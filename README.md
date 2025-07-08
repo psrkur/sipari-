@@ -174,4 +174,4 @@ Eğer portlar kullanımdaysa:
 
 ## Lisans
 
-MIT License 
+MIT License
