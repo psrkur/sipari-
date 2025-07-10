@@ -6,6 +6,7 @@ import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
+import { API_ENDPOINTS } from '../lib/api'
 
 interface Branch {
   id: number
@@ -50,7 +51,7 @@ export default function Cart({ selectedBranch }: CartProps) {
       if (!token || !user) return
 
       try {
-        const response = await axios.get('http://localhost:3001/api/customer/profile', {
+        const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
           headers: {
             Authorization: `Bearer ${token}`
           }

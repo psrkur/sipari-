@@ -240,7 +240,7 @@ export default function AdminPage() {
       });
       toast.success('Kullanıcı silindi');
       // Kullanıcı listesini yenile
-      const response = await axios.get('http://localhost:3001/api/admin/users', {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUsers(response.data);
@@ -280,7 +280,7 @@ export default function AdminPage() {
       setEditingProduct(null);
       
       // Ürün listesini yenile
-      const productsResponse = await axios.get('http://localhost:3001/api/admin/products', {
+      const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(productsResponse.data);
@@ -293,13 +293,13 @@ export default function AdminPage() {
     if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
     
     try {
-      await axios.delete(`http://localhost:3001/api/admin/products/${productId}`, {
+      await axios.delete(API_ENDPOINTS.ADMIN_DELETE_PRODUCT(productId), {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Ürün silindi');
       
       // Ürün listesini yenile
-      const response = await axios.get('http://localhost:3001/api/admin/products', {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(response.data);
@@ -313,12 +313,12 @@ export default function AdminPage() {
     if (!confirm('Bu kategoriyi silmek istediğinizden emin misiniz?')) return;
     
     try {
-      await axios.delete(`http://localhost:3001/api/categories/${categoryId}`, {
+      await axios.delete(API_ENDPOINTS.ADMIN_DELETE_CATEGORY(categoryId), {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Kategori başarıyla silindi');
       // Kategori listesini yenile
-      const response = await axios.get('http://localhost:3001/api/categories', {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCategories(response.data);
@@ -359,7 +359,7 @@ export default function AdminPage() {
         params.branchId = statsBranchId;
       }
       
-      const res = await axios.get('http://localhost:3001/api/admin/stats', {
+      const res = await axios.get(API_ENDPOINTS.ADMIN_STATS, {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
@@ -691,7 +691,7 @@ export default function AdminPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1 flex items-center">
                         {product.image && (
-                          <img src={`http://localhost:3001${product.image}`} alt={product.name} className="w-20 h-20 object-cover rounded mr-4" />
+                          <img src={API_ENDPOINTS.IMAGE_URL(product.image)} alt={product.name} className="w-20 h-20 object-cover rounded mr-4" />
                         )}
                         <div>
                           <h3 className="text-lg font-medium text-gray-900">{product.name}</h3>

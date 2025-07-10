@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { API_ENDPOINTS } from '../../lib/api'
 
 interface Order {
   id: number
@@ -62,7 +63,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/customer/profile', {
+      const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -88,7 +89,7 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async () => {
     try {
-      const response = await axios.put('http://localhost:3001/api/customer/profile', formData, {
+      const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
