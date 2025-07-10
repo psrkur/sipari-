@@ -7,6 +7,7 @@ import LoginModal from '../components/LoginModal'
 import RegisterModal from '../components/RegisterModal'
 import Cart from '../components/Cart'
 import { useAuthStore } from '../store/auth'
+import { API_ENDPOINTS } from '../lib/api'
 import { useCartStore } from '../store/cart'
 import toast from 'react-hot-toast'
 
@@ -55,7 +56,7 @@ export default function Home() {
     if (selectedBranch) {
       setProductsLoading(true);
       // API'den ürünleri çek
-      axios.get(`http://localhost:3001/api/products/${selectedBranch.id}`)
+              axios.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id))
         .then((response: any) => {
           console.log('Ürünler yüklendi:', response.data);
           setProducts(response.data);
@@ -477,7 +478,7 @@ export default function Home() {
                           {product.image && (
                             <div className="mb-3 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
                               <img 
-                                src={`http://localhost:3001${product.image}`}
+                                src={API_ENDPOINTS.IMAGE_URL(product.image)}
                                 alt={product.name}
                                 className="w-full h-32 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                                 onError={(e) => {

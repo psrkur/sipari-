@@ -8,6 +8,7 @@ interface User {
   phone?: string | null
   address?: string | null
   role: string
+  branchId?: number | null
 }
 
 interface AuthState {

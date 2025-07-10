@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/auth'
+import { API_ENDPOINTS } from '../lib/api'
 
 interface LoginForm {
   email: string
@@ -24,7 +25,7 @@ export default function LoginModal({ onClose, onSwitchToRegister }: LoginModalPr
   const onSubmit = async (data: LoginForm) => {
     setLoading(true)
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', data)
+      const response = await axios.post(API_ENDPOINTS.LOGIN, data)
       login(response.data.user, response.data.token)
       toast.success('Başarıyla giriş yapıldı')
       onClose()

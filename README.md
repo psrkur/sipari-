@@ -74,8 +74,15 @@ Bu komut hem backend (port 3001) hem de frontend (port 3000) uygulamalarını ba
 ## Kullanım
 
 ### Kullanıcı Girişi
-- **Admin**: `admin@fastfood.com` / `admin123`
+- **Süper Admin**: `admin@example.com` / `admin123`
+- **Şube Yöneticisi**: `manager@example.com` / `manager123`
 - **Normal kullanıcı**: Kayıt olarak yeni hesap oluşturabilirsiniz
+
+### Test Verileri
+Haftalık ve aylık istatistikler için test verileri oluşturmak için:
+```bash
+curl -X POST http://localhost:3001/api/admin/create-test-data
+```
 
 ### Sipariş Verme
 1. Giriş yapın

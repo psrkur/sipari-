@@ -26,7 +26,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.FRONTEND_URL || 'https://your-frontend-domain.vercel.app']
+    : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006'],
+  credentials: true
+}));
 app.use(express.json());
 
 // uploads klasörünü public olarak sun
@@ -34,17 +39,26 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Auth middleware
 const authenticateToken = (req, res, next) => {
+  console.log('🔐 Authentication middleware çalışıyor...')
+  console.log('Headers:', req.headers)
+  
   const authHeader = req.headers['authorization'];
+  console.log('Auth header:', authHeader)
+  
   const token = authHeader && authHeader.split(' ')[1];
+  console.log('Extracted token:', token ? 'Token mevcut' : 'Token yok')
 
   if (!token) {
+    console.log('❌ Token bulunamadı')
     return res.status(401).json({ error: 'Token gerekli' });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
+      console.log('❌ Token doğrulama hatası:', err.message)
       return res.status(403).json({ error: 'Geçersiz token' });
     }
+    console.log('✅ Token doğrulandı, user:', user)
     req.user = user;
     next();
   });
@@ -174,11 +188,24 @@ app.get('/api/products/:branchId', async (req, res) => {
 // Order routes
 app.post('/api/orders', authenticateToken, async (req, res) => {
   try {
+    console.log('=== SİPARİŞ OLUŞTURMA BAŞLADI ===')
+    console.log('Request body:', req.body)
+    console.log('User:', req.user)
+    
     const { branchId, items, customerInfo, deliveryType, paymentMethod, notes } = req.body;
+    
+    console.log('Parsed data:')
+    console.log('- branchId:', branchId)
+    console.log('- items:', items)
+    console.log('- customerInfo:', customerInfo)
+    console.log('- deliveryType:', deliveryType)
+    console.log('- paymentMethod:', paymentMethod)
+    console.log('- notes:', notes)
     
     // Müşteri oluştur veya mevcut olanı bul
     let customer = null;
     if (customerInfo) {
+      console.log('🔄 Müşteri oluşturuluyor/güncelleniyor...')
       customer = await prisma.customer.upsert({
         where: { phone: customerInfo.phone },
         update: {
@@ -193,17 +220,22 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
           address: customerInfo.address
         }
       });
+      console.log('✅ Müşteri işlemi tamamlandı:', customer)
     }
 
     // Toplam tutarı hesapla
     const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    console.log('💰 Toplam tutar:', totalAmount)
     
     // Sipariş numarası oluştur
     const orderNumber = `ORD-${Date.now()}`;
+    console.log('📋 Sipariş numarası:', orderNumber)
 
     // Teslimat ücreti hesapla (adrese teslim için +5 TL)
     const deliveryFee = deliveryType === 'delivery' ? 5.0 : 0.0;
     const finalTotal = totalAmount + deliveryFee;
+    console.log('🚚 Teslimat ücreti:', deliveryFee)
+    console.log('💵 Final toplam:', finalTotal)
 
     // Ödeme yöntemi metni oluştur
     const paymentText = paymentMethod ? 
@@ -212,7 +244,11 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
        paymentMethod === 'online' ? 'Online Ödeme' : 'Belirtilmemiş') : '';
 
     // Sipariş oluştur
-    console.log('Sipariş oluşturuluyor - Branch ID:', branchId);
+    console.log('🔄 Sipariş veritabanına kaydediliyor...')
+    console.log('Branch ID:', branchId)
+    console.log('User ID:', req.user.userId)
+    console.log('Customer ID:', customer?.id)
+    
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -224,10 +260,12 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         notes: `${deliveryType === 'delivery' ? 'Adrese Teslim' : 'Şubeden Al'} - Ödeme: ${paymentText} - ${notes || ''}`
       }
     });
-    console.log('Sipariş oluşturuldu - Order ID:', order.id, 'Branch ID:', order.branchId);
+    console.log('✅ Sipariş oluşturuldu - Order ID:', order.id, 'Branch ID:', order.branchId);
 
     // Sipariş kalemlerini oluştur
+    console.log('🔄 Sipariş kalemleri oluşturuluyor...')
     for (const item of items) {
+      console.log('Kalem:', item)
       await prisma.orderItem.create({
         data: {
           quantity: item.quantity,
@@ -237,10 +275,17 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         }
       });
     }
+    console.log('✅ Sipariş kalemleri oluşturuldu')
 
+    console.log('✅ Sipariş başarıyla tamamlandı')
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
-    console.error('Sipariş oluşturulamadı:', error);
+    console.error('❌ Sipariş oluşturulamadı:', error)
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    })
     res.status(500).json({ error: 'Sipariş oluşturulamadı' });
   }
 });
@@ -471,11 +516,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Ürün ekleme/düzenleme endpointlerinde (ör: /api/admin/products)
-    if (req.body.branchId === 'all' || isNaN(parseInt(req.body.branchId))) {
-      return res.status(400).json({ error: 'Geçersiz şube seçimi. Lütfen bir şube seçin.' });
-    }
-
+    // Tüm şubeler seçilmişse geçerli
     if (branchId === 'all') {
       // Tüm şubelere ekle
       const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
@@ -558,8 +599,10 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Ürün ekleme/düzenleme endpointlerinde (ör: /api/admin/products)
-    if (req.body.branchId === 'all' || isNaN(parseInt(req.body.branchId))) {
+    // Tüm şubeler seçilmişse geçerli
+    if (branchId === 'all') {
+      // Bu durumda devam et
+    } else if (isNaN(parseInt(branchId))) {
       return res.status(400).json({ error: 'Geçersiz şube seçimi. Lütfen bir şube seçin.' });
     }
 
@@ -1055,7 +1098,23 @@ async function seedData() {
       }
     });
 
+    // Şube yöneticisi kullanıcısı oluştur
+    const managerPassword = await bcrypt.hash('manager123', 10);
+    await prisma.user.upsert({
+      where: { id: 2 },
+      update: {},
+      create: {
+        id: 2,
+        email: 'manager@example.com',
+        password: managerPassword,
+        name: 'Merkez Şube Müdürü',
+        role: 'BRANCH_MANAGER',
+        branchId: 1 // Merkez Şube
+      }
+    });
+
     console.log('Süper admin kullanıcısı oluşturuldu');
+    console.log('Şube yöneticisi kullanıcısı oluşturuldu');
     console.log('Seed data tamamlandı!');
 
   } catch (error) {
@@ -1104,7 +1163,163 @@ app.post('/api/admin/fix-kadikoy-completed-dates', async (req, res) => {
   }
 });
 
-// Günlük İstatistikler Endpointi
+// Test verileri oluştur - Haftalık ve aylık istatistikler için
+app.post('/api/admin/create-test-data', async (req, res) => {
+  try {
+    const now = new Date();
+    
+    // Bu hafta için test siparişleri
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(10 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60));
+      
+      await prisma.order.create({
+        data: {
+          orderNumber: `TEST-WEEK-${Date.now()}-${i}`,
+          totalAmount: 50 + Math.floor(Math.random() * 200),
+          status: 'COMPLETED',
+          branchId: 1,
+          customerId: 1,
+          createdAt: date
+        }
+      });
+    }
+    
+    // Bu ay için test siparişleri
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      date.setHours(10 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60));
+      
+      await prisma.order.create({
+        data: {
+          orderNumber: `TEST-MONTH-${Date.now()}-${i}`,
+          totalAmount: 30 + Math.floor(Math.random() * 150),
+          status: 'COMPLETED',
+          branchId: 2,
+          customerId: 1,
+          createdAt: date
+        }
+      });
+    }
+    
+    res.json({ message: 'Test verileri oluşturuldu' });
+  } catch (error) {
+    console.error('Test veri oluşturma hatası:', error);
+    res.status(500).json({ error: 'Test verileri oluşturulamadı' });
+  }
+});
+
+// İstatistikler Endpointi (Günlük, Haftalık, Aylık)
+app.get('/api/admin/stats', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { branchId, period = 'daily' } = req.query;
+    
+    // Tarih aralığını hesapla
+    const now = new Date();
+    let startDate, endDate;
+    
+    switch (period) {
+      case 'daily':
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      case 'weekly':
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - startDate.getDay()); // Haftanın başlangıcı (Pazar)
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 7);
+        break;
+      case 'monthly':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Ayın başlangıcı
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // Sonraki ayın başlangıcı
+        break;
+      default:
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+    }
+
+    let where = {
+      createdAt: {
+        gte: startDate,
+        lt: endDate
+      },
+      status: { in: ['DELIVERED', 'COMPLETED'] }
+    };
+
+    // Şube yöneticisi ise sadece kendi şubesinin verilerini getir
+    if (req.user.role === 'BRANCH_MANAGER') {
+      where.branchId = req.user.branchId;
+    } else if (branchId) {
+      where.branchId = Number(branchId);
+    }
+
+    // Süper admin için tüm şubeler, şube yöneticisi için sadece kendi şubesi
+    let branches = [];
+    if (req.user.role === 'SUPER_ADMIN') {
+      branches = await prisma.branch.findMany({ where: { isActive: true } });
+    } else {
+      const userBranch = await prisma.branch.findUnique({
+        where: { id: req.user.branchId }
+      });
+      if (userBranch) branches = [userBranch];
+    }
+
+    const stats = [];
+    for (const branch of branches) {
+      if (branchId && branch.id !== Number(branchId)) continue;
+      
+      const orders = await prisma.order.findMany({
+        where: { ...where, branchId: branch.id },
+        select: { totalAmount: true, id: true, createdAt: true }
+      });
+      
+      const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+      const orderCount = orders.length;
+      const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
+      
+      // Günlük ortalama hesapla
+      let dailyAverage = 0;
+      if (period === 'weekly') {
+        dailyAverage = totalRevenue / 7;
+      } else if (period === 'monthly') {
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        dailyAverage = totalRevenue / daysInMonth;
+      } else {
+        dailyAverage = totalRevenue; // Günlük için zaten günlük toplam
+      }
+      
+      stats.push({
+        branchId: branch.id,
+        branchName: branch.name,
+        period: period,
+        orders: orderCount,
+        revenue: totalRevenue,
+        averageOrder: averageOrder,
+        dailyAverage: dailyAverage,
+        startDate: startDate,
+        endDate: endDate
+      });
+    }
+
+    res.json(stats);
+  } catch (error) {
+    console.error('İstatistik hatası:', error);
+    res.status(500).json({ error: 'İstatistik verisi getirilemedi' });
+  }
+});
+
+// Eski endpoint'i geriye uyumluluk için koru
 app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {

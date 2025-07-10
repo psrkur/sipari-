@@ -84,27 +84,44 @@ export default function Cart({ selectedBranch }: CartProps) {
   }, [showCheckout, token, user, setValue])
 
   const handleCheckout = async (customerInfo: CustomerInfo) => {
+    console.log('=== SİPARİŞ TAMAMLAMA BAŞLADI ===')
     console.log('handleCheckout called with:', customerInfo)
+    console.log('selectedBranch:', selectedBranch)
+    console.log('items:', items)
+    console.log('token:', token ? 'Token mevcut' : 'Token yok')
+    console.log('user:', user)
     
     if (!selectedBranch) {
+      console.log('❌ Şube seçilmemiş')
       toast.error('Lütfen bir şube seçin')
       return
     }
 
     if (items.length === 0) {
+      console.log('❌ Sepet boş')
       toast.error('Sepetiniz boş')
       return
     }
 
     if (!customerInfo.deliveryType) {
+      console.log('❌ Teslimat seçeneği belirlenmemiş')
       toast.error('Lütfen teslimat seçeneğini belirleyin')
+      return
+    }
+
+    if (!token) {
+      console.log('❌ Token yok')
+      toast.error('Oturum süreniz dolmuş, lütfen tekrar giriş yapın')
       return
     }
 
     setLoading(true)
     try {
+      console.log('🔄 Sipariş oluşturuluyor...')
+      
       // Müşteri bilgilerini kullan (form verileri veya otomatik yüklenen veriler)
       const finalCustomerInfo = customerData || customerInfo
+      console.log('finalCustomerInfo:', finalCustomerInfo)
 
       const orderData = {
         branchId: selectedBranch.id,
@@ -119,7 +136,7 @@ export default function Cart({ selectedBranch }: CartProps) {
         notes: ''
       }
 
-      console.log('Sending order data:', orderData)
+      console.log('📤 Sending order data:', orderData)
 
       const response = await axios.post('http://localhost:3001/api/orders', orderData, {
         headers: {
@@ -127,15 +144,18 @@ export default function Cart({ selectedBranch }: CartProps) {
         }
       })
 
-      console.log('Order response:', response.data)
+      console.log('✅ Order response:', response.data)
       toast.success('Siparişiniz oluşturuldu, afiyet olsun! 🍕')
       clearCart()
       setShowCheckout(false)
     } catch (error: any) {
-      console.error('Order error:', error)
+      console.error('❌ Order error:', error)
+      console.error('❌ Error response:', error.response?.data)
+      console.error('❌ Error status:', error.response?.status)
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı')
     } finally {
       setLoading(false)
+      console.log('=== SİPARİŞ TAMAMLAMA BİTTİ ===')
     }
   }
 

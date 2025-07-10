@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/auth';
+import { API_ENDPOINTS } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -71,10 +72,11 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'daily-stats'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
-  // Günlük İstatistikler için state
-  const [dailyStats, setDailyStats] = useState<any[]>([]);
-  const [dailyStatsLoading, setDailyStatsLoading] = useState(false);
-  const [dailyStatsBranchId, setDailyStatsBranchId] = useState('');
+  // İstatistikler için state
+  const [stats, setStats] = useState<any[]>([]);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsBranchId, setStatsBranchId] = useState('');
+  const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
   useEffect(() => {
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
@@ -86,22 +88,22 @@ export default function AdminPage() {
 
   useEffect(() => {
     // Şubeleri çek
-    axios.get('http://localhost:3001/api/branches', { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(API_ENDPOINTS.BRANCHES, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setBranches(res.data))
       .catch(() => setBranches([]));
     
     // Kategorileri çek
-    axios.get('http://localhost:3001/api/categories', { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setCategories(res.data))
       .catch(() => setCategories([]));
     
     // Süper admin ise kullanıcıları ve ürünleri de çek
     if (user && user.role === 'SUPER_ADMIN') {
-      axios.get('http://localhost:3001/api/admin/users', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get(API_ENDPOINTS.ADMIN_USERS, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => setUsers(res.data))
         .catch(() => setUsers([]));
       
-      axios.get('http://localhost:3001/api/admin/products', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => setProducts(res.data))
         .catch(() => setProducts([]));
     }
@@ -116,7 +118,7 @@ export default function AdminPage() {
 
   // 10 saniyede bir otomatik yenileme
   useEffect(() => {
-    if (!user || user.role !== 'ADMIN') return;
+    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) return;
 
     const interval = setInterval(() => {
       fetchOrders();
@@ -162,7 +164,7 @@ export default function AdminPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/admin/orders', {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -178,7 +180,7 @@ export default function AdminPage() {
   const updateOrderStatus = async (orderId: number, status: string) => {
     try {
       console.log('Sipariş durumu güncelleniyor:', orderId, status);
-      const response = await axios.put(`http://localhost:3001/api/admin/orders/${orderId}/status`, 
+      const response = await axios.put(API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId), 
         { status },
         {
           headers: {
@@ -233,7 +235,7 @@ export default function AdminPage() {
     if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return;
     
     try {
-      await axios.delete(`http://localhost:3001/api/admin/users/${userId}`, {
+      await axios.delete(API_ENDPOINTS.ADMIN_DELETE_USER(userId), {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Kullanıcı silindi');
@@ -262,7 +264,7 @@ export default function AdminPage() {
 
   const updateProduct = async () => {
     try {
-      const response = await axios.put(`http://localhost:3001/api/admin/products/${editingProduct.id}`, {
+      const response = await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), {
         name: editProductForm.name,
         description: editProductForm.description,
         price: Number(editProductForm.price),
@@ -341,30 +343,41 @@ export default function AdminPage() {
   // const fetchAnalytics = async () => { ... }
   // useEffect(() => { ... }, [activeTab, analyticsBranchId, analyticsPeriod, analyticsStartDate, analyticsEndDate]);
 
-  // Günlük İstatistikler verisini çek
-  const fetchDailyStats = async () => {
-    setDailyStatsLoading(true);
+  // İstatistikler verisini çek
+  const fetchStats = async () => {
+    setStatsLoading(true);
     try {
-      const params: any = {};
-      if (dailyStatsBranchId) params.branchId = dailyStatsBranchId;
-      const res = await axios.get('http://localhost:3001/api/admin/daily-stats', {
+      const params: any = {
+        period: statsPeriod
+      };
+      
+      // Şube yöneticisi ise kendi şubesinin verilerini çek
+      if (user && user.role === 'BRANCH_MANAGER' && user.branchId) {
+        params.branchId = user.branchId;
+      } else if (statsBranchId) {
+        // Süper admin için seçilen şube
+        params.branchId = statsBranchId;
+      }
+      
+      const res = await axios.get('http://localhost:3001/api/admin/stats', {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
-      setDailyStats(res.data);
-    } catch {
-      setDailyStats([]);
+      setStats(res.data);
+    } catch (error) {
+      console.error('İstatistik hatası:', error);
+      setStats([]);
     } finally {
-      setDailyStatsLoading(false);
+      setStatsLoading(false);
     }
   };
 
   useEffect(() => {
     if (activeTab === 'daily-stats') {
-      fetchDailyStats();
+      fetchStats();
     }
     // eslint-disable-next-line
-  }, [activeTab, dailyStatsBranchId]);
+  }, [activeTab, statsBranchId, statsPeriod]);
 
   if (loading) {
     return (
@@ -384,8 +397,18 @@ export default function AdminPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Admin Paneli</h1>
-              <p className="mt-2 text-gray-600">Gelen siparişleri takip edin ve yönetin</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {user && user.role === 'BRANCH_MANAGER' 
+                  ? 'Şube Yönetim Paneli' 
+                  : 'Admin Paneli'
+                }
+              </h1>
+              <p className="mt-2 text-gray-600">
+                {user && user.role === 'BRANCH_MANAGER' 
+                  ? 'Şubenizin siparişlerini takip edin ve yönetin' 
+                  : 'Gelen siparişleri takip edin ve yönetin'
+                }
+              </p>
             </div>
             <div className="flex items-center space-x-2 text-sm text-green-600">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -446,18 +469,18 @@ export default function AdminPage() {
                   >
                     Kategoriler ({categories.length})
                   </button>
-                  <button
-                    onClick={() => setActiveTab('daily-stats')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'daily-stats'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Günlük İstatistikler
-                  </button>
                 </>
               )}
+              <button
+                onClick={() => setActiveTab('daily-stats')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'daily-stats'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Günlük İstatistikler
+              </button>
             </nav>
           </div>
         </div>
@@ -466,7 +489,12 @@ export default function AdminPage() {
         {activeTab === 'orders' && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">Tüm Şubelerin Siparişleri ({orders.length})</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                {user && user.role === 'BRANCH_MANAGER' 
+                  ? 'Şubenizin Siparişleri' 
+                  : 'Tüm Şubelerin Siparişleri'
+                } ({orders.length})
+              </h2>
             </div>
 
           {orders.length === 0 ? (
@@ -751,41 +779,81 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Daily Stats Tab */}
+        {/* Stats Tab */}
         {activeTab === 'daily-stats' && (
           <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-end md:space-x-4 space-y-2 md:space-y-0">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Şube</label>
-                <select value={dailyStatsBranchId} onChange={e => setDailyStatsBranchId(e.target.value)} className="border px-3 py-2 rounded w-48">
-                  <option value="">Tüm Şubeler</option>
-                  {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                {user && user.role === 'BRANCH_MANAGER' 
+                  ? 'Şubenizin İstatistikleri' 
+                  : 'İstatistikler'
+                }
+              </h2>
+              <div className="flex flex-col md:flex-row md:items-end md:space-x-4 space-y-2 md:space-y-0">
+                {user && user.role === 'SUPER_ADMIN' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Şube</label>
+                    <select value={statsBranchId} onChange={e => setStatsBranchId(e.target.value)} className="border px-3 py-2 rounded w-48">
+                      <option value="">Tüm Şubeler</option>
+                      {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Dönem</label>
+                  <select value={statsPeriod} onChange={e => setStatsPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')} className="border px-3 py-2 rounded w-32">
+                    <option value="daily">Günlük</option>
+                    <option value="weekly">Haftalık</option>
+                    <option value="monthly">Aylık</option>
+                  </select>
+                </div>
+                <button onClick={fetchStats} className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 h-10 mt-6">Yenile</button>
               </div>
-              <button onClick={fetchDailyStats} className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 h-10 mt-6">Yenile</button>
             </div>
             <div className="p-6">
-              {dailyStatsLoading ? (
+              {statsLoading ? (
                 <div className="text-center text-gray-500">Yükleniyor...</div>
-              ) : dailyStats.length === 0 ? (
-                <div className="text-center text-gray-500">Bugün için istatistik verisi bulunamadı</div>
+              ) : stats.length === 0 ? (
+                <div className="text-center text-gray-500">
+                  {user && user.role === 'BRANCH_MANAGER' 
+                    ? 'Seçilen dönem için şubenizde istatistik verisi bulunamadı' 
+                    : 'Seçilen dönem için istatistik verisi bulunamadı'
+                  }
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {dailyStats.map((stat) => (
+                  {stats.map((stat: any) => (
                     <div key={stat.branchId} className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-900">{stat.branchName}</h3>
-                        <span className="text-sm text-gray-500">Bugün</span>
+                        <span className="text-sm text-gray-500">
+                          {statsPeriod === 'daily' ? 'Bugün' : 
+                           statsPeriod === 'weekly' ? 'Bu Hafta' : 'Bu Ay'}
+                        </span>
                       </div>
                       <div className="space-y-3">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Sipariş Sayısı:</span>
-                          <span className="font-bold text-blue-600">{stat.dailyOrders}</span>
+                          <span className="font-bold text-blue-600">{stat.orders}</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Toplam Ciro:</span>
-                          <span className="font-bold text-green-600">{typeof stat.dailyRevenue === 'number' ? stat.dailyRevenue.toFixed(2) : '0.00'} ₺</span>
+                          <span className="font-bold text-green-600">{typeof stat.revenue === 'number' ? stat.revenue.toFixed(2) : '0.00'} ₺</span>
                         </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">Ortalama Sipariş:</span>
+                          <span className="font-bold text-purple-600">
+                            {stat.averageOrder ? stat.averageOrder.toFixed(2) : '0.00'} ₺
+                          </span>
+                        </div>
+                        {(statsPeriod === 'weekly' || statsPeriod === 'monthly') && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-600">Günlük Ortalama:</span>
+                            <span className="font-bold text-orange-600">
+                              {stat.dailyAverage ? stat.dailyAverage.toFixed(2) : '0.00'} ₺
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -815,7 +883,7 @@ export default function AdminPage() {
                 setShowUserModal(false);
                 setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
                 // Kullanıcı listesini yenile
-                const response = await axios.get('http://localhost:3001/api/admin/users', {
+                const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
                   headers: { Authorization: `Bearer ${token}` }
                 });
                 setUsers(response.data);
@@ -900,6 +968,7 @@ export default function AdminPage() {
               </select>
               <select required value={productForm.branchId} onChange={e => setProductForm(f => ({ ...f, branchId: e.target.value }))} className="w-full border px-3 py-2 rounded">
                 <option value="">Şube Seç</option>
+                <option value="all">Tüm Şubeler</option>
                 {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
               <input type="file" accept="image/*" onChange={e => setProductImage(e.target.files?.[0] || null)} className="w-full" />
@@ -928,6 +997,7 @@ export default function AdminPage() {
               </select>
               <select required value={editProductForm.branchId} onChange={e => setEditProductForm(f => ({ ...f, branchId: e.target.value }))} className="w-full border px-3 py-2 rounded">
                 <option value="">Şube Seç</option>
+                <option value="all">Tüm Şubeler</option>
                 {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
               </select>
               <input type="file" accept="image/*" onChange={e => setEditProductImage(e.target.files?.[0] || null)} className="w-full" />
@@ -956,7 +1026,12 @@ export default function AdminPage() {
                         'Content-Type': 'multipart/form-data'
                       }
                     });
-                    toast.success('Ürün başarıyla güncellendi');
+                    
+                    if (editProductForm.branchId === 'all') {
+                      toast.success(response.data.message || 'Ürün tüm şubelere başarıyla güncellendi');
+                    } else {
+                      toast.success('Ürün başarıyla güncellendi');
+                    }
                     setShowEditProductModal(false);
                     setEditingProduct(null);
                     setEditProductImage(null);

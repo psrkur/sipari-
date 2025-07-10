@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '../store/auth'
+import { API_ENDPOINTS } from '../lib/api'
 
 interface RegisterForm {
   name: string
@@ -35,7 +36,7 @@ export default function RegisterModal({ onClose, onSwitchToLogin }: RegisterModa
 
     setLoading(true)
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', {
+      const response = await axios.post(API_ENDPOINTS.REGISTER, {
         name: data.name,
         email: data.email,
         phone: data.phone,
