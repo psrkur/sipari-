@@ -3,8 +3,8 @@ services:
     name: yemek5-backend
     env: node
     plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && npm start
+    buildCommand: cd backend && npm install && npx prisma generate
+    startCommand: cd backend && npx prisma db push && npm start
     envVars:
       - key: NODE_ENV
         value: production

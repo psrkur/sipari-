@@ -20,6 +20,24 @@ require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// Veritabanı bağlantısını test et
+async function testDatabaseConnection() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Veritabanı bağlantısı başarılı');
+    
+    // Basit bir sorgu test et
+    const branchCount = await prisma.branch.count();
+    console.log(`📊 Veritabanında ${branchCount} şube bulundu`);
+  } catch (error) {
+    console.error('❌ Veritabanı bağlantı hatası:', error);
+    process.exit(1);
+  }
+}
+
+// Uygulama başlatılırken veritabanını test et
+testDatabaseConnection();
+
 const multer = require('multer');
 const path = require('path');
 
@@ -1423,6 +1441,22 @@ app.get('/', (req, res) => {
   });
 });
 
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Server hatası:', err);
+  res.status(500).json({ 
+    error: 'Sunucu hatası',
+    message: isProduction ? 'Bir hata oluştu' : err.message 
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint bulunamadı' });
+});
+
 app.listen(SERVER_PORT, () => {
-  console.log(`Server ${SERVER_PORT} portunda çalışıyor`);
+  console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
+  console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
+  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 }); 
