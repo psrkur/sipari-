@@ -1,17 +1,7 @@
 // API Configuration - Otomatik bağlantı
-const getApiBaseUrl = () => {
-  // Production'da öncelik sırası
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  
-  // Netlify URL'i
-  if (typeof window !== 'undefined' && window.location.hostname.includes('netlify')) {
-    return 'https://yemek5-backend.onrender.com';
-  }
-  
-  // Render URL'i
-  return 'https://yemek5-backend.onrender.com' || 'http://localhost:3001';
+const getApiBaseUrl = (): string => {
+  // Production URL - Render deployment
+  return 'https://yemek5-backend.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();
