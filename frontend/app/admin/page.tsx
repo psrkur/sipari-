@@ -878,7 +878,7 @@ export default function AdminPage() {
                   role: userForm.role,
                   ...(userForm.role === 'BRANCH_MANAGER' && userForm.branchId ? { branchId: Number(userForm.branchId) } : {})
                 };
-                await axios.post('http://localhost:3001/api/admin/users', userData, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.post(API_ENDPOINTS.ADMIN_USERS, userData, { headers: { Authorization: `Bearer ${token}` } });
                 toast.success('Kullanıcı eklendi');
                 setShowUserModal(false);
                 setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
@@ -932,7 +932,7 @@ export default function AdminPage() {
                 formData.append('branchId', productForm.branchId);
                 if (productImage) formData.append('image', productImage);
 
-                const response = await axios.post('http://localhost:3001/api/admin/products', formData, {
+                const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
                   headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -950,7 +950,7 @@ export default function AdminPage() {
                 setProductImage(null);
 
                 // Ürün listesini yenile
-                const productsResponse = await axios.get('http://localhost:3001/api/admin/products', {
+                const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
                   headers: { Authorization: `Bearer ${token}` }
                 });
                 setProducts(productsResponse.data);
@@ -1002,7 +1002,7 @@ export default function AdminPage() {
               </select>
               <input type="file" accept="image/*" onChange={e => setEditProductImage(e.target.files?.[0] || null)} className="w-full" />
               {editingProduct.image && !editProductImage && (
-                <img src={`http://localhost:3001${editingProduct.image}`} alt="Ürün Görseli" className="w-32 h-32 object-cover rounded" />
+                <img src={API_ENDPOINTS.IMAGE_URL(editingProduct.image)} alt="Ürün Görseli" className="w-32 h-32 object-cover rounded" />
               )}
               <div className="flex items-center space-x-2">
                 <input type="checkbox" id="isActive" checked={editProductForm.isActive} onChange={e => setEditProductForm(f => ({ ...f, isActive: e.target.checked }))} className="rounded" />
@@ -1020,7 +1020,7 @@ export default function AdminPage() {
                     formData.append('branchId', editProductForm.branchId);
                     formData.append('isActive', String(editProductForm.isActive));
                     if (editProductImage) formData.append('image', editProductImage);
-                    const response = await axios.put(`http://localhost:3001/api/admin/products/${editingProduct.id}`, formData, {
+                    const response = await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), formData, {
                       headers: {
                         Authorization: `Bearer ${token}`,
                         'Content-Type': 'multipart/form-data'
@@ -1036,7 +1036,7 @@ export default function AdminPage() {
                     setEditingProduct(null);
                     setEditProductImage(null);
                     // Ürün listesini yenile
-                    const productsResponse = await axios.get('http://localhost:3001/api/admin/products', {
+                    const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
                       headers: { Authorization: `Bearer ${token}` }
                     });
                     setProducts(productsResponse.data);
@@ -1062,12 +1062,12 @@ export default function AdminPage() {
                   name: categoryForm.name,
                   description: categoryForm.description
                 };
-                await axios.post('http://localhost:3001/api/admin/categories', categoryData, { headers: { Authorization: `Bearer ${token}` } });
+                await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryData, { headers: { Authorization: `Bearer ${token}` } });
                 toast.success('Kategori eklendi');
                 setShowCategoryModal(false);
                 setCategoryForm({ name: '', description: '' });
                 // Kategori listesini yenile
-                const categoriesResponse = await axios.get('http://localhost:3001/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } });
+                const categoriesResponse = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { headers: { Authorization: `Bearer ${token}` } });
                 setCategories(categoriesResponse.data);
               } catch (error: any) {
                 toast.error(`Kategori eklenemedi: ${error.response?.data?.error || error.message}`);
@@ -1104,14 +1104,14 @@ export default function AdminPage() {
                     formData.append('name', editCategoryForm.name);
                     formData.append('description', editCategoryForm.description);
                     formData.append('isActive', String(editCategoryForm.isActive));
-                    const response = await axios.put(`http://localhost:3001/api/admin/categories/${editingCategory.id}`, formData, {
+                    const response = await axios.put(API_ENDPOINTS.ADMIN_UPDATE_CATEGORY(editingCategory.id), formData, {
                       headers: { Authorization: `Bearer ${token}` }
                     });
                     toast.success('Kategori başarıyla güncellendi');
                     setShowEditCategoryModal(false);
                     setEditingCategory(null);
                     // Kategori listesini yenile
-                    const categoriesResponse = await axios.get('http://localhost:3001/api/admin/categories', { headers: { Authorization: `Bearer ${token}` } });
+                    const categoriesResponse = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { headers: { Authorization: `Bearer ${token}` } });
                     setCategories(categoriesResponse.data);
                   } catch (error: any) {
                     toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
