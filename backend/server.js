@@ -1,3 +1,9 @@
+// Environment variables
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+process.env.PORT = process.env.PORT || 3001;
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
