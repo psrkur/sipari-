@@ -34,12 +34,19 @@ async function testDatabaseConnection() {
     await prisma.$connect();
     console.log('✅ Veritabanı bağlantısı başarılı');
     
-    // Basit bir sorgu test et
-    const branchCount = await prisma.branch.count();
-    console.log(`📊 Veritabanında ${branchCount} şube bulundu`);
+    // Tabloların var olup olmadığını kontrol et
+    try {
+      const branchCount = await prisma.branch.count();
+      console.log(`📊 Veritabanında ${branchCount} şube bulundu`);
+    } catch (tableError) {
+      console.log('⚠️ Veritabanı tabloları henüz oluşturulmamış, migration gerekli');
+      // Tablolar yoksa migration yapılması gerekiyor
+      return false;
+    }
+    return true;
   } catch (error) {
     console.error('❌ Veritabanı bağlantı hatası:', error);
-    process.exit(1);
+    return false;
   }
 }
 
@@ -1433,10 +1440,20 @@ app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
   }
 });
 
-// Seed data'yı güvenli şekilde çalıştır
-seedData().catch(error => {
-  console.error('❌ Seed data hatası:', error);
-  // Seed data hatası olsa bile sunucu çalışmaya devam etsin
+// Veritabanı bağlantısını test et ve seed data'yı çalıştır
+testDatabaseConnection().then(async (isConnected) => {
+  if (isConnected) {
+    // Veritabanı bağlantısı başarılı, seed data'yı çalıştır
+    seedData().catch(error => {
+      console.error('❌ Seed data hatası:', error);
+      // Seed data hatası olsa bile sunucu çalışmaya devam etsin
+    });
+  } else {
+    console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
+    console.log('💡 Render build sırasında migration yapılacak');
+  }
+}).catch(error => {
+  console.error('❌ Veritabanı bağlantı testi hatası:', error);
 });
 
 // Root endpoint
