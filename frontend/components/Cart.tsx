@@ -139,7 +139,7 @@ export default function Cart({ selectedBranch }: CartProps) {
 
       console.log('📤 Sending order data:', orderData)
 
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com'}/api/orders`, orderData, {
+      const response = await axios.post(API_ENDPOINTS.ORDERS, orderData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
