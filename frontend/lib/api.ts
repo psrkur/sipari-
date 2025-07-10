@@ -1,5 +1,9 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
+  // Development için local backend, production için Render
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:3001';
+  }
   // Production URL - Render deployment
   return 'https://yemek5-backend.onrender.com';
 };
