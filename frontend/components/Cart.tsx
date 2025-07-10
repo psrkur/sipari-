@@ -51,6 +51,7 @@ export default function Cart({ selectedBranch }: CartProps) {
       if (!token || !user) return
 
       try {
+        console.log('🔄 Müşteri bilgileri yükleniyor...')
         const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -66,6 +67,7 @@ export default function Cart({ selectedBranch }: CartProps) {
           paymentMethod: 'cash' as const
         }
 
+        console.log('✅ Müşteri bilgileri yüklendi:', customerInfo)
         setCustomerData(customerInfo)
         
         // Form alanlarını otomatik doldur
@@ -74,8 +76,12 @@ export default function Cart({ selectedBranch }: CartProps) {
         setValue('phone', customerInfo.phone)
         setValue('address', customerInfo.address)
         setValue('deliveryType', customerInfo.deliveryType)
+        
+        // Başarı mesajı göster
+        toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
       } catch (error) {
-        console.error('Müşteri bilgileri yüklenemedi:', error)
+        console.error('❌ Müşteri bilgileri yüklenemedi:', error)
+        toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
       }
     }
 
@@ -235,9 +241,30 @@ export default function Cart({ selectedBranch }: CartProps) {
             >
               {customerData && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-                  <p className="text-sm text-blue-800">
-                    ✅ Müşteri bilgileriniz otomatik olarak dolduruldu
-                  </p>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-blue-800 font-medium">
+                        ✅ Müşteri bilgileriniz otomatik olarak dolduruldu
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        Kayıt olduğunuzda girdiğiniz bilgiler kullanılıyor. İsterseniz güncelleyebilirsiniz.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCustomerData(null)
+                        setValue('name', '')
+                        setValue('email', '')
+                        setValue('phone', '')
+                        setValue('address', '')
+                        toast.success('Form alanları temizlendi, yeni bilgiler girebilirsiniz')
+                      }}
+                      className="text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Temizle
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -296,6 +323,9 @@ export default function Cart({ selectedBranch }: CartProps) {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                   placeholder="0555 123 45 67"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Teslimat için gerekli
+                </p>
                 {errors.phone && (
                   <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
                 )}
@@ -331,8 +361,11 @@ export default function Cart({ selectedBranch }: CartProps) {
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       rows={3}
-                      placeholder="Teslimat adresi"
+                      placeholder="Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Adrese teslim seçeneği için zorunlu
+                    </p>
                     {errors.address && (
                       <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>
                     )}
