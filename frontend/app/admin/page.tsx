@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useAuthStore } from '@/store/auth';
-import { API_ENDPOINTS } from '@/lib/api';
+import { useAuthStore } from '../../store/auth';
+import { API_ENDPOINTS } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';

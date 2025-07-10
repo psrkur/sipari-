@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import API_ENDPOINTS from '@/lib/api';
+import API_ENDPOINTS from '../../lib/api';
 
 export default function TestApiPage() {
   const [branches, setBranches] = useState([]);
