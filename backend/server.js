@@ -1451,6 +1451,23 @@ testDatabaseConnection().then(async (isConnected) => {
   } else {
     console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
     console.log('💡 Render build sırasında migration yapılacak');
+    
+    // Tablolar yoksa otomatik olarak oluşturmayı dene
+    try {
+      console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
+      const { execSync } = require('child_process');
+      execSync('npx prisma db push --accept-data-loss --force-reset', { stdio: 'inherit' });
+      console.log('✅ Veritabanı tabloları oluşturuldu');
+      
+      // Tablolar oluşturulduktan sonra seed data'yı çalıştır
+      setTimeout(() => {
+        seedData().catch(error => {
+          console.error('❌ Seed data hatası:', error);
+        });
+      }, 2000);
+    } catch (migrationError) {
+      console.error('❌ Migration hatası:', migrationError);
+    }
   }
 }).catch(error => {
   console.error('❌ Veritabanı bağlantı testi hatası:', error);
