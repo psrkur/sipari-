@@ -28,6 +28,11 @@ const prisma = new PrismaClient({
   }
 });
 
+// Environment variable'ı Prisma için ayarla
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = 'file:./dev.db';
+}
+
 // Veritabanı bağlantısını test et
 async function testDatabaseConnection() {
   try {
