@@ -13,4 +13,6 @@ services:
       - key: DATABASE_URL
         value: file:./dev.db
       - key: JWT_SECRET
-        value: your-super-secret-jwt-key-change-this-in-production 
+        value: your-super-secret-jwt-key-change-this-in-production
+      - key: FRONTEND_URL
+        value: https://siparisnet.netlify.app 

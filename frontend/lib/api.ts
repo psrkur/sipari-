@@ -1,5 +1,22 @@
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://siparisnet.netlify.app' || 'https://yemek5-backend.onrender.com' || 'http://localhost:3001';
+// API Configuration - Otomatik bağlantı
+const getApiBaseUrl = () => {
+  // Production'da öncelik sırası
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Netlify URL'i
+  if (typeof window !== 'undefined' && window.location.hostname.includes('netlify')) {
+    return 'https://yemek5-backend.onrender.com';
+  }
+  
+  // Render URL'i
+  return 'https://yemek5-backend.onrender.com' || 'http://localhost:3001';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔧 Frontend API URL:', API_BASE_URL);
 
 export const API_ENDPOINTS = {
   // Auth

@@ -1,8 +1,15 @@
-// Environment variables
-process.env.NODE_ENV = process.env.NODE_ENV || 'development';
-process.env.PORT = process.env.PORT || 3001;
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+// Environment variables - Otomatik bağlantı
+const isProduction = process.env.NODE_ENV === 'production';
+const SERVER_PORT = process.env.PORT || 3001;
+const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
+
+console.log('🔧 Environment Variables:');
+console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`PORT: ${SERVER_PORT}`);
+console.log(`DATABASE_URL: ${DATABASE_URL}`);
+console.log(`FRONTEND_URL: ${FRONTEND_URL}`);
 
 const express = require('express');
 const cors = require('cors');
@@ -33,8 +40,8 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-netlify-site.netlify.app', 'https://your-vercel-site.vercel.app']
+  origin: isProduction 
+    ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com']
     : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006'],
   credentials: true
 }));
@@ -1416,6 +1423,6 @@ app.get('/', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server ${PORT} portunda çalışıyor`);
+app.listen(SERVER_PORT, () => {
+  console.log(`Server ${SERVER_PORT} portunda çalışıyor`);
 }); 
