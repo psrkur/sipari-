@@ -18,7 +18,15 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+// PrismaClient'ı environment variable ile oluştur
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || 'file:./dev.db'
+    }
+  }
+});
 
 // Veritabanı bağlantısını test et
 async function testDatabaseConnection() {
@@ -59,9 +67,11 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors({
   origin: isProduction 
-    ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com']
+    ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com', 'https://*.netlify.app', 'https://*.onrender.com']
     : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -920,6 +930,12 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
 // Seed data
 async function seedData() {
   try {
+    console.log('🌱 Seed data başlatılıyor...');
+    
+    // Önce veritabanı bağlantısını test et
+    await prisma.$connect();
+    console.log('✅ Veritabanı bağlantısı başarılı');
+    
     // Kategoriler oluştur
     const categories = [
       { name: 'Pizza', description: 'Çeşitli pizza türleri' },
@@ -932,6 +948,7 @@ async function seedData() {
       { name: 'Pide', description: 'Geleneksel pideler' }
     ];
 
+    console.log('📝 Kategoriler oluşturuluyor...');
     for (const categoryData of categories) {
       await prisma.category.upsert({
         where: { id: categories.indexOf(categoryData) + 1 },
@@ -943,7 +960,7 @@ async function seedData() {
       });
     }
 
-    console.log('Kategoriler oluşturuldu');
+    console.log('✅ Kategoriler oluşturuldu');
 
     // Şubeler oluştur
     const branches = [
@@ -1416,8 +1433,11 @@ app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
   }
 });
 
-// Seed data'yı çalıştır
-seedData();
+// Seed data'yı güvenli şekilde çalıştır
+seedData().catch(error => {
+  console.error('❌ Seed data hatası:', error);
+  // Seed data hatası olsa bile sunucu çalışmaya devam etsin
+});
 
 // Root endpoint
 app.get('/', (req, res) => {

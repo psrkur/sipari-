@@ -1,9 +1,15 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
+  // Environment variable'dan al
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
   // Development için local backend, production için Render
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:3001';
   }
+  
   // Production URL - Render deployment
   return 'https://yemek5-backend.onrender.com';
 };
@@ -11,6 +17,28 @@ const getApiBaseUrl = (): string => {
 const API_BASE_URL = getApiBaseUrl();
 
 console.log('🔧 Frontend API URL:', API_BASE_URL);
+
+// API isteği wrapper'ı
+const apiRequest = async (url: string, options: RequestInit = {}) => {
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('API Request Error:', error);
+    throw error;
+  }
+};
 
 export const API_ENDPOINTS = {
   // Auth
@@ -46,4 +74,5 @@ export const API_ENDPOINTS = {
   IMAGE_URL: (imagePath: string) => `${API_BASE_URL}${imagePath}`,
 };
 
+export { apiRequest };
 export default API_ENDPOINTS; 
