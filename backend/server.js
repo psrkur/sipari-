@@ -613,6 +613,25 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       whereClause.branchId = user.branchId;
     }
 
+    // Önce mevcut siparişi kontrol et
+    const existingOrder = await prisma.order.findUnique({
+      where: whereClause
+    });
+
+    if (!existingOrder) {
+      return res.status(404).json({ error: 'Sipariş bulunamadı' });
+    }
+
+    // Eğer sipariş zaten teslim edildiyse, güncellemeye izin verme
+    if (existingOrder.status === 'DELIVERED') {
+      return res.status(400).json({ 
+        error: 'Teslim edilen siparişler güncellenemez',
+        message: 'Bu sipariş zaten teslim edilmiş ve artık değiştirilemez.'
+      });
+    }
+
+    // Eğer yeni durum DELIVERED ise, güncellemeye izin ver
+    // Eğer mevcut durum DELIVERED değilse, güncellemeye izin ver
     const order = await prisma.order.update({
       where: whereClause,
       data: { status }
@@ -620,6 +639,7 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
 
     res.json(order);
   } catch (error) {
+    console.error('Sipariş durumu güncelleme hatası:', error);
     res.status(500).json({ error: 'Sipariş durumu güncellenemedi' });
   }
 });

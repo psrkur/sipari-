@@ -264,7 +264,11 @@ export default function AdminPage() {
       toast.success('Sipariş durumu güncellendi');
       fetchOrders();
     } catch (error: any) {
-      toast.error(`Sipariş durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
+      if (error.response?.status === 400 && error.response?.data?.error === 'Teslim edilen siparişler güncellenemez') {
+        toast.error('Bu sipariş zaten teslim edilmiş ve artık değiştirilemez.');
+      } else {
+        toast.error(`Sipariş durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
+      }
     }
   };
 

@@ -90,17 +90,23 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   {formatDate(order.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <select
-                    value={order.status}
-                    onChange={(e) => onUpdateStatus(order.id, e.target.value)}
-                    className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-                  >
-                    <option value="PENDING">Bekliyor</option>
-                    <option value="PREPARING">Hazırlanıyor</option>
-                    <option value="READY">Hazır</option>
-                    <option value="DELIVERED">Teslim Edildi</option>
-                    <option value="CANCELLED">İptal Edildi</option>
-                  </select>
+                  {order.status === 'DELIVERED' ? (
+                    <span className="text-gray-500 text-xs italic">
+                      Değiştirilemez
+                    </span>
+                  ) : (
+                    <select
+                      value={order.status}
+                      onChange={(e) => onUpdateStatus(order.id, e.target.value)}
+                      className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                    >
+                      <option value="PENDING">Bekliyor</option>
+                      <option value="PREPARING">Hazırlanıyor</option>
+                      <option value="READY">Hazır</option>
+                      <option value="DELIVERED">Teslim Edildi</option>
+                      <option value="CANCELLED">İptal Edildi</option>
+                    </select>
+                  )}
                 </td>
               </tr>
             ))}
