@@ -91,11 +91,6 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     <div>
                       <div className="font-medium">{order.orderNumber}</div>
-                      {order.orderType === 'TABLE' && order.table && (
-                        <div className="text-blue-600 text-xs font-semibold">
-                          Masa: {order.table.number}
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
