@@ -521,7 +521,7 @@ export default function AdminPage() {
               <button 
                 onClick={async () => {
                   try {
-                    const response = await axios.post(`${API_ENDPOINTS.ADMIN_PRODUCTS.replace('/products', '/cleanup-images')}`, {}, {
+                    const response = await axios.post(API_ENDPOINTS.ADMIN_CLEANUP_IMAGES, {}, {
                       headers: { Authorization: `Bearer ${token}` }
                     });
                     toast.success(response.data.message);
@@ -533,6 +533,11 @@ export default function AdminPage() {
               >
                 🗑️ Eski Resimleri Temizle
               </button>
+            </div>
+          )}
+          {user && user.role === 'BRANCH_MANAGER' && (
+            <div className="flex space-x-4 mt-6">
+              <button onClick={() => setShowProductModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700">Ürün Ekle</button>
             </div>
           )}
         </div>
@@ -563,16 +568,6 @@ export default function AdminPage() {
                     Kullanıcılar ({sortedUsers.length})
                   </button>
                   <button
-                    onClick={() => setActiveTab('products')}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                      activeTab === 'products'
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    Ürünler ({products.length})
-                  </button>
-                  <button
                     onClick={() => setActiveTab('categories')}
                     className={`py-4 px-1 border-b-2 font-medium text-sm ${
                       activeTab === 'categories'
@@ -593,6 +588,18 @@ export default function AdminPage() {
                     Şubeler ({branches.length})
                   </button>
                 </>
+              )}
+              {(user && user.role === 'SUPER_ADMIN' || user && user.role === 'BRANCH_MANAGER') && (
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'products'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Ürünler ({products.length})
+                </button>
               )}
               <button
                 onClick={() => setActiveTab('daily-stats')}
@@ -625,7 +632,7 @@ export default function AdminPage() {
           />
         )}
 
-        {activeTab === 'products' && user && user.role === 'SUPER_ADMIN' && (
+        {activeTab === 'products' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
           <ProductManagement
             products={products}
             categories={categories}
@@ -980,7 +987,7 @@ export default function AdminPage() {
                   toast.error('Kategori seçin');
                   return;
                 }
-                if (!productForm.branchId) {
+                if (user && user.role === 'SUPER_ADMIN' && !productForm.branchId) {
                   toast.error('Şube seçin');
                   return;
                 }
