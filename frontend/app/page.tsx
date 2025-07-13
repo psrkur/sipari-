@@ -47,12 +47,27 @@ export default function Home() {
   const { addItem, getItemCount } = useCartStore()
 
   useEffect(() => {
-    // Mock data for now
-    setBranches([
-      { id: 1, name: 'Merkez Şube', address: 'Atatürk Caddesi No:1, İstanbul', phone: '0212 555 0001' },
-      { id: 2, name: 'Kadıköy Şube', address: 'Moda Caddesi No:15, İstanbul', phone: '0216 555 0002' }
-    ])
-    setLoading(false)
+    // API'den şubeleri çek
+    axios.get(API_ENDPOINTS.BRANCHES)
+      .then((response: any) => {
+        console.log('Şubeler yüklendi:', response.data);
+        setBranches(response.data);
+        // İlk şubeyi otomatik seç
+        if (response.data.length > 0) {
+          setSelectedBranch(response.data[0]);
+        }
+      })
+      .catch((error: any) => {
+        console.error('Şubeler yüklenemedi:', error);
+        // Fallback mock data
+        setBranches([
+          { id: 1, name: 'Merkez Şube', address: 'Atatürk Caddesi No:1, İstanbul', phone: '0212 555 0001' },
+          { id: 2, name: 'Kadıköy Şube', address: 'Moda Caddesi No:15, İstanbul', phone: '0216 555 0002' }
+        ]);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [])
 
   useEffect(() => {
