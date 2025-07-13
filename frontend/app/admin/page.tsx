@@ -372,16 +372,16 @@ export default function AdminPage() {
   const toggleProductStatus = async (productId: number, isActive: boolean) => {
     console.log('Toggle fonksiyonu çağrıldı:', { productId, isActive });
     try {
-      const formData = new FormData();
-      formData.append('isActive', isActive.toString());
+      // Sadece isActive değerini güncellemek için JSON gönder
+      const updateData = { isActive: isActive };
 
       console.log('API çağrısı yapılıyor:', API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId));
-      console.log('FormData içeriği:', { isActive: isActive.toString() });
+      console.log('Güncellenecek veri:', updateData);
 
-      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId), formData, {
+      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId), updateData, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
       

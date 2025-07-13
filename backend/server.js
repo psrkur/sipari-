@@ -842,7 +842,12 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       }
     }
 
-    if (!name || !price || !categoryId) {
+    // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
+    const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
+                              Object.keys(req.body).length === 1 && 
+                              req.body.hasOwnProperty('isActive');
+
+    if (!isOnlyStatusUpdate && (!name || !price || !categoryId)) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
