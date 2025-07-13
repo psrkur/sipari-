@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: DATABASE_URL
-        value: file:./dev.db
+        value: postgresql://yemek5_user:password@host:port/yemek5_db
       - key: JWT_SECRET
         value: your-super-secret-jwt-key-change-this-in-production
       - key: FRONTEND_URL
