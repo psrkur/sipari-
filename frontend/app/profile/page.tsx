@@ -115,15 +115,34 @@ export default function ProfilePage() {
 
     try {
       console.log('Profil güncelleniyor:', formData)
+      console.log('Token:', token)
+      console.log('API Endpoint:', API_ENDPOINTS.CUSTOMER_PROFILE)
+      
       const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       })
+      
       console.log('Profil güncelleme başarılı:', response.data)
       toast.success('Profil başarıyla güncellendi')
       setProfileData(prev => prev ? { ...prev, user: response.data.user } : null)
       setEditing(false)
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error)
+      console.error('Error response:', error.response)
+      console.error('Error message:', error.message)
+      console.error('Error status:', error.response?.status)
+      console.error('Error data:', error.response?.data)
+      
+      if (error.response?.status === 401) {
+        toast.error('Oturum süresi dolmuş, lütfen tekrar giriş yapın')
+        logout()
+        router.push('/')
+        return
+      }
+      
       toast.error(error.response?.data?.error || 'Profil güncellenemedi')
     }
   }
