@@ -989,10 +989,10 @@ export default function AdminPage() {
                 setShowCategoryModal(false);
                 setCategoryForm({ name: '', description: '' });
                       const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
                       setCategories(response.data);
-              } catch (error: any) {
+                  } catch (error: any) {
                 toast.error(`Kategori eklenemedi: ${error.response?.data?.error || error.message}`);
               }
                   }}
@@ -1000,14 +1000,14 @@ export default function AdminPage() {
                 >
                   Ekle
                 </button>
-              </div>
+            </div>
           </div>
         </div>
-              )}
+      )}
 
         {/* Branch Modal */}
         {showBranchModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Şube Ekle</h3>
               <div className="space-y-4">
@@ -1053,7 +1053,7 @@ export default function AdminPage() {
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       setBranches(response.data);
-                    } catch (error: any) {
+              } catch (error: any) {
                       toast.error(`Şube eklenemedi: ${error.response?.data?.error || error.message}`);
                     }
                   }}
@@ -1062,9 +1062,9 @@ export default function AdminPage() {
                   Ekle
                 </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Edit Branch Modal */}
         {showEditBranchModal && editingBranch && (

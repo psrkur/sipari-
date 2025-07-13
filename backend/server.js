@@ -404,7 +404,7 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       (paymentMethod === 'cash' ? 'Nakit' : 
        paymentMethod === 'card' ? 'Kart (Kapıda)' : 
        paymentMethod === 'online' ? 'Online Ödeme' : 'Belirtilmemiş') : '';
-
+    
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -1408,7 +1408,7 @@ async function initializeDatabase() {
         if (dbType === 'postgresql') {
           await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
           console.log('✅ PostgreSQL schema oluşturuldu');
-        } else {
+    } else {
           console.log('✅ SQLite kullanılıyor - schema gerekli değil');
         }
         
@@ -1609,7 +1609,7 @@ async function initializeDatabase() {
             if (existingData === 0) {
               await seedData();
               console.log('✅ Seed data başarıyla oluşturuldu');
-            } else {
+  } else {
               console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
             }
           } catch (seedError) {
@@ -1748,7 +1748,7 @@ async function initializeDatabase() {
             } catch (seedError) {
               console.error('❌ Seed data hatası:', seedError);
             }
-          }, 2000);
+      }, 2000);
           
         } catch (rawError) {
           console.error('❌ Raw SQL tablo oluşturma hatası:', rawError);
