@@ -138,6 +138,20 @@ async function createTables() {
     );
   `;
 
+  // Create user_addresses table
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS user_addresses (
+      id SERIAL PRIMARY KEY,
+      "userId" INTEGER NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      address TEXT NOT NULL,
+      "isDefault" BOOLEAN DEFAULT false,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("userId") REFERENCES users(id)
+    );
+  `;
+
   // Create indexes
   await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);`;
   await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_users_branch_id ON users("branchId");`;
@@ -147,6 +161,7 @@ async function createTables() {
   await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_orders_branch_id ON orders("branchId");`;
   await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items("orderId");`;
   await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_order_items_product_id ON order_items("productId");`;
+  await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_user_addresses_user_id ON user_addresses("userId");`;
 
   console.log('✅ All tables and indexes created');
 }
