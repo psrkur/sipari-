@@ -115,11 +115,6 @@ export default function Home() {
     localStorage.setItem('selectedBranch', JSON.stringify(branch));
   }
 
-  const handleBranchChange = () => {
-    // Şube seçme sayfasına yönlendir
-    router.push('/branch-select');
-  }
-
   // Ürünleri kategorilere göre gruplandır
   const groupProductsByCategory = (products: Product[]) => {
     const grouped = products.reduce((acc, product) => {
@@ -183,11 +178,11 @@ export default function Home() {
 
   // Şube seçimi kontrolü
   useEffect(() => {
-    if (!loading && !selectedBranch && branches.length > 0) {
+    if (!loading && !selectedBranch) {
       // Şube seçilmediyse şube seçme sayfasına yönlendir
       router.push('/branch-select');
     }
-  }, [loading, selectedBranch, branches.length, router]);
+  }, [loading, selectedBranch, router]);
 
   if (loading) {
     return (
@@ -259,14 +254,6 @@ export default function Home() {
                           <div className="text-xs opacity-80 mt-1">{branch.address}</div>
                         </button>
                       ))}
-                      <div className="border-t border-gray-100 mt-2 pt-2">
-                        <button
-                          onClick={handleBranchChange}
-                          className="w-full text-left p-3 rounded-lg text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-semibold"
-                        >
-                          📋 Tüm Şubeleri Gör
-                        </button>
-                      </div>
                     </div>
                   </div>
                 )}
@@ -396,12 +383,6 @@ export default function Home() {
                       <div className="text-xs opacity-80">{branch.address}</div>
                     </button>
                   ))}
-                  <button
-                    onClick={handleBranchChange}
-                    className="w-full text-left p-3 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200"
-                  >
-                    <div className="font-semibold">📋 Tüm Şubeleri Gör</div>
-                  </button>
                 </div>
               </div>
 
