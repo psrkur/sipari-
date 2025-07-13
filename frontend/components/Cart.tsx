@@ -331,65 +331,115 @@ export default function Cart({ selectedBranch }: CartProps) {
               {watch('deliveryType') === 'delivery' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Teslimat Adresi *
                     </label>
                     
-                    {userAddresses.length > 0 && (
-                      <div className="mb-3">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Kayıtlı Adresleriniz
-                        </label>
-                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                          {userAddresses.map((address) => (
-                            <div
-                              key={address.id}
-                              className={`border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
-                                selectedAddress?.id === address.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
-                              }`}
-                              onClick={() => {
-                                setSelectedAddress(address)
-                                setValue('address', address.address)
-                              }}
+                    {/* Adres Seçimi Bölümü */}
+                    <div className="mb-4">
+                      {userAddresses.length > 0 ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-700">
+                              Kayıtlı Adresleriniz ({userAddresses.length})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddressManager(true)}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium underline"
                             >
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-medium text-sm">{address.title}</span>
-                                    {address.isDefault && (
-                                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        Varsayılan
+                              + Yeni Adres Ekle
+                            </button>
+                          </div>
+                          
+                          <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3 bg-gray-50">
+                            {userAddresses.map((address) => (
+                              <div
+                                key={address.id}
+                                className={`border rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                                  selectedAddress?.id === address.id 
+                                    ? 'border-blue-500 bg-blue-50 shadow-md' 
+                                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
+                                }`}
+                                onClick={() => {
+                                  setSelectedAddress(address)
+                                  setValue('address', address.address)
+                                  toast.success(`${address.title} adresi seçildi`)
+                                }}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2">
+                                      <span className="font-medium text-sm text-gray-900">
+                                        {address.title}
                                       </span>
-                                    )}
+                                      {address.isDefault && (
+                                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                          Varsayılan
+                                        </span>
+                                      )}
+                                      {selectedAddress?.id === address.id && (
+                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                          Seçili
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-gray-600 text-sm mt-1">{address.address}</p>
                                   </div>
-                                  <p className="text-gray-600 text-sm mt-1">{address.address}</p>
+                                  {selectedAddress?.id === address.id && (
+                                    <span className="text-blue-600 text-lg">✓</span>
+                                  )}
                                 </div>
-                                {selectedAddress?.id === address.id && (
-                                  <span className="text-blue-600">✓</span>
-                                )}
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
+                          
+                          <div className="flex space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedAddress(null)
+                                setValue('address', '')
+                                toast.info('Manuel adres girişi için hazır')
+                              }}
+                              className="text-gray-600 hover:text-gray-800 text-sm underline"
+                            >
+                              Manuel Adres Gir
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddressManager(true)}
+                              className="text-blue-600 hover:text-blue-800 text-sm underline"
+                            >
+                              Adreslerimi Yönet
+                            </button>
+                          </div>
                         </div>
-                        
-                        <div className="mt-3 flex space-x-2">
+                      ) : (
+                        <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <p className="text-gray-500 mb-3">Henüz kayıtlı adresiniz yok</p>
                           <button
                             type="button"
                             onClick={() => setShowAddressManager(true)}
-                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
                           >
-                            + Yeni Adres Ekle
+                            + İlk Adresinizi Ekleyin
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedAddress(null)
-                              setValue('address', '')
-                            }}
-                            className="text-gray-600 hover:text-gray-800 text-sm underline"
-                          >
-                            Manuel Adres Gir
-                          </button>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Seçili Adres Gösterimi */}
+                    {selectedAddress && (
+                      <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-green-600">✓</span>
+                          <div>
+                            <p className="text-sm font-medium text-green-800">
+                              Seçili Adres: {selectedAddress.title}
+                            </p>
+                            <p className="text-xs text-green-600">{selectedAddress.address}</p>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -406,10 +456,10 @@ export default function Cart({ selectedBranch }: CartProps) {
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                       rows={3}
-                      placeholder="Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"
+                      placeholder={selectedAddress ? "Adres detaylarını düzenleyebilirsiniz..." : "Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"}
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Adrese teslim seçeneği için zorunlu
+                      {selectedAddress ? "Seçili adresinizi düzenleyebilir veya yeni adres ekleyebilirsiniz" : "Adrese teslim seçeneği için zorunlu"}
                     </p>
                     {errors.address && (
                       <p className="text-red-500 text-xs mt-1">{errors.address.message}</p>
