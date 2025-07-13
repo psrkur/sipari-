@@ -1177,7 +1177,7 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
           },
           orderBy: { createdAt: 'desc' }
         },
-        addresses: {
+        userAddresses: {
           orderBy: [
             { isDefault: 'desc' },
             { createdAt: 'desc' }
@@ -1200,7 +1200,7 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
         role: user.role
       },
       orders: user.orders,
-      addresses: user.addresses
+      addresses: user.userAddresses
     });
   } catch (error) {
     res.status(500).json({ error: 'Profil bilgileri getirilemedi' });
