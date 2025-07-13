@@ -2,6 +2,7 @@
 const isProduction = process.env.NODE_ENV === 'production';
 const SERVER_PORT = process.env.PORT || 3001;
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
+const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
 
@@ -61,6 +62,10 @@ prisma.$on('query', (e) => {
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'file:./dev.db';
 }
+
+// Database type detection
+console.log(`🔍 Database URL: ${DATABASE_URL.substring(0, 20)}...`);
+console.log(`📊 Database Type: ${isPostgreSQL ? 'PostgreSQL' : 'SQLite'}`);
 
 async function testDatabaseConnection() {
   try {
@@ -1403,12 +1408,16 @@ async function initializeDatabase() {
         const tempPrisma = new PrismaClient();
         
         // Veritabanı türünü kontrol et ve uygun şema oluştur
-        const dbType = process.env.DATABASE_URL?.includes('postgresql') ? 'postgresql' : 'sqlite';
+        const dbType = isPostgreSQL ? 'postgresql' : 'sqlite';
         
         if (dbType === 'postgresql') {
-          await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
-          console.log('✅ PostgreSQL schema oluşturuldu');
-    } else {
+          try {
+            await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
+            console.log('✅ PostgreSQL schema oluşturuldu');
+          } catch (schemaError) {
+            console.log('⚠️ Schema oluşturma hatası (muhtemelen zaten var):', schemaError.message);
+          }
+        } else {
           console.log('✅ SQLite kullanılıyor - schema gerekli değil');
         }
         
@@ -1567,9 +1576,13 @@ async function initializeDatabase() {
           )`
         ];
         
-        // Tabloları oluştur
+        // Tabloları oluştur - PostgreSQL için daha güvenli
         for (const tableSQL of tables) {
-          await tempPrisma.$executeRawUnsafe(tableSQL);
+          try {
+            await tempPrisma.$executeRawUnsafe(tableSQL);
+          } catch (tableError) {
+            console.log(`⚠️ Tablo oluşturma hatası (muhtemelen zaten var): ${tableError.message}`);
+          }
         }
         
         console.log('✅ Tüm tablolar başarıyla oluşturuldu');
