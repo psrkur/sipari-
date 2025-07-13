@@ -204,6 +204,21 @@ app.get('/uploads/:filename', (req, res) => {
   });
 });
 
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Token gerekli' });
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Geçersiz token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
 // Kullanılmayan resimleri temizleme endpoint'i
 app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
   try {
@@ -252,21 +267,6 @@ app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
     res.status(500).json({ error: 'Resim temizleme hatası' });
   }
 });
-
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Token gerekli' });
-  }
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Geçersiz token' });
-    }
-    req.user = user;
-    next();
-  });
-};
 
 app.post('/api/auth/register', async (req, res) => {
   try {
