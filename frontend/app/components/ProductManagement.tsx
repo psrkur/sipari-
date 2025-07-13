@@ -35,10 +35,11 @@ interface ProductManagementProps {
   branches: Branch[];
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: number) => void;
+  onToggleProductStatus?: (productId: number, isActive: boolean) => void;
   user?: any;
 }
 
-const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct, user }) => {
+const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct, onToggleProductStatus, user }) => {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -92,19 +93,34 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
-                    <button
-                      onClick={() => onEditProduct(product)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      Düzenle
-                    </button>
-                    {user && user.role === 'SUPER_ADMIN' && (
+                    {user && user.role === 'SUPER_ADMIN' ? (
+                      <>
+                        <button
+                          onClick={() => onEditProduct(product)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          Düzenle
+                        </button>
+                        <button
+                          onClick={() => onDeleteProduct(product.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          Sil
+                        </button>
+                      </>
+                    ) : user && user.role === 'BRANCH_MANAGER' && onToggleProductStatus ? (
                       <button
-                        onClick={() => onDeleteProduct(product.id)}
-                        className="text-red-600 hover:text-red-900"
+                        onClick={() => onToggleProductStatus(product.id, !product.isActive)}
+                        className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                          product.isActive 
+                            ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                            : 'bg-green-100 text-green-700 hover:bg-green-200'
+                        }`}
                       >
-                        Sil
+                        {product.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                       </button>
+                    ) : (
+                      <span className="text-gray-400 text-xs">Yetkisiz</span>
                     )}
                   </div>
                 </td>

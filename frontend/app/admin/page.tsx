@@ -369,6 +369,31 @@ export default function AdminPage() {
     }
   };
 
+  const toggleProductStatus = async (productId: number, isActive: boolean) => {
+    try {
+      const formData = new FormData();
+      formData.append('isActive', isActive.toString());
+
+      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId), formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      toast.success(`Ürün ${isActive ? 'aktif' : 'pasif'} yapıldı`);
+      
+      // Ürünleri yeniden yükle
+      const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProducts(productsResponse.data);
+    } catch (error: any) {
+      console.error('Ürün durumu güncelleme hatası:', error);
+      toast.error(`Ürün durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
   const deleteProduct = async (productId: number) => {
     if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) return;
     
@@ -640,6 +665,7 @@ export default function AdminPage() {
             branches={branches}
             onEditProduct={editProduct}
             onDeleteProduct={deleteProduct}
+            onToggleProductStatus={toggleProductStatus}
             user={user}
           />
         )}
