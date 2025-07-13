@@ -9,7 +9,32 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const compression = require('compression');
+const winston = require('winston');
 require('dotenv').config();
+
+// Winston Logger Konfigürasyonu
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'yemek5-backend' },
+  transports: [
+    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'logs/combined.log' })
+  ]
+});
+
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.simple()
+  }));
+}
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient({
@@ -17,7 +42,20 @@ const prisma = new PrismaClient({
     db: {
       url: process.env.DATABASE_URL || 'file:./dev.db'
     }
-  }
+  },
+  log: [
+    { level: 'query', emit: 'event' },
+    { level: 'info', emit: 'stdout' },
+    { level: 'warn', emit: 'stdout' },
+    { level: 'error', emit: 'stdout' }
+  ]
+});
+
+// Prisma query logging
+prisma.$on('query', (e) => {
+  logger.info('Query: ' + e.query);
+  logger.info('Params: ' + e.params);
+  logger.info('Duration: ' + e.duration + 'ms');
 });
 
 if (!process.env.DATABASE_URL) {
@@ -63,6 +101,36 @@ const upload = multer({ storage });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Güvenlik middleware'leri
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// Compression middleware
+app.use(compression());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 100, // IP başına 100 istek
+  message: {
+    error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/', limiter);
+
+// CORS konfigürasyonu
 app.use(cors({
   origin: isProduction 
     ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com', 'https://*.netlify.app', 'https://*.onrender.com']
@@ -71,7 +139,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const authenticateToken = (req, res, next) => {
@@ -1671,11 +1741,31 @@ async function initializeDatabase() {
 // Veritabanını başlat
 initializeDatabase();
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV,
+    version: '2.0.0'
+  });
+});
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Fast Food Sales API',
-    version: '1.0.0',
+    version: '2.0.0',
+    environment: process.env.NODE_ENV,
+    features: [
+      'Rate Limiting',
+      'Security Headers',
+      'Compression',
+      'Logging',
+      'Error Handling'
+    ],
     endpoints: {
+      health: 'GET /health',
       auth: {
         register: 'POST /api/auth/register',
         login: 'POST /api/auth/login'
@@ -1685,9 +1775,12 @@ app.get('/', (req, res) => {
       orders: 'POST /api/orders',
       admin: {
         orders: 'GET /api/admin/orders',
-        updateOrderStatus: 'PUT /api/admin/orders/:id/status'
-      },
-      seed: 'POST /api/seed'
+        updateOrderStatus: 'PUT /api/admin/orders/:id/status',
+        users: 'GET /api/admin/users',
+        products: 'GET /api/admin/products',
+        categories: 'GET /api/admin/categories',
+        branches: 'GET /api/admin/branches'
+      }
     }
   });
 });
