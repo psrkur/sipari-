@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { API_ENDPOINTS } from '../../lib/api'
+import AddressManager from '../components/AddressManager'
 
 interface Order {
   id: number
@@ -271,6 +272,11 @@ export default function ProfilePage() {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Adres Yönetimi</h2>
+            <AddressManager />
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
