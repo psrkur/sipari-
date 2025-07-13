@@ -123,7 +123,7 @@ export default function TableManagement() {
 
   const loadTableOrders = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/api/admin/tables/${tableId}/orders`, {
+      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -138,7 +138,7 @@ export default function TableManagement() {
 
   const collectPayment = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/api/admin/tables/${tableId}/collect`, {
+      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_COLLECT(tableId), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -167,7 +167,7 @@ export default function TableManagement() {
 
   const resetTable = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/api/admin/tables/${tableId}/reset`, {
+      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_RESET(tableId), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
