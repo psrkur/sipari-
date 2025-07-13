@@ -50,6 +50,10 @@ export const API_ENDPOINTS = {
   
   // Customer
   CUSTOMER_PROFILE: `${API_BASE_URL}/api/customer/profile`,
+  CUSTOMER_ADDRESSES: `${API_BASE_URL}/api/customer/addresses`,
+  CUSTOMER_ADD_ADDRESS: `${API_BASE_URL}/api/customer/addresses`,
+  CUSTOMER_UPDATE_ADDRESS: (addressId: number) => `${API_BASE_URL}/api/customer/addresses/${addressId}`,
+  CUSTOMER_DELETE_ADDRESS: (addressId: number) => `${API_BASE_URL}/api/customer/addresses/${addressId}`,
   
   // Admin
   ADMIN_ORDERS: `${API_BASE_URL}/api/admin/orders`,

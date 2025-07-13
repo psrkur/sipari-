@@ -7,12 +7,21 @@ import toast from 'react-hot-toast'
 import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 import { API_ENDPOINTS } from '../lib/api'
+import AddressManager from '../app/components/AddressManager'
 
 interface Branch {
   id: number
   name: string
   address: string
   phone: string
+}
+
+interface Address {
+  id: number;
+  title: string;
+  address: string;
+  isDefault: boolean;
+  createdAt: string;
 }
 
 interface CustomerInfo {
@@ -32,6 +41,9 @@ export default function Cart({ selectedBranch }: CartProps) {
   const [showCheckout, setShowCheckout] = useState(false)
   const [loading, setLoading] = useState(false)
   const [customerData, setCustomerData] = useState<CustomerInfo | null>(null)
+  const [showAddressManager, setShowAddressManager] = useState(false)
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
+  const [userAddresses, setUserAddresses] = useState<Address[]>([])
   const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore()
   const { token, user } = useAuthStore()
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<CustomerInfo>({
@@ -64,11 +76,20 @@ export default function Cart({ selectedBranch }: CartProps) {
         }
 
         setCustomerData(customerInfo)
+        setUserAddresses(response.data.addresses || [])
+        
+        // Varsayılan adresi seç
+        const defaultAddress = response.data.addresses?.find((addr: Address) => addr.isDefault)
+        if (defaultAddress) {
+          setSelectedAddress(defaultAddress)
+          setValue('address', defaultAddress.address)
+        } else {
+          setValue('address', customerInfo.address)
+        }
         
         setValue('name', customerInfo.name)
         setValue('email', customerInfo.email)
         setValue('phone', customerInfo.phone)
-        setValue('address', customerInfo.address)
         setValue('deliveryType', customerInfo.deliveryType)
         
         toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
@@ -313,6 +334,66 @@ export default function Cart({ selectedBranch }: CartProps) {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Teslimat Adresi *
                     </label>
+                    
+                    {userAddresses.length > 0 && (
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Kayıtlı Adresleriniz
+                        </label>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {userAddresses.map((address) => (
+                            <div
+                              key={address.id}
+                              className={`border rounded-lg p-3 cursor-pointer hover:bg-gray-50 ${
+                                selectedAddress?.id === address.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'
+                              }`}
+                              onClick={() => {
+                                setSelectedAddress(address)
+                                setValue('address', address.address)
+                              }}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="flex items-center space-x-2">
+                                    <span className="font-medium text-sm">{address.title}</span>
+                                    {address.isDefault && (
+                                      <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                        Varsayılan
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-gray-600 text-sm mt-1">{address.address}</p>
+                                </div>
+                                {selectedAddress?.id === address.id && (
+                                  <span className="text-blue-600">✓</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        <div className="mt-3 flex space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAddressManager(true)}
+                            className="text-blue-600 hover:text-blue-800 text-sm underline"
+                          >
+                            + Yeni Adres Ekle
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAddress(null)
+                              setValue('address', '')
+                            }}
+                            className="text-gray-600 hover:text-gray-800 text-sm underline"
+                          >
+                            Manuel Adres Gir
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
                     <textarea
                       {...register('address', { 
                         required: watch('deliveryType') === 'delivery' ? 'Teslimat adresi gerekli' : false,
@@ -402,6 +483,23 @@ export default function Cart({ selectedBranch }: CartProps) {
             </form>
           )}
         </>
+      )}
+      
+      {/* Adres Yöneticisi Modal */}
+      {showAddressManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <AddressManager
+              onAddressSelect={(address) => {
+                setSelectedAddress(address)
+                setValue('address', address.address)
+                setShowAddressManager(false)
+                toast.success(`${address.title} adresi seçildi`)
+              }}
+              onClose={() => setShowAddressManager(false)}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

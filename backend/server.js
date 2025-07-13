@@ -1176,6 +1176,12 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
             }
           },
           orderBy: { createdAt: 'desc' }
+        },
+        addresses: {
+          orderBy: [
+            { isDefault: 'desc' },
+            { createdAt: 'desc' }
+          ]
         }
       }
     });
@@ -1193,7 +1199,8 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
         address: user.address,
         role: user.role
       },
-      orders: user.orders
+      orders: user.orders,
+      addresses: user.addresses
     });
   } catch (error) {
     res.status(500).json({ error: 'Profil bilgileri getirilemedi' });
@@ -1221,6 +1228,130 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: 'Profil güncellenemedi' });
+  }
+});
+
+// Müşteri adresleri endpoint'i
+app.get('/api/customer/addresses', authenticateToken, async (req, res) => {
+  try {
+    const addresses = await prisma.userAddress.findMany({
+      where: { userId: req.user.userId },
+      orderBy: [
+        { isDefault: 'desc' },
+        { createdAt: 'desc' }
+      ]
+    });
+    
+    res.json(addresses);
+  } catch (error) {
+    res.status(500).json({ error: 'Adresler getirilemedi' });
+  }
+});
+
+// Yeni adres ekleme endpoint'i
+app.post('/api/customer/addresses', authenticateToken, async (req, res) => {
+  try {
+    const { title, address, isDefault } = req.body;
+    
+    if (!title || !address) {
+      return res.status(400).json({ error: 'Adres başlığı ve adres detayı gerekli' });
+    }
+    
+    // Eğer bu adres varsayılan olarak işaretleniyorsa, diğer adresleri varsayılan olmaktan çıkar
+    if (isDefault) {
+      await prisma.userAddress.updateMany({
+        where: { userId: req.user.userId },
+        data: { isDefault: false }
+      });
+    }
+    
+    const newAddress = await prisma.userAddress.create({
+      data: {
+        userId: req.user.userId,
+        title,
+        address,
+        isDefault: isDefault || false
+      }
+    });
+    
+    res.status(201).json(newAddress);
+  } catch (error) {
+    console.error('Adres ekleme hatası:', error);
+    res.status(500).json({ error: 'Adres eklenemedi' });
+  }
+});
+
+// Adres güncelleme endpoint'i
+app.put('/api/customer/addresses/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, address, isDefault } = req.body;
+    
+    if (!title || !address) {
+      return res.status(400).json({ error: 'Adres başlığı ve adres detayı gerekli' });
+    }
+    
+    // Adresin bu kullanıcıya ait olduğunu kontrol et
+    const existingAddress = await prisma.userAddress.findFirst({
+      where: { 
+        id: parseInt(id),
+        userId: req.user.userId
+      }
+    });
+    
+    if (!existingAddress) {
+      return res.status(404).json({ error: 'Adres bulunamadı' });
+    }
+    
+    // Eğer bu adres varsayılan olarak işaretleniyorsa, diğer adresleri varsayılan olmaktan çıkar
+    if (isDefault) {
+      await prisma.userAddress.updateMany({
+        where: { userId: req.user.userId },
+        data: { isDefault: false }
+      });
+    }
+    
+    const updatedAddress = await prisma.userAddress.update({
+      where: { id: parseInt(id) },
+      data: {
+        title,
+        address,
+        isDefault: isDefault || false
+      }
+    });
+    
+    res.json(updatedAddress);
+  } catch (error) {
+    console.error('Adres güncelleme hatası:', error);
+    res.status(500).json({ error: 'Adres güncellenemedi' });
+  }
+});
+
+// Adres silme endpoint'i
+app.delete('/api/customer/addresses/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Adresin bu kullanıcıya ait olduğunu kontrol et
+    const existingAddress = await prisma.userAddress.findFirst({
+      where: { 
+        id: parseInt(id),
+        userId: req.user.userId
+      }
+    });
+    
+    if (!existingAddress) {
+      return res.status(404).json({ error: 'Adres bulunamadı' });
+    }
+    
+    await prisma.userAddress.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ message: 'Adres silindi' });
+  } catch (error) {
+    console.error('Adres silme hatası:', error);
+    res.status(500).json({ error: 'Adres silinemedi' });
   }
 });
 
