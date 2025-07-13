@@ -181,8 +181,8 @@ app.get('/uploads/:filename', (req, res) => {
   // Kapsamlı CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Allow-Headers', 'Content-Type', 'Authorization', 'X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition', 'Content-Length');
   res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
   
   // OPTIONS request için
@@ -193,7 +193,14 @@ app.get('/uploads/:filename', (req, res) => {
   // Dosya var mı kontrol et
   if (!require('fs').existsSync(filePath)) {
     console.error('Resim dosyası bulunamadı:', filePath);
-    return res.status(404).json({ error: 'Resim bulunamadı' });
+    
+    // Render'da ephemeral storage nedeniyle dosya kaybolmuş olabilir
+    // Varsayılan bir resim döndür veya 404
+    return res.status(404).json({ 
+      error: 'Resim bulunamadı',
+      message: 'Resim dosyası sunucuda bulunamadı. Bu Render\'ın ephemeral storage özelliği nedeniyle normal olabilir.',
+      filename: filename
+    });
   }
   
   res.sendFile(filePath, (err) => {
@@ -1629,6 +1636,65 @@ app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Resim temizleme hatası:', error);
     res.status(500).json({ error: 'Resim temizlenemedi' });
+  }
+});
+
+// Render için resim durumu kontrol endpoint'i
+app.get('/api/admin/image-status', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const fs = require('fs');
+    const uploadsDir = path.join(__dirname, 'uploads');
+    
+    // Tüm ürünleri getir
+    const products = await prisma.product.findMany({
+      select: { id: true, name: true, image: true }
+    });
+    
+    // Her ürün için resim durumunu kontrol et
+    const imageStatus = products.map(product => {
+      if (!product.image) {
+        return {
+          id: product.id,
+          name: product.name,
+          hasImage: false,
+          imagePath: null,
+          fileExists: false
+        };
+      }
+      
+      const filename = product.image.replace('/uploads/', '');
+      const filePath = path.join(uploadsDir, filename);
+      const fileExists = fs.existsSync(filePath);
+      
+      return {
+        id: product.id,
+        name: product.name,
+        hasImage: true,
+        imagePath: product.image,
+        fileExists: fileExists
+      };
+    });
+    
+    const missingImages = imageStatus.filter(item => item.hasImage && !item.fileExists);
+    const totalProducts = imageStatus.length;
+    const productsWithImages = imageStatus.filter(item => item.hasImage).length;
+    const existingImages = imageStatus.filter(item => item.hasImage && item.fileExists).length;
+    
+    res.json({
+      totalProducts,
+      productsWithImages,
+      existingImages,
+      missingImages: missingImages.length,
+      details: imageStatus,
+      message: `Toplam ${totalProducts} ürün, ${productsWithImages} tanesi resimli, ${existingImages} resim mevcut, ${missingImages.length} resim eksik`
+    });
+  } catch (error) {
+    console.error('Resim durumu kontrol hatası:', error);
+    res.status(500).json({ error: 'Resim durumu kontrol edilemedi' });
   }
 });
 

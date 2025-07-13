@@ -570,6 +570,22 @@ export default function AdminPage() {
               >
                 🗑️ Eski Resimleri Temizle
               </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGE_STATUS, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    console.log('Resim durumu:', response.data);
+                    toast.success(response.data.message);
+                  } catch (error: any) {
+                    toast.error(`Resim durumu kontrol hatası: ${error.response?.data?.error || error.message}`);
+                  }
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
+              >
+                📊 Resim Durumu Kontrol Et
+              </button>
             </div>
           )}
 

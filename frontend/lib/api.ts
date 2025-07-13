@@ -66,6 +66,7 @@ export const API_ENDPOINTS = {
   ADMIN_UPDATE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
   ADMIN_DELETE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
   ADMIN_CLEANUP_IMAGES: `${API_BASE_URL}/api/admin/cleanup-images`,
+  ADMIN_IMAGE_STATUS: `${API_BASE_URL}/api/admin/image-status`,
   
   // Images
   IMAGE_URL: (imagePath: string) => `${API_BASE_URL}${imagePath}`,
