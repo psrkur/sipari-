@@ -458,7 +458,7 @@ export default function AdminPage() {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Kategoriler ({categories.length})</h2>
-                <button
+                <button 
                   onClick={() => setShowCategoryModal(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
                 >
@@ -477,7 +477,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {categories.map((category) => (
+                {categories.map((category) => (
                     <tr key={category.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         {category.name}
@@ -496,13 +496,13 @@ export default function AdminPage() {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => {
-                              setEditingCategory(category);
-                              setEditCategoryForm({
-                                name: category.name,
+                          setEditingCategory(category);
+                          setEditCategoryForm({
+                            name: category.name,
                                 description: category.description || '',
-                                isActive: category.isActive
-                              });
-                              setShowEditCategoryModal(true);
+                            isActive: category.isActive
+                          });
+                          setShowEditCategoryModal(true);
                             }}
                             className="text-blue-600 hover:text-blue-900"
                           >
@@ -514,13 +514,13 @@ export default function AdminPage() {
                           >
                             Sil
                           </button>
-                        </div>
+                      </div>
                       </td>
                     </tr>
-                  ))}
+                ))}
                 </tbody>
               </table>
-            </div>
+              </div>
           </div>
         )}
 
@@ -530,7 +530,7 @@ export default function AdminPage() {
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Günlük İstatistikler</h2>
                 <div className="flex space-x-4">
-                  {user && user.role === 'SUPER_ADMIN' && (
+                {user && user.role === 'SUPER_ADMIN' && (
                     <select
                       value={statsBranchId}
                       onChange={(e) => setStatsBranchId(e.target.value)}
@@ -543,7 +543,7 @@ export default function AdminPage() {
                         </option>
                       ))}
                     </select>
-                  )}
+                )}
                   <select
                     value={statsPeriod}
                     onChange={(e) => setStatsPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
@@ -581,9 +581,9 @@ export default function AdminPage() {
                           <span className="font-semibold">₺{stat.averageOrder?.toFixed(2) || '0.00'}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Günlük Ortalama:</span>
+                            <span className="text-gray-600">Günlük Ortalama:</span>
                           <span className="font-semibold text-blue-600">₺{stat.dailyAverage?.toFixed(2) || '0.00'}</span>
-                        </div>
+                          </div>
                       </div>
                     </div>
                   ))}
@@ -599,8 +599,8 @@ export default function AdminPage() {
 
         {/* Modals */}
         {/* User Modal */}
-        {showUserModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Kullanıcı Ekle</h3>
               <div className="space-y-4">
@@ -663,12 +663,12 @@ export default function AdminPage() {
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       toast.success('Kullanıcı başarıyla eklendi');
-                      setShowUserModal(false);
-                      setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
-                      const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      setUsers(response.data);
+                setShowUserModal(false);
+                setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
+                const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                setUsers(response.data);
                     } catch (error: any) {
                       toast.error(`Kullanıcı eklenemedi: ${error.response?.data?.error || error.message}`);
                     }
@@ -678,13 +678,13 @@ export default function AdminPage() {
                   Ekle
                 </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Product Modal */}
-        {showProductModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Ürün Ekle</h3>
               <div className="space-y-4">
@@ -749,50 +749,50 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={async () => {
-                    try {
-                      const formData = new FormData();
-                      formData.append('name', productForm.name);
-                      formData.append('description', productForm.description);
-                      formData.append('price', productForm.price);
-                      formData.append('categoryId', productForm.categoryId);
-                      formData.append('branchId', productForm.branchId);
+              try {
+                const formData = new FormData();
+                formData.append('name', productForm.name);
+                formData.append('description', productForm.description);
+                formData.append('price', productForm.price);
+                formData.append('categoryId', productForm.categoryId);
+                formData.append('branchId', productForm.branchId);
                       if (productImage) {
                         formData.append('image', productImage);
                       }
-                      
+
                       await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
-                        headers: { 
-                          Authorization: `Bearer ${token}`,
-                          'Content-Type': 'multipart/form-data'
-                        }
-                      });
-                      toast.success('Ürün başarıyla eklendi');
-                      setShowProductModal(false);
-                      setProductForm({ name: '', description: '', price: '', categoryId: '', branchId: '' });
-                      setProductImage(null);
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                  }
+                });
+                  toast.success('Ürün başarıyla eklendi');
+                setShowProductModal(false);
+                setProductForm({ name: '', description: '', price: '', categoryId: '', branchId: '' });
+                setProductImage(null);
                       const response = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
+                  headers: { Authorization: `Bearer ${token}` }
+                });
                       setProducts(response.data);
-                    } catch (error: any) {
-                      toast.error(`Ürün eklenemedi: ${error.response?.data?.error || error.message}`);
-                    }
+              } catch (error: any) {
+                toast.error(`Ürün eklenemedi: ${error.response?.data?.error || error.message}`);
+              }
                   }}
                   className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
                 >
                   Ekle
                 </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Edit Product Modal */}
-        {showEditProductModal && editingProduct && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showEditProductModal && editingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Ürün Düzenle</h3>
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <input
                   type="text"
                   placeholder="Ürün Adı"
@@ -825,7 +825,7 @@ export default function AdminPage() {
                       {category.name}
                     </option>
                   ))}
-                </select>
+              </select>
                 <select
                   value={editProductForm.branchId}
                   onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
@@ -837,7 +837,7 @@ export default function AdminPage() {
                       {branch.name}
                     </option>
                   ))}
-                </select>
+              </select>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
@@ -870,14 +870,14 @@ export default function AdminPage() {
                 >
                   Güncelle
                 </button>
-              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Category Modal */}
-        {showCategoryModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Kategori Ekle</h3>
               <div className="space-y-4">
@@ -910,31 +910,31 @@ export default function AdminPage() {
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       toast.success('Kategori başarıyla eklendi');
-                      setShowCategoryModal(false);
-                      setCategoryForm({ name: '', description: '' });
+                setShowCategoryModal(false);
+                setCategoryForm({ name: '', description: '' });
                       const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       setCategories(response.data);
-                    } catch (error: any) {
-                      toast.error(`Kategori eklenemedi: ${error.response?.data?.error || error.message}`);
-                    }
+              } catch (error: any) {
+                toast.error(`Kategori eklenemedi: ${error.response?.data?.error || error.message}`);
+              }
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Ekle
                 </button>
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Edit Category Modal */}
-        {showEditCategoryModal && editingCategory && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {showEditCategoryModal && editingCategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Kategori Düzenle</h3>
-              <div className="space-y-4">
+            <div className="space-y-4">
                 <input
                   type="text"
                   placeholder="Kategori Adı"
@@ -971,30 +971,30 @@ export default function AdminPage() {
                 </button>
                 <button
                   onClick={async () => {
-                    try {
+                  try {
                       await axios.put(API_ENDPOINTS.ADMIN_UPDATE_CATEGORY(editingCategory.id), editCategoryForm, {
-                        headers: { Authorization: `Bearer ${token}` }
-                      });
-                      toast.success('Kategori başarıyla güncellendi');
-                      setShowEditCategoryModal(false);
-                      setEditingCategory(null);
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    toast.success('Kategori başarıyla güncellendi');
+                    setShowEditCategoryModal(false);
+                    setEditingCategory(null);
                       const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       setCategories(response.data);
-                    } catch (error: any) {
-                      toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
-                    }
+                  } catch (error: any) {
+                    toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
+                  }
                   }}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   Güncelle
                 </button>
-              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
     </div>
   );
 }
