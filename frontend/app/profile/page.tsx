@@ -74,10 +74,16 @@ export default function ProfilePage() {
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
         headers: { Authorization: `Bearer ${token}` }
       })
+      
+      // API response kontrolü
+      if (!response.data || !response.data.user) {
+        throw new Error('Geçersiz API response');
+      }
+      
       setProfileData(response.data)
       setFormData({
-        name: response.data.user.name,
-        email: response.data.user.email,
+        name: response.data.user.name || '',
+        email: response.data.user.email || '',
         phone: response.data.user.phone || '',
         address: response.data.user.address || ''
       })
@@ -344,7 +350,7 @@ export default function ProfilePage() {
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Sipariş Geçmişi</h2>
-            {profileData?.orders && profileData.orders.length > 0 ? (
+            {profileData?.orders && Array.isArray(profileData.orders) && profileData.orders.length > 0 ? (
               <div className="space-y-4">
                 {profileData.orders.map((order) => (
                   <div key={order.id} className="border border-gray-200 rounded-lg p-4">
@@ -367,15 +373,15 @@ export default function ProfilePage() {
                     
                     <div className="mb-3">
                       <p className="text-sm text-gray-600">
-                        <strong>Şube:</strong> {order.branch.name}
+                        <strong>Şube:</strong> {order.branch?.name || 'Şube bilgisi bulunamadı'}
                       </p>
                     </div>
                     
                     <div className="space-y-2">
-                      {order.items.map((item, index) => (
+                      {order.items && Array.isArray(order.items) && order.items.map((item, index) => (
                         <div key={index} className="flex justify-between items-center text-sm">
-                          <span>{item.product.name}</span>
-                          <span>{item.quantity} x ₺{item.price.toFixed(2)}</span>
+                          <span>{item.product?.name || 'Ürün adı bulunamadı'}</span>
+                          <span>{item.quantity || 0} x ₺{(item.price || 0).toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
