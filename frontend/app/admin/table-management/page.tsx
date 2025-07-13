@@ -14,7 +14,10 @@ import {
   QrCode, 
   Download,
   Building,
-  Table as TableIcon
+  Table as TableIcon,
+  DollarSign,
+  RefreshCw,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,12 +35,22 @@ interface Table {
 interface Branch {
   id: number;
   name: string;
+  address: string;
+  phone: string;
+  isActive: boolean;
 }
 
 interface QRCodeData {
   table: Table;
   qrCode: string;
   qrUrl: string;
+}
+
+interface TableOrders {
+  table: Table;
+  orders: any[];
+  totalAmount: number;
+  orderCount: number;
 }
 
 export default function TableManagement() {
@@ -48,6 +61,11 @@ export default function TableManagement() {
   const [loading, setLoading] = useState(true);
   const [qrCodeData, setQrCodeData] = useState<QRCodeData | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [selectedTableOrders, setSelectedTableOrders] = useState<TableOrders | null>(null);
+  const [showOrdersModal, setShowOrdersModal] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [collectionNotes, setCollectionNotes] = useState('');
   
   // Form state
   const [newTableNumber, setNewTableNumber] = useState('');
@@ -103,20 +121,101 @@ export default function TableManagement() {
     }
   };
 
-  const handleAddTable = async () => {
-    if (!newTableNumber.trim() || !selectedBranchForNew) {
+  const loadTableOrders = async (tableId: number) => {
+    try {
+      const response = await apiRequest(`/api/admin/tables/${tableId}/orders`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setSelectedTableOrders(response);
+      setShowOrdersModal(true);
+    } catch (error) {
+      console.error('Masa siparişleri yüklenemedi:', error);
+      toast.error('Masa siparişleri yüklenemedi');
+    }
+  };
+
+  const collectPayment = async (tableId: number) => {
+    try {
+      const response = await apiRequest(`/api/admin/tables/${tableId}/collect`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          paymentMethod,
+          notes: collectionNotes
+        })
+      });
+
+      toast.success(response.message);
+      setShowCollectionModal(false);
+      setShowOrdersModal(false);
+      setSelectedTableOrders(null);
+      setPaymentMethod('CASH');
+      setCollectionNotes('');
+      
+      // Masaları yeniden yükle
+      loadTables();
+    } catch (error: any) {
+      console.error('Tahsilat hatası:', error);
+      toast.error(error.message || 'Tahsilat yapılamadı');
+    }
+  };
+
+  const resetTable = async (tableId: number) => {
+    try {
+      const response = await apiRequest(`/api/admin/tables/${tableId}/reset`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      toast.success(response.message);
+      setShowOrdersModal(false);
+      setSelectedTableOrders(null);
+      
+      // Masaları yeniden yükle
+      loadTables();
+    } catch (error: any) {
+      console.error('Masa sıfırlama hatası:', error);
+      toast.error(error.message || 'Masa sıfırlanamadı');
+    }
+  };
+
+  const generateQRCode = async (tableId: number) => {
+    try {
+      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_QR(tableId), {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      setQrCodeData(response);
+      setShowQRModal(true);
+    } catch (error) {
+      console.error('QR kod oluşturulamadı:', error);
+      toast.error('QR kod oluşturulamadı');
+    }
+  };
+
+  const addTable = async () => {
+    if (!newTableNumber || !selectedBranchForNew) {
       toast.error('Masa numarası ve şube seçimi gerekli');
       return;
     }
 
     try {
-      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLES, {
+      await apiRequest(API_ENDPOINTS.ADMIN_TABLES, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          number: newTableNumber.trim(),
+          number: newTableNumber,
           branchId: selectedBranchForNew
         })
       });
@@ -125,47 +224,14 @@ export default function TableManagement() {
       setNewTableNumber('');
       setSelectedBranchForNew(null);
       setShowAddForm(false);
-      
-      // Yeni masa eklendikten sonra masaları yeniden yükle
-      // Eğer şube filtresi seçiliyse ve yeni masa farklı şubedeyse, filtreyi temizle
-      if (selectedBranch && selectedBranch !== selectedBranchForNew) {
-        setSelectedBranch(null);
-      }
-      
-      // Masaları yeniden yükle
-      await loadTables();
+      loadTables();
     } catch (error: any) {
-      console.error('Masa ekleme hatası:', error);
       toast.error(error.message || 'Masa eklenemedi');
     }
   };
 
-  const handleUpdateTable = async (table: Table) => {
-    try {
-      await apiRequest(API_ENDPOINTS.ADMIN_UPDATE_TABLE(table.id), {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          number: table.number,
-          isActive: table.isActive
-        })
-      });
-
-      toast.success('Masa güncellendi');
-      setEditingTable(null);
-      loadTables();
-    } catch (error: any) {
-      console.error('Masa güncelleme hatası:', error);
-      toast.error(error.message || 'Masa güncellenemedi');
-    }
-  };
-
-  const handleDeleteTable = async (tableId: number) => {
-    if (!confirm('Bu masayı silmek istediğinizden emin misiniz?')) {
-      return;
-    }
+  const deleteTable = async (tableId: number) => {
+    if (!confirm('Bu masayı silmek istediğinizden emin misiniz?')) return;
 
     try {
       await apiRequest(API_ENDPOINTS.ADMIN_DELETE_TABLE(tableId), {
@@ -178,270 +244,397 @@ export default function TableManagement() {
       toast.success('Masa silindi');
       loadTables();
     } catch (error: any) {
-      console.error('Masa silme hatası:', error);
       toast.error(error.message || 'Masa silinemedi');
     }
   };
 
-  const generateQRCode = async (tableId: number) => {
-    try {
-      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_QR(tableId), {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      setQrCodeData(response);
-      setShowQRModal(true);
-    } catch (error: any) {
-      console.error('QR kod oluşturma hatası:', error);
-      toast.error(error.message || 'QR kod oluşturulamadı');
-    }
-  };
-
-  const downloadQRCode = () => {
-    if (!qrCodeData) return;
-    
-    const link = document.createElement('a');
-    link.href = qrCodeData.qrCode;
-    link.download = `qr-table-${qrCodeData.table.number}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  if (user?.role !== 'SUPER_ADMIN') {
+  if (loading) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600">Yetkisiz Erişim</h1>
-          <p className="text-gray-600 mt-2">Bu sayfaya erişim yetkiniz bulunmamaktadır.</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Masalar yükleniyor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <TableIcon className="h-8 w-8" />
-            Masa Yönetimi
-          </h1>
-          <p className="text-gray-600 mt-2">Şubelerdeki masaları yönetin ve QR kodları oluşturun</p>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Masa Yönetimi</h1>
+          <Button onClick={() => setShowAddForm(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Yeni Masa Ekle
+          </Button>
         </div>
-        <Button 
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Yeni Masa Ekle
-        </Button>
-      </div>
 
-      {/* Şube Filtresi */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building className="h-5 w-5" />
+        {/* Şube Filtresi */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             Şube Filtresi
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Button
-              variant={selectedBranch === null ? "default" : "outline"}
-              onClick={() => setSelectedBranch(null)}
-            >
-              Tüm Şubeler
-            </Button>
+          </label>
+          <select
+            value={selectedBranch || ''}
+            onChange={(e) => setSelectedBranch(e.target.value ? Number(e.target.value) : null)}
+            className="border border-gray-300 rounded-md px-3 py-2 w-full max-w-xs"
+          >
+            <option value="">Tüm Şubeler</option>
             {branches.map((branch) => (
-              <Button
-                key={branch.id}
-                variant={selectedBranch === branch.id ? "default" : "outline"}
-                onClick={() => setSelectedBranch(branch.id)}
-              >
+              <option key={branch.id} value={branch.id}>
                 {branch.name}
-              </Button>
+              </option>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Yeni Masa Ekleme Formu */}
-      {showAddForm && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Yeni Masa Ekle</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Şube</label>
-                <select
-                  value={selectedBranchForNew || ''}
-                  onChange={(e) => setSelectedBranchForNew(Number(e.target.value))}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Şube seçin</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Masa Numarası</label>
-                <Input
-                  value={newTableNumber}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTableNumber(e.target.value)}
-                  placeholder="Örn: A1, B3, 5"
-                />
-              </div>
-              <div className="flex items-end gap-2">
-                <Button onClick={handleAddTable} disabled={!newTableNumber.trim() || !selectedBranchForNew}>
-                  Ekle
-                </Button>
-                <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                  İptal
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Masalar Listesi */}
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Masalar yükleniyor...</p>
+          </select>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* Masalar */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tables.map((table) => (
-            <Card key={table.id}>
+            <Card key={table.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <TableIcon className="h-5 w-5" />
-                    Masa {table.number}
-                  </CardTitle>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <TableIcon className="w-5 h-5 mr-2" />
+                      Masa {table.number}
+                    </CardTitle>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {table.branch.name}
+                    </p>
+                  </div>
                   <Badge variant={table.isActive ? "default" : "secondary"}>
-                    {table.isActive ? 'Aktif' : 'Pasif'}
+                    {table.isActive ? "Aktif" : "Pasif"}
                   </Badge>
                 </div>
-                <p className="text-sm text-gray-600">{table.branch.name}</p>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-2">
+                <div className="space-y-3">
                   <Button
-                    size="sm"
                     variant="outline"
-                    onClick={() => setEditingTable(table)}
+                    size="sm"
+                    onClick={() => loadTableOrders(table.id)}
+                    className="w-full"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Eye className="w-4 h-4 mr-2" />
+                    Siparişleri Gör
                   </Button>
+                  
                   <Button
-                    size="sm"
                     variant="outline"
+                    size="sm"
                     onClick={() => generateQRCode(table.id)}
+                    className="w-full"
                   >
-                    <QrCode className="h-4 w-4" />
+                    <QrCode className="w-4 h-4 mr-2" />
+                    QR Kod
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleDeleteTable(table.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingTable(table);
+                        setShowAddForm(true);
+                      }}
+                      className="flex-1"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteTable(table.id)}
+                      className="flex-1 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      )}
 
-      {/* QR Kod Modal */}
-      {showQRModal && qrCodeData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold mb-4">
-              QR Kod - Masa {qrCodeData.table.number}
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              {qrCodeData.table.branch.name}
-            </p>
-            
-            <div className="text-center mb-4">
-              <img 
-                src={qrCodeData.qrCode} 
-                alt="QR Code" 
-                className="mx-auto border"
-              />
-            </div>
-            
-            <div className="flex gap-2">
-              <Button onClick={downloadQRCode} className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                İndir
-              </Button>
-              <Button variant="outline" onClick={() => setShowQRModal(false)} className="flex-1">
-                Kapat
-              </Button>
+        {/* Yeni Masa Ekleme Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">
+                {editingTable ? 'Masa Düzenle' : 'Yeni Masa Ekle'}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Masa Numarası
+                  </label>
+                  <Input
+                    value={newTableNumber}
+                    onChange={(e) => setNewTableNumber(e.target.value)}
+                    placeholder="A1, B3, vb."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şube
+                  </label>
+                  <select
+                    value={selectedBranchForNew || ''}
+                    onChange={(e) => setSelectedBranchForNew(Number(e.target.value))}
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                  >
+                    <option value="">Şube Seçin</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button onClick={addTable} className="flex-1">
+                    {editingTable ? 'Güncelle' : 'Ekle'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddForm(false);
+                      setEditingTable(null);
+                      setNewTableNumber('');
+                      setSelectedBranchForNew(null);
+                    }}
+                    className="flex-1"
+                  >
+                    İptal
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Düzenleme Modal */}
-      {editingTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-bold mb-4">
-              Masa Düzenle - {editingTable.number}
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Masa Numarası</label>
-                <Input
-                  value={editingTable.number}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEditingTable({
-                    ...editingTable,
-                    number: e.target.value
-                  })}
-                />
+        {/* QR Kod Modal */}
+        {showQRModal && qrCodeData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">
+                  QR Kod - Masa {qrCodeData.table.number}
+                </h3>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
               </div>
               
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={editingTable.isActive}
-                  onChange={(e) => setEditingTable({
-                    ...editingTable,
-                    isActive: e.target.checked
-                  })}
+              <div className="text-center">
+                <img
+                  src={qrCodeData.qrCode}
+                  alt="QR Code"
+                  className="mx-auto mb-4"
                 />
-                <label htmlFor="isActive">Aktif</label>
+                <p className="text-sm text-gray-600 mb-4">
+                  Bu QR kodu masaya yerleştirin
+                </p>
+                <Button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = qrCodeData.qrCode;
+                    link.download = `qr-masa-${qrCodeData.table.number}.png`;
+                    link.click();
+                  }}
+                  className="w-full"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  QR Kodu İndir
+                </Button>
               </div>
             </div>
-            
-            <div className="flex gap-2 mt-4">
-              <Button onClick={() => handleUpdateTable(editingTable)} className="flex-1">
-                Güncelle
-              </Button>
-              <Button variant="outline" onClick={() => setEditingTable(null)} className="flex-1">
-                İptal
-              </Button>
+          </div>
+        )}
+
+        {/* Masa Siparişleri Modal */}
+        {showOrdersModal && selectedTableOrders && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">
+                  Masa {selectedTableOrders.table.number} Siparişleri
+                </h3>
+                <button
+                  onClick={() => setShowOrdersModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {selectedTableOrders.orderCount}
+                      </div>
+                      <div className="text-sm text-gray-600">Sipariş</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">
+                        ₺{selectedTableOrders.totalAmount.toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-600">Toplam</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        ₺{(selectedTableOrders.totalAmount / selectedTableOrders.orderCount).toFixed(2)}
+                      </div>
+                      <div className="text-sm text-gray-600">Ortalama</div>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedTableOrders.orders.length > 0 ? (
+                  <div className="space-y-3">
+                    <h4 className="font-semibold">Sipariş Detayları:</h4>
+                    {selectedTableOrders.orders.map((order, index) => (
+                      <div key={order.id} className="border p-3 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-medium">{order.orderNumber}</div>
+                            <div className="text-sm text-gray-600">
+                              {new Date(order.createdAt).toLocaleString('tr-TR')}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              Durum: {order.status}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold">₺{order.totalAmount.toFixed(2)}</div>
+                          </div>
+                        </div>
+                        
+                        {order.orderItems && order.orderItems.length > 0 && (
+                          <div className="mt-2 text-sm">
+                            <div className="font-medium mb-1">Ürünler:</div>
+                            {order.orderItems.map((item: any, itemIndex: number) => (
+                              <div key={itemIndex} className="flex justify-between text-gray-600">
+                                <span>{item.product.name} x{item.quantity}</span>
+                                <span>₺{(item.price * item.quantity).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Bu masada henüz sipariş yok
+                  </div>
+                )}
+
+                {selectedTableOrders.orders.length > 0 && (
+                  <div className="flex space-x-3 pt-4 border-t">
+                    <Button
+                      onClick={() => setShowCollectionModal(true)}
+                      className="flex-1"
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Tahsilat Yap
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => resetTable(selectedTableOrders.table.id)}
+                      className="flex-1"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Masayı Sıfırla
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Tahsilat Modal */}
+        {showCollectionModal && selectedTableOrders && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">
+                  Tahsilat - Masa {selectedTableOrders.table.number}
+                </h3>
+                <button
+                  onClick={() => setShowCollectionModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-green-50 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    ₺{selectedTableOrders.totalAmount.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-gray-600">Tahsilat Tutarı</div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ödeme Yöntemi
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-2 w-full"
+                  >
+                    <option value="CASH">Nakit</option>
+                    <option value="CARD">Kart</option>
+                    <option value="ONLINE">Online</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Not (Opsiyonel)
+                  </label>
+                  <Input
+                    value={collectionNotes}
+                    onChange={(e) => setCollectionNotes(e.target.value)}
+                    placeholder="Tahsilat notu..."
+                  />
+                </div>
+                
+                <div className="flex space-x-3">
+                  <Button
+                    onClick={() => collectPayment(selectedTableOrders.table.id)}
+                    className="flex-1"
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Tahsilatı Tamamla
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCollectionModal(false)}
+                    className="flex-1"
+                  >
+                    İptal
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 } 

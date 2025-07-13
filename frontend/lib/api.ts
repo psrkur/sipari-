@@ -88,6 +88,11 @@ export const API_ENDPOINTS = {
   ADMIN_UPDATE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
   ADMIN_DELETE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
   
+  // Table Orders & Collection
+  ADMIN_TABLE_ORDERS: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/orders`,
+  ADMIN_TABLE_COLLECT: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/collect`,
+  ADMIN_TABLE_RESET: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/reset`,
+  
   // Table Order
   TABLE_INFO: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}`,
   TABLE_PRODUCTS: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/products`,
