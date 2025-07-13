@@ -41,7 +41,7 @@ interface ProfileData {
 }
 
 export default function ProfilePage() {
-  const { user, token, logout } = useAuthStore()
+  const { user, token, logout, login } = useAuthStore()
   const router = useRouter()
   const [profileData, setProfileData] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -81,6 +81,11 @@ export default function ProfilePage() {
         phone: response.data.user.phone || '',
         address: response.data.user.address || ''
       })
+      
+      // Update auth store with latest user data
+      if (token) {
+        login(response.data.user, token)
+      }
     } catch (error: any) {
       console.error('Profil yükleme hatası:', error);
       console.error('Error response:', error.response);
@@ -127,7 +132,15 @@ export default function ProfilePage() {
       
       console.log('Profil güncelleme başarılı:', response.data)
       toast.success('Profil başarıyla güncellendi')
+      
+      // Update both profileData and auth store
       setProfileData(prev => prev ? { ...prev, user: response.data.user } : null)
+      
+      // Update auth store with new user data
+      if (token) {
+        login(response.data.user, token)
+      }
+      
       setEditing(false)
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error)
