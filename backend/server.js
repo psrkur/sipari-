@@ -4,7 +4,7 @@ const SERVER_PORT = process.env.PORT || 3001;
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
+const FRONTEND_URL = isProduction ? 'https://siparisnet.netlify.app' : (process.env.FRONTEND_URL || 'https://siparisnet.netlify.app');
 
 const express = require('express');
 const cors = require('cors');
@@ -1563,8 +1563,18 @@ app.get('/api/admin/tables/:id/qr', authenticateToken, async (req, res) => {
     };
 
     // Frontend URL'yi kontrol et ve güvenli hale getir
-    const frontendUrl = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
+    let frontendUrl = process.env.FRONTEND_URL;
+    
+    // Production ortamında doğru URL'yi kullan
+    if (process.env.NODE_ENV === 'production') {
+      frontendUrl = 'https://siparisnet.netlify.app';
+    } else if (!frontendUrl) {
+      frontendUrl = 'https://siparisnet.netlify.app';
+    }
+    
     console.log('🔗 QR kod için Frontend URL:', frontendUrl);
+    console.log('🔗 Environment NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔗 Environment FRONTEND_URL:', process.env.FRONTEND_URL);
     
     const qrUrl = `${frontendUrl}/table-order?data=${encodeURIComponent(JSON.stringify(qrData))}`;
     console.log('🔗 Oluşturulan QR URL:', qrUrl);
