@@ -1328,13 +1328,13 @@ async function initializeDatabase() {
           console.log('✅ SQLite kullanılıyor - schema gerekli değil');
         }
         
-        // Tabloları veritabanı türüne göre oluştur
+        // Tabloları veritabanı türüne göre oluştur (Prisma schema'ya uygun)
         const tables = dbType === 'postgresql' ? [
-          `CREATE TABLE IF NOT EXISTS "User" (
+          `CREATE TABLE IF NOT EXISTS "users" (
             "id" SERIAL PRIMARY KEY,
             "email" TEXT NOT NULL UNIQUE,
             "password" TEXT NOT NULL,
-            "name" TEXT,
+            "name" TEXT NOT NULL,
             "phone" TEXT,
             "address" TEXT,
             "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
@@ -1343,39 +1343,39 @@ async function initializeDatabase() {
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Branch" (
+          `CREATE TABLE IF NOT EXISTS "branches" (
             "id" SERIAL PRIMARY KEY,
             "name" TEXT NOT NULL,
-            "address" TEXT,
-            "phone" TEXT,
+            "address" TEXT NOT NULL,
+            "phone" TEXT NOT NULL,
             "isActive" BOOLEAN NOT NULL DEFAULT true,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Category" (
+          `CREATE TABLE IF NOT EXISTS "categories" (
             "id" SERIAL PRIMARY KEY,
-            "name" TEXT NOT NULL,
+            "name" TEXT NOT NULL UNIQUE,
             "description" TEXT,
             "isActive" BOOLEAN NOT NULL DEFAULT true,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Product" (
+          `CREATE TABLE IF NOT EXISTS "products" (
             "id" SERIAL PRIMARY KEY,
             "name" TEXT NOT NULL,
             "description" TEXT,
             "price" DECIMAL(10,2) NOT NULL,
             "image" TEXT,
-            "categoryId" INTEGER,
-            "branchId" INTEGER,
+            "categoryId" INTEGER NOT NULL,
+            "branchId" INTEGER NOT NULL,
             "isActive" BOOLEAN NOT NULL DEFAULT true,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Customer" (
+          `CREATE TABLE IF NOT EXISTS "customers" (
             "id" SERIAL PRIMARY KEY,
             "name" TEXT NOT NULL,
             "phone" TEXT NOT NULL UNIQUE,
@@ -1385,35 +1385,32 @@ async function initializeDatabase() {
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Order" (
+          `CREATE TABLE IF NOT EXISTS "orders" (
             "id" SERIAL PRIMARY KEY,
             "orderNumber" TEXT NOT NULL UNIQUE,
-            "totalAmount" DECIMAL(10,2) NOT NULL,
-            "status" TEXT NOT NULL DEFAULT 'PENDING',
-            "notes" TEXT,
-            "customerId" INTEGER,
+            "userId" INTEGER NOT NULL,
             "branchId" INTEGER NOT NULL,
-            "deliveryType" TEXT DEFAULT 'PICKUP',
-            "paymentMethod" TEXT DEFAULT 'CASH',
+            "customerId" INTEGER,
+            "status" TEXT NOT NULL DEFAULT 'PENDING',
+            "totalAmount" DECIMAL(10,2) NOT NULL,
+            "notes" TEXT,
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "OrderItem" (
+          `CREATE TABLE IF NOT EXISTS "order_items" (
             "id" SERIAL PRIMARY KEY,
             "orderId" INTEGER NOT NULL,
             "productId" INTEGER NOT NULL,
             "quantity" INTEGER NOT NULL,
-            "price" DECIMAL(10,2) NOT NULL,
-            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            "price" DECIMAL(10,2) NOT NULL
           )`
         ] : [
-          `CREATE TABLE IF NOT EXISTS "User" (
+          `CREATE TABLE IF NOT EXISTS "users" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "email" TEXT NOT NULL UNIQUE,
             "password" TEXT NOT NULL,
-            "name" TEXT,
+            "name" TEXT NOT NULL,
             "phone" TEXT,
             "address" TEXT,
             "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
@@ -1422,39 +1419,39 @@ async function initializeDatabase() {
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Branch" (
+          `CREATE TABLE IF NOT EXISTS "branches" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "name" TEXT NOT NULL,
-            "address" TEXT,
-            "phone" TEXT,
+            "address" TEXT NOT NULL,
+            "phone" TEXT NOT NULL,
             "isActive" INTEGER NOT NULL DEFAULT 1,
             "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Category" (
+          `CREATE TABLE IF NOT EXISTS "categories" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
-            "name" TEXT NOT NULL,
+            "name" TEXT NOT NULL UNIQUE,
             "description" TEXT,
             "isActive" INTEGER NOT NULL DEFAULT 1,
             "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Product" (
+          `CREATE TABLE IF NOT EXISTS "products" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "name" TEXT NOT NULL,
             "description" TEXT,
             "price" REAL NOT NULL,
             "image" TEXT,
-            "categoryId" INTEGER,
-            "branchId" INTEGER,
+            "categoryId" INTEGER NOT NULL,
+            "branchId" INTEGER NOT NULL,
             "isActive" INTEGER NOT NULL DEFAULT 1,
             "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Customer" (
+          `CREATE TABLE IF NOT EXISTS "customers" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "name" TEXT NOT NULL,
             "phone" TEXT NOT NULL UNIQUE,
@@ -1464,28 +1461,25 @@ async function initializeDatabase() {
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "Order" (
+          `CREATE TABLE IF NOT EXISTS "orders" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "orderNumber" TEXT NOT NULL UNIQUE,
-            "totalAmount" REAL NOT NULL,
-            "status" TEXT NOT NULL DEFAULT 'PENDING',
-            "notes" TEXT,
-            "customerId" INTEGER,
+            "userId" INTEGER NOT NULL,
             "branchId" INTEGER NOT NULL,
-            "deliveryType" TEXT DEFAULT 'PICKUP',
-            "paymentMethod" TEXT DEFAULT 'CASH',
+            "customerId" INTEGER,
+            "status" TEXT NOT NULL DEFAULT 'PENDING',
+            "totalAmount" REAL NOT NULL,
+            "notes" TEXT,
             "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
           
-          `CREATE TABLE IF NOT EXISTS "OrderItem" (
+          `CREATE TABLE IF NOT EXISTS "order_items" (
             "id" INTEGER PRIMARY KEY AUTOINCREMENT,
             "orderId" INTEGER NOT NULL,
             "productId" INTEGER NOT NULL,
             "quantity" INTEGER NOT NULL,
-            "price" REAL NOT NULL,
-            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+            "price" REAL NOT NULL
           )`
         ];
         
@@ -1496,23 +1490,23 @@ async function initializeDatabase() {
         
         console.log('✅ Tüm tablolar başarıyla oluşturuldu');
         
-        // Index'leri veritabanı türüne göre oluştur
+        // Index'leri veritabanı türüne göre oluştur (Prisma schema'ya uygun)
         const indexes = dbType === 'postgresql' ? [
-          'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
-          'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
-          'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
-          'CREATE INDEX IF NOT EXISTS "Order_branchId_idx" ON "Order"("branchId")',
-          'CREATE INDEX IF NOT EXISTS "Order_customerId_idx" ON "Order"("customerId")',
-          'CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId")',
-          'CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId")'
+          'CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")',
+          'CREATE INDEX IF NOT EXISTS "products_branchId_idx" ON "products"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "products_categoryId_idx" ON "products"("categoryId")',
+          'CREATE INDEX IF NOT EXISTS "orders_branchId_idx" ON "orders"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "orders_customerId_idx" ON "orders"("customerId")',
+          'CREATE INDEX IF NOT EXISTS "order_items_orderId_idx" ON "order_items"("orderId")',
+          'CREATE INDEX IF NOT EXISTS "order_items_productId_idx" ON "order_items"("productId")'
         ] : [
-          'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
-          'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
-          'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
-          'CREATE INDEX IF NOT EXISTS "Order_branchId_idx" ON "Order"("branchId")',
-          'CREATE INDEX IF NOT EXISTS "Order_customerId_idx" ON "Order"("customerId")',
-          'CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId")',
-          'CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId")'
+          'CREATE INDEX IF NOT EXISTS "users_email_idx" ON "users"("email")',
+          'CREATE INDEX IF NOT EXISTS "products_branchId_idx" ON "products"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "products_categoryId_idx" ON "products"("categoryId")',
+          'CREATE INDEX IF NOT EXISTS "orders_branchId_idx" ON "orders"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "orders_customerId_idx" ON "orders"("customerId")',
+          'CREATE INDEX IF NOT EXISTS "order_items_orderId_idx" ON "order_items"("orderId")',
+          'CREATE INDEX IF NOT EXISTS "order_items_productId_idx" ON "order_items"("productId")'
         ];
         
         for (const indexSQL of indexes) {
