@@ -826,9 +826,27 @@ export default function AdminPage() {
                 <button
                   onClick={async () => {
               try {
+                // Form validasyonu
+                if (!productForm.name.trim()) {
+                  toast.error('Ürün adı gerekli');
+                  return;
+                }
+                if (!productForm.price || parseFloat(productForm.price) <= 0) {
+                  toast.error('Geçerli bir fiyat girin');
+                  return;
+                }
+                if (!productForm.categoryId) {
+                  toast.error('Kategori seçin');
+                  return;
+                }
+                if (!productForm.branchId) {
+                  toast.error('Şube seçin');
+                  return;
+                }
+
                 const formData = new FormData();
-                formData.append('name', productForm.name);
-                formData.append('description', productForm.description);
+                formData.append('name', productForm.name.trim());
+                formData.append('description', productForm.description.trim());
                 formData.append('price', productForm.price);
                 formData.append('categoryId', productForm.categoryId);
                 formData.append('branchId', productForm.branchId);
@@ -854,7 +872,12 @@ export default function AdminPage() {
                 toast.error(`Ürün eklenemedi: ${error.response?.data?.error || error.message}`);
               }
                   }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  disabled={!productForm.name.trim() || !productForm.price || !productForm.categoryId || !productForm.branchId}
+                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                    productForm.name.trim() && productForm.price && productForm.categoryId && productForm.branchId
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
                   Ekle
                 </button>
