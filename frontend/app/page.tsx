@@ -40,21 +40,35 @@ export default function Home() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [showCart, setShowCart] = useState(false)
-  const [showBranchDropdown, setShowBranchDropdown] = useState(false)
+
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const { user, logout } = useAuthStore()
   const { addItem, getItemCount } = useCartStore()
 
   useEffect(() => {
+    // Local storage'dan seçili şubeyi kontrol et
+    const savedBranch = localStorage.getItem('selectedBranch');
+    if (savedBranch) {
+      try {
+        const parsedBranch = JSON.parse(savedBranch);
+        setSelectedBranch(parsedBranch);
+      } catch (error) {
+        console.error('Kayıtlı şube bilgisi okunamadı:', error);
+        localStorage.removeItem('selectedBranch');
+      }
+    }
+
     // API'den şubeleri çek
     axios.get(API_ENDPOINTS.BRANCHES)
       .then((response: any) => {
         console.log('Şubeler yüklendi:', response.data);
         setBranches(response.data);
-        // İlk şubeyi otomatik seç
-        if (response.data.length > 0) {
+        
+        // Eğer seçili şube yoksa ve şubeler varsa, ilkini seç
+        if (!selectedBranch && response.data.length > 0) {
           setSelectedBranch(response.data[0]);
+          localStorage.setItem('selectedBranch', JSON.stringify(response.data[0]));
         }
       })
       .catch((error: any) => {
@@ -89,23 +103,19 @@ export default function Home() {
     }
   }, [selectedBranch])
 
-  // Dropdown dışına tıklandığında kapatma
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      if (!target.closest('.branch-dropdown')) {
-        setShowBranchDropdown(false)
-      }
-    }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   const handleBranchSelect = (branch: Branch) => {
     setSelectedBranch(branch)
     setSelectedCategory('Tümü') // Şube değiştiğinde kategori seçimini sıfırla
     setShowMobileMenu(false) // Mobil menüyü kapat
+    // Local storage'a kaydet
+    localStorage.setItem('selectedBranch', JSON.stringify(branch));
+  }
+
+  const handleBranchChange = () => {
+    // Şube seçme sayfasına yönlendir
+    router.push('/branch-select');
   }
 
   // Ürünleri kategorilere göre gruplandır
@@ -169,6 +179,14 @@ export default function Home() {
     toast.success(`${product.name} sepete eklendi`);
   };
 
+  // Şube seçimi kontrolü
+  useEffect(() => {
+    if (!loading && !selectedBranch && branches.length > 0) {
+      // Şube seçilmediyse şube seçme sayfasına yönlendir
+      router.push('/branch-select');
+    }
+  }, [loading, selectedBranch, branches.length, router]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
@@ -179,6 +197,12 @@ export default function Home() {
         </div>
       </div>
     )
+  }
+
+  // Şube seçilmediyse şube seçme sayfasına yönlendir
+  if (!selectedBranch) {
+    router.push('/branch-select');
+    return null;
   }
 
   return (
@@ -201,37 +225,18 @@ export default function Home() {
               {/* Desktop Şube Seçimi */}
               <div className="relative branch-dropdown hidden lg:block">
                 <button
-                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                  onClick={handleBranchChange}
                   className="flex items-center space-x-2 sm:space-x-3 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-200 shadow-md"
                 >
                   <span className="text-sm sm:text-lg">🏪</span>
                   <span className="hidden sm:inline">{selectedBranch ? selectedBranch.name : 'Şube Seç'}</span>
                   <span className="sm:hidden">{selectedBranch ? 'Seçili' : 'Şube'}</span>
-                  <svg className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
                 
-                {showBranchDropdown && (
-                  <div className="absolute top-full left-0 mt-2 w-64 sm:w-80 bg-white/95 backdrop-blur-md border-2 border-orange-200 rounded-xl shadow-2xl z-50 animate-in slide-in-from-top-2 duration-200">
-                    <div className="py-2">
-                      {branches.map((branch) => (
-                        <button
-                          key={branch.id}
-                          onClick={() => {
-                            handleBranchSelect(branch)
-                            setShowBranchDropdown(false)
-                          }}
-                          className="w-full text-left px-4 sm:px-6 py-3 sm:py-4 hover:bg-orange-50 focus:bg-orange-50 focus:outline-none transition-colors duration-150"
-                        >
-                          <div className="font-semibold text-gray-900 text-sm sm:text-lg">{branch.name}</div>
-                          <div className="text-xs sm:text-sm text-gray-500 mt-1">{branch.address}</div>
-                          <div className="text-xs text-orange-600 mt-1">📞 {branch.phone}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
 
