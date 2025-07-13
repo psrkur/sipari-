@@ -16,6 +16,8 @@ const API_BASE_URL = getApiBaseUrl();
 // API isteği wrapper'ı
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   try {
+    console.log('API isteği:', url, options);
+    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -24,12 +26,19 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
       },
     });
     
+    console.log('API yanıtı:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('API hatası:', response.status, errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('API verisi:', data);
+    return data;
   } catch (error) {
+    console.error('API isteği hatası:', error);
     throw error;
   }
 };

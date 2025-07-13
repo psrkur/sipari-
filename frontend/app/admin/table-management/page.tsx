@@ -65,6 +65,13 @@ export default function TableManagement() {
     loadTables();
   }, [user]);
 
+  // Şube filtresi değiştiğinde masaları yeniden yükle
+  useEffect(() => {
+    if (user?.role === 'SUPER_ADMIN') {
+      loadTables();
+    }
+  }, [selectedBranch]);
+
   const loadBranches = async () => {
     try {
       const response = await apiRequest(API_ENDPOINTS.BRANCHES);
@@ -118,7 +125,15 @@ export default function TableManagement() {
       setNewTableNumber('');
       setSelectedBranchForNew(null);
       setShowAddForm(false);
-      loadTables();
+      
+      // Yeni masa eklendikten sonra masaları yeniden yükle
+      // Eğer şube filtresi seçiliyse ve yeni masa farklı şubedeyse, filtreyi temizle
+      if (selectedBranch && selectedBranch !== selectedBranchForNew) {
+        setSelectedBranch(null);
+      }
+      
+      // Masaları yeniden yükle
+      await loadTables();
     } catch (error: any) {
       console.error('Masa ekleme hatası:', error);
       toast.error(error.message || 'Masa eklenemedi');

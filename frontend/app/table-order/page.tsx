@@ -63,12 +63,19 @@ export default function TableOrder() {
     if (dataParam) {
       try {
         const tableData = JSON.parse(decodeURIComponent(dataParam));
+        console.log('QR kod verisi:', tableData);
+        
+        if (!tableData.tableId) {
+          throw new Error('QR kod verisi eksik: tableId bulunamadı');
+        }
+        
         loadTableInfo(tableData.tableId);
       } catch (error) {
         console.error('QR kod verisi okunamadı:', error);
-        toast.error('QR kod geçersiz');
+        toast.error('QR kod geçersiz veya bozuk');
       }
     } else {
+      console.error('QR kod verisi bulunamadı');
       toast.error('QR kod verisi bulunamadı');
     }
   }, [searchParams]);
@@ -76,17 +83,26 @@ export default function TableOrder() {
   const loadTableInfo = async (tableId: number) => {
     try {
       setLoading(true);
+      console.log('Masa bilgileri yükleniyor, tableId:', tableId);
       
       // Masa bilgilerini getir
       const tableResponse = await apiRequest(API_ENDPOINTS.TABLE_INFO(tableId));
+      console.log('Masa bilgileri:', tableResponse);
       setTable(tableResponse);
       
       // Masa için ürünleri getir
       const productsResponse = await apiRequest(API_ENDPOINTS.TABLE_PRODUCTS(tableId));
+      console.log('Masa ürünleri:', productsResponse);
       setProducts(productsResponse);
     } catch (error: any) {
       console.error('Masa bilgileri yüklenemedi:', error);
-      toast.error(error.message || 'Masa bilgileri yüklenemedi');
+      if (error.message?.includes('404')) {
+        toast.error('Masa bulunamadı veya aktif değil');
+      } else if (error.message?.includes('400')) {
+        toast.error('Bu masa aktif değil');
+      } else {
+        toast.error(error.message || 'Masa bilgileri yüklenemedi');
+      }
     } finally {
       setLoading(false);
     }
