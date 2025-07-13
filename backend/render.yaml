@@ -2,17 +2,14 @@ services:
   - type: web
     name: yemek5-backend
     env: node
-    plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npx prisma generate
     startCommand: npm start
     envVars:
+      - key: DATABASE_URL
+        value: postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
-        sync: false
       - key: JWT_SECRET
-        generateValue: true
-      - key: SERVER_PORT
-        value: 3001
+        value: your-super-secret-jwt-key-change-this-in-production
       - key: FRONTEND_URL
-        value: https://yemek5-frontend.onrender.com 
+        value: https://siparisnet.netlify.app 
