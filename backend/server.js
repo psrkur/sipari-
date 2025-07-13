@@ -585,7 +585,8 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
         },
         orderItems: {
           include: {
-            product: true
+            product: true,
+            note: true // Masa siparişlerindeki notları dahil et
           }
         }
       },
