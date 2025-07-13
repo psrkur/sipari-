@@ -158,6 +158,23 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Resim endpoint'i
+app.get('/uploads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', filename);
+  
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Resim gönderilemedi:', filename, err);
+      res.status(404).json({ error: 'Resim bulunamadı' });
+    }
+  });
+});
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -621,6 +638,8 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
       console.log('Yüklenen resim:', image);
+      console.log('Resim dosyası:', req.file);
+      console.log('Resim tam yolu:', path.join(__dirname, 'uploads', req.file.filename));
     }
 
     if (!name || !price || !categoryId || !branchId) {
@@ -692,6 +711,8 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
       console.log('Güncellenen resim:', image);
+      console.log('Resim dosyası:', req.file);
+      console.log('Resim tam yolu:', path.join(__dirname, 'uploads', req.file.filename));
     }
 
     if (!name || !price || !categoryId || !branchId) {

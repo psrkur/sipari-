@@ -60,10 +60,12 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                         className="w-full h-32 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => { 
                           console.error('Resim yüklenemedi:', product.image);
+                          console.error('Resim URL:', API_ENDPOINTS.IMAGE_URL(product.image));
                           (e.target as HTMLImageElement).style.display = 'none'; 
                         }}
                         onLoad={() => {
                           console.log('Resim başarıyla yüklendi:', product.image);
+                          console.log('Resim URL:', API_ENDPOINTS.IMAGE_URL(product.image));
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
