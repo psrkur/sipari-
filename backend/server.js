@@ -148,22 +148,28 @@ app.use('/api/', limiter);
 
 // CORS konfigürasyonu
 app.use(cors({
-  origin: isProduction 
-    ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com', 'https://*.netlify.app', 'https://*.onrender.com', 'https://yemek5-frontend.onrender.com']
-    : ['http://localhost:3000', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:3005', 'http://localhost:3006'],
+  origin: true, // Tüm origin'lere izin ver
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Disposition']
 }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', (req, res, next) => {
+  // Tüm origin'lere izin ver
   res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
@@ -172,11 +178,12 @@ app.get('/uploads/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'uploads', filename);
   
-  // CORS headers
+  // Kapsamlı CORS headers
   res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
   
   // OPTIONS request için
   if (req.method === 'OPTIONS') {

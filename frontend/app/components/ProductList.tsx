@@ -58,6 +58,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                         src={API_ENDPOINTS.IMAGE_URL(product.image)}
                         alt={product.name}
                         className="w-full h-32 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
+                        crossOrigin="anonymous"
                         onError={(e) => { 
                           console.error('Resim yüklenemedi:', product.image);
                           console.error('Resim URL:', API_ENDPOINTS.IMAGE_URL(product.image));
