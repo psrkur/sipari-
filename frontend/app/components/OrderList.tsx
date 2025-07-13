@@ -94,7 +94,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   <div>
                     {order.orderType === 'TABLE' && order.table ? (
                       <div>
-                        <div className="font-bold text-lg text-blue-600">Masa {order.table.number}</div>
+                        <div className="font-bold text-xl text-blue-700">Masa {order.table.number}</div>
                         <div className="text-gray-500 text-xs">QR Kod Siparişi</div>
                       </div>
                     ) : (
