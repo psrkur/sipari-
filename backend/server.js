@@ -204,6 +204,55 @@ app.get('/uploads/:filename', (req, res) => {
   });
 });
 
+// Kullanılmayan resimleri temizleme endpoint'i
+app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const fs = require('fs');
+    const uploadsDir = path.join(__dirname, 'uploads');
+    
+    // Uploads klasörü var mı kontrol et
+    if (!fs.existsSync(uploadsDir)) {
+      return res.json({ message: 'Uploads klasörü bulunamadı', deletedCount: 0 });
+    }
+
+    // Tüm ürünlerdeki resim yollarını al
+    const products = await prisma.product.findMany({
+      select: { image: true }
+    });
+    
+    const usedImages = new Set(products.map(p => p.image).filter(Boolean));
+    
+    // Uploads klasöründeki tüm dosyaları al
+    const files = fs.readdirSync(uploadsDir);
+    let deletedCount = 0;
+    
+    for (const file of files) {
+      const filePath = `/uploads/${file}`;
+      if (!usedImages.has(filePath)) {
+        try {
+          fs.unlinkSync(path.join(uploadsDir, file));
+          deletedCount++;
+          console.log('Silinen dosya:', file);
+        } catch (error) {
+          console.error('Dosya silinemedi:', file, error);
+        }
+      }
+    }
+    
+    res.json({ 
+      message: `${deletedCount} kullanılmayan resim dosyası silindi`,
+      deletedCount 
+    });
+  } catch (error) {
+    console.error('Resim temizleme hatası:', error);
+    res.status(500).json({ error: 'Resim temizleme hatası' });
+  }
+});
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -938,7 +987,9 @@ app.get('/api/categories', async (req, res) => {
 
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz' });
+    }
     
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }

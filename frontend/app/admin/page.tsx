@@ -95,32 +95,97 @@ export default function AdminPage() {
   }, [user, router]);
 
   useEffect(() => {
-    axios.get(API_ENDPOINTS.BRANCHES, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setBranches(res.data))
-      .catch(() => setBranches([]));
-    
-    axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => setCategories(res.data))
-      .catch(() => setCategories([]));
-    
-    if (user && user.role === 'SUPER_ADMIN') {
-      axios.get(API_ENDPOINTS.ADMIN_USERS, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setUsers(res.data))
-        .catch(() => setUsers([]));
-      
-      axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => setProducts(res.data))
-        .catch(() => setProducts([]));
-    } else if (user && user.role === 'BRANCH_MANAGER') {
-      // Branch manager sadece kendi şubesindeki ürünleri görebilir
-      axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
-        headers: { Authorization: `Bearer ${token}` },
-        params: { branchId: user.branchId }
-      })
-        .then(res => setProducts(res.data))
-        .catch(() => setProducts([]));
+    if (!token) {
+      console.log('Token bulunamadı, giriş sayfasına yönlendiriliyor');
+      router.push('/login');
+      return;
     }
-  }, [token, user]);
+
+    // API calls with proper error handling
+    const fetchData = async () => {
+      try {
+        // Fetch branches
+        const branchesResponse = await axios.get(API_ENDPOINTS.BRANCHES, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        setBranches(branchesResponse.data);
+      } catch (error: any) {
+        console.error('Branches fetch error:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+          router.push('/login');
+          return;
+        }
+        setBranches([]);
+      }
+
+      try {
+        // Fetch categories
+        const categoriesResponse = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { 
+          headers: { Authorization: `Bearer ${token}` } 
+        });
+        setCategories(categoriesResponse.data);
+      } catch (error: any) {
+        console.error('Categories fetch error:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+          router.push('/login');
+          return;
+        }
+        setCategories([]);
+      }
+      
+      if (user && user.role === 'SUPER_ADMIN') {
+        try {
+          const usersResponse = await axios.get(API_ENDPOINTS.ADMIN_USERS, { 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          setUsers(usersResponse.data);
+        } catch (error: any) {
+          console.error('Users fetch error:', error);
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+            router.push('/login');
+            return;
+          }
+          setUsers([]);
+        }
+        
+        try {
+          const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          setProducts(productsResponse.data);
+        } catch (error: any) {
+          console.error('Products fetch error:', error);
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+            router.push('/login');
+            return;
+          }
+          setProducts([]);
+        }
+      } else if (user && user.role === 'BRANCH_MANAGER') {
+        try {
+          const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
+            headers: { Authorization: `Bearer ${token}` },
+            params: { branchId: user.branchId }
+          });
+          setProducts(productsResponse.data);
+        } catch (error: any) {
+          console.error('Products fetch error:', error);
+          if (error.response?.status === 401 || error.response?.status === 403) {
+            toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+            router.push('/login');
+            return;
+          }
+          setProducts([]);
+        }
+      }
+    };
+
+    fetchData();
+  }, [token, user, router]);
 
   const sortedUsers = [...users].sort((a, b) => {
     if (a.role === 'SUPER_ADMIN') return -1;
@@ -177,7 +242,13 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setOrders(response.data);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Orders fetch error:', error);
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+        router.push('/login');
+        return;
+      }
       toast.error('Siparişler yüklenemedi');
     } finally {
       setLoading(false);
@@ -569,12 +640,29 @@ export default function AdminPage() {
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Kategoriler ({categories.length})</h2>
-                <button 
-                  onClick={() => setShowCategoryModal(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
-                >
-                  Kategori Ekle
-                </button>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const response = await axios.post(API_ENDPOINTS.ADMIN_CLEANUP_IMAGES, {}, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        toast.success(response.data.message);
+                      } catch (error: any) {
+                        toast.error(`Resim temizleme hatası: ${error.response?.data?.error || error.message}`);
+                      }
+                    }}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-md font-medium hover:bg-orange-700"
+                  >
+                    Resimleri Temizle
+                  </button>
+                  <button 
+                    onClick={() => setShowCategoryModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
+                  >
+                    Kategori Ekle
+                  </button>
+                </div>
               </div>
             </div>
             <div className="overflow-x-auto">
