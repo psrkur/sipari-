@@ -1169,7 +1169,7 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
         orders: {
           include: {
             branch: true,
-            items: {
+            orderItems: {
               include: {
                 product: true
               }
@@ -2008,6 +2008,16 @@ async function initializeDatabase() {
             "productId" INTEGER NOT NULL,
             "quantity" INTEGER NOT NULL,
             "price" DECIMAL(10,2) NOT NULL
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "user_addresses" (
+            "id" SERIAL PRIMARY KEY,
+            "userId" INTEGER NOT NULL,
+            "title" TEXT NOT NULL,
+            "address" TEXT NOT NULL,
+            "isDefault" BOOLEAN NOT NULL DEFAULT false,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`
         ] : [
           `CREATE TABLE IF NOT EXISTS "users" (
@@ -2074,6 +2084,24 @@ async function initializeDatabase() {
             "status" TEXT NOT NULL DEFAULT 'PENDING',
             "totalAmount" REAL NOT NULL,
             "notes" TEXT,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "order_items" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "orderId" INTEGER NOT NULL,
+            "productId" INTEGER NOT NULL,
+            "quantity" INTEGER NOT NULL,
+            "price" REAL NOT NULL
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "user_addresses" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "userId" INTEGER NOT NULL,
+            "title" TEXT NOT NULL,
+            "address" TEXT NOT NULL,
+            "isDefault" INTEGER NOT NULL DEFAULT 0,
             "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`,
