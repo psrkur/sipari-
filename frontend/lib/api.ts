@@ -1,22 +1,17 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
-  // Environment variable'dan al
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
-  // Development için local backend, production için Render
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:3001';
   }
   
-  // Production URL - Render deployment
   return 'https://yemek5-backend.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();
-
-console.log('🔧 Frontend API URL:', API_BASE_URL);
 
 // API isteği wrapper'ı
 const apiRequest = async (url: string, options: RequestInit = {}) => {
@@ -35,7 +30,6 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
     
     return await response.json();
   } catch (error) {
-    console.error('API Request Error:', error);
     throw error;
   }
 };

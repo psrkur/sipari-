@@ -45,17 +45,13 @@ export default function Cart({ selectedBranch }: CartProps) {
     }
   })
 
-  // Müşteri bilgilerini otomatik olarak yükle
   useEffect(() => {
     const loadCustomerData = async () => {
       if (!token || !user) return
 
       try {
-        console.log('🔄 Müşteri bilgileri yükleniyor...')
         const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         })
 
         const customerInfo = {
@@ -67,20 +63,16 @@ export default function Cart({ selectedBranch }: CartProps) {
           paymentMethod: 'cash' as const
         }
 
-        console.log('✅ Müşteri bilgileri yüklendi:', customerInfo)
         setCustomerData(customerInfo)
         
-        // Form alanlarını otomatik doldur
         setValue('name', customerInfo.name)
         setValue('email', customerInfo.email)
         setValue('phone', customerInfo.phone)
         setValue('address', customerInfo.address)
         setValue('deliveryType', customerInfo.deliveryType)
         
-        // Başarı mesajı göster
         toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
       } catch (error) {
-        console.error('❌ Müşteri bilgileri yüklenemedi:', error)
         toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
       }
     }
@@ -91,44 +83,29 @@ export default function Cart({ selectedBranch }: CartProps) {
   }, [showCheckout, token, user, setValue])
 
   const handleCheckout = async (customerInfo: CustomerInfo) => {
-    console.log('=== SİPARİŞ TAMAMLAMA BAŞLADI ===')
-    console.log('handleCheckout called with:', customerInfo)
-    console.log('selectedBranch:', selectedBranch)
-    console.log('items:', items)
-    console.log('token:', token ? 'Token mevcut' : 'Token yok')
-    console.log('user:', user)
-    
     if (!selectedBranch) {
-      console.log('❌ Şube seçilmemiş')
       toast.error('Lütfen bir şube seçin')
       return
     }
 
     if (items.length === 0) {
-      console.log('❌ Sepet boş')
       toast.error('Sepetiniz boş')
       return
     }
 
     if (!customerInfo.deliveryType) {
-      console.log('❌ Teslimat seçeneği belirlenmemiş')
       toast.error('Lütfen teslimat seçeneğini belirleyin')
       return
     }
 
     if (!token) {
-      console.log('❌ Token yok')
       toast.error('Oturum süreniz dolmuş, lütfen tekrar giriş yapın')
       return
     }
 
     setLoading(true)
     try {
-      console.log('🔄 Sipariş oluşturuluyor...')
-      
-      // Müşteri bilgilerini kullan (form verileri veya otomatik yüklenen veriler)
       const finalCustomerInfo = customerData || customerInfo
-      console.log('finalCustomerInfo:', finalCustomerInfo)
 
       const orderData = {
         branchId: selectedBranch.id,
@@ -143,26 +120,17 @@ export default function Cart({ selectedBranch }: CartProps) {
         notes: ''
       }
 
-      console.log('📤 Sending order data:', orderData)
-
-      const response = await axios.post(API_ENDPOINTS.ORDERS, orderData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+      await axios.post(API_ENDPOINTS.ORDERS, orderData, {
+        headers: { Authorization: `Bearer ${token}` }
       })
 
-      console.log('✅ Order response:', response.data)
       toast.success('Siparişiniz oluşturuldu, afiyet olsun! 🍕')
       clearCart()
       setShowCheckout(false)
     } catch (error: any) {
-      console.error('❌ Order error:', error)
-      console.error('❌ Error response:', error.response?.data)
-      console.error('❌ Error status:', error.response?.status)
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı')
     } finally {
       setLoading(false)
-      console.log('=== SİPARİŞ TAMAMLAMA BİTTİ ===')
     }
   }
 
@@ -235,10 +203,7 @@ export default function Cart({ selectedBranch }: CartProps) {
               Sipariş Ver
             </button>
           ) : (
-            <form 
-              onSubmit={handleSubmit(handleCheckout)} 
-              className="space-y-4"
-            >
+            <form onSubmit={handleSubmit(handleCheckout)} className="space-y-4">
               {customerData && (
                 <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
                   <div className="flex items-start justify-between">
@@ -268,7 +233,6 @@ export default function Cart({ selectedBranch }: CartProps) {
                 </div>
               )}
 
-              {/* Teslimat Seçeneği */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Teslimat Seçeneği *
@@ -371,7 +335,6 @@ export default function Cart({ selectedBranch }: CartProps) {
                     )}
                   </div>
 
-                  {/* Ödeme Yöntemi */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Ödeme Yöntemi *

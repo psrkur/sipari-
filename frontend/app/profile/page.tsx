@@ -57,16 +57,13 @@ export default function ProfilePage() {
       router.push('/')
       return
     }
-
     fetchProfile()
   }, [user, token])
 
   const fetchProfile = async () => {
     try {
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       })
       setProfileData(response.data)
       setFormData({
@@ -76,7 +73,6 @@ export default function ProfilePage() {
         address: response.data.user.address || ''
       })
     } catch (error: any) {
-      console.error('Profile fetch error:', error)
       toast.error('Profil bilgileri yüklenemedi')
       if (error.response?.status === 401) {
         logout()
@@ -90,9 +86,7 @@ export default function ProfilePage() {
   const handleUpdateProfile = async () => {
     try {
       const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       })
       toast.success('Profil başarıyla güncellendi')
       setProfileData(prev => prev ? { ...prev, user: response.data.user } : null)
@@ -138,7 +132,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -164,12 +157,10 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Profilim</h1>
 
-          {/* Profile Information */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Kişisel Bilgiler</h2>
@@ -253,68 +244,69 @@ export default function ProfilePage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <span className="text-sm font-medium text-gray-500">Ad Soyad:</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ad Soyad
+                  </label>
                   <p className="text-gray-900">{profileData?.user.name}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-500">Email:</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
                   <p className="text-gray-900">{profileData?.user.email}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-500">Telefon:</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
                   <p className="text-gray-900">{profileData?.user.phone || 'Belirtilmemiş'}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-500">Adres:</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Adres
+                  </label>
                   <p className="text-gray-900">{profileData?.user.address || 'Belirtilmemiş'}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-gray-500">Üyelik Türü:</span>
-                  <p className="text-gray-900">{profileData?.user.role === 'CUSTOMER' ? 'Müşteri' : 'Admin'}</p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Order History */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Sipariş Geçmişi</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Sipariş Geçmişi</h2>
             {profileData?.orders && profileData.orders.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {profileData.orders.map((order) => (
                   <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Sipariş #{order.orderNumber}
-                        </h3>
+                        <h3 className="font-semibold text-gray-900">Sipariş #{order.orderNumber}</h3>
                         <p className="text-sm text-gray-600">
-                          {new Date(order.createdAt).toLocaleDateString('tr-TR')} - {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
+                          {new Date(order.createdAt).toLocaleDateString('tr-TR')}
                         </p>
-                        <p className="text-sm text-gray-600">{order.branch.name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-red-600">
-                          ₺{order.totalAmount.toFixed(2)}
-                        </p>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                           {getStatusText(order.status)}
                         </span>
+                        <p className="text-lg font-bold text-gray-900 mt-1">
+                          ₺{order.totalAmount.toFixed(2)}
+                        </p>
                       </div>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-600">
+                        <strong>Şube:</strong> {order.branch.name}
+                      </p>
                     </div>
                     
                     <div className="space-y-2">
                       {order.items.map((item, index) => (
                         <div key={index} className="flex justify-between items-center text-sm">
-                          <span className="text-gray-700">
-                            {item.quantity}x {item.product.name}
-                          </span>
-                          <span className="text-gray-600">
-                            ₺{(item.price * item.quantity).toFixed(2)}
-                          </span>
+                          <span>{item.product.name}</span>
+                          <span>{item.quantity} x ₺{item.price.toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
@@ -322,15 +314,7 @@ export default function ProfilePage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Henüz sipariş geçmişiniz bulunmuyor.</p>
-                <button
-                  onClick={() => router.push('/')}
-                  className="mt-4 bg-red-600 text-white px-6 py-2 rounded-md font-medium hover:bg-red-700"
-                >
-                  İlk Siparişinizi Verin
-                </button>
-              </div>
+              <p className="text-gray-500 text-center py-8">Henüz sipariş geçmişiniz bulunmuyor</p>
             )}
           </div>
         </div>

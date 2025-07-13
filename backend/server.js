@@ -5,12 +5,6 @@ const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
 
-console.log('🔧 Environment Variables:');
-console.log(`NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-console.log(`PORT: ${SERVER_PORT}`);
-console.log(`DATABASE_URL: ${DATABASE_URL}`);
-console.log(`FRONTEND_URL: ${FRONTEND_URL}`);
-
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -18,8 +12,6 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const { PrismaClient } = require('@prisma/client');
-
-// PrismaClient'ı environment variable ile oluştur
 const prisma = new PrismaClient({
   datasources: {
     db: {
@@ -28,40 +20,29 @@ const prisma = new PrismaClient({
   }
 });
 
-// Environment variable'ı Prisma için ayarla
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'file:./dev.db';
 }
 
-// Veritabanı bağlantısını test et
 async function testDatabaseConnection() {
   try {
     await prisma.$connect();
-    console.log('✅ Veritabanı bağlantısı başarılı');
-    
-    // Tabloların var olup olmadığını kontrol et
     try {
-      const branchCount = await prisma.branch.count();
-      console.log(`📊 Veritabanında ${branchCount} şube bulundu`);
+      await prisma.branch.count();
     } catch (tableError) {
-      console.log('⚠️ Veritabanı tabloları henüz oluşturulmamış, migration gerekli');
-      // Tablolar yoksa migration yapılması gerekiyor
       return false;
     }
     return true;
   } catch (error) {
-    console.error('❌ Veritabanı bağlantı hatası:', error);
     return false;
   }
 }
 
-// Uygulama başlatılırken veritabanını test et
 testDatabaseConnection();
 
 const multer = require('multer');
 const path = require('path');
 
-// Multer ayarları
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, 'uploads'));
@@ -76,7 +57,6 @@ const upload = multer({ storage });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors({
   origin: isProduction 
     ? [FRONTEND_URL, 'https://siparisnet.netlify.app', 'https://yemek5-backend.onrender.com', 'https://*.netlify.app', 'https://*.onrender.com']
@@ -86,38 +66,23 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-
-// uploads klasörünü public olarak sun
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Auth middleware
 const authenticateToken = (req, res, next) => {
-  console.log('🔐 Authentication middleware çalışıyor...')
-  console.log('Headers:', req.headers)
-  
   const authHeader = req.headers['authorization'];
-  console.log('Auth header:', authHeader)
-  
   const token = authHeader && authHeader.split(' ')[1];
-  console.log('Extracted token:', token ? 'Token mevcut' : 'Token yok')
-
   if (!token) {
-    console.log('❌ Token bulunamadı')
     return res.status(401).json({ error: 'Token gerekli' });
   }
-
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      console.log('❌ Token doğrulama hatası:', err.message)
       return res.status(403).json({ error: 'Geçersiz token' });
     }
-    console.log('✅ Token doğrulandı, user:', user)
     req.user = user;
     next();
   });
 };
 
-// Auth routes
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, name, phone, address } = req.body;
@@ -195,7 +160,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Branch routes
 app.get('/api/branches', async (req, res) => {
   try {
     const branches = await prisma.branch.findMany({
@@ -207,7 +171,6 @@ app.get('/api/branches', async (req, res) => {
   }
 });
 
-// Ürünleri getir (şubeye göre)
 app.get('/api/products/:branchId', async (req, res) => {
   try {
     const { branchId } = req.params;
@@ -233,32 +196,16 @@ app.get('/api/products/:branchId', async (req, res) => {
     });
     res.json(products);
   } catch (error) {
-    console.error('Ürünler getirilirken hata:', error);
     res.status(500).json({ error: 'Ürünler getirilemedi' });
   }
 });
 
-// Order routes
 app.post('/api/orders', authenticateToken, async (req, res) => {
   try {
-    console.log('=== SİPARİŞ OLUŞTURMA BAŞLADI ===')
-    console.log('Request body:', req.body)
-    console.log('User:', req.user)
-    
     const { branchId, items, customerInfo, deliveryType, paymentMethod, notes } = req.body;
     
-    console.log('Parsed data:')
-    console.log('- branchId:', branchId)
-    console.log('- items:', items)
-    console.log('- customerInfo:', customerInfo)
-    console.log('- deliveryType:', deliveryType)
-    console.log('- paymentMethod:', paymentMethod)
-    console.log('- notes:', notes)
-    
-    // Müşteri oluştur veya mevcut olanı bul
     let customer = null;
     if (customerInfo) {
-      console.log('🔄 Müşteri oluşturuluyor/güncelleniyor...')
       customer = await prisma.customer.upsert({
         where: { phone: customerInfo.phone },
         update: {
@@ -273,35 +220,18 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
           address: customerInfo.address
         }
       });
-      console.log('✅ Müşteri işlemi tamamlandı:', customer)
     }
 
-    // Toplam tutarı hesapla
     const totalAmount = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    console.log('💰 Toplam tutar:', totalAmount)
-    
-    // Sipariş numarası oluştur
     const orderNumber = `ORD-${Date.now()}`;
-    console.log('📋 Sipariş numarası:', orderNumber)
-
-    // Teslimat ücreti hesapla (adrese teslim için +5 TL)
     const deliveryFee = deliveryType === 'delivery' ? 5.0 : 0.0;
     const finalTotal = totalAmount + deliveryFee;
-    console.log('🚚 Teslimat ücreti:', deliveryFee)
-    console.log('💵 Final toplam:', finalTotal)
 
-    // Ödeme yöntemi metni oluştur
     const paymentText = paymentMethod ? 
       (paymentMethod === 'cash' ? 'Nakit' : 
        paymentMethod === 'card' ? 'Kart (Kapıda)' : 
        paymentMethod === 'online' ? 'Online Ödeme' : 'Belirtilmemiş') : '';
 
-    // Sipariş oluştur
-    console.log('🔄 Sipariş veritabanına kaydediliyor...')
-    console.log('Branch ID:', branchId)
-    console.log('User ID:', req.user.userId)
-    console.log('Customer ID:', customer?.id)
-    
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -313,12 +243,8 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         notes: `${deliveryType === 'delivery' ? 'Adrese Teslim' : 'Şubeden Al'} - Ödeme: ${paymentText} - ${notes || ''}`
       }
     });
-    console.log('✅ Sipariş oluşturuldu - Order ID:', order.id, 'Branch ID:', order.branchId);
 
-    // Sipariş kalemlerini oluştur
-    console.log('🔄 Sipariş kalemleri oluşturuluyor...')
     for (const item of items) {
-      console.log('Kalem:', item)
       await prisma.orderItem.create({
         data: {
           quantity: item.quantity,
@@ -328,29 +254,19 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         }
       });
     }
-    console.log('✅ Sipariş kalemleri oluşturuldu')
 
-    console.log('✅ Sipariş başarıyla tamamlandı')
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
-    console.error('❌ Sipariş oluşturulamadı:', error)
-    console.error('❌ Error details:', {
-      message: error.message,
-      stack: error.stack,
-      code: error.code
-    })
     res.status(500).json({ error: 'Sipariş oluşturulamadı' });
   }
 });
 
-// Admin routes
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
-    // Kullanıcı bilgilerini veritabanından tekrar çek
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
       include: { branch: true }
@@ -362,12 +278,10 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 
     let whereClause = {};
     
-    // Şube yöneticisi ise sadece kendi şubesinin siparişlerini getir
     if (user.role === 'BRANCH_MANAGER') {
       whereClause.branchId = user.branchId;
-      console.log('Şube yöneticisi siparişleri getiriyor - User Branch ID:', user.branchId);
     } else if (user.role === 'SUPER_ADMIN') {
-      console.log('Süper admin tüm siparişleri getiriyor');
+      // Süper admin tüm siparişleri getir
     }
 
     const orders = await prisma.order.findMany({
@@ -386,7 +300,6 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 
     res.json(orders);
   } catch (error) {
-    console.error('Admin orders hatası:', error);
     res.status(500).json({ error: 'Siparişler getirilemedi' });
   }
 });
@@ -397,7 +310,6 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
-    // Kullanıcı bilgilerini veritabanından tekrar çek
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
       include: { branch: true }
@@ -410,7 +322,6 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Şube yöneticisi ise sadece kendi şubesinin siparişlerini güncelleyebilir
     let whereClause = { id: parseInt(id) };
     if (user.role === 'BRANCH_MANAGER') {
       whereClause.branchId = user.branchId;
@@ -427,7 +338,6 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
   }
 });
 
-// Süper Admin: Tüm kullanıcıları getir
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -445,7 +355,6 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
   }
 });
 
-// Süper Admin: Kullanıcı ekle (müşteri veya yönetici)
 app.post('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -463,7 +372,6 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
       role
     };
     
-    // Eğer şube yöneticisi ise branchId ekle
     if (role === 'BRANCH_MANAGER' && branchId) {
       userData.branchId = Number(branchId);
     }
@@ -481,7 +389,6 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
   }
 });
 
-// Süper Admin: Kullanıcı sil
 app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -489,7 +396,6 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const userId = parseInt(id);
     
-    // Kendini silmeye çalışıyorsa engelle
     if (userId === req.user.userId) {
       return res.status(400).json({ error: 'Kendinizi silemezsiniz' });
     }
@@ -504,7 +410,6 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Süper Admin: Tüm ürünleri getir
 app.get('/api/admin/products', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -522,7 +427,6 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
   }
 });
 
-// Süper Admin: Ürünleri getir
 app.get('/api/admin/products', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -537,30 +441,19 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
     
     res.json(products);
   } catch (error) {
-    console.error('Ürünler getirilirken hata:', error);
     res.status(500).json({ error: 'Ürünler getirilemedi' });
   }
 });
 
-// Süper Admin: Ürün ekleme endpoint'i
 app.post('/api/admin/products', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, categoryId, branchId } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : null;
 
-    console.log('Ürün ekleniyor:', {
-      name,
-      description,
-      price,
-      categoryId,
-      branchId
-    });
-
     if (!name || !price || !categoryId || !branchId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
-    // Kategori var mı kontrol et
     const category = await prisma.category.findUnique({
       where: { id: parseInt(categoryId) }
     });
@@ -569,9 +462,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Tüm şubeler seçilmişse geçerli
     if (branchId === 'all') {
-      // Tüm şubelere ekle
       const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
       const products = [];
 
@@ -593,10 +484,8 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
         products.push(product);
       }
 
-      console.log(`${allBranches.length} şubeye ürün başarıyla eklendi`);
       res.status(201).json(products);
     } else {
-      // Tek şubeye ekle
       const product = await prisma.product.create({
         data: {
           name,
@@ -612,38 +501,23 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
         }
       });
 
-      console.log('Ürün başarıyla eklendi:', product);
       res.status(201).json(product);
     }
   } catch (error) {
-    console.error('Ürün eklenirken hata:', error);
     res.status(500).json({ error: 'Ürün eklenemedi' });
   }
 });
 
-// Süper Admin: Ürün güncelleme endpoint'i
 app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, price, categoryId, branchId, isActive } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : undefined;
 
-    console.log('Ürün düzenleniyor:', {
-      id,
-      name,
-      description,
-      price,
-      categoryId,
-      branchId,
-      isActive,
-      image
-    });
-
     if (!name || !price || !categoryId || !branchId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
-    // Kategori var mı kontrol et
     const category = await prisma.category.findUnique({
       where: { id: parseInt(categoryId) }
     });
@@ -652,7 +526,6 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Tüm şubeler seçilmişse geçerli
     if (branchId === 'all') {
       // Bu durumda devam et
     } else if (isNaN(parseInt(branchId))) {
@@ -673,19 +546,15 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       isActive: isActiveBool !== undefined ? isActiveBool : true
     };
     if (image !== undefined) updateData.image = image;
-    console.log('updateData:', updateData);
 
     if (branchId === 'all') {
-      // Tüm şubelere güncelle
-      const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
-      const updatedProducts = [];
-      
-      // Önce mevcut ürünü sil
       await prisma.product.delete({
         where: { id: parseInt(id) }
       });
 
-      // Tüm şubelere yeni ürün ekle
+      const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
+      const updatedProducts = [];
+      
       for (const branch of allBranches) {
         const product = await prisma.product.create({
           data: {
@@ -705,10 +574,8 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
         updatedProducts.push(product);
       }
 
-      console.log(`${allBranches.length} şubeye ürün başarıyla güncellendi`);
       res.json(updatedProducts);
     } else {
-      // Tek şubeye güncelle
       const product = await prisma.product.update({
         where: { id: parseInt(id) },
         data: updateData,
@@ -718,36 +585,28 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
         }
       });
 
-      console.log('Ürün başarıyla düzenlendi:', product);
       res.json(product);
     }
   } catch (error) {
-    console.error('Ürün düzenleme hatası:', error);
     res.status(500).json({ error: 'Ürün güncellenemedi' });
   }
 });
 
-// Süper Admin: Ürün sil
 app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
     const { id } = req.params;
     
-    console.log('Ürün siliniyor:', id);
-    
     await prisma.product.delete({
       where: { id: parseInt(id) }
     });
     
-    console.log('Ürün başarıyla silindi');
     res.json({ message: 'Ürün silindi' });
   } catch (e) {
-    console.error('Ürün silme hatası:', e);
     res.status(500).json({ error: 'Ürün silinemedi' });
   }
 });
 
-// Kategori CRUD işlemleri
 app.get('/api/categories', async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
@@ -756,12 +615,10 @@ app.get('/api/categories', async (req, res) => {
     });
     res.json(categories);
   } catch (error) {
-    console.error('Kategoriler getirilirken hata:', error);
     res.status(500).json({ error: 'Kategoriler getirilemedi' });
   }
 });
 
-// Süper Admin: Kategorileri getir
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
@@ -772,7 +629,6 @@ app.get('/api/admin/categories', authenticateToken, async (req, res) => {
     
     res.json(categories);
   } catch (error) {
-    console.error('Kategoriler getirilirken hata:', error);
     res.status(500).json({ error: 'Kategoriler getirilemedi' });
   }
 });
@@ -804,7 +660,6 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
 
     res.status(201).json(category);
   } catch (error) {
-    console.error('Kategori eklenirken hata:', error);
     res.status(500).json({ error: 'Kategori eklenemedi' });
   }
 });
@@ -842,7 +697,6 @@ app.put('/api/admin/categories/:id', authenticateToken, async (req, res) => {
 
     res.json(category);
   } catch (error) {
-    console.error('Kategori güncellenirken hata:', error);
     res.status(500).json({ error: 'Kategori güncellenemedi' });
   }
 });
@@ -853,7 +707,6 @@ app.delete('/api/admin/categories/:id', authenticateToken, async (req, res) => {
     
     const { id } = req.params;
 
-    // Kategoriye bağlı ürün var mı kontrol et
     const productsWithCategory = await prisma.product.findFirst({
       where: { categoryId: parseInt(id) }
     });
@@ -870,12 +723,10 @@ app.delete('/api/admin/categories/:id', authenticateToken, async (req, res) => {
 
     res.json({ message: 'Kategori başarıyla silindi' });
   } catch (error) {
-    console.error('Kategori silinirken hata:', error);
     res.status(500).json({ error: 'Kategori silinemedi' });
   }
 });
 
-// Customer profile routes
 app.get('/api/customer/profile', authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -939,16 +790,10 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Seed data
 async function seedData() {
   try {
-    console.log('🌱 Seed data başlatılıyor...');
-    
-    // Önce veritabanı bağlantısını test et
     await prisma.$connect();
-    console.log('✅ Veritabanı bağlantısı başarılı');
     
-    // Kategoriler oluştur
     const categories = [
       { name: 'Pizza', description: 'Çeşitli pizza türleri' },
       { name: 'Burger', description: 'Hamburger ve sandviçler' },
@@ -960,7 +805,6 @@ async function seedData() {
       { name: 'Pide', description: 'Geleneksel pideler' }
     ];
 
-    console.log('📝 Kategoriler oluşturuluyor...');
     for (const categoryData of categories) {
       await prisma.category.upsert({
         where: { id: categories.indexOf(categoryData) + 1 },
@@ -972,9 +816,6 @@ async function seedData() {
       });
     }
 
-    console.log('✅ Kategoriler oluşturuldu');
-
-    // Şubeler oluştur
     const branches = [
       {
         name: 'Merkez Şube',
@@ -999,9 +840,6 @@ async function seedData() {
       });
     }
 
-    console.log('Şubeler oluşturuldu');
-
-    // Örnek ürünler oluştur
     const pizzaCategory = await prisma.category.findUnique({ where: { id: 1 } });
     const burgerCategory = await prisma.category.findUnique({ where: { id: 2 } });
     const drinkCategory = await prisma.category.findUnique({ where: { id: 3 } });
@@ -1012,7 +850,6 @@ async function seedData() {
 
     if (pizzaCategory && burgerCategory && drinkCategory && dessertCategory && merkezBranch && kadikoyBranch) {
       const products = [
-        // Merkez Şube ürünleri
         {
           name: 'Margherita Pizza',
           description: 'Domates sosu, mozzarella peyniri, fesleğen',
@@ -1069,7 +906,6 @@ async function seedData() {
           categoryId: dessertCategory.id,
           branchId: merkezBranch.id
         },
-        // Kadıköy Şube ürünleri
         {
           name: 'Margherita Pizza',
           description: 'Domates sosu, mozzarella peyniri, fesleğen',
@@ -1141,10 +977,8 @@ async function seedData() {
         productId++;
       }
 
-      console.log('Örnek ürünler oluşturuldu');
     }
 
-    // Süper admin kullanıcısı oluştur
     const hashedPassword = await bcrypt.hash('admin123', 10);
     await prisma.user.upsert({
       where: { id: 1 },
@@ -1158,7 +992,6 @@ async function seedData() {
       }
     });
 
-    // Şube yöneticisi kullanıcısı oluştur
     const managerPassword = await bcrypt.hash('manager123', 10);
     await prisma.user.upsert({
       where: { id: 2 },
@@ -1169,20 +1002,15 @@ async function seedData() {
         password: managerPassword,
         name: 'Merkez Şube Müdürü',
         role: 'BRANCH_MANAGER',
-        branchId: 1 // Merkez Şube
+        branchId: 1
       }
     });
-
-    console.log('Süper admin kullanıcısı oluşturuldu');
-    console.log('Şube yöneticisi kullanıcısı oluşturuldu');
-    console.log('Seed data tamamlandı!');
 
   } catch (error) {
     console.error('Seed data hatası:', error);
   }
 }
 
-// Seed endpoint
 app.post('/api/seed', async (req, res) => {
   try {
     await seedData();
@@ -1193,7 +1021,6 @@ app.post('/api/seed', async (req, res) => {
   }
 });
 
-// Geçici: Kadıköy Şubesi siparişlerinin tarihini bugüne çek
 app.post('/api/admin/fix-kadikoy-dates', async (req, res) => {
   try {
     const now = new Date();
@@ -1208,7 +1035,6 @@ app.post('/api/admin/fix-kadikoy-dates', async (req, res) => {
   }
 });
 
-// Geçici: Kadıköy Şubesi COMPLETED siparişlerinin tarihini bugüne çek
 app.post('/api/admin/fix-kadikoy-completed-dates', async (req, res) => {
   try {
     const now = new Date();
@@ -1223,12 +1049,10 @@ app.post('/api/admin/fix-kadikoy-completed-dates', async (req, res) => {
   }
 });
 
-// Test verileri oluştur - Haftalık ve aylık istatistikler için
 app.post('/api/admin/create-test-data', async (req, res) => {
   try {
     const now = new Date();
     
-    // Bu hafta için test siparişleri
     for (let i = 0; i < 7; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
@@ -1246,7 +1070,6 @@ app.post('/api/admin/create-test-data', async (req, res) => {
       });
     }
     
-    // Bu ay için test siparişleri
     for (let i = 0; i < 30; i++) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
@@ -1271,7 +1094,6 @@ app.post('/api/admin/create-test-data', async (req, res) => {
   }
 });
 
-// İstatistikler Endpointi (Günlük, Haftalık, Aylık)
 app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
@@ -1280,7 +1102,6 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 
     const { branchId, period = 'daily' } = req.query;
     
-    // Tarih aralığını hesapla
     const now = new Date();
     let startDate, endDate;
     
@@ -1293,14 +1114,14 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
         break;
       case 'weekly':
         startDate = new Date(now);
-        startDate.setDate(startDate.getDate() - startDate.getDay()); // Haftanın başlangıcı (Pazar)
+        startDate.setDate(startDate.getDate() - startDate.getDay());
         startDate.setHours(0, 0, 0, 0);
         endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + 7);
         break;
       case 'monthly':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1); // Ayın başlangıcı
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // Sonraki ayın başlangıcı
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         break;
       default:
         startDate = new Date(now);
@@ -1317,14 +1138,12 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       status: { in: ['DELIVERED', 'COMPLETED'] }
     };
 
-    // Şube yöneticisi ise sadece kendi şubesinin verilerini getir
     if (req.user.role === 'BRANCH_MANAGER') {
       where.branchId = req.user.branchId;
     } else if (branchId) {
       where.branchId = Number(branchId);
     }
 
-    // Süper admin için tüm şubeler, şube yöneticisi için sadece kendi şubesi
     let branches = [];
     if (req.user.role === 'SUPER_ADMIN') {
       branches = await prisma.branch.findMany({ where: { isActive: true } });
@@ -1348,7 +1167,6 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
       const orderCount = orders.length;
       const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
       
-      // Günlük ortalama hesapla
       let dailyAverage = 0;
       if (period === 'weekly') {
         dailyAverage = totalRevenue / 7;
@@ -1356,7 +1174,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
         const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
         dailyAverage = totalRevenue / daysInMonth;
       } else {
-        dailyAverage = totalRevenue; // Günlük için zaten günlük toplam
+        dailyAverage = totalRevenue;
       }
       
       stats.push({
@@ -1374,12 +1192,10 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('İstatistik hatası:', error);
     res.status(500).json({ error: 'İstatistik verisi getirilemedi' });
   }
 });
 
-// Eski endpoint'i geriye uyumluluk için koru
 app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
@@ -1400,14 +1216,12 @@ app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
       status: { in: ['DELIVERED', 'COMPLETED'] }
     };
 
-    // Şube yöneticisi ise sadece kendi şubesinin verilerini getir
     if (req.user.role === 'BRANCH_MANAGER') {
       where.branchId = req.user.branchId;
     } else if (branchId) {
       where.branchId = Number(branchId);
     }
 
-    // Süper admin için tüm şubeler, şube yöneticisi için sadece kendi şubesi
     let branches = [];
     if (req.user.role === 'SUPER_ADMIN') {
       branches = await prisma.branch.findMany({ where: { isActive: true } });
@@ -1440,31 +1254,25 @@ app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
 
     res.json(stats);
   } catch (error) {
-    console.error('Günlük istatistik hatası:', error);
     res.status(500).json({ error: 'Günlük istatistik verisi getirilemedi' });
   }
 });
 
-// Veritabanı bağlantısını test et ve seed data'yı çalıştır
 testDatabaseConnection().then(async (isConnected) => {
   if (isConnected) {
-    // Veritabanı bağlantısı başarılı, seed data'yı çalıştır
     seedData().catch(error => {
       console.error('❌ Seed data hatası:', error);
-      // Seed data hatası olsa bile sunucu çalışmaya devam etsin
     });
   } else {
     console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
     console.log('💡 Render build sırasında migration yapılacak');
     
-    // Tablolar yoksa otomatik olarak oluşturmayı dene
     try {
       console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
       const { execSync } = require('child_process');
       execSync('npx prisma db push --accept-data-loss --force-reset', { stdio: 'inherit' });
       console.log('✅ Veritabanı tabloları oluşturuldu');
       
-      // Tablolar oluşturulduktan sonra seed data'yı çalıştır
       setTimeout(() => {
         seedData().catch(error => {
           console.error('❌ Seed data hatası:', error);
@@ -1478,7 +1286,6 @@ testDatabaseConnection().then(async (isConnected) => {
   console.error('❌ Veritabanı bağlantı testi hatası:', error);
 });
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Fast Food Sales API',
@@ -1500,16 +1307,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Server hatası:', err);
   res.status(500).json({ 
     error: 'Sunucu hatası',
     message: isProduction ? 'Bir hata oluştu' : err.message 
   });
 });
 
-// 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
