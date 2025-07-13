@@ -1177,7 +1177,7 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
           },
           orderBy: { createdAt: 'desc' }
         },
-        userAddresses: {
+        addresses: {
           orderBy: [
             { isDefault: 'desc' },
             { createdAt: 'desc' }
@@ -1200,7 +1200,7 @@ app.get('/api/customer/profile', authenticateToken, async (req, res) => {
         role: user.role
       },
       orders: user.orders,
-      addresses: user.userAddresses
+      addresses: user.addresses
     });
   } catch (error) {
     res.status(500).json({ error: 'Profil bilgileri getirilemedi' });
@@ -1227,6 +1227,18 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
     }
 
     console.log('Profil güncelleme isteği:', { userId: req.user.userId, name, email, phone, address });
+
+    // Email unique constraint kontrolü - kullanıcının kendi email'ini güncellemesine izin ver
+    const existingUser = await prisma.user.findFirst({
+      where: { 
+        email: email.trim(),
+        id: { not: req.user.userId }
+      }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ error: 'Bu email adresi başka bir kullanıcı tarafından kullanılıyor' });
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: req.user.userId },
