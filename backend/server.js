@@ -576,6 +576,11 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
       include: {
         branch: true,
         customer: true,
+        table: {
+          include: {
+            branch: true
+          }
+        },
         orderItems: {
           include: {
             product: true
