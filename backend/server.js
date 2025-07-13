@@ -537,7 +537,8 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
           quantity: item.quantity,
           price: item.price,
           orderId: order.id,
-          productId: item.productId
+          productId: item.productId,
+          note: item.note || null // Ürün notunu kaydet
         }
       });
     }
@@ -1739,7 +1740,8 @@ app.post('/api/table/:tableId/order', async (req, res) => {
             orderId: order.id,
             productId: item.productId,
             quantity: item.quantity,
-            price: product.price
+            price: product.price,
+            note: item.note || null // Ürün notunu kaydet
           }
         });
       }
