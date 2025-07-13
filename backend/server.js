@@ -1318,12 +1318,18 @@ async function initializeDatabase() {
         const { PrismaClient } = require('@prisma/client');
         const tempPrisma = new PrismaClient();
         
-        // Veritabanı şemasını oluştur (shell komutu olmadan)
-        await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
-        console.log('✅ Schema oluşturuldu');
+        // Veritabanı türünü kontrol et ve uygun şema oluştur
+        const dbType = process.env.DATABASE_URL?.includes('postgresql') ? 'postgresql' : 'sqlite';
         
-        // Tabloları güvenli şekilde oluştur
-        const tables = [
+        if (dbType === 'postgresql') {
+          await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
+          console.log('✅ PostgreSQL schema oluşturuldu');
+        } else {
+          console.log('✅ SQLite kullanılıyor - schema gerekli değil');
+        }
+        
+        // Tabloları veritabanı türüne göre oluştur
+        const tables = dbType === 'postgresql' ? [
           `CREATE TABLE IF NOT EXISTS "User" (
             "id" SERIAL PRIMARY KEY,
             "email" TEXT NOT NULL UNIQUE,
@@ -1402,6 +1408,85 @@ async function initializeDatabase() {
             "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
           )`
+        ] : [
+          `CREATE TABLE IF NOT EXISTS "User" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "email" TEXT NOT NULL UNIQUE,
+            "password" TEXT NOT NULL,
+            "name" TEXT,
+            "phone" TEXT,
+            "address" TEXT,
+            "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
+            "branchId" INTEGER,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Branch" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "name" TEXT NOT NULL,
+            "address" TEXT,
+            "phone" TEXT,
+            "isActive" INTEGER NOT NULL DEFAULT 1,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Category" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "name" TEXT NOT NULL,
+            "description" TEXT,
+            "isActive" INTEGER NOT NULL DEFAULT 1,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Product" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "name" TEXT NOT NULL,
+            "description" TEXT,
+            "price" REAL NOT NULL,
+            "image" TEXT,
+            "categoryId" INTEGER,
+            "branchId" INTEGER,
+            "isActive" INTEGER NOT NULL DEFAULT 1,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Customer" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "name" TEXT NOT NULL,
+            "phone" TEXT NOT NULL UNIQUE,
+            "email" TEXT,
+            "address" TEXT,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Order" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "orderNumber" TEXT NOT NULL UNIQUE,
+            "totalAmount" REAL NOT NULL,
+            "status" TEXT NOT NULL DEFAULT 'PENDING',
+            "notes" TEXT,
+            "customerId" INTEGER,
+            "branchId" INTEGER NOT NULL,
+            "deliveryType" TEXT DEFAULT 'PICKUP',
+            "paymentMethod" TEXT DEFAULT 'CASH',
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "OrderItem" (
+            "id" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "orderId" INTEGER NOT NULL,
+            "productId" INTEGER NOT NULL,
+            "quantity" INTEGER NOT NULL,
+            "price" REAL NOT NULL,
+            "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`
         ];
         
         // Tabloları oluştur
@@ -1411,8 +1496,16 @@ async function initializeDatabase() {
         
         console.log('✅ Tüm tablolar başarıyla oluşturuldu');
         
-        // Index'leri oluştur
-        const indexes = [
+        // Index'leri veritabanı türüne göre oluştur
+        const indexes = dbType === 'postgresql' ? [
+          'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
+          'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
+          'CREATE INDEX IF NOT EXISTS "Order_branchId_idx" ON "Order"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "Order_customerId_idx" ON "Order"("customerId")',
+          'CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId")',
+          'CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId")'
+        ] : [
           'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
           'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
           'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
