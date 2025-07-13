@@ -27,13 +27,19 @@ if (!process.env.DATABASE_URL) {
 async function testDatabaseConnection() {
   try {
     await prisma.$connect();
+    console.log('✅ Veritabanı bağlantısı başarılı');
+    
     try {
-      await prisma.branch.count();
+      const branchCount = await prisma.branch.count();
+      const userCount = await prisma.user.count();
+      console.log(`📊 Mevcut veriler: ${branchCount} şube, ${userCount} kullanıcı`);
+      return true;
     } catch (tableError) {
+      console.log('⚠️ Tablolar henüz oluşturulmamış');
       return false;
     }
-    return true;
   } catch (error) {
+    console.error('❌ Veritabanı bağlantı hatası:', error);
     return false;
   }
 }
@@ -777,6 +783,13 @@ async function seedData() {
   try {
     await prisma.$connect();
     
+    // Veritabanında veri var mı kontrol et
+    const existingUsers = await prisma.user.count();
+    if (existingUsers > 0) {
+      console.log('✅ Veritabanında zaten veri var, seed data atlanıyor');
+      return;
+    }
+    
     const categories = [
       { name: 'Pizza', description: 'Çeşitli pizza türleri' },
       { name: 'Burger', description: 'Hamburger ve sandviçler' },
@@ -1179,73 +1192,21 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/admin/daily-stats', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
 
-    const { branchId } = req.query;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    let where = {
-      createdAt: {
-        gte: today,
-        lt: tomorrow
-      },
-      status: { in: ['DELIVERED', 'COMPLETED'] }
-    };
-
-    if (req.user.role === 'BRANCH_MANAGER') {
-      where.branchId = req.user.branchId;
-    } else if (branchId) {
-      where.branchId = Number(branchId);
-    }
-
-    let branches = [];
-    if (req.user.role === 'SUPER_ADMIN') {
-      branches = await prisma.branch.findMany({ where: { isActive: true } });
-    } else {
-      const userBranch = await prisma.branch.findUnique({
-        where: { id: req.user.branchId }
-      });
-      if (userBranch) branches = [userBranch];
-    }
-
-    const stats = [];
-    for (const branch of branches) {
-      if (branchId && branch.id !== Number(branchId)) continue;
-      
-      const orders = await prisma.order.findMany({
-        where: { ...where, branchId: branch.id },
-        select: { totalAmount: true, id: true }
-      });
-      
-      const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-      const orderCount = orders.length;
-      
-      stats.push({
-        branchId: branch.id,
-        branchName: branch.name,
-        dailyOrders: orderCount,
-        dailyRevenue: totalRevenue
-      });
-    }
-
-    res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: 'Günlük istatistik verisi getirilemedi' });
-  }
-});
 
 testDatabaseConnection().then(async (isConnected) => {
   if (isConnected) {
-    seedData().catch(error => {
-      console.error('❌ Seed data hatası:', error);
-    });
+    // Veritabanında veri var mı kontrol et
+    const existingData = await prisma.user.count();
+    
+    if (existingData === 0) {
+      console.log('📊 Veritabanı boş, seed data oluşturuluyor...');
+      seedData().catch(error => {
+        console.error('❌ Seed data hatası:', error);
+      });
+    } else {
+      console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
+    }
   } else {
     console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
     console.log('💡 Render build sırasında migration yapılacak');

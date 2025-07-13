@@ -2,19 +2,17 @@ services:
   - type: web
     name: yemek5-backend
     env: node
-    buildCommand: |
-      npm install
-      npx prisma generate
-      npx prisma db push --accept-data-loss --force-reset
-    startCommand: node server.js
+    plan: free
+    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: DATABASE_URL
-        value: file:./dev.db
+        sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: SERVER_PORT
+        value: 3001
       - key: FRONTEND_URL
-        value: https://siparisnet.netlify.app 
+        value: https://yemek5-frontend.onrender.com 
