@@ -5,14 +5,14 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  category: {
+  category?: {
     id: number;
     name: string;
-  };
-  branch: {
+  } | null;
+  branch?: {
     id: number;
     name: string;
-  };
+  } | null;
   isActive: boolean;
   image?: string;
 }
@@ -74,10 +74,10 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.category.name}
+                  {product.category?.name || 'Kategori Yok'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.branch.name}
+                  {product.branch?.name || 'Şube Yok'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   ₺{product.price.toFixed(2)}

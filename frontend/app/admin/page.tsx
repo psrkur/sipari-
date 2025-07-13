@@ -453,7 +453,547 @@ export default function AdminPage() {
           />
         )}
 
-        {/* Diğer tablar için mevcut kodlar devam edecek */}
+        {activeTab === 'categories' && user && user.role === 'SUPER_ADMIN' && (
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Kategoriler ({categories.length})</h2>
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
+                >
+                  Kategori Ekle
+                </button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori Adı</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Açıklama</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {categories.map((category) => (
+                    <tr key={category.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {category.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {category.description}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {category.isActive ? 'Aktif' : 'Pasif'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => {
+                              setEditingCategory(category);
+                              setEditCategoryForm({
+                                name: category.name,
+                                description: category.description || '',
+                                isActive: category.isActive
+                              });
+                              setShowEditCategoryModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={() => deleteCategory(category.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'daily-stats' && (
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Günlük İstatistikler</h2>
+                <div className="flex space-x-4">
+                  {user && user.role === 'SUPER_ADMIN' && (
+                    <select
+                      value={statsBranchId}
+                      onChange={(e) => setStatsBranchId(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    >
+                      <option value="">Tüm Şubeler</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <select
+                    value={statsPeriod}
+                    onChange={(e) => setStatsPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                    className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  >
+                    <option value="daily">Günlük</option>
+                    <option value="weekly">Haftalık</option>
+                    <option value="monthly">Aylık</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              {statsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">İstatistikler yükleniyor...</p>
+                </div>
+              ) : stats.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {stats.map((stat, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">{stat.branchName}</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Sipariş Sayısı:</span>
+                          <span className="font-semibold">{stat.orders}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Toplam Gelir:</span>
+                          <span className="font-semibold text-green-600">₺{stat.revenue?.toFixed(2) || '0.00'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Ortalama Sipariş:</span>
+                          <span className="font-semibold">₺{stat.averageOrder?.toFixed(2) || '0.00'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Günlük Ortalama:</span>
+                          <span className="font-semibold text-blue-600">₺{stat.dailyAverage?.toFixed(2) || '0.00'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Bu dönem için istatistik verisi bulunamadı.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Modals */}
+        {/* User Modal */}
+        {showUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Kullanıcı Ekle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ad Soyad"
+                  value={userForm.name}
+                  onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <input
+                  type="email"
+                  placeholder="E-posta"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <input
+                  type="password"
+                  placeholder="Şifre"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <select
+                  value={userForm.role}
+                  onChange={(e) => setUserForm({...userForm, role: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="CUSTOMER">Müşteri</option>
+                  <option value="BRANCH_MANAGER">Şube Yöneticisi</option>
+                  <option value="SUPER_ADMIN">Süper Admin</option>
+                </select>
+                {userForm.role === 'BRANCH_MANAGER' && (
+                  <select
+                    value={userForm.branchId}
+                    onChange={(e) => setUserForm({...userForm, branchId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Şube Seçin</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await axios.post(API_ENDPOINTS.ADMIN_USERS, userForm, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      toast.success('Kullanıcı başarıyla eklendi');
+                      setShowUserModal(false);
+                      setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
+                      const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setUsers(response.data);
+                    } catch (error: any) {
+                      toast.error(`Kullanıcı eklenemedi: ${error.response?.data?.error || error.message}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Product Modal */}
+        {showProductModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Ürün Ekle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ürün Adı"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+                <input
+                  type="number"
+                  placeholder="Fiyat"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <select
+                  value={productForm.categoryId}
+                  onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Kategori Seçin</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={productForm.branchId}
+                  onChange={(e) => setProductForm({...productForm, branchId: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Şube Seçin</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setProductImage(e.target.files?.[0] || null)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowProductModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const formData = new FormData();
+                      formData.append('name', productForm.name);
+                      formData.append('description', productForm.description);
+                      formData.append('price', productForm.price);
+                      formData.append('categoryId', productForm.categoryId);
+                      formData.append('branchId', productForm.branchId);
+                      if (productImage) {
+                        formData.append('image', productImage);
+                      }
+                      
+                      await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
+                        headers: { 
+                          Authorization: `Bearer ${token}`,
+                          'Content-Type': 'multipart/form-data'
+                        }
+                      });
+                      toast.success('Ürün başarıyla eklendi');
+                      setShowProductModal(false);
+                      setProductForm({ name: '', description: '', price: '', categoryId: '', branchId: '' });
+                      setProductImage(null);
+                      const response = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setProducts(response.data);
+                    } catch (error: any) {
+                      toast.error(`Ürün eklenemedi: ${error.response?.data?.error || error.message}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Product Modal */}
+        {showEditProductModal && editingProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Ürün Düzenle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ürün Adı"
+                  value={editProductForm.name}
+                  onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={editProductForm.description}
+                  onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+                <input
+                  type="number"
+                  placeholder="Fiyat"
+                  value={editProductForm.price}
+                  onChange={(e) => setEditProductForm({...editProductForm, price: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <select
+                  value={editProductForm.categoryId}
+                  onChange={(e) => setEditProductForm({...editProductForm, categoryId: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Kategori Seçin</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={editProductForm.branchId}
+                  onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                >
+                  <option value="">Şube Seçin</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editProductForm.isActive}
+                    onChange={(e) => setEditProductForm({...editProductForm, isActive: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Aktif</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setEditProductImage(e.target.files?.[0] || null)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditProductModal(false);
+                    setEditingProduct(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={updateProduct}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Category Modal */}
+        {showCategoryModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Kategori Ekle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Kategori Adı"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowCategoryModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      toast.success('Kategori başarıyla eklendi');
+                      setShowCategoryModal(false);
+                      setCategoryForm({ name: '', description: '' });
+                      const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setCategories(response.data);
+                    } catch (error: any) {
+                      toast.error(`Kategori eklenemedi: ${error.response?.data?.error || error.message}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Category Modal */}
+        {showEditCategoryModal && editingCategory && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Kategori Düzenle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Kategori Adı"
+                  value={editCategoryForm.name}
+                  onChange={(e) => setEditCategoryForm({...editCategoryForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={editCategoryForm.description}
+                  onChange={(e) => setEditCategoryForm({...editCategoryForm, description: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editCategoryForm.isActive}
+                    onChange={(e) => setEditCategoryForm({...editCategoryForm, isActive: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Aktif</span>
+                </label>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditCategoryModal(false);
+                    setEditingCategory(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_CATEGORY(editingCategory.id), editCategoryForm, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      toast.success('Kategori başarıyla güncellendi');
+                      setShowEditCategoryModal(false);
+                      setEditingCategory(null);
+                      const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setCategories(response.data);
+                    } catch (error: any) {
+                      toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

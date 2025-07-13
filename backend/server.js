@@ -416,23 +416,6 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
     
     const products = await prisma.product.findMany({
       include: {
-        branch: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    
-    res.json(products);
-  } catch (e) {
-    res.status(500).json({ error: 'Ürünler getirilemedi' });
-  }
-});
-
-app.get('/api/admin/products', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
-    
-    const products = await prisma.product.findMany({
-      include: {
         branch: true,
         category: true
       },
