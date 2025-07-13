@@ -822,6 +822,11 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
 
 app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), async (req, res) => {
   try {
+    console.log('=== PRODUCT UPDATE REQUEST ===');
+    console.log('Request body:', req.body);
+    console.log('User role:', req.user.role);
+    console.log('Product ID:', req.params.id);
+    
     const { id } = req.params;
     const { name, description, price, categoryId, branchId, isActive } = req.body;
     let image = undefined;
@@ -846,6 +851,10 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
     const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
                               Object.keys(req.body).length === 1 && 
                               req.body.hasOwnProperty('isActive');
+
+    console.log('Is only status update:', isOnlyStatusUpdate);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Has isActive property:', req.body.hasOwnProperty('isActive'));
 
     if (!isOnlyStatusUpdate && (!name || !price || !categoryId)) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -889,11 +898,15 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
 
     let updateData = {};
     
+    console.log('isActive value:', isActive);
+    console.log('isActive type:', typeof isActive);
+    
     if (req.user.role === 'BRANCH_MANAGER') {
       // Şube müdürleri sadece isActive değerini güncelleyebilir
       updateData = {
         isActive: isActiveBool !== undefined ? isActiveBool : true
       };
+      console.log('Branch manager update data:', updateData);
     } else {
       // Süper admin tüm alanları güncelleyebilir
       updateData = {
@@ -945,6 +958,9 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
 
       res.json(updatedProducts);
     } else {
+      console.log('Final update data:', updateData);
+      console.log('Product ID to update:', parseInt(id));
+      
       const product = await prisma.product.update({
         where: { id: parseInt(id) },
         data: updateData,
@@ -954,6 +970,7 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
         }
       });
 
+      console.log('Product updated successfully:', product.id);
       res.json(product);
     }
   } catch (error) {
