@@ -90,7 +90,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   {formatDate(order.createdAt)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  {order.status === 'DELIVERED' ? (
+                  {order.status === 'DELIVERED' || order.status === 'CANCELLED' ? (
                     <span className="text-gray-500 text-xs italic">
                       Değiştirilemez
                     </span>

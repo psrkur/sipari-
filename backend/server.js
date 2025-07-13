@@ -622,11 +622,18 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Sipariş bulunamadı' });
     }
 
-    // Eğer sipariş zaten teslim edildiyse, güncellemeye izin verme
+    // Eğer sipariş zaten teslim edildiyse veya iptal edildiyse, güncellemeye izin verme
     if (existingOrder.status === 'DELIVERED') {
       return res.status(400).json({ 
         error: 'Teslim edilen siparişler güncellenemez',
         message: 'Bu sipariş zaten teslim edilmiş ve artık değiştirilemez.'
+      });
+    }
+
+    if (existingOrder.status === 'CANCELLED') {
+      return res.status(400).json({ 
+        error: 'İptal edilen siparişler güncellenemez',
+        message: 'Bu sipariş zaten iptal edilmiş ve artık değiştirilemez.'
       });
     }
 

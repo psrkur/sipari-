@@ -266,6 +266,8 @@ export default function AdminPage() {
     } catch (error: any) {
       if (error.response?.status === 400 && error.response?.data?.error === 'Teslim edilen siparişler güncellenemez') {
         toast.error('Bu sipariş zaten teslim edilmiş ve artık değiştirilemez.');
+      } else if (error.response?.status === 400 && error.response?.data?.error === 'İptal edilen siparişler güncellenemez') {
+        toast.error('Bu sipariş zaten iptal edilmiş ve artık değiştirilemez.');
       } else {
         toast.error(`Sipariş durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
       }
