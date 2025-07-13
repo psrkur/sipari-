@@ -62,9 +62,12 @@ export default function Cart({ selectedBranch }: CartProps) {
       if (!token || !user) return
 
       try {
+        console.log('Loading customer data...')
         const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
           headers: { Authorization: `Bearer ${token}` }
         })
+
+        console.log('Customer data response:', response.data)
 
         const customerInfo = {
           name: response.data.user.name,
@@ -87,21 +90,74 @@ export default function Cart({ selectedBranch }: CartProps) {
           setValue('address', customerInfo.address)
         }
         
+        // Form değerlerini set et
         setValue('name', customerInfo.name)
         setValue('email', customerInfo.email)
         setValue('phone', customerInfo.phone)
         setValue('deliveryType', customerInfo.deliveryType)
+        setValue('paymentMethod', customerInfo.paymentMethod)
         
+        console.log('Customer data loaded successfully:', customerInfo)
         toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
-      } catch (error) {
+      } catch (error: any) {
+        console.error('Customer data loading error:', error)
         toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
       }
     }
 
-    if (showCheckout) {
+    // Kullanıcı ve token varsa hemen yükle
+    if (token && user) {
       loadCustomerData()
     }
-  }, [showCheckout, token, user, setValue])
+  }, [token, user, setValue])
+
+  // showCheckout değiştiğinde de yükle (ek güvenlik için)
+  useEffect(() => {
+    if (showCheckout && token && user && !customerData) {
+      const loadCustomerData = async () => {
+        try {
+          console.log('Loading customer data for checkout...')
+          const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+
+          const customerInfo = {
+            name: response.data.user.name,
+            email: response.data.user.email,
+            phone: response.data.user.phone || '',
+            address: response.data.user.address || '',
+            deliveryType: 'pickup' as const,
+            paymentMethod: 'cash' as const
+          }
+
+          setCustomerData(customerInfo)
+          setUserAddresses(response.data.addresses || [])
+          
+          // Varsayılan adresi seç
+          const defaultAddress = response.data.addresses?.find((addr: Address) => addr.isDefault)
+          if (defaultAddress) {
+            setSelectedAddress(defaultAddress)
+            setValue('address', defaultAddress.address)
+          } else {
+            setValue('address', customerInfo.address)
+          }
+          
+          // Form değerlerini set et
+          setValue('name', customerInfo.name)
+          setValue('email', customerInfo.email)
+          setValue('phone', customerInfo.phone)
+          setValue('deliveryType', customerInfo.deliveryType)
+          setValue('paymentMethod', customerInfo.paymentMethod)
+          
+          console.log('Customer data loaded for checkout:', customerInfo)
+        } catch (error: any) {
+          console.error('Customer data loading error for checkout:', error)
+        }
+      }
+
+      loadCustomerData()
+    }
+  }, [showCheckout, token, user, customerData, setValue])
 
   const handleCheckout = async (customerInfo: CustomerInfo) => {
     if (!selectedBranch) {
@@ -397,11 +453,11 @@ export default function Cart({ selectedBranch }: CartProps) {
                           <div className="flex space-x-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedAddress(null)
-                                setValue('address', '')
-                                toast.info('Manuel adres girişi için hazır')
-                              }}
+                                                             onClick={() => {
+                                 setSelectedAddress(null)
+                                 setValue('address', '')
+                                 toast.success('Manuel adres girişi için hazır')
+                               }}
                               className="text-gray-600 hover:text-gray-800 text-sm underline"
                             >
                               Manuel Adres Gir
