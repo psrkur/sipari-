@@ -62,7 +62,15 @@ export default function ProfilePage() {
   }, [user, token])
 
   const fetchProfile = async () => {
+    if (!token) {
+      console.error('Token bulunamadı');
+      toast.error('Giriş yapmanız gerekiyor');
+      router.push('/');
+      return;
+    }
+
     try {
+      console.log('Token:', token);
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -74,6 +82,8 @@ export default function ProfilePage() {
         address: response.data.user.address || ''
       })
     } catch (error: any) {
+      console.error('Profil yükleme hatası:', error);
+      console.error('Error response:', error.response);
       toast.error('Profil bilgileri yüklenemedi')
       if (error.response?.status === 401) {
         logout()

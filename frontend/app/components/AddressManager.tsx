@@ -41,13 +41,21 @@ const AddressManager: React.FC<AddressManagerProps> = ({
   }, []);
 
   const fetchAddresses = async () => {
+    if (!token) {
+      console.error('Token bulunamadı');
+      toast.error('Giriş yapmanız gerekiyor');
+      return;
+    }
+
     try {
+      console.log('Token:', token);
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_ADDRESSES, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setAddresses(response.data);
     } catch (error: any) {
       console.error('Adresler yüklenemedi:', error);
+      console.error('Error response:', error.response);
       toast.error('Adresler yüklenemedi');
     } finally {
       setLoading(false);
