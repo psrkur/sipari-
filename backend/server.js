@@ -1214,17 +1214,132 @@ async function initializeDatabase() {
       }
     } else {
       console.log('⚠️ Veritabanı tabloları oluşturulmamış');
-      console.log('🔒 Production ortamında otomatik migration yapılmıyor');
-      console.log('💡 Manuel olarak veritabanı tablolarını oluşturmanız gerekiyor');
+      console.log('🔧 Güvenli migration yapılıyor...');
       
-      // Production'da otomatik migration yapmıyoruz
-      if (!isProduction) {
+      try {
+        console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
+        const { execSync } = require('child_process');
+        
+        // Güvenli migration - sadece tabloları oluştur
+        execSync('npx prisma db push --accept-data-loss=false', { stdio: 'inherit' });
+        console.log('✅ Veritabanı tabloları oluşturuldu');
+        
+        // Tablolar oluşturulduktan sonra seed data ekle
+        setTimeout(async () => {
+          try {
+            await seedData();
+            console.log('✅ Seed data başarıyla oluşturuldu');
+          } catch (seedError) {
+            console.error('❌ Seed data hatası:', seedError);
+          }
+        }, 3000);
+      } catch (migrationError) {
+        console.error('❌ Migration hatası:', migrationError);
+        console.log('💡 Alternatif migration yöntemi deneniyor...');
+        
+        // Alternatif yöntem: Prisma client ile migration
         try {
-          console.log('🔧 Development ortamında tabloları oluşturmayı deniyorum...');
-          const { execSync } = require('child_process');
-          execSync('npx prisma db push', { stdio: 'inherit' });
-          console.log('✅ Veritabanı tabloları oluşturuldu');
+          console.log('🔧 Prisma client ile migration deneniyor...');
+          await prisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
+          console.log('✅ Schema oluşturuldu');
           
+          // Tabloları manuel oluştur
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "User" (
+              "id" SERIAL PRIMARY KEY,
+              "email" TEXT NOT NULL UNIQUE,
+              "password" TEXT NOT NULL,
+              "name" TEXT,
+              "phone" TEXT,
+              "address" TEXT,
+              "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
+              "branchId" INTEGER,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "Branch" (
+              "id" SERIAL PRIMARY KEY,
+              "name" TEXT NOT NULL,
+              "address" TEXT,
+              "phone" TEXT,
+              "isActive" BOOLEAN NOT NULL DEFAULT true,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "Category" (
+              "id" SERIAL PRIMARY KEY,
+              "name" TEXT NOT NULL,
+              "description" TEXT,
+              "isActive" BOOLEAN NOT NULL DEFAULT true,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "Product" (
+              "id" SERIAL PRIMARY KEY,
+              "name" TEXT NOT NULL,
+              "description" TEXT,
+              "price" DECIMAL(10,2) NOT NULL,
+              "image" TEXT,
+              "categoryId" INTEGER,
+              "branchId" INTEGER,
+              "isActive" BOOLEAN NOT NULL DEFAULT true,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "Customer" (
+              "id" SERIAL PRIMARY KEY,
+              "name" TEXT NOT NULL,
+              "phone" TEXT NOT NULL UNIQUE,
+              "email" TEXT,
+              "address" TEXT,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "Order" (
+              "id" SERIAL PRIMARY KEY,
+              "orderNumber" TEXT NOT NULL UNIQUE,
+              "totalAmount" DECIMAL(10,2) NOT NULL,
+              "status" TEXT NOT NULL DEFAULT 'PENDING',
+              "notes" TEXT,
+              "customerId" INTEGER,
+              "branchId" INTEGER NOT NULL,
+              "deliveryType" TEXT DEFAULT 'PICKUP',
+              "paymentMethod" TEXT DEFAULT 'CASH',
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          await prisma.$executeRaw`
+            CREATE TABLE IF NOT EXISTS "OrderItem" (
+              "id" SERIAL PRIMARY KEY,
+              "orderId" INTEGER NOT NULL,
+              "productId" INTEGER NOT NULL,
+              "quantity" INTEGER NOT NULL,
+              "price" DECIMAL(10,2) NOT NULL,
+              "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              "updatedAt" TIMESTAMP(3) NOT NULL
+            )
+          `;
+          
+          console.log('✅ Tablolar başarıyla oluşturuldu');
+          
+          // Seed data ekle
           setTimeout(async () => {
             try {
               await seedData();
@@ -1232,9 +1347,11 @@ async function initializeDatabase() {
             } catch (seedError) {
               console.error('❌ Seed data hatası:', seedError);
             }
-          }, 3000);
-        } catch (migrationError) {
-          console.error('❌ Migration hatası:', migrationError);
+          }, 2000);
+          
+        } catch (rawError) {
+          console.error('❌ Raw SQL migration hatası:', rawError);
+          console.log('💡 Veritabanı tabloları manuel olarak oluşturulmalı');
         }
       }
     }
