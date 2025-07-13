@@ -270,6 +270,35 @@ export default function TableOrder() {
         </div>
       </div>
 
+      {/* Sepet Listesi */}
+      <div className="bg-white rounded-lg shadow p-4 mb-4 max-w-lg mx-auto">
+        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
+          <ShoppingCart className="h-5 w-5" /> Sepetiniz
+        </h2>
+        {cart.length === 0 ? (
+          <p className="text-gray-500 text-center py-4">Sepetiniz boş</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {cart.map(item => (
+              <li key={item.productId} className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <span className="font-medium">{item.name}</span>
+                  <span className="ml-2 text-gray-500">x{item.quantity}</span>
+                  <span className="ml-2 text-blue-600 font-semibold">₺{(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+                <button
+                  className="ml-4 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
+                  onClick={() => removeFromCart(item.productId)}
+                  aria-label="Ürünü çıkar"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* Ürünler */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-24">
         {products.map(product => (
