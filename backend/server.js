@@ -950,12 +950,20 @@ async function seedData() {
   try {
     await prisma.$connect();
     
-    // Veritabanında veri var mı kontrol et
+    // Veritabanında veri var mı kontrol et - daha kapsamlı kontrol
     const existingUsers = await prisma.user.count();
-    if (existingUsers > 0) {
+    const existingBranches = await prisma.branch.count();
+    const existingCategories = await prisma.category.count();
+    const existingProducts = await prisma.product.count();
+    
+    // Eğer herhangi bir veri varsa seed data atla
+    if (existingUsers > 0 || existingBranches > 0 || existingCategories > 0 || existingProducts > 0) {
       console.log('✅ Veritabanında zaten veri var, seed data atlanıyor');
+      console.log(`📊 Mevcut veriler: ${existingUsers} kullanıcı, ${existingBranches} şube, ${existingCategories} kategori, ${existingProducts} ürün`);
       return;
     }
+    
+    console.log('📦 Veritabanı boş, seed data oluşturuluyor...');
     
     const categories = [
       { name: 'Pizza', description: 'Çeşitli pizza türleri' },
@@ -1368,16 +1376,19 @@ async function initializeDatabase() {
     const isConnected = await testDatabaseConnection();
     
     if (isConnected) {
-      // Veritabanında veri var mı kontrol et
-      const existingData = await prisma.user.count();
+      // Veritabanında veri var mı kontrol et - daha kapsamlı kontrol
+      const existingUsers = await prisma.user.count();
+      const existingBranches = await prisma.branch.count();
+      const existingCategories = await prisma.category.count();
+      const existingProducts = await prisma.product.count();
       
-      if (existingData === 0) {
+      if (existingUsers === 0 && existingBranches === 0 && existingCategories === 0 && existingProducts === 0) {
         console.log('📊 Veritabanı boş, seed data oluşturuluyor...');
         await seedData();
         console.log('✅ Seed data başarıyla oluşturuldu');
       } else {
         console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
-        console.log(`📊 Mevcut kullanıcı sayısı: ${existingData}`);
+        console.log(`📊 Mevcut veriler: ${existingUsers} kullanıcı, ${existingBranches} şube, ${existingCategories} kategori, ${existingProducts} ürün`);
       }
     } else {
       console.log('⚠️ Veritabanı tabloları oluşturulmamış');
@@ -1591,11 +1602,16 @@ async function initializeDatabase() {
         // Temp Prisma client'ı kapat
         await tempPrisma.$disconnect();
         
-        // Seed data ekle
+        // Seed data ekle - sadece veritabanı boşsa
         setTimeout(async () => {
           try {
-            await seedData();
-            console.log('✅ Seed data başarıyla oluşturuldu');
+            const existingData = await prisma.user.count() + await prisma.branch.count() + await prisma.category.count() + await prisma.product.count();
+            if (existingData === 0) {
+              await seedData();
+              console.log('✅ Seed data başarıyla oluşturuldu');
+            } else {
+              console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
+            }
           } catch (seedError) {
             console.error('❌ Seed data hatası:', seedError);
           }
@@ -1719,11 +1735,16 @@ async function initializeDatabase() {
           
           console.log('✅ Index\'ler oluşturuldu');
           
-          // Seed data ekle
+          // Seed data ekle - sadece veritabanı boşsa
           setTimeout(async () => {
             try {
-              await seedData();
-              console.log('✅ Seed data başarıyla oluşturuldu');
+              const existingData = await prisma.user.count() + await prisma.branch.count() + await prisma.category.count() + await prisma.product.count();
+              if (existingData === 0) {
+                await seedData();
+                console.log('✅ Seed data başarıyla oluşturuldu');
+              } else {
+                console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
+              }
             } catch (seedError) {
               console.error('❌ Seed data hatası:', seedError);
             }
