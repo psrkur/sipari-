@@ -72,6 +72,18 @@ export const API_ENDPOINTS = {
   ADMIN_CLEANUP_IMAGES: `${API_BASE_URL}/api/admin/cleanup-images`,
   ADMIN_IMAGE_STATUS: `${API_BASE_URL}/api/admin/image-status`,
   
+  // Table Management
+  ADMIN_TABLES: `${API_BASE_URL}/api/admin/tables`,
+  ADMIN_TABLES_BY_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/tables/${branchId}`,
+  ADMIN_TABLE_QR: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/qr`,
+  ADMIN_UPDATE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
+  ADMIN_DELETE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
+  
+  // Table Order
+  TABLE_INFO: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}`,
+  TABLE_PRODUCTS: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/products`,
+  TABLE_ORDER: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/order`,
+  
   // Images
   IMAGE_URL: (imagePath: string) => `${API_BASE_URL}${imagePath}`,
 };

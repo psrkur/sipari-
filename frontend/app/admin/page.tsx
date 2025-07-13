@@ -78,7 +78,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [stats, setStats] = useState<any[]>([]);
@@ -668,6 +668,18 @@ export default function AdminPage() {
               >
                 Günlük İstatistikler
               </button>
+              {user && user.role === 'SUPER_ADMIN' && (
+                <button
+                  onClick={() => setActiveTab('tables')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'tables'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Masa Yönetimi
+                </button>
+              )}
             </nav>
           </div>
         </div>
@@ -795,6 +807,28 @@ export default function AdminPage() {
             onEditBranch={editBranch}
             onDeleteBranch={deleteBranch}
           />
+        )}
+
+        {activeTab === 'tables' && user && user.role === 'SUPER_ADMIN' && (
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-900">Masa Yönetimi</h2>
+                <button 
+                  onClick={() => window.open('/admin/table-management', '_blank')}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700"
+                >
+                  Masa Yönetimi Sayfasını Aç
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600">
+                Masa yönetimi için ayrı bir sayfa kullanılmaktadır. 
+                QR kod oluşturma ve masa yönetimi işlemleri için yukarıdaki butona tıklayın.
+              </p>
+            </div>
+          </div>
         )}
 
         {activeTab === 'daily-stats' && (

@@ -97,6 +97,7 @@ testDatabaseConnection();
 
 const multer = require('multer');
 const path = require('path');
+const QRCode = require('qrcode');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -1389,6 +1390,349 @@ app.delete('/api/customer/addresses/:id', authenticateToken, async (req, res) =>
   } catch (error) {
     console.error('Adres silme hatası:', error);
     res.status(500).json({ error: 'Adres silinemedi' });
+  }
+});
+
+// ==================== MASA YÖNETİMİ ENDPOINT'LERİ ====================
+
+// Tüm masaları getir (Admin)
+app.get('/api/admin/tables', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const tables = await prisma.table.findMany({
+      include: {
+        branch: true
+      },
+      orderBy: [
+        { branch: { name: 'asc' } },
+        { number: 'asc' }
+      ]
+    });
+    
+    res.json(tables);
+  } catch (error) {
+    console.error('Masalar getirilemedi:', error);
+    res.status(500).json({ error: 'Masalar getirilemedi' });
+  }
+});
+
+// Şubeye göre masaları getir
+app.get('/api/admin/tables/:branchId', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { branchId } = req.params;
+    
+    const tables = await prisma.table.findMany({
+      where: { branchId: parseInt(branchId) },
+      include: {
+        branch: true
+      },
+      orderBy: { number: 'asc' }
+    });
+    
+    res.json(tables);
+  } catch (error) {
+    console.error('Şube masaları getirilemedi:', error);
+    res.status(500).json({ error: 'Şube masaları getirilemedi' });
+  }
+});
+
+// Yeni masa ekle
+app.post('/api/admin/tables', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { number, branchId } = req.body;
+    
+    if (!number || !branchId) {
+      return res.status(400).json({ error: 'Masa numarası ve şube ID gerekli' });
+    }
+
+    // Aynı şubede aynı masa numarası var mı kontrol et
+    const existingTable = await prisma.table.findFirst({
+      where: { 
+        number: number,
+        branchId: parseInt(branchId)
+      }
+    });
+
+    if (existingTable) {
+      return res.status(400).json({ error: 'Bu masa numarası zaten kullanımda' });
+    }
+
+    const newTable = await prisma.table.create({
+      data: {
+        number,
+        branchId: parseInt(branchId),
+        isActive: true
+      },
+      include: {
+        branch: true
+      }
+    });
+    
+    res.status(201).json(newTable);
+  } catch (error) {
+    console.error('Masa ekleme hatası:', error);
+    res.status(500).json({ error: 'Masa eklenemedi' });
+  }
+});
+
+// Masa güncelle
+app.put('/api/admin/tables/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+    const { number, isActive } = req.body;
+    
+    const updatedTable = await prisma.table.update({
+      where: { id: parseInt(id) },
+      data: {
+        number,
+        isActive
+      },
+      include: {
+        branch: true
+      }
+    });
+    
+    res.json(updatedTable);
+  } catch (error) {
+    console.error('Masa güncelleme hatası:', error);
+    res.status(500).json({ error: 'Masa güncellenemedi' });
+  }
+});
+
+// Masa sil
+app.delete('/api/admin/tables/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+    
+    await prisma.table.delete({
+      where: { id: parseInt(id) }
+    });
+    
+    res.json({ message: 'Masa silindi' });
+  } catch (error) {
+    console.error('Masa silme hatası:', error);
+    res.status(500).json({ error: 'Masa silinemedi' });
+  }
+});
+
+// QR kod oluştur
+app.get('/api/admin/tables/:id/qr', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+    
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        branch: true
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    // QR kod için URL oluştur
+    const qrData = {
+      tableId: table.id,
+      tableNumber: table.number,
+      branchId: table.branchId,
+      branchName: table.branch.name
+    };
+
+    const qrUrl = `${FRONTEND_URL}/table-order?data=${encodeURIComponent(JSON.stringify(qrData))}`;
+    
+    // QR kod oluştur
+    const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    res.json({
+      table,
+      qrCode: qrCodeDataUrl,
+      qrUrl: qrUrl
+    });
+  } catch (error) {
+    console.error('QR kod oluşturma hatası:', error);
+    res.status(500).json({ error: 'QR kod oluşturulamadı' });
+  }
+});
+
+// ==================== MASA SİPARİŞ ENDPOINT'LERİ ====================
+
+// QR kod ile masa bilgilerini getir
+app.get('/api/table/:tableId', async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        branch: true
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    if (!table.isActive) {
+      return res.status(400).json({ error: 'Bu masa aktif değil' });
+    }
+
+    res.json(table);
+  } catch (error) {
+    console.error('Masa bilgileri getirilemedi:', error);
+    res.status(500).json({ error: 'Masa bilgileri getirilemedi' });
+  }
+});
+
+// Masa için ürünleri getir
+app.get('/api/table/:tableId/products', async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        branch: true
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    if (!table.isActive) {
+      return res.status(400).json({ error: 'Bu masa aktif değil' });
+    }
+
+    // Şubeye ait ürünleri getir
+    const products = await prisma.product.findMany({
+      where: { 
+        branchId: table.branchId,
+        isActive: true
+      },
+      include: {
+        category: true
+      },
+      orderBy: [
+        { category: { name: 'asc' } },
+        { name: 'asc' }
+      ]
+    });
+    
+    res.json(products);
+  } catch (error) {
+    console.error('Masa ürünleri getirilemedi:', error);
+    res.status(500).json({ error: 'Masa ürünleri getirilemedi' });
+  }
+});
+
+// Masa siparişi oluştur
+app.post('/api/table/:tableId/order', async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const { items, notes } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Sipariş öğeleri gerekli' });
+    }
+
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        branch: true
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    if (!table.isActive) {
+      return res.status(400).json({ error: 'Bu masa aktif değil' });
+    }
+
+    // Toplam tutarı hesapla
+    let totalAmount = 0;
+    for (const item of items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+      if (product) {
+        totalAmount += product.price * item.quantity;
+      }
+    }
+
+    // Sipariş numarası oluştur
+    const orderNumber = `T${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    // Siparişi oluştur
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        branchId: table.branchId,
+        tableId: table.id,
+        status: 'PENDING',
+        totalAmount,
+        notes: notes || `Masa ${table.number} siparişi`,
+        orderType: 'TABLE'
+      }
+    });
+
+    // Sipariş öğelerini oluştur
+    for (const item of items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+      if (product) {
+        await prisma.orderItem.create({
+          data: {
+            orderId: order.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: product.price
+          }
+        });
+      }
+    }
+
+    res.status(201).json({
+      order,
+      table: table,
+      message: `Masa ${table.number} için sipariş oluşturuldu`
+    });
+  } catch (error) {
+    console.error('Masa siparişi oluşturma hatası:', error);
+    res.status(500).json({ error: 'Sipariş oluşturulamadı' });
   }
 });
 
