@@ -40,6 +40,7 @@ export default function Home() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [showCart, setShowCart] = useState(false)
+  const [showBranchDropdown, setShowBranchDropdown] = useState(false)
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -109,6 +110,7 @@ export default function Home() {
     setSelectedBranch(branch)
     setSelectedCategory('Tümü') // Şube değiştiğinde kategori seçimini sıfırla
     setShowMobileMenu(false) // Mobil menüyü kapat
+    setShowBranchDropdown(false) // Dropdown'ı kapat
     // Local storage'a kaydet
     localStorage.setItem('selectedBranch', JSON.stringify(branch));
   }
@@ -222,21 +224,52 @@ export default function Home() {
                 </h1>
               </div>
               
-              {/* Desktop Şube Seçimi */}
+              {/* Desktop Şube Dropdown */}
               <div className="relative branch-dropdown hidden lg:block">
                 <button
-                  onClick={handleBranchChange}
+                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
                   className="flex items-center space-x-2 sm:space-x-3 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-4 focus:ring-orange-200 transition-all duration-200 shadow-md"
                 >
                   <span className="text-sm sm:text-lg">🏪</span>
                   <span className="hidden sm:inline">{selectedBranch ? selectedBranch.name : 'Şube Seç'}</span>
                   <span className="sm:hidden">{selectedBranch ? 'Seçili' : 'Şube'}</span>
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className={`w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 
-
+                {/* Dropdown Menu */}
+                {showBranchDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-orange-200 z-50">
+                    <div className="p-2">
+                      <div className="text-xs font-semibold text-gray-500 px-3 py-2 border-b border-gray-100">
+                        Şube Seçin
+                      </div>
+                      {branches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={() => handleBranchSelect(branch)}
+                          className={`w-full text-left p-3 rounded-lg transition-all duration-200 hover:bg-orange-50 ${
+                            selectedBranch?.id === branch.id
+                              ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                              : 'text-gray-700'
+                          }`}
+                        >
+                          <div className="font-semibold text-sm">{branch.name}</div>
+                          <div className="text-xs opacity-80 mt-1">{branch.address}</div>
+                        </button>
+                      ))}
+                      <div className="border-t border-gray-100 mt-2 pt-2">
+                        <button
+                          onClick={handleBranchChange}
+                          className="w-full text-left p-3 rounded-lg text-blue-600 hover:bg-blue-50 transition-all duration-200 text-sm font-semibold"
+                        >
+                          📋 Tüm Şubeleri Gör
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -363,6 +396,12 @@ export default function Home() {
                       <div className="text-xs opacity-80">{branch.address}</div>
                     </button>
                   ))}
+                  <button
+                    onClick={handleBranchChange}
+                    className="w-full text-left p-3 rounded-xl bg-blue-100 text-blue-700 hover:bg-blue-200 transition-all duration-200"
+                  >
+                    <div className="font-semibold">📋 Tüm Şubeleri Gör</div>
+                  </button>
                 </div>
               </div>
 
@@ -413,6 +452,14 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      {/* Dropdown dışına tıklandığında kapatma */}
+      {showBranchDropdown && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowBranchDropdown(false)}
+        />
+      )}
 
       {/* Responsive Content Section */}
       <main className="relative">
