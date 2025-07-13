@@ -1211,10 +1211,34 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
   try {
     const { name, email, phone, address } = req.body;
 
+    // Validation
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Ad soyad alanı zorunludur' });
+    }
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'Email alanı zorunludur' });
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Geçerli bir email adresi giriniz' });
+    }
+
+    console.log('Profil güncelleme isteği:', { userId: req.user.userId, name, email, phone, address });
+
     const updatedUser = await prisma.user.update({
       where: { id: req.user.userId },
-      data: { name, email, phone, address }
+      data: { 
+        name: name.trim(), 
+        email: email.trim(), 
+        phone: phone || null, 
+        address: address || null 
+      }
     });
+
+    console.log('Profil güncelleme başarılı:', updatedUser);
 
     res.json({
       user: {
@@ -1227,7 +1251,8 @@ app.put('/api/customer/profile', authenticateToken, async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ error: 'Profil güncellenemedi' });
+    console.error('Profil güncelleme hatası:', error);
+    res.status(500).json({ error: 'Profil güncellenemedi: ' + error.message });
   }
 });
 

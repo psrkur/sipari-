@@ -95,14 +95,35 @@ export default function ProfilePage() {
   }
 
   const handleUpdateProfile = async () => {
+    // Form validation
+    if (!formData.name.trim()) {
+      toast.error('Ad soyad alanı zorunludur')
+      return
+    }
+    
+    if (!formData.email.trim()) {
+      toast.error('Email alanı zorunludur')
+      return
+    }
+    
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      toast.error('Geçerli bir email adresi giriniz')
+      return
+    }
+
     try {
+      console.log('Profil güncelleniyor:', formData)
       const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
         headers: { Authorization: `Bearer ${token}` }
       })
+      console.log('Profil güncelleme başarılı:', response.data)
       toast.success('Profil başarıyla güncellendi')
       setProfileData(prev => prev ? { ...prev, user: response.data.user } : null)
       setEditing(false)
     } catch (error: any) {
+      console.error('Profil güncelleme hatası:', error)
       toast.error(error.response?.data?.error || 'Profil güncellenemedi')
     }
   }
