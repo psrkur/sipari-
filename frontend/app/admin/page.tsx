@@ -535,11 +535,7 @@ export default function AdminPage() {
               </button>
             </div>
           )}
-          {user && user.role === 'BRANCH_MANAGER' && (
-            <div className="flex space-x-4 mt-6">
-              <button onClick={() => setShowProductModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700">Ürün Ekle</button>
-            </div>
-          )}
+
         </div>
 
         <div className="bg-white shadow rounded-lg mb-6">
@@ -639,6 +635,7 @@ export default function AdminPage() {
             branches={branches}
             onEditProduct={editProduct}
             onDeleteProduct={deleteProduct}
+            user={user}
           />
         )}
 

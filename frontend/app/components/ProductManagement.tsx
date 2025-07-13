@@ -35,9 +35,10 @@ interface ProductManagementProps {
   branches: Branch[];
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: number) => void;
+  user?: any;
 }
 
-const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct }) => {
+const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct, user }) => {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -97,12 +98,14 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                     >
                       Düzenle
                     </button>
-                    <button
-                      onClick={() => onDeleteProduct(product.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Sil
-                    </button>
+                    {user && user.role === 'SUPER_ADMIN' && (
+                      <button
+                        onClick={() => onDeleteProduct(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Sil
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

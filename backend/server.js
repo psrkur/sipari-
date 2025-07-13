@@ -719,6 +719,11 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
 
 app.post('/api/admin/products', authenticateToken, upload.single('image'), async (req, res) => {
   try {
+    // Şube müdürleri ürün ekleyemez
+    if (req.user.role === 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Şube müdürleri ürün ekleyemez' });
+    }
+
     const { name, description, price, categoryId, branchId } = req.body;
     let image = null;
     
@@ -750,20 +755,16 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Branch manager kontrolü
-    let targetBranchId;
-    if (req.user.role === 'BRANCH_MANAGER') {
-      // Branch manager sadece kendi şubesine ürün ekleyebilir
-      targetBranchId = req.user.branchId;
-    } else if (req.user.role === 'SUPER_ADMIN') {
-      // Süper admin tüm şubelere ekleyebilir
-      if (!branchId) {
-        return res.status(400).json({ error: 'Şube seçimi gerekli' });
-      }
-      targetBranchId = branchId === 'all' ? 'all' : Number(branchId);
-    } else {
+    // Sadece süper admin ürün ekleyebilir
+    if (req.user.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ error: 'Yetkisiz' });
     }
+
+    let targetBranchId;
+    if (!branchId) {
+      return res.status(400).json({ error: 'Şube seçimi gerekli' });
+    }
+    targetBranchId = branchId === 'all' ? 'all' : Number(branchId);
 
     if (targetBranchId === 'all') {
       const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
@@ -938,7 +939,8 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
 
 app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+    // Sadece süper admin ürün silebilir
+    if (req.user.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ error: 'Yetkisiz' });
     }
     
@@ -953,14 +955,6 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
     
     if (!product) {
       return res.status(404).json({ error: 'Ürün bulunamadı' });
-    }
-    
-    // Branch manager kontrolü
-    if (req.user.role === 'BRANCH_MANAGER') {
-      // Branch manager sadece kendi şubesindeki ürünleri silebilir
-      if (product.branchId !== req.user.branchId) {
-        return res.status(403).json({ error: 'Bu ürünü silemezsiniz' });
-      }
     }
     
     await prisma.product.delete({
