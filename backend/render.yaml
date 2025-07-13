@@ -3,7 +3,7 @@ services:
     name: yemek5-backend
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss
+    buildCommand: npm install && npx prisma generate
     startCommand: npm start
     envVars:
       - key: NODE_ENV

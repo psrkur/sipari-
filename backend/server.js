@@ -1194,41 +1194,55 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 
 
 
-testDatabaseConnection().then(async (isConnected) => {
-  if (isConnected) {
-    // Veritabanında veri var mı kontrol et
-    const existingData = await prisma.user.count();
+// Veritabanı başlatma ve seed logic'i
+async function initializeDatabase() {
+  try {
+    console.log('🔍 Veritabanı bağlantısı test ediliyor...');
+    const isConnected = await testDatabaseConnection();
     
-    if (existingData === 0) {
-      console.log('📊 Veritabanı boş, seed data oluşturuluyor...');
-      seedData().catch(error => {
-        console.error('❌ Seed data hatası:', error);
-      });
-    } else {
-      console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
-    }
-  } else {
-    console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
-    console.log('💡 Render build sırasında migration yapılacak');
-    
-    try {
-      console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
-      const { execSync } = require('child_process');
-      execSync('npx prisma db push --accept-data-loss --force-reset', { stdio: 'inherit' });
-      console.log('✅ Veritabanı tabloları oluşturuldu');
+    if (isConnected) {
+      // Veritabanında veri var mı kontrol et
+      const existingData = await prisma.user.count();
       
-      setTimeout(() => {
-        seedData().catch(error => {
-          console.error('❌ Seed data hatası:', error);
-        });
-      }, 2000);
-    } catch (migrationError) {
-      console.error('❌ Migration hatası:', migrationError);
+      if (existingData === 0) {
+        console.log('📊 Veritabanı boş, seed data oluşturuluyor...');
+        await seedData();
+        console.log('✅ Seed data başarıyla oluşturuldu');
+      } else {
+        console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
+      }
+    } else {
+      console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
+      
+      try {
+        console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
+        const { execSync } = require('child_process');
+        
+        // Sadece tabloları oluştur, veriyi sıfırlama
+        execSync('npx prisma db push', { stdio: 'inherit' });
+        console.log('✅ Veritabanı tabloları oluşturuldu');
+        
+        // Tablolar oluşturulduktan sonra seed data ekle
+        setTimeout(async () => {
+          try {
+            await seedData();
+            console.log('✅ Seed data başarıyla oluşturuldu');
+          } catch (seedError) {
+            console.error('❌ Seed data hatası:', seedError);
+          }
+        }, 3000);
+      } catch (migrationError) {
+        console.error('❌ Migration hatası:', migrationError);
+        console.log('💡 Render build sırasında migration yapılacak');
+      }
     }
+  } catch (error) {
+    console.error('❌ Veritabanı başlatma hatası:', error);
   }
-}).catch(error => {
-  console.error('❌ Veritabanı bağlantı testi hatası:', error);
-});
+}
+
+// Veritabanını başlat
+initializeDatabase();
 
 app.get('/', (req, res) => {
   res.json({ 
