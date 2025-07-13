@@ -63,6 +63,8 @@ export const API_ENDPOINTS = {
   ADMIN_UPDATE_PRODUCT: (productId: number) => `${API_BASE_URL}/api/admin/products/${productId}`,
   ADMIN_DELETE_CATEGORY: (categoryId: number) => `${API_BASE_URL}/api/categories/${categoryId}`,
   ADMIN_UPDATE_CATEGORY: (categoryId: number) => `${API_BASE_URL}/api/admin/categories/${categoryId}`,
+  ADMIN_UPDATE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
+  ADMIN_DELETE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
   
   // Images
   IMAGE_URL: (imagePath: string) => `${API_BASE_URL}${imagePath}`,

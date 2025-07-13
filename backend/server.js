@@ -177,6 +177,100 @@ app.get('/api/branches', async (req, res) => {
   }
 });
 
+// Şube yönetimi endpoint'leri
+app.post('/api/branches', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { name, address, phone } = req.body;
+    
+    const branch = await prisma.branch.create({
+      data: {
+        name,
+        address,
+        phone,
+        isActive: true
+      }
+    });
+
+    res.json(branch);
+  } catch (error) {
+    res.status(500).json({ error: 'Şube oluşturulamadı' });
+  }
+});
+
+app.put('/api/admin/branches/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+    const { name, address, phone, isActive } = req.body;
+
+    const branch = await prisma.branch.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        address,
+        phone,
+        isActive
+      }
+    });
+
+    res.json(branch);
+  } catch (error) {
+    res.status(500).json({ error: 'Şube güncellenemedi' });
+  }
+});
+
+app.delete('/api/admin/branches/:id', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+
+    // Şubeye bağlı siparişler var mı kontrol et
+    const ordersCount = await prisma.order.count({
+      where: { branchId: parseInt(id) }
+    });
+
+    if (ordersCount > 0) {
+      return res.status(400).json({ error: 'Bu şubeye ait siparişler bulunduğu için silinemez' });
+    }
+
+    // Şubeye bağlı ürünler var mı kontrol et
+    const productsCount = await prisma.product.count({
+      where: { branchId: parseInt(id) }
+    });
+
+    if (productsCount > 0) {
+      return res.status(400).json({ error: 'Bu şubeye ait ürünler bulunduğu için silinemez' });
+    }
+
+    // Şubeye bağlı kullanıcılar var mı kontrol et
+    const usersCount = await prisma.user.count({
+      where: { branchId: parseInt(id) }
+    });
+
+    if (usersCount > 0) {
+      return res.status(400).json({ error: 'Bu şubeye ait kullanıcılar bulunduğu için silinemez' });
+    }
+
+    await prisma.branch.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.json({ message: 'Şube başarıyla silindi' });
+  } catch (error) {
+    res.status(500).json({ error: 'Şube silinemedi' });
+  }
+});
+
 app.get('/api/products/:branchId', async (req, res) => {
   try {
     const { branchId } = req.params;

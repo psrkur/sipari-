@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
 import ProductManagement from '../components/ProductManagement';
+import BranchManagement from '../components/BranchManagement';
 
 interface OrderItem {
   id: number;
@@ -61,9 +62,12 @@ export default function AdminPage() {
   const [showEditProductModal, setShowEditProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [showBranchModal, setShowBranchModal] = useState(false);
+  const [showEditBranchModal, setShowEditBranchModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [branches, setBranches] = useState<{id:number, name:string}[]>([]);
+  const [editingBranch, setEditingBranch] = useState<any>(null);
+  const [branches, setBranches] = useState<{id:number, name:string, address:string, phone:string, isActive:boolean}[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -72,7 +76,9 @@ export default function AdminPage() {
   const [editProductForm, setEditProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '', isActive: true });
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'daily-stats'>('orders');
+  const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
+  const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true });
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [stats, setStats] = useState<any[]>([]);
@@ -294,6 +300,57 @@ export default function AdminPage() {
     }
   };
 
+  // Şube yönetimi fonksiyonları
+  const editBranch = (branch: any) => {
+    setEditingBranch(branch);
+    setEditBranchForm({
+      name: branch.name,
+      address: branch.address,
+      phone: branch.phone,
+      isActive: branch.isActive
+    });
+    setShowEditBranchModal(true);
+  };
+
+  const updateBranch = async () => {
+    try {
+      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_BRANCH(editingBranch.id), editBranchForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Şube başarıyla güncellendi');
+      setShowEditBranchModal(false);
+      setEditingBranch(null);
+      setEditBranchForm({ name: '', address: '', phone: '', isActive: true });
+      
+      // Şubeleri yeniden yükle
+      const response = await axios.get(API_ENDPOINTS.BRANCHES, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBranches(response.data);
+    } catch (error: any) {
+      toast.error(`Şube güncellenemedi: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const deleteBranch = async (branchId: number) => {
+    if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
+    
+    try {
+      await axios.delete(API_ENDPOINTS.ADMIN_DELETE_BRANCH(branchId), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Şube başarıyla silindi');
+      
+      // Şubeleri yeniden yükle
+      const response = await axios.get(API_ENDPOINTS.BRANCHES, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBranches(response.data);
+    } catch (error: any) {
+      toast.error(`Şube silinemedi: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('tr-TR');
   };
@@ -361,6 +418,7 @@ export default function AdminPage() {
             <div className="flex space-x-4 mt-6">
               <button onClick={() => setShowUserModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">Kullanıcı Ekle</button>
               <button onClick={() => setShowProductModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700">Ürün Ekle</button>
+              <button onClick={() => setShowBranchModal(true)} className="bg-purple-600 text-white px-4 py-2 rounded-md font-medium hover:bg-purple-700">Şube Ekle</button>
             </div>
           )}
         </div>
@@ -409,6 +467,16 @@ export default function AdminPage() {
                     }`}
                   >
                     Kategoriler ({categories.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('branches')}
+                    className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                      activeTab === 'branches'
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    Şubeler ({branches.length})
                   </button>
                 </>
               )}
@@ -522,6 +590,14 @@ export default function AdminPage() {
               </table>
               </div>
           </div>
+        )}
+
+        {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
+          <BranchManagement
+            branches={branches}
+            onEditBranch={editBranch}
+            onDeleteBranch={deleteBranch}
+          />
         )}
 
         {activeTab === 'daily-stats' && (
@@ -927,7 +1003,126 @@ export default function AdminPage() {
               </div>
           </div>
         </div>
-      )}
+              )}
+
+        {/* Branch Modal */}
+        {showBranchModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Şube Ekle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Şube Adı"
+                  value={branchForm.name}
+                  onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Adres"
+                  value={branchForm.address}
+                  onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+                <input
+                  type="text"
+                  placeholder="Telefon"
+                  value={branchForm.phone}
+                  onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowBranchModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await axios.post(API_ENDPOINTS.BRANCHES, branchForm, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      toast.success('Şube başarıyla eklendi');
+                      setShowBranchModal(false);
+                      setBranchForm({ name: '', address: '', phone: '' });
+                      const response = await axios.get(API_ENDPOINTS.BRANCHES, {
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setBranches(response.data);
+                    } catch (error: any) {
+                      toast.error(`Şube eklenemedi: ${error.response?.data?.error || error.message}`);
+                    }
+                  }}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Branch Modal */}
+        {showEditBranchModal && editingBranch && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-4">Şube Düzenle</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Şube Adı"
+                  value={editBranchForm.name}
+                  onChange={(e) => setEditBranchForm({...editBranchForm, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <textarea
+                  placeholder="Adres"
+                  value={editBranchForm.address}
+                  onChange={(e) => setEditBranchForm({...editBranchForm, address: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  rows={3}
+                />
+                <input
+                  type="text"
+                  placeholder="Telefon"
+                  value={editBranchForm.phone}
+                  onChange={(e) => setEditBranchForm({...editBranchForm, phone: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                />
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={editBranchForm.isActive}
+                    onChange={(e) => setEditBranchForm({...editBranchForm, isActive: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">Aktif</span>
+                </label>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditBranchModal(false);
+                    setEditingBranch(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  onClick={updateBranch}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Edit Category Modal */}
       {showEditCategoryModal && editingCategory && (
