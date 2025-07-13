@@ -110,7 +110,15 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                       </>
                     ) : user && user.role === 'BRANCH_MANAGER' && onToggleProductStatus ? (
                       <button
-                        onClick={() => onToggleProductStatus(product.id, !product.isActive)}
+                        onClick={() => {
+                          console.log('Toggle butonu tıklandı:', { 
+                            productId: product.id, 
+                            currentStatus: product.isActive, 
+                            newStatus: !product.isActive,
+                            onToggleProductStatus: !!onToggleProductStatus
+                          });
+                          onToggleProductStatus(product.id, !product.isActive);
+                        }}
                         className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                           product.isActive 
                             ? 'bg-red-100 text-red-700 hover:bg-red-200' 

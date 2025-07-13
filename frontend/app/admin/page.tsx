@@ -370,9 +370,13 @@ export default function AdminPage() {
   };
 
   const toggleProductStatus = async (productId: number, isActive: boolean) => {
+    console.log('Toggle fonksiyonu çağrıldı:', { productId, isActive });
     try {
       const formData = new FormData();
       formData.append('isActive', isActive.toString());
+
+      console.log('API çağrısı yapılıyor:', API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId));
+      console.log('FormData içeriği:', { isActive: isActive.toString() });
 
       await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(productId), formData, {
         headers: { 
@@ -381,6 +385,7 @@ export default function AdminPage() {
         }
       });
       
+      console.log('API çağrısı başarılı');
       toast.success(`Ürün ${isActive ? 'aktif' : 'pasif'} yapıldı`);
       
       // Ürünleri yeniden yükle
@@ -388,8 +393,10 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(productsResponse.data);
+      console.log('Ürünler yeniden yüklendi');
     } catch (error: any) {
       console.error('Ürün durumu güncelleme hatası:', error);
+      console.error('Hata detayları:', error.response?.data);
       toast.error(`Ürün durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
   };
