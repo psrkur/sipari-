@@ -46,6 +46,7 @@ interface CartItem {
   price: number;
   quantity: number;
   image: string;
+  note?: string;
 }
 
 export default function TableOrder() {
@@ -150,6 +151,13 @@ export default function TableOrder() {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
+  // Notu güncelleyen fonksiyon
+  const updateCartItemNote = (productId: number, note: string) => {
+    setCart(prevCart => prevCart.map(item =>
+      item.productId === productId ? { ...item, note } : item
+    ));
+  };
+
   const handlePlaceOrder = async () => {
     if (cart.length === 0) {
       toast.error('Sepetiniz boş');
@@ -164,7 +172,8 @@ export default function TableOrder() {
     try {
       const orderItems = cart.map(item => ({
         productId: item.productId,
-        quantity: item.quantity
+        quantity: item.quantity,
+        note: item.note || ''
       }));
 
       const response = await apiRequest(API_ENDPOINTS.TABLE_ORDER(table.id), {
@@ -280,19 +289,28 @@ export default function TableOrder() {
         ) : (
           <ul className="divide-y divide-gray-200">
             {cart.map(item => (
-              <li key={item.productId} className="flex items-center justify-between py-2">
-                <div className="flex-1">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="ml-2 text-gray-500">x{item.quantity}</span>
-                  <span className="ml-2 text-blue-600 font-semibold">₺{(item.price * item.quantity).toFixed(2)}</span>
+              <li key={item.productId} className="flex flex-col gap-1 py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <span className="font-medium">{item.name}</span>
+                    <span className="ml-2 text-gray-500">x{item.quantity}</span>
+                    <span className="ml-2 text-blue-600 font-semibold">₺{(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                  <button
+                    className="ml-4 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
+                    onClick={() => removeFromCart(item.productId)}
+                    aria-label="Ürünü çıkar"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
                 </div>
-                <button
-                  className="ml-4 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
-                  onClick={() => removeFromCart(item.productId)}
-                  aria-label="Ürünü çıkar"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
+                <input
+                  type="text"
+                  className="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                  placeholder="Bu ürün için not (örn: soğansız, az pişmiş)"
+                  value={item.note || ''}
+                  onChange={e => updateCartItemNote(item.productId, e.target.value)}
+                />
               </li>
             ))}
           </ul>
