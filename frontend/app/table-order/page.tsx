@@ -245,9 +245,9 @@ export default function TableOrder() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="container mx-auto px-2 sm:px-4 py-4 pb-28 min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b mb-4">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -270,143 +270,29 @@ export default function TableOrder() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Ürünler */}
-          <div className="lg:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <Menu className="h-5 w-5" />
-              <h2 className="text-lg font-semibold">Menü</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {products.map((product) => (
-                <Card key={product.id} className="overflow-hidden">
-                  <div className="aspect-square bg-gray-100">
-                    <img
-                      src={product.image ? API_ENDPOINTS.IMAGE_URL(product.image) : '/placeholder-food.jpg'}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-food.jpg';
-                      }}
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-semibold">{product.name}</h3>
-                        <p className="text-sm text-gray-600">{product.description}</p>
-                        <Badge variant="outline" className="mt-1">
-                          {product.category.name}
-                        </Badge>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg">{product.price.toFixed(2)} ₺</p>
-                        <Button
-                          size="sm"
-                          onClick={() => addToCart(product)}
-                          className="mt-2"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+      {/* Ürünler */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-24">
+        {products.map(product => (
+          <div key={product.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
+            <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded mb-2" />
+            <div className="font-semibold text-center text-base sm:text-lg mb-1">{product.name}</div>
+            <div className="text-blue-600 font-bold text-lg mb-2">₺{product.price.toFixed(2)}</div>
+            <button
+              className="w-full bg-blue-600 text-white rounded py-2 mt-auto hover:bg-blue-700 transition"
+              onClick={() => addToCart(product)}
+            >
+              Sepete Ekle
+            </button>
           </div>
+        ))}
+      </div>
 
-          {/* Sepet */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
-                  Sepet
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {cart.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
-                    Sepetiniz boş
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {cart.map((item) => (
-                      <div key={item.productId} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <img
-                          src={item.image ? API_ENDPOINTS.IMAGE_URL(item.image) : '/placeholder-food.jpg'}
-                          alt={item.name}
-                          className="w-12 h-12 object-cover rounded"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder-food.jpg';
-                          }}
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-sm text-gray-600">{item.price.toFixed(2)} ₺</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => removeFromCart(item.productId)}
-                          >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span className="font-medium">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => addToCart({
-                              id: item.productId,
-                              name: item.name,
-                              price: item.price,
-                              image: item.image,
-                              description: '',
-                              category: { id: 0, name: '' }
-                            })}
-                          >
-                            <Plus className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="border-t pt-4">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="font-semibold">Toplam:</span>
-                        <span className="font-bold text-lg">{getTotalPrice().toFixed(2)} ₺</span>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <textarea
-                          placeholder="Sipariş notu (opsiyonel)"
-                          value={notes}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
-                          className="w-full p-2 border border-gray-300 rounded-md resize-none"
-                          rows={3}
-                        />
-                        
-                        <Button 
-                          onClick={handlePlaceOrder}
-                          className="w-full"
-                          size="lg"
-                        >
-                          Sipariş Ver
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+      {/* Sepet ve Sipariş Özeti - Mobilde sabit alt bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 flex justify-between items-center z-50 sm:static sm:shadow-none sm:border-0">
+        <span className="font-bold">Toplam: ₺{getTotalPrice().toFixed(2)}</span>
+        <button className="bg-green-600 text-white rounded px-4 py-2" onClick={handlePlaceOrder}>
+          Siparişi Tamamla
+        </button>
       </div>
     </div>
   );
