@@ -82,7 +82,7 @@ export default function BranchSelectPage() {
             Şube Seçin
           </h2>
           <p className="text-lg sm:text-xl text-gray-600">
-            Sipariş vermek için size en yakın şubeyi seçin
+            Sipariş vermek için şubenizi seçin
           </p>
         </div>
 

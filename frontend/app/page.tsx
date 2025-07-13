@@ -57,7 +57,14 @@ export default function Home() {
       } catch (error) {
         console.error('Kayıtlı şube bilgisi okunamadı:', error);
         localStorage.removeItem('selectedBranch');
+        // Hatalı veri varsa şube seçme sayfasına yönlendir
+        router.push('/branch-select');
+        return;
       }
+    } else {
+      // Şube seçilmemişse direkt şube seçme sayfasına yönlendir
+      router.push('/branch-select');
+      return;
     }
 
     // API'den şubeleri çek
@@ -77,7 +84,7 @@ export default function Home() {
       .finally(() => {
         setLoading(false);
       });
-  }, [])
+  }, [router])
 
   useEffect(() => {
     if (selectedBranch) {
