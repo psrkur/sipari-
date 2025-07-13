@@ -29,6 +29,7 @@ interface Order {
   status: string;
   notes: string;
   createdAt: string;
+  orderType: string; // 'DELIVERY' veya 'TABLE'
   branch: {
     id: number;
     name: string;
@@ -39,6 +40,14 @@ interface Order {
     name: string;
     phone: string;
     address: string;
+  } | null;
+  table: {
+    id: number;
+    number: string;
+    branch: {
+      id: number;
+      name: string;
+    };
   } | null;
   items: OrderItem[];
   orderItems?: OrderItem[];

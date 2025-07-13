@@ -18,6 +18,7 @@ interface Order {
   status: string;
   notes: string;
   createdAt: string;
+  orderType: string; // 'DELIVERY' veya 'TABLE'
   branch: {
     id: number;
     name: string;
@@ -28,6 +29,14 @@ interface Order {
     name: string;
     phone: string;
     address: string;
+  } | null;
+  table: {
+    id: number;
+    number: string;
+    branch: {
+      id: number;
+      name: string;
+    };
   } | null;
   items: OrderItem[];
   orderItems?: OrderItem[];
@@ -52,7 +61,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş No</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tip</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri/Masa</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Şube</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
@@ -67,9 +77,25 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   {order.orderNumber}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    order.orderType === 'TABLE' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                  }`}>
+                    {order.orderType === 'TABLE' ? 'Masa' : 'Teslimat'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <div className="font-medium">{order.customer?.name || 'Anonim'}</div>
-                    <div className="text-gray-500">{order.customer?.phone || 'Telefon yok'}</div>
+                    {order.orderType === 'TABLE' && order.table ? (
+                      <div>
+                        <div className="font-medium">Masa {order.table.number}</div>
+                        <div className="text-gray-500">QR Kod Siparişi</div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="font-medium">{order.customer?.name || 'Anonim'}</div>
+                        <div className="text-gray-500">{order.customer?.phone || 'Telefon yok'}</div>
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
