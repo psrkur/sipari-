@@ -195,10 +195,10 @@ app.get('/uploads/:filename', (req, res) => {
     console.error('Resim dosyası bulunamadı:', filePath);
     
     // Render'da ephemeral storage nedeniyle dosya kaybolmuş olabilir
-    // Varsayılan bir resim döndür veya 404
-    return res.status(404).json({ 
-      error: 'Resim bulunamadı',
-      message: 'Resim dosyası sunucuda bulunamadı. Bu Render\'ın ephemeral storage özelliği nedeniyle normal olabilir.',
+    // Varsayılan bir resim döndür
+    return res.status(200).json({ 
+      message: 'Resim bulunamadı, varsayılan resim kullanılıyor',
+      defaultImage: 'https://via.placeholder.com/300x200?text=Resim+Bulunamadı',
       filename: filename
     });
   }
