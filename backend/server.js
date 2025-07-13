@@ -183,6 +183,12 @@ app.get('/uploads/:filename', (req, res) => {
     return res.status(200).end();
   }
   
+  // Dosya var mı kontrol et
+  if (!require('fs').existsSync(filePath)) {
+    console.error('Resim dosyası bulunamadı:', filePath);
+    return res.status(404).json({ error: 'Resim bulunamadı' });
+  }
+  
   res.sendFile(filePath, (err) => {
     if (err) {
       console.error('Resim gönderilemedi:', filename, err);
@@ -656,6 +662,14 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       console.log('Yüklenen resim:', image);
       console.log('Resim dosyası:', req.file);
       console.log('Resim tam yolu:', path.join(__dirname, 'uploads', req.file.filename));
+      
+      // Dosya gerçekten yüklendi mi kontrol et
+      const fs = require('fs');
+      const fullPath = path.join(__dirname, 'uploads', req.file.filename);
+      if (!fs.existsSync(fullPath)) {
+        console.error('Resim dosyası yüklenemedi:', fullPath);
+        return res.status(500).json({ error: 'Resim yüklenemedi' });
+      }
     }
 
     if (!name || !price || !categoryId || !branchId) {
@@ -729,6 +743,14 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       console.log('Güncellenen resim:', image);
       console.log('Resim dosyası:', req.file);
       console.log('Resim tam yolu:', path.join(__dirname, 'uploads', req.file.filename));
+      
+      // Dosya gerçekten yüklendi mi kontrol et
+      const fs = require('fs');
+      const fullPath = path.join(__dirname, 'uploads', req.file.filename);
+      if (!fs.existsSync(fullPath)) {
+        console.error('Resim dosyası yüklenemedi:', fullPath);
+        return res.status(500).json({ error: 'Resim yüklenemedi' });
+      }
     }
 
     if (!name || !price || !categoryId || !branchId) {
@@ -1429,6 +1451,54 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   }
 });
 
+// Eski resimleri temizle endpoint'i
+app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const fs = require('fs');
+    const uploadsDir = path.join(__dirname, 'uploads');
+    
+    // Uploads klasörü var mı kontrol et
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    
+    // Tüm ürünleri getir
+    const products = await prisma.product.findMany({
+      select: { image: true }
+    });
+    
+    // Veritabanındaki resim yollarını topla
+    const dbImages = products.map(p => p.image).filter(img => img);
+    
+    // Uploads klasöründeki dosyaları listele
+    const files = fs.readdirSync(uploadsDir);
+    
+    // Kullanılmayan dosyaları sil
+    let deletedCount = 0;
+    for (const file of files) {
+      const filePath = `/uploads/${file}`;
+      if (!dbImages.includes(filePath)) {
+        fs.unlinkSync(path.join(uploadsDir, file));
+        deletedCount++;
+        console.log('Silinen dosya:', file);
+      }
+    }
+    
+    res.json({ 
+      message: `${deletedCount} kullanılmayan dosya silindi`,
+      deletedCount,
+      totalFiles: files.length,
+      dbImages: dbImages.length
+    });
+  } catch (error) {
+    console.error('Resim temizleme hatası:', error);
+    res.status(500).json({ error: 'Resim temizlenemedi' });
+  }
+});
 
 
 // Veritabanı başlatma ve seed logic'i - Render Güvenli Versiyon

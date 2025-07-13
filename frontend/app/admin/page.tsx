@@ -437,6 +437,21 @@ export default function AdminPage() {
               <button onClick={() => setShowUserModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700">Kullanıcı Ekle</button>
               <button onClick={() => setShowProductModal(true)} className="bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700">Ürün Ekle</button>
               <button onClick={() => setShowBranchModal(true)} className="bg-purple-600 text-white px-4 py-2 rounded-md font-medium hover:bg-purple-700">Şube Ekle</button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const response = await axios.post(`${API_ENDPOINTS.ADMIN_PRODUCTS.replace('/products', '/cleanup-images')}`, {}, {
+                      headers: { Authorization: `Bearer ${token}` }
+                    });
+                    toast.success(response.data.message);
+                  } catch (error: any) {
+                    toast.error(`Resim temizleme hatası: ${error.response?.data?.error || error.message}`);
+                  }
+                }}
+                className="bg-orange-600 text-white px-4 py-2 rounded-md font-medium hover:bg-orange-700"
+              >
+                🗑️ Eski Resimleri Temizle
+              </button>
             </div>
           )}
         </div>
