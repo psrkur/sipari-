@@ -872,24 +872,34 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       isActiveBool = isActiveBool === 'true';
     }
 
-    const updateData = {
-      name,
-      description: description || '',
-      price: Number(price),
-      categoryId: parseInt(categoryId),
-      isActive: isActiveBool !== undefined ? isActiveBool : true
-    };
+    let updateData = {};
     
-    // Branch manager şube değiştiremez
-    if (req.user.role === 'SUPER_ADMIN' && branchId) {
-      if (branchId === 'all') {
-        // Süper admin için all seçeneği
-      } else if (!isNaN(parseInt(branchId))) {
-        updateData.branchId = Number(branchId);
+    if (req.user.role === 'BRANCH_MANAGER') {
+      // Şube müdürleri sadece isActive değerini güncelleyebilir
+      updateData = {
+        isActive: isActiveBool !== undefined ? isActiveBool : true
+      };
+    } else {
+      // Süper admin tüm alanları güncelleyebilir
+      updateData = {
+        name,
+        description: description || '',
+        price: Number(price),
+        categoryId: parseInt(categoryId),
+        isActive: isActiveBool !== undefined ? isActiveBool : true
+      };
+      
+      // Branch manager şube değiştiremez
+      if (branchId) {
+        if (branchId === 'all') {
+          // Süper admin için all seçeneği
+        } else if (!isNaN(parseInt(branchId))) {
+          updateData.branchId = Number(branchId);
+        }
       }
+      
+      if (image !== undefined) updateData.image = image;
     }
-    
-    if (image !== undefined) updateData.image = image;
 
     if (req.user.role === 'SUPER_ADMIN' && branchId === 'all') {
       await prisma.product.delete({

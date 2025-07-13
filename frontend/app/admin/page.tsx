@@ -323,18 +323,23 @@ export default function AdminPage() {
   const updateProduct = async () => {
     try {
       const formData = new FormData();
-      formData.append('name', editProductForm.name);
-      formData.append('description', editProductForm.description);
-      formData.append('price', editProductForm.price);
-      formData.append('categoryId', editProductForm.categoryId);
-      if (user && user.role === 'SUPER_ADMIN') {
-        formData.append('branchId', editProductForm.branchId);
-      }
-      formData.append('isActive', editProductForm.isActive.toString());
       
-      if (editProductImage) {
-        console.log('Güncelleme için resim yükleniyor:', editProductImage.name);
-        formData.append('image', editProductImage);
+      if (user && user.role === 'BRANCH_MANAGER') {
+        // Şube müdürleri sadece isActive değerini güncelleyebilir
+        formData.append('isActive', editProductForm.isActive.toString());
+      } else {
+        // Süper admin tüm alanları güncelleyebilir
+        formData.append('name', editProductForm.name);
+        formData.append('description', editProductForm.description);
+        formData.append('price', editProductForm.price);
+        formData.append('categoryId', editProductForm.categoryId);
+        formData.append('branchId', editProductForm.branchId);
+        formData.append('isActive', editProductForm.isActive.toString());
+        
+        if (editProductImage) {
+          console.log('Güncelleme için resim yükleniyor:', editProductImage.name);
+          formData.append('image', editProductImage);
+        }
       }
 
       console.log('Güncelleme FormData içeriği:');
@@ -349,7 +354,7 @@ export default function AdminPage() {
         }
       });
       
-      toast.success('Ürün başarıyla güncellendi');
+      toast.success(user && user.role === 'BRANCH_MANAGER' ? 'Ürün durumu güncellendi' : 'Ürün başarıyla güncellendi');
       setShowEditProductModal(false);
       setEditingProduct(null);
       setEditProductImage(null);
@@ -1043,78 +1048,102 @@ export default function AdminPage() {
       {showEditProductModal && editingProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">Ürün Düzenle</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {user && user.role === 'BRANCH_MANAGER' ? 'Ürün Durumu' : 'Ürün Düzenle'}
+              </h3>
             <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Ürün Adı"
-                  value={editProductForm.name}
-                  onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-                <textarea
-                  placeholder="Açıklama"
-                  value={editProductForm.description}
-                  onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  rows={3}
-                />
-                <input
-                  type="number"
-                  placeholder="Fiyat"
-                  value={editProductForm.price}
-                  onChange={(e) => setEditProductForm({...editProductForm, price: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                />
-                <select
-                  value={editProductForm.categoryId}
-                  onChange={(e) => setEditProductForm({...editProductForm, categoryId: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="">Kategori Seçin</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-              </select>
-                {user && user.role === 'SUPER_ADMIN' && (
-                  <select
-                    value={editProductForm.branchId}
-                    onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  >
-                    <option value="">Şube Seçin</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </option>
-                    ))}
-                  </select>
+                {user && user.role === 'SUPER_ADMIN' ? (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Ürün Adı"
+                      value={editProductForm.name}
+                      onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                    <textarea
+                      placeholder="Açıklama"
+                      value={editProductForm.description}
+                      onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                      rows={3}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Fiyat"
+                      value={editProductForm.price}
+                      onChange={(e) => setEditProductForm({...editProductForm, price: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                    <select
+                      value={editProductForm.categoryId}
+                      onChange={(e) => setEditProductForm({...editProductForm, categoryId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Kategori Seçin</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={editProductForm.branchId}
+                      onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    >
+                      <option value="">Şube Seçin</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          console.log('Güncelleme için seçilen resim:', file.name, file.size, file.type);
+                          setEditProductImage(file);
+                        } else {
+                          setEditProductImage(null);
+                        }
+                      }}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    />
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-2">Ürün Bilgileri</h4>
+                      <div className="space-y-2 text-sm">
+                        <div><span className="font-medium">Ürün Adı:</span> {editingProduct.name}</div>
+                        <div><span className="font-medium">Açıklama:</span> {editingProduct.description || 'Açıklama yok'}</div>
+                        <div><span className="font-medium">Fiyat:</span> ₺{editingProduct.price.toFixed(2)}</div>
+                        <div><span className="font-medium">Kategori:</span> {editingProduct.category?.name || 'Kategori yok'}</div>
+                        <div><span className="font-medium">Şube:</span> {editingProduct.branch?.name || 'Şube yok'}</div>
+                      </div>
+                    </div>
+                  </div>
                 )}
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={editProductForm.isActive}
-                    onChange={(e) => setEditProductForm({...editProductForm, isActive: e.target.checked})}
-                    className="mr-2"
-                  />
-                  <span className="text-sm text-gray-700">Aktif</span>
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      console.log('Güncelleme için seçilen resim:', file.name, file.size, file.type);
-                      setEditProductImage(file);
-                    } else {
-                      setEditProductImage(null);
-                    }
-                  }}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                />
+                <div className="border-t pt-4">
+                  <label className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Ürün Durumu</span>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={editProductForm.isActive}
+                        onChange={(e) => setEditProductForm({...editProductForm, isActive: e.target.checked})}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {editProductForm.isActive ? 'Aktif' : 'Pasif'}
+                      </span>
+                    </div>
+                  </label>
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
@@ -1130,7 +1159,7 @@ export default function AdminPage() {
                   onClick={updateProduct}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  Güncelle
+                  {user && user.role === 'BRANCH_MANAGER' ? 'Durumu Güncelle' : 'Güncelle'}
                 </button>
             </div>
           </div>
