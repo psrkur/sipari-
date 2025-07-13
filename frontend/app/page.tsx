@@ -65,12 +65,6 @@ export default function Home() {
       .then((response: any) => {
         console.log('Şubeler yüklendi:', response.data);
         setBranches(response.data);
-        
-        // Eğer seçili şube yoksa ve şubeler varsa, ilkini seç
-        if (!selectedBranch && response.data.length > 0) {
-          setSelectedBranch(response.data[0]);
-          localStorage.setItem('selectedBranch', JSON.stringify(response.data[0]));
-        }
       })
       .catch((error: any) => {
         console.error('Şubeler yüklenemedi:', error);
