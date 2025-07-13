@@ -111,6 +111,14 @@ export default function AdminPage() {
       axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { headers: { Authorization: `Bearer ${token}` } })
         .then(res => setProducts(res.data))
         .catch(() => setProducts([]));
+    } else if (user && user.role === 'BRANCH_MANAGER') {
+      // Branch manager sadece kendi şubesindeki ürünleri görebilir
+      axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
+        headers: { Authorization: `Bearer ${token}` },
+        params: { branchId: user.branchId }
+      })
+        .then(res => setProducts(res.data))
+        .catch(() => setProducts([]));
     }
   }, [token, user]);
 
@@ -248,7 +256,9 @@ export default function AdminPage() {
       formData.append('description', editProductForm.description);
       formData.append('price', editProductForm.price);
       formData.append('categoryId', editProductForm.categoryId);
-      formData.append('branchId', editProductForm.branchId);
+      if (user && user.role === 'SUPER_ADMIN') {
+        formData.append('branchId', editProductForm.branchId);
+      }
       formData.append('isActive', editProductForm.isActive.toString());
       
       if (editProductImage) {
@@ -830,18 +840,20 @@ export default function AdminPage() {
                     </option>
                   ))}
                 </select>
-                <select
-                  value={productForm.branchId}
-                  onChange={(e) => setProductForm({...productForm, branchId: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="">Şube Seçin</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
+                {user && user.role === 'SUPER_ADMIN' && (
+                  <select
+                    value={productForm.branchId}
+                    onChange={(e) => setProductForm({...productForm, branchId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Şube Seçin</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <input
                   type="file"
                   accept="image/*"
@@ -890,7 +902,9 @@ export default function AdminPage() {
                 formData.append('description', productForm.description.trim());
                 formData.append('price', productForm.price);
                 formData.append('categoryId', productForm.categoryId);
-                formData.append('branchId', productForm.branchId);
+                if (user && user.role === 'SUPER_ADMIN') {
+                  formData.append('branchId', productForm.branchId);
+                }
                 if (productImage) {
                   console.log('Resim yükleniyor:', productImage.name);
                   formData.append('image', productImage);
@@ -919,9 +933,9 @@ export default function AdminPage() {
                 toast.error(`Ürün eklenemedi: ${error.response?.data?.error || error.message}`);
               }
                   }}
-                  disabled={!productForm.name.trim() || !productForm.price || !productForm.categoryId || !productForm.branchId}
+                  disabled={!productForm.name.trim() || !productForm.price || !productForm.categoryId || (user?.role === 'SUPER_ADMIN' && !productForm.branchId)}
                   className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                    productForm.name.trim() && productForm.price && productForm.categoryId && productForm.branchId
+                    productForm.name.trim() && productForm.price && productForm.categoryId && (user?.role === 'SUPER_ADMIN' ? productForm.branchId : true)
                       ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
@@ -972,18 +986,20 @@ export default function AdminPage() {
                     </option>
                   ))}
               </select>
-                <select
-                  value={editProductForm.branchId}
-                  onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
-                >
-                  <option value="">Şube Seçin</option>
-                  {branches.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-              </select>
+                {user && user.role === 'SUPER_ADMIN' && (
+                  <select
+                    value={editProductForm.branchId}
+                    onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="">Şube Seçin</option>
+                    {branches.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 <label className="flex items-center">
                   <input
                     type="checkbox"

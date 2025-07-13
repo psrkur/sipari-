@@ -642,9 +642,19 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/products', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz' });
+    }
+    
+    let whereClause = {};
+    
+    // Branch manager sadece kendi şubesindeki ürünleri görebilir
+    if (req.user.role === 'BRANCH_MANAGER') {
+      whereClause.branchId = req.user.branchId;
+    }
     
     const products = await prisma.product.findMany({
+      where: whereClause,
       include: {
         branch: true,
         category: true
@@ -679,7 +689,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       }
     }
 
-    if (!name || !price || !categoryId || !branchId) {
+    if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
@@ -691,7 +701,22 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    if (branchId === 'all') {
+    // Branch manager kontrolü
+    let targetBranchId;
+    if (req.user.role === 'BRANCH_MANAGER') {
+      // Branch manager sadece kendi şubesine ürün ekleyebilir
+      targetBranchId = req.user.branchId;
+    } else if (req.user.role === 'SUPER_ADMIN') {
+      // Süper admin tüm şubelere ekleyebilir
+      if (!branchId) {
+        return res.status(400).json({ error: 'Şube seçimi gerekli' });
+      }
+      targetBranchId = branchId === 'all' ? 'all' : Number(branchId);
+    } else {
+      return res.status(403).json({ error: 'Yetkisiz' });
+    }
+
+    if (targetBranchId === 'all') {
       const allBranches = await prisma.branch.findMany({ where: { isActive: true } });
       const products = [];
 
@@ -722,7 +747,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
           price: Number(price),
           categoryId: parseInt(categoryId),
           image,
-          branchId: Number(branchId)
+          branchId: targetBranchId
         },
         include: {
           branch: true,
@@ -760,7 +785,7 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       }
     }
 
-    if (!name || !price || !categoryId || !branchId) {
+    if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
@@ -772,10 +797,24 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    if (branchId === 'all') {
-      // Bu durumda devam et
-    } else if (isNaN(parseInt(branchId))) {
-      return res.status(400).json({ error: 'Geçersiz şube seçimi. Lütfen bir şube seçin.' });
+    // Ürünü kontrol et
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: parseInt(id) },
+      include: { branch: true }
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: 'Ürün bulunamadı' });
+    }
+
+    // Branch manager kontrolü
+    if (req.user.role === 'BRANCH_MANAGER') {
+      // Branch manager sadece kendi şubesindeki ürünleri güncelleyebilir
+      if (existingProduct.branchId !== req.user.branchId) {
+        return res.status(403).json({ error: 'Bu ürünü güncelleyemezsiniz' });
+      }
+    } else if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz' });
     }
 
     let isActiveBool = isActive;
@@ -788,12 +827,21 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       description: description || '',
       price: Number(price),
       categoryId: parseInt(categoryId),
-      branchId: Number(branchId),
       isActive: isActiveBool !== undefined ? isActiveBool : true
     };
+    
+    // Branch manager şube değiştiremez
+    if (req.user.role === 'SUPER_ADMIN' && branchId) {
+      if (branchId === 'all') {
+        // Süper admin için all seçeneği
+      } else if (!isNaN(parseInt(branchId))) {
+        updateData.branchId = Number(branchId);
+      }
+    }
+    
     if (image !== undefined) updateData.image = image;
 
-    if (branchId === 'all') {
+    if (req.user.role === 'SUPER_ADMIN' && branchId === 'all') {
       await prisma.product.delete({
         where: { id: parseInt(id) }
       });
@@ -841,11 +889,33 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
 
 app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz' });
+    }
+    
     const { id } = req.params;
+    const productId = parseInt(id);
+    
+    // Ürünü kontrol et
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { branch: true }
+    });
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Ürün bulunamadı' });
+    }
+    
+    // Branch manager kontrolü
+    if (req.user.role === 'BRANCH_MANAGER') {
+      // Branch manager sadece kendi şubesindeki ürünleri silebilir
+      if (product.branchId !== req.user.branchId) {
+        return res.status(403).json({ error: 'Bu ürünü silemezsiniz' });
+      }
+    }
     
     await prisma.product.delete({
-      where: { id: parseInt(id) }
+      where: { id: productId }
     });
     
     res.json({ message: 'Ürün silindi' });
