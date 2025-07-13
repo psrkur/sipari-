@@ -1562,7 +1562,12 @@ app.get('/api/admin/tables/:id/qr', authenticateToken, async (req, res) => {
       branchName: table.branch.name
     };
 
-    const qrUrl = `${FRONTEND_URL}/table-order?data=${encodeURIComponent(JSON.stringify(qrData))}`;
+    // Frontend URL'yi kontrol et ve güvenli hale getir
+    const frontendUrl = process.env.FRONTEND_URL || 'https://siparisnet.netlify.app';
+    console.log('🔗 QR kod için Frontend URL:', frontendUrl);
+    
+    const qrUrl = `${frontendUrl}/table-order?data=${encodeURIComponent(JSON.stringify(qrData))}`;
+    console.log('🔗 Oluşturulan QR URL:', qrUrl);
     
     // QR kod oluştur
     const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
