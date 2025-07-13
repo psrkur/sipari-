@@ -851,12 +851,15 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
-    const category = await prisma.category.findUnique({
-      where: { id: parseInt(categoryId) }
-    });
+    // Sadece tam güncelleme yapılıyorsa kategori kontrolü yap
+    if (!isOnlyStatusUpdate) {
+      const category = await prisma.category.findUnique({
+        where: { id: parseInt(categoryId) }
+      });
 
-    if (!category) {
-      return res.status(400).json({ error: 'Geçersiz kategori' });
+      if (!category) {
+        return res.status(400).json({ error: 'Geçersiz kategori' });
+      }
     }
 
     // Ürünü kontrol et
@@ -955,7 +958,10 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
     }
   } catch (error) {
     console.error('Ürün güncelleme hatası:', error);
-    res.status(500).json({ error: 'Ürün güncellenemedi' });
+    console.error('Request body:', req.body);
+    console.error('User role:', req.user.role);
+    console.error('Product ID:', req.params.id);
+    res.status(500).json({ error: 'Ürün güncellenemedi', details: error.message });
   }
 });
 

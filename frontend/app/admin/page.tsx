@@ -397,6 +397,8 @@ export default function AdminPage() {
     } catch (error: any) {
       console.error('Ürün durumu güncelleme hatası:', error);
       console.error('Hata detayları:', error.response?.data);
+      console.error('Response status:', error.response?.status);
+      console.error('Response headers:', error.response?.headers);
       toast.error(`Ürün durumu güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
   };
