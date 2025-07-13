@@ -243,24 +243,42 @@ export default function AdminPage() {
 
   const updateProduct = async () => {
     try {
-      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), {
-        name: editProductForm.name,
-        description: editProductForm.description,
-        price: Number(editProductForm.price),
-        categoryId: editProductForm.categoryId === 'all' ? 'all' : Number(editProductForm.categoryId),
-        branchId: editProductForm.branchId === 'all' ? 'all' : Number(editProductForm.branchId),
-        isActive: editProductForm.isActive
-      }, { headers: { Authorization: `Bearer ${token}` } });
+      const formData = new FormData();
+      formData.append('name', editProductForm.name);
+      formData.append('description', editProductForm.description);
+      formData.append('price', editProductForm.price);
+      formData.append('categoryId', editProductForm.categoryId);
+      formData.append('branchId', editProductForm.branchId);
+      formData.append('isActive', editProductForm.isActive.toString());
+      
+      if (editProductImage) {
+        console.log('Güncelleme için resim yükleniyor:', editProductImage.name);
+        formData.append('image', editProductImage);
+      }
+
+      console.log('Güncelleme FormData içeriği:');
+      formData.forEach((value, key) => {
+        console.log(key, value);
+      });
+
+      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       
       toast.success('Ürün başarıyla güncellendi');
       setShowEditProductModal(false);
       setEditingProduct(null);
+      setEditProductImage(null);
       
       const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(productsResponse.data);
     } catch (error: any) {
+      console.error('Ürün güncelleme hatası:', error);
       toast.error(`Ürün güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
   };
@@ -812,7 +830,15 @@ export default function AdminPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setProductImage(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      console.log('Seçilen resim:', file.name, file.size, file.type);
+                      setProductImage(file);
+                    } else {
+                      setProductImage(null);
+                    }
+                  }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
               </div>
@@ -850,11 +876,17 @@ export default function AdminPage() {
                 formData.append('price', productForm.price);
                 formData.append('categoryId', productForm.categoryId);
                 formData.append('branchId', productForm.branchId);
-                      if (productImage) {
-                        formData.append('image', productImage);
-                      }
+                if (productImage) {
+                  console.log('Resim yükleniyor:', productImage.name);
+                  formData.append('image', productImage);
+                }
 
-                      await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
+                console.log('FormData içeriği:');
+                formData.forEach((value, key) => {
+                  console.log(key, value);
+                });
+
+                await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
                   headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -949,7 +981,15 @@ export default function AdminPage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setEditProductImage(e.target.files?.[0] || null)}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      console.log('Güncelleme için seçilen resim:', file.name, file.size, file.type);
+                      setEditProductImage(file);
+                    } else {
+                      setEditProductImage(null);
+                    }
+                  }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
               </div>

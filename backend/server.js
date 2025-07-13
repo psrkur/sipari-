@@ -615,7 +615,13 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
 app.post('/api/admin/products', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, categoryId, branchId } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    let image = null;
+    
+    // Resim yükleme kontrolü
+    if (req.file) {
+      image = `/uploads/${req.file.filename}`;
+      console.log('Yüklenen resim:', image);
+    }
 
     if (!name || !price || !categoryId || !branchId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -671,6 +677,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       res.status(201).json(product);
     }
   } catch (error) {
+    console.error('Ürün ekleme hatası:', error);
     res.status(500).json({ error: 'Ürün eklenemedi' });
   }
 });
@@ -679,7 +686,13 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
   try {
     const { id } = req.params;
     const { name, description, price, categoryId, branchId, isActive } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    let image = undefined;
+    
+    // Resim yükleme kontrolü
+    if (req.file) {
+      image = `/uploads/${req.file.filename}`;
+      console.log('Güncellenen resim:', image);
+    }
 
     if (!name || !price || !categoryId || !branchId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -755,6 +768,7 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       res.json(product);
     }
   } catch (error) {
+    console.error('Ürün güncelleme hatası:', error);
     res.status(500).json({ error: 'Ürün güncellenemedi' });
   }
 });

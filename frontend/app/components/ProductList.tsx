@@ -58,7 +58,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                         src={API_ENDPOINTS.IMAGE_URL(product.image)}
                         alt={product.name}
                         className="w-full h-32 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        onError={(e) => { 
+                          console.error('Resim yüklenemedi:', product.image);
+                          (e.target as HTMLImageElement).style.display = 'none'; 
+                        }}
+                        onLoad={() => {
+                          console.log('Resim başarıyla yüklendi:', product.image);
+                        }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                     </div>
