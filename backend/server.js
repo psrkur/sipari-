@@ -101,6 +101,9 @@ const upload = multer({ storage });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Render/proxy ortamı için gerçek IP ve rate limit desteği
+app.set('trust proxy', 1);
+
 // Güvenlik middleware'leri
 app.use(helmet({
   contentSecurityPolicy: {
