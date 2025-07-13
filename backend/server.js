@@ -545,6 +545,7 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
+    console.error('Sipariş oluşturma hatası:', error); // <-- Hata detayını logla
     res.status(500).json({ error: 'Sipariş oluşturulamadı' });
   }
 });
@@ -593,6 +594,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 
     res.json(orders);
   } catch (error) {
+    console.error('Admin siparişler getirilemedi:', error); // <-- Hata detayını logla
     res.status(500).json({ error: 'Siparişler getirilemedi' });
   }
 });

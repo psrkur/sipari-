@@ -253,6 +253,8 @@ export default function AdminPage() {
       setOrders(response.data);
     } catch (error: any) {
       console.error('Orders fetch error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
       if (error.response?.status === 401 || error.response?.status === 403) {
         toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
         router.push('/login');
