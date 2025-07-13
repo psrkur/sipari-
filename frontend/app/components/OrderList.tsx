@@ -62,7 +62,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sipariş No</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tip</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri/Masa</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Müşteri/Masa No</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Şube</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tutar</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
@@ -87,8 +87,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   <div>
                     {order.orderType === 'TABLE' && order.table ? (
                       <div>
-                        <div className="font-medium">Masa {order.table.number}</div>
-                        <div className="text-gray-500">QR Kod Siparişi</div>
+                        <div className="font-bold text-lg text-blue-600">Masa {order.table.number}</div>
+                        <div className="text-gray-500 text-xs">QR Kod Siparişi</div>
                       </div>
                     ) : (
                       <div>
