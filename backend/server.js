@@ -2782,3 +2782,37 @@ app.listen(SERVER_PORT, () => {
   console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
   console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 }); 
+
+// Veritabanı kolonu ekleme endpoint'i (sadece production'da)
+app.post('/api/admin/fix-database', async (req, res) => {
+  try {
+    console.log('🔄 Veritabanı düzeltme işlemi başlatılıyor...');
+    
+    // order_items tablosuna note kolonu ekle
+    await prisma.$executeRaw`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS note TEXT`;
+    
+    console.log('✅ Note kolonu başarıyla eklendi!');
+    
+    // Kolonun eklendiğini doğrula
+    const result = await prisma.$queryRaw`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'order_items' AND column_name = 'note'
+    `;
+    
+    console.log('📊 Kolon bilgisi:', result);
+    
+    res.json({ 
+      success: true, 
+      message: 'Veritabanı düzeltildi',
+      columnInfo: result 
+    });
+    
+  } catch (error) {
+    console.error('❌ Veritabanı düzeltme hatası:', error);
+    res.status(500).json({ 
+      error: 'Veritabanı düzeltilemedi',
+      details: error.message 
+    });
+  }
+}); 
