@@ -1194,7 +1194,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 
 
 
-// Veritabanı başlatma ve seed logic'i - Güvenli versiyon
+// Veritabanı başlatma ve seed logic'i - Render Güvenli Versiyon
 async function initializeDatabase() {
   try {
     console.log('🔍 Veritabanı bağlantısı test ediliyor...');
@@ -1214,15 +1214,16 @@ async function initializeDatabase() {
       }
     } else {
       console.log('⚠️ Veritabanı tabloları oluşturulmamış');
-      console.log('🔧 Güvenli migration yapılıyor...');
+      console.log('🔧 Güvenli tablo oluşturma başlatılıyor...');
       
       try {
-        console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
+        // Önce Prisma client ile tabloları oluşturmayı dene
+        console.log('🔧 Prisma ile tablolar oluşturuluyor...');
         const { execSync } = require('child_process');
         
-        // Güvenli migration - sadece tabloları oluştur
-        execSync('npx prisma db push --accept-data-loss=false', { stdio: 'inherit' });
-        console.log('✅ Veritabanı tabloları oluşturuldu');
+        // Sadece tabloları oluştur, veriyi sıfırlama
+        execSync('npx prisma db push --accept-data-loss=false --force-reset=false', { stdio: 'inherit' });
+        console.log('✅ Prisma ile tablolar oluşturuldu');
         
         // Tablolar oluşturulduktan sonra seed data ekle
         setTimeout(async () => {
@@ -1233,19 +1234,22 @@ async function initializeDatabase() {
             console.error('❌ Seed data hatası:', seedError);
           }
         }, 3000);
-      } catch (migrationError) {
-        console.error('❌ Migration hatası:', migrationError);
-        console.log('💡 Alternatif migration yöntemi deneniyor...');
         
-        // Alternatif yöntem: Prisma client ile migration
+      } catch (migrationError) {
+        console.error('❌ Prisma migration hatası:', migrationError);
+        console.log('💡 Raw SQL ile tablo oluşturma deneniyor...');
+        
+        // Raw SQL ile güvenli tablo oluşturma
         try {
-          console.log('🔧 Prisma client ile migration deneniyor...');
+          console.log('🔧 Raw SQL ile tablolar oluşturuluyor...');
+          
+          // Schema oluştur
           await prisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
           console.log('✅ Schema oluşturuldu');
           
-          // Tabloları manuel oluştur
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "User" (
+          // Tabloları güvenli şekilde oluştur (IF NOT EXISTS ile)
+          const tables = [
+            `CREATE TABLE IF NOT EXISTS "User" (
               "id" SERIAL PRIMARY KEY,
               "email" TEXT NOT NULL UNIQUE,
               "password" TEXT NOT NULL,
@@ -1255,35 +1259,29 @@ async function initializeDatabase() {
               "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
               "branchId" INTEGER,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "Branch" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "Branch" (
               "id" SERIAL PRIMARY KEY,
               "name" TEXT NOT NULL,
               "address" TEXT,
               "phone" TEXT,
               "isActive" BOOLEAN NOT NULL DEFAULT true,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "Category" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "Category" (
               "id" SERIAL PRIMARY KEY,
               "name" TEXT NOT NULL,
               "description" TEXT,
               "isActive" BOOLEAN NOT NULL DEFAULT true,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "Product" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "Product" (
               "id" SERIAL PRIMARY KEY,
               "name" TEXT NOT NULL,
               "description" TEXT,
@@ -1293,24 +1291,20 @@ async function initializeDatabase() {
               "branchId" INTEGER,
               "isActive" BOOLEAN NOT NULL DEFAULT true,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "Customer" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "Customer" (
               "id" SERIAL PRIMARY KEY,
               "name" TEXT NOT NULL,
               "phone" TEXT NOT NULL UNIQUE,
               "email" TEXT,
               "address" TEXT,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "Order" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "Order" (
               "id" SERIAL PRIMARY KEY,
               "orderNumber" TEXT NOT NULL UNIQUE,
               "totalAmount" DECIMAL(10,2) NOT NULL,
@@ -1321,23 +1315,43 @@ async function initializeDatabase() {
               "deliveryType" TEXT DEFAULT 'PICKUP',
               "paymentMethod" TEXT DEFAULT 'CASH',
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
-          
-          await prisma.$executeRaw`
-            CREATE TABLE IF NOT EXISTS "OrderItem" (
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`,
+            
+            `CREATE TABLE IF NOT EXISTS "OrderItem" (
               "id" SERIAL PRIMARY KEY,
               "orderId" INTEGER NOT NULL,
               "productId" INTEGER NOT NULL,
               "quantity" INTEGER NOT NULL,
               "price" DECIMAL(10,2) NOT NULL,
               "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              "updatedAt" TIMESTAMP(3) NOT NULL
-            )
-          `;
+              "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )`
+          ];
           
-          console.log('✅ Tablolar başarıyla oluşturuldu');
+          // Tabloları oluştur
+          for (const tableSQL of tables) {
+            await prisma.$executeRawUnsafe(tableSQL);
+          }
+          
+          console.log('✅ Tüm tablolar başarıyla oluşturuldu');
+          
+          // Index'leri oluştur
+          const indexes = [
+            'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
+            'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
+            'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
+            'CREATE INDEX IF NOT EXISTS "Order_branchId_idx" ON "Order"("branchId")',
+            'CREATE INDEX IF NOT EXISTS "Order_customerId_idx" ON "Order"("customerId")',
+            'CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId")',
+            'CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId")'
+          ];
+          
+          for (const indexSQL of indexes) {
+            await prisma.$executeRawUnsafe(indexSQL);
+          }
+          
+          console.log('✅ Index\'ler oluşturuldu');
           
           // Seed data ekle
           setTimeout(async () => {
@@ -1350,8 +1364,9 @@ async function initializeDatabase() {
           }, 2000);
           
         } catch (rawError) {
-          console.error('❌ Raw SQL migration hatası:', rawError);
+          console.error('❌ Raw SQL tablo oluşturma hatası:', rawError);
           console.log('💡 Veritabanı tabloları manuel olarak oluşturulmalı');
+          console.log('🔧 Lütfen veritabanı yöneticinizle iletişime geçin');
         }
       }
     }
