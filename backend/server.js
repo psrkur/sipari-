@@ -63,6 +63,12 @@ if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = 'file:./dev.db';
 }
 
+// PostgreSQL URL override for Render
+if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL.includes('postgresql')) {
+  process.env.DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis';
+  console.log('🔧 PostgreSQL URL override applied for production');
+}
+
 // Database type detection
 console.log(`🔍 Database URL: ${DATABASE_URL.substring(0, 20)}...`);
 console.log(`📊 Database Type: ${isPostgreSQL ? 'PostgreSQL' : 'SQLite'}`);
