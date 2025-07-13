@@ -1194,7 +1194,7 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
 
 
 
-// Veritabanı başlatma ve seed logic'i
+// Veritabanı başlatma ve seed logic'i - Güvenli versiyon
 async function initializeDatabase() {
   try {
     console.log('🔍 Veritabanı bağlantısı test ediliyor...');
@@ -1210,30 +1210,32 @@ async function initializeDatabase() {
         console.log('✅ Seed data başarıyla oluşturuldu');
       } else {
         console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
+        console.log(`📊 Mevcut kullanıcı sayısı: ${existingData}`);
       }
     } else {
-      console.log('⚠️ Veritabanı tabloları oluşturulmamış, migration gerekli');
+      console.log('⚠️ Veritabanı tabloları oluşturulmamış');
+      console.log('🔒 Production ortamında otomatik migration yapılmıyor');
+      console.log('💡 Manuel olarak veritabanı tablolarını oluşturmanız gerekiyor');
       
-      try {
-        console.log('🔧 Veritabanı tablolarını oluşturmayı deniyorum...');
-        const { execSync } = require('child_process');
-        
-        // Sadece tabloları oluştur, veriyi sıfırlama
-        execSync('npx prisma db push', { stdio: 'inherit' });
-        console.log('✅ Veritabanı tabloları oluşturuldu');
-        
-        // Tablolar oluşturulduktan sonra seed data ekle
-        setTimeout(async () => {
-          try {
-            await seedData();
-            console.log('✅ Seed data başarıyla oluşturuldu');
-          } catch (seedError) {
-            console.error('❌ Seed data hatası:', seedError);
-          }
-        }, 3000);
-      } catch (migrationError) {
-        console.error('❌ Migration hatası:', migrationError);
-        console.log('💡 Render build sırasında migration yapılacak');
+      // Production'da otomatik migration yapmıyoruz
+      if (!isProduction) {
+        try {
+          console.log('🔧 Development ortamında tabloları oluşturmayı deniyorum...');
+          const { execSync } = require('child_process');
+          execSync('npx prisma db push', { stdio: 'inherit' });
+          console.log('✅ Veritabanı tabloları oluşturuldu');
+          
+          setTimeout(async () => {
+            try {
+              await seedData();
+              console.log('✅ Seed data başarıyla oluşturuldu');
+            } catch (seedError) {
+              console.error('❌ Seed data hatası:', seedError);
+            }
+          }, 3000);
+        } catch (migrationError) {
+          console.error('❌ Migration hatası:', migrationError);
+        }
       }
     }
   } catch (error) {

@@ -7,7 +7,6 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "npx prisma generate",
-    "postinstall": "npx prisma generate",
     "db:migrate": "npx prisma db push",
     "db:seed": "node -e \"require('./server.js').seedData()\""
   },

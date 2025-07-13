@@ -3,7 +3,7 @@ services:
     name: yemek5-backend
     env: node
     plan: free
-    buildCommand: npm install && npx prisma generate
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV
