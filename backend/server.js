@@ -1311,15 +1311,127 @@ async function initializeDatabase() {
       console.log('🔧 Güvenli tablo oluşturma başlatılıyor...');
       
       try {
-        // Önce Prisma client ile tabloları oluşturmayı dene
+        // Prisma client ile tabloları oluşturmayı dene
         console.log('🔧 Prisma ile tablolar oluşturuluyor...');
-        const { execSync } = require('child_process');
         
-        // Sadece tabloları oluştur, veriyi sıfırlama
-        execSync('npx prisma db push --accept-data-loss=false --force-reset=false', { stdio: 'inherit' });
-        console.log('✅ Prisma ile tablolar oluşturuldu');
+        // Prisma client'ı yeniden oluştur
+        const { PrismaClient } = require('@prisma/client');
+        const tempPrisma = new PrismaClient();
         
-        // Tablolar oluşturulduktan sonra seed data ekle
+        // Veritabanı şemasını oluştur (shell komutu olmadan)
+        await tempPrisma.$executeRaw`CREATE SCHEMA IF NOT EXISTS public`;
+        console.log('✅ Schema oluşturuldu');
+        
+        // Tabloları güvenli şekilde oluştur
+        const tables = [
+          `CREATE TABLE IF NOT EXISTS "User" (
+            "id" SERIAL PRIMARY KEY,
+            "email" TEXT NOT NULL UNIQUE,
+            "password" TEXT NOT NULL,
+            "name" TEXT,
+            "phone" TEXT,
+            "address" TEXT,
+            "role" TEXT NOT NULL DEFAULT 'CUSTOMER',
+            "branchId" INTEGER,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Branch" (
+            "id" SERIAL PRIMARY KEY,
+            "name" TEXT NOT NULL,
+            "address" TEXT,
+            "phone" TEXT,
+            "isActive" BOOLEAN NOT NULL DEFAULT true,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Category" (
+            "id" SERIAL PRIMARY KEY,
+            "name" TEXT NOT NULL,
+            "description" TEXT,
+            "isActive" BOOLEAN NOT NULL DEFAULT true,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Product" (
+            "id" SERIAL PRIMARY KEY,
+            "name" TEXT NOT NULL,
+            "description" TEXT,
+            "price" DECIMAL(10,2) NOT NULL,
+            "image" TEXT,
+            "categoryId" INTEGER,
+            "branchId" INTEGER,
+            "isActive" BOOLEAN NOT NULL DEFAULT true,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Customer" (
+            "id" SERIAL PRIMARY KEY,
+            "name" TEXT NOT NULL,
+            "phone" TEXT NOT NULL UNIQUE,
+            "email" TEXT,
+            "address" TEXT,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "Order" (
+            "id" SERIAL PRIMARY KEY,
+            "orderNumber" TEXT NOT NULL UNIQUE,
+            "totalAmount" DECIMAL(10,2) NOT NULL,
+            "status" TEXT NOT NULL DEFAULT 'PENDING',
+            "notes" TEXT,
+            "customerId" INTEGER,
+            "branchId" INTEGER NOT NULL,
+            "deliveryType" TEXT DEFAULT 'PICKUP',
+            "paymentMethod" TEXT DEFAULT 'CASH',
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`,
+          
+          `CREATE TABLE IF NOT EXISTS "OrderItem" (
+            "id" SERIAL PRIMARY KEY,
+            "orderId" INTEGER NOT NULL,
+            "productId" INTEGER NOT NULL,
+            "quantity" INTEGER NOT NULL,
+            "price" DECIMAL(10,2) NOT NULL,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          )`
+        ];
+        
+        // Tabloları oluştur
+        for (const tableSQL of tables) {
+          await tempPrisma.$executeRawUnsafe(tableSQL);
+        }
+        
+        console.log('✅ Tüm tablolar başarıyla oluşturuldu');
+        
+        // Index'leri oluştur
+        const indexes = [
+          'CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email")',
+          'CREATE INDEX IF NOT EXISTS "Product_branchId_idx" ON "Product"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "Product_categoryId_idx" ON "Product"("categoryId")',
+          'CREATE INDEX IF NOT EXISTS "Order_branchId_idx" ON "Order"("branchId")',
+          'CREATE INDEX IF NOT EXISTS "Order_customerId_idx" ON "Order"("customerId")',
+          'CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId")',
+          'CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId")'
+        ];
+        
+        for (const indexSQL of indexes) {
+          await tempPrisma.$executeRawUnsafe(indexSQL);
+        }
+        
+        console.log('✅ Index\'ler oluşturuldu');
+        
+        // Temp Prisma client'ı kapat
+        await tempPrisma.$disconnect();
+        
+        // Seed data ekle
         setTimeout(async () => {
           try {
             await seedData();
@@ -1327,7 +1439,7 @@ async function initializeDatabase() {
           } catch (seedError) {
             console.error('❌ Seed data hatası:', seedError);
           }
-        }, 3000);
+        }, 2000);
         
       } catch (migrationError) {
         console.error('❌ Prisma migration hatası:', migrationError);
