@@ -6,6 +6,7 @@ import { API_ENDPOINTS, apiRequest } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   ShoppingCart, 
   Plus, 
@@ -13,7 +14,12 @@ import {
   CheckCircle,
   Table as TableIcon,
   Building,
-  Menu
+  Menu,
+  X,
+  ChefHat,
+  Star,
+  Clock,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -58,6 +64,7 @@ export default function TableOrder() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     const dataParam = searchParams.get('data');
@@ -129,6 +136,7 @@ export default function TableOrder() {
         }];
       }
     });
+    toast.success(`${product.name} sepete eklendi!`);
   };
 
   const removeFromCart = (productId: number) => {
@@ -151,7 +159,6 @@ export default function TableOrder() {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
-  // Notu güncelleyen fonksiyon
   const updateCartItemNote = (productId: number, note: string) => {
     setCart(prevCart => prevCart.map(item =>
       item.productId === productId ? { ...item, note } : item
@@ -198,10 +205,11 @@ export default function TableOrder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Masa bilgileri yükleniyor...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Menü Yükleniyor</h2>
+          <p className="text-gray-600">Lütfen bekleyin...</p>
         </div>
       </div>
     );
@@ -209,42 +217,50 @@ export default function TableOrder() {
 
   if (!table) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Masa Bulunamadı</h1>
-          <p className="text-gray-600">QR kod geçersiz veya masa aktif değil.</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4 shadow-2xl">
+          <CardContent className="text-center p-8">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <X className="h-8 w-8 text-red-600" />
+            </div>
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Masa Bulunamadı</h1>
+            <p className="text-gray-600">QR kod geçersiz veya masa aktif değil.</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full mx-4">
-          <CardHeader className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <CardTitle className="text-2xl text-green-600">Sipariş Başarılı!</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-600 mb-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4 shadow-2xl">
+          <CardContent className="text-center p-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-green-600 mb-4">Sipariş Başarılı!</h1>
+            <p className="text-gray-600 mb-6">
               Siparişiniz başarıyla oluşturuldu. Sipariş numaranız:
             </p>
-            <Badge variant="outline" className="text-lg font-mono">
+            <Badge variant="outline" className="text-xl font-mono bg-green-50 border-green-200 text-green-800 px-4 py-2">
               {orderNumber}
             </Badge>
-            <div className="mt-6 space-y-2">
-              <p className="text-sm text-gray-500">
-                <strong>Masa:</strong> {table.number}
-              </p>
-              <p className="text-sm text-gray-500">
-                <strong>Şube:</strong> {table.branch.name}
-              </p>
+            <div className="mt-8 space-y-3 bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center justify-center gap-2">
+                <TableIcon className="h-5 w-5 text-blue-600" />
+                <span className="text-gray-700"><strong>Masa:</strong> {table.number}</span>
+              </div>
+              <div className="flex items-center justify-center gap-2">
+                <Building className="h-5 w-5 text-blue-600" />
+                <span className="text-gray-700"><strong>Şube:</strong> {table.branch.name}</span>
+              </div>
             </div>
             <Button 
               onClick={() => window.location.reload()} 
-              className="mt-6 w-full"
+              className="mt-6 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg"
             >
+              <Sparkles className="h-5 w-5 mr-2" />
               Yeni Sipariş
             </Button>
           </CardContent>
@@ -254,92 +270,197 @@ export default function TableOrder() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 pb-28 min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
+      {/* Modern Header */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-orange-200 sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <TableIcon className="h-8 w-8 text-blue-600" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                <TableIcon className="h-6 w-6 text-white" />
+              </div>
               <div>
-                <h1 className="text-xl font-bold">Masa {table.number}</h1>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  Masa {table.number}
+                </h1>
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <Building className="h-4 w-4" />
                   {table.branch.name}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <ShoppingCart className="h-6 w-6 text-blue-600" />
-              <Badge variant="secondary">
-                {cart.reduce((total, item) => total + item.quantity, 0)} ürün
-              </Badge>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowCart(!showCart)}
+                className="relative bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Sepet
+                {cart.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs">
+                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                  </Badge>
+                )}
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Sepet Listesi */}
-      <div className="bg-white rounded-lg shadow p-4 mb-4 max-w-lg mx-auto">
-        <h2 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" /> Sepetiniz
-        </h2>
-        {cart.length === 0 ? (
-          <p className="text-gray-500 text-center py-4">Sepetiniz boş</p>
-        ) : (
-          <ul className="divide-y divide-gray-200">
-            {cart.map(item => (
-              <li key={item.productId} className="flex flex-col gap-1 py-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <span className="font-medium">{item.name}</span>
-                    <span className="ml-2 text-gray-500">x{item.quantity}</span>
-                    <span className="ml-2 text-blue-600 font-semibold">₺{(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
-                  <button
-                    className="ml-4 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
-                    onClick={() => removeFromCart(item.productId)}
-                    aria-label="Ürünü çıkar"
-                  >
-                    <Minus className="h-4 w-4" />
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  className="mt-1 w-full border border-gray-300 rounded px-2 py-1 text-sm"
-                  placeholder="Bu ürün için not (örn: soğansız, az pişmiş)"
-                  value={item.note || ''}
-                  onChange={e => updateCartItemNote(item.productId, e.target.value)}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Ürünler */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-24">
-        {products.map(product => (
-          <div key={product.id} className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-            <img src={product.image} alt={product.name} className="w-24 h-24 object-cover rounded mb-2" />
-            <div className="font-semibold text-center text-base sm:text-lg mb-1">{product.name}</div>
-            <div className="text-blue-600 font-bold text-lg mb-2">₺{product.price.toFixed(2)}</div>
-            <button
-              className="w-full bg-blue-600 text-white rounded py-2 mt-auto hover:bg-blue-700 transition"
-              onClick={() => addToCart(product)}
-            >
-              Sepete Ekle
-            </button>
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Ürünler Bölümü */}
+          <div className="lg:col-span-3">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
+                <ChefHat className="h-6 w-6 text-orange-600" />
+                Menü
+              </h2>
+              <p className="text-gray-600">Lezzetli yemeklerimizi keşfedin</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {products.map(product => (
+                <Card key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm">
+                  <CardContent className="p-0">
+                    <div className="relative overflow-hidden rounded-t-xl">
+                      <img 
+                        src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${product.id}/image`}
+                        alt={product.name} 
+                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Resim+Yüklenemedi';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                      <div className="absolute top-3 right-3">
+                        <Badge className="bg-orange-500 text-white">
+                          {product.category.name}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-gray-800 mb-2 group-hover:text-orange-600 transition-colors">
+                        {product.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {product.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                          ₺{product.price.toFixed(2)}
+                        </span>
+                        <Button
+                          onClick={() => addToCart(product)}
+                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Ekle
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Sepet ve Sipariş Özeti - Mobilde sabit alt bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg p-4 flex justify-between items-center z-50 sm:static sm:shadow-none sm:border-0">
-        <span className="font-bold">Toplam: ₺{getTotalPrice().toFixed(2)}</span>
-        <button className="bg-green-600 text-white rounded px-4 py-2" onClick={handlePlaceOrder}>
-          Siparişi Tamamla
-        </button>
+          {/* Sepet Bölümü */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-24 bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <ShoppingCart className="h-6 w-6 text-orange-600" />
+                  Sepetiniz
+                  {cart.length > 0 && (
+                    <Badge className="bg-orange-500 text-white">
+                      {cart.reduce((total, item) => total + item.quantity, 0)}
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {cart.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Sepetiniz boş</p>
+                    <p className="text-sm text-gray-400">Menüden ürün seçin</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {cart.map(item => (
+                        <div key={item.productId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${item.productId}/image`}
+                            alt={item.name}
+                            className="w-12 h-12 object-cover rounded-lg"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => removeFromCart(item.productId)}
+                                  className="h-6 w-6 p-0 rounded-full"
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="font-semibold text-gray-700">{item.quantity}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price, description: '', image: item.image, category: { id: 0, name: '' } })}
+                                  className="h-6 w-6 p-0 rounded-full"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <span className="font-bold text-orange-600">₺{(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
+                            <Input
+                              type="text"
+                              placeholder="Not ekle..."
+                              value={item.note || ''}
+                              onChange={e => updateCartItemNote(item.productId, e.target.value)}
+                              className="mt-2 text-sm"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="flex justify-between items-center text-lg font-bold">
+                        <span>Toplam:</span>
+                        <span className="text-2xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                          ₺{getTotalPrice().toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      <Input
+                        placeholder="Sipariş notu (opsiyonel)"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full"
+                      />
+                      
+                      <Button
+                        onClick={handlePlaceOrder}
+                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg"
+                      >
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        Siparişi Tamamla
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

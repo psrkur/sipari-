@@ -149,6 +149,42 @@ if (fs.existsSync(currentSchemaPath)) {
 fs.writeFileSync(currentSchemaPath, sqliteSchema);
 console.log('✅ SQLite schema written');
 
+// --- YENİ: uploads klasöründeki resimleri veritabanına aktar ---
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const fs = require('fs');
+const path = require('path');
+
+async function migrateImagesToDb() {
+  const uploadsDir = path.join(__dirname, 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    console.log('Uploads klasörü yok.');
+    return;
+  }
+  const files = fs.readdirSync(uploadsDir);
+  let updated = 0;
+  for (const file of files) {
+    const imagePath = `/uploads/${file}`;
+    const fullPath = path.join(uploadsDir, file);
+    const product = await prisma.product.findFirst({ where: { image: imagePath } });
+    if (product && fs.existsSync(fullPath)) {
+      const imageData = fs.readFileSync(fullPath);
+      await prisma.product.update({
+        where: { id: product.id },
+        data: { imageData }
+      });
+      updated++;
+      console.log(`Aktarıldı: ${product.name} (${imagePath})`);
+    }
+  }
+  console.log(`Toplam ${updated} ürün resmi veritabanına aktarıldı.`);
+  await prisma.$disconnect();
+}
+
+if (require.main === module) {
+  migrateImagesToDb();
+}
+
 console.log('\n📋 NEXT STEPS:');
 console.log('==============');
 console.log('1. Run: npx prisma generate');

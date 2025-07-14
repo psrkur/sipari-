@@ -73,6 +73,7 @@ model Product {
   price       Float
   categoryId  Int
   image       String?
+  imageData   Bytes?
   isActive    Boolean   @default(true)
   branchId    Int
   createdAt   DateTime  @default(now())
