@@ -16,6 +16,7 @@ model User {
   address   String?
   role      String   @default("CUSTOMER")
   branchId  Int?
+  isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]

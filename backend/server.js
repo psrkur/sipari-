@@ -297,27 +297,13 @@ app.post('/api/auth/register', async (req, res) => {
         name,
         phone,
         address,
-        role: 'CUSTOMER'
+        role: 'CUSTOMER',
+        isActive: false // Yönetici onayına kadar pasif
       }
     });
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role, branchId: user.branchId },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
-
     res.json({ 
-      token, 
-      user: { 
-        id: user.id, 
-        email: user.email, 
-        name: user.name, 
-        phone: user.phone,
-        address: user.address,
-        role: user.role,
-        branchId: user.branchId
-      } 
+      message: 'Kayıt başarılı, yönetici onayından sonra giriş yapabilirsiniz.'
     });
   } catch (error) {
     res.status(500).json({ error: 'Kayıt hatası' });
@@ -334,6 +320,10 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Hesabınız henüz yönetici tarafından onaylanmadı.' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
