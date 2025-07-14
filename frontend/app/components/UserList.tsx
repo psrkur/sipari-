@@ -5,6 +5,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  isActive?: boolean;
   branch?: {
     id: number;
     name: string;
@@ -15,9 +16,10 @@ interface User {
 interface UserListProps {
   users: User[];
   onDeleteUser: (userId: number) => void;
+  onActivateUser: (userId: number) => void;
 }
 
-const UserList: React.FC<UserListProps> = ({ users, onDeleteUser }) => {
+const UserList: React.FC<UserListProps> = ({ users, onDeleteUser, onActivateUser }) => {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'SUPER_ADMIN':
@@ -81,7 +83,15 @@ const UserList: React.FC<UserListProps> = ({ users, onDeleteUser }) => {
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {new Date(user.createdAt).toLocaleDateString('tr-TR')}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
+                  {!user.isActive && (
+                    <button
+                      onClick={() => onActivateUser(user.id)}
+                      className="text-green-600 hover:text-green-900 border border-green-200 rounded px-2 py-1 mr-2"
+                    >
+                      Onayla
+                    </button>
+                  )}
                   <button
                     onClick={() => onDeleteUser(user.id)}
                     className="text-red-600 hover:text-red-900"

@@ -72,6 +72,7 @@ export const API_ENDPOINTS = {
   ADMIN_STATS: `${API_BASE_URL}/api/admin/stats`,
   ADMIN_UPDATE_ORDER_STATUS: (orderId: number) => `${API_BASE_URL}/api/admin/orders/${orderId}/status`,
   ADMIN_DELETE_USER: (userId: number) => `${API_BASE_URL}/api/admin/users/${userId}`,
+  ADMIN_ACTIVATE_USER: (userId: number) => `${API_BASE_URL}/api/admin/users/${userId}/activate`,
   ADMIN_DELETE_PRODUCT: (productId: number) => `${API_BASE_URL}/api/admin/products/${productId}`,
   ADMIN_UPDATE_PRODUCT: (productId: number) => `${API_BASE_URL}/api/admin/products/${productId}`,
   ADMIN_DELETE_CATEGORY: (categoryId: number) => `${API_BASE_URL}/api/categories/${categoryId}`,

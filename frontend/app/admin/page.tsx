@@ -324,6 +324,23 @@ export default function AdminPage() {
     }
   };
 
+  const activateUser = async (userId: number) => {
+    if (!confirm('Bu kullanıcıyı onaylamak istediğinizden emin misiniz?')) return;
+    
+    try {
+      await axios.put(API_ENDPOINTS.ADMIN_ACTIVATE_USER(userId), {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Kullanıcı onaylandı');
+      const response = await axios.get(API_ENDPOINTS.ADMIN_USERS, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      toast.error('Kullanıcı onaylanamadı');
+    }
+  };
+
   const editProduct = (product: any) => {
     setEditingProduct(product);
     setEditProductForm({
@@ -709,6 +726,7 @@ export default function AdminPage() {
           <UserList
             users={sortedUsers}
             onDeleteUser={deleteUser}
+            onActivateUser={activateUser}
           />
         )}
 
