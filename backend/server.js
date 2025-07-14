@@ -547,6 +547,74 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
   }
 });
 
+// Müşteri siparişlerini getir (sadece giriş yapmış kullanıcılar için)
+app.get('/api/customer/orders', authenticateToken, async (req, res) => {
+  try {
+    // Sadece CUSTOMER rolündeki kullanıcılar kendi siparişlerini görebilir
+    if (req.user.role !== 'CUSTOMER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: {
+        userId: req.user.userId,
+        orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
+      },
+      include: {
+        branch: true,
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Müşteri siparişleri getirilemedi:', error);
+    res.status(500).json({ error: 'Siparişler getirilemedi' });
+  }
+});
+
+// Müşteri sipariş detayını getir
+app.get('/api/customer/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    // Sadece CUSTOMER rolündeki kullanıcılar kendi siparişlerini görebilir
+    if (req.user.role !== 'CUSTOMER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+
+    const order = await prisma.order.findFirst({
+      where: {
+        id: parseInt(id),
+        userId: req.user.userId,
+        orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
+      },
+      include: {
+        branch: true,
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      }
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Sipariş bulunamadı' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('Müşteri sipariş detayı getirilemedi:', error);
+    res.status(500).json({ error: 'Sipariş detayı getirilemedi' });
+  }
+});
+
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
@@ -621,7 +689,11 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
 
     // Önce mevcut siparişi kontrol et
     const existingOrder = await prisma.order.findUnique({
-      where: whereClause
+      where: whereClause,
+      include: {
+        user: true,
+        branch: true
+      }
     });
 
     if (!existingOrder) {
@@ -643,14 +715,38 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       });
     }
 
-    // Eğer yeni durum DELIVERED ise, güncellemeye izin ver
-    // Eğer mevcut durum DELIVERED değilse, güncellemeye izin ver
+    // Sipariş durumunu güncelle
     const order = await prisma.order.update({
       where: whereClause,
-      data: { status }
+      data: { status },
+      include: {
+        user: true,
+        branch: true
+      }
     });
 
-    res.json(order);
+    // Müşteri bilgilendirme mesajı oluştur
+    const statusMessages = {
+      'PENDING': 'Siparişiniz alındı ve hazırlanmaya başlandı.',
+      'PREPARING': 'Siparişiniz hazırlanıyor.',
+      'READY': 'Siparişiniz hazır! Teslimata çıkıyoruz.',
+      'DELIVERED': 'Siparişiniz teslim edildi. Afiyet olsun!',
+      'CANCELLED': 'Siparişiniz iptal edildi.'
+    };
+
+    const statusMessage = statusMessages[status] || 'Sipariş durumunuz güncellendi.';
+
+    res.json({
+      order,
+      message: statusMessage,
+      customerNotification: {
+        orderNumber: order.orderNumber,
+        status: status,
+        statusText: statusMessage,
+        branchName: order.branch?.name || 'Şube',
+        updatedAt: new Date().toISOString()
+      }
+    });
   } catch (error) {
     console.error('Sipariş durumu güncelleme hatası:', error);
     res.status(500).json({ error: 'Sipariş durumu güncellenemedi' });

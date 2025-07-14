@@ -59,6 +59,8 @@ export const API_ENDPOINTS = {
   
   // Customer
   CUSTOMER_PROFILE: `${API_BASE_URL}/api/customer/profile`,
+  CUSTOMER_ORDERS: `${API_BASE_URL}/api/customer/orders`,
+  CUSTOMER_ORDER_DETAIL: (orderId: number) => `${API_BASE_URL}/api/customer/orders/${orderId}`,
   CUSTOMER_ADDRESSES: `${API_BASE_URL}/api/customer/addresses`,
   CUSTOMER_ADD_ADDRESS: `${API_BASE_URL}/api/customer/addresses`,
   CUSTOMER_UPDATE_ADDRESS: (addressId: number) => `${API_BASE_URL}/api/customer/addresses/${addressId}`,
