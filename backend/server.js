@@ -2941,6 +2941,39 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Admin: Kullanıcı aktivasyonu
+app.put('/api/admin/users/:id/activate', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Admin kontrolü
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+    
+    // Kullanıcıyı aktif hale getir
+    await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { isActive: true }
+    });
+    
+    res.json({ message: 'Kullanıcı başarıyla aktifleştirildi' });
+  } catch (error) {
+    console.error('Kullanıcı aktivasyon hatası:', error);
+    res.status(500).json({ error: 'Kullanıcı aktivasyonu başarısız' });
+  }
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint bulunamadı' });
+});
+
+
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
