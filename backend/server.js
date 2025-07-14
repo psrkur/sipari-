@@ -2944,9 +2944,13 @@ app.use((err, req, res, next) => {
 // Admin: Kullanıcı aktivasyonu
 app.put('/api/admin/users/:id/activate', authenticateToken, async (req, res) => {
   try {
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+    
     const { id } = req.params;
     
-    // Admin kontrolü
+    // Kullanıcı var mı kontrol et
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) }
     });
@@ -2967,22 +2971,6 @@ app.put('/api/admin/users/:id/activate', authenticateToken, async (req, res) => 
     res.status(500).json({ error: 'Kullanıcı aktivasyonu başarısız' });
   }
 });
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint bulunamadı' });
-});
-
-
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint bulunamadı' });
-});
-
-app.listen(SERVER_PORT, () => {
-  console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
-  console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
-  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
-}); 
 
 // Veritabanı kolonu ekleme endpoint'i (sadece production'da)
 app.post('/api/admin/fix-database', async (req, res) => {
@@ -3032,17 +3020,14 @@ app.get('/api/products/:id/image', async (req, res) => {
   }
 });
 
-app.put('/api/admin/users/:id/activate', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
-    const { id } = req.params;
-    const user = await prisma.user.update({
-      where: { id: parseInt(id) },
-      data: { isActive: true }
-    });
-    res.json({ message: 'Kullanıcı onaylandı', user });
-  } catch (e) {
-    res.status(500).json({ error: 'Kullanıcı onaylanamadı' });
-  }
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ error: 'Endpoint bulunamadı' });
+});
+
+app.listen(SERVER_PORT, () => {
+  console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
+  console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
+  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 });
 
