@@ -300,13 +300,15 @@ export default function Home() {
                     <span className="hidden sm:inline">👤 Profilim</span>
                     <span className="sm:hidden">👤</span>
                   </button>
-                  <button 
-                    onClick={() => router.push('/orders')}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg"
-                  >
-                    <span className="hidden sm:inline">📋 Siparişlerim</span>
-                    <span className="sm:hidden">📋</span>
-                  </button>
+                  {user.role === 'CUSTOMER' && (
+                    <button 
+                      onClick={() => router.push('/orders')}
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg"
+                    >
+                      <span className="hidden sm:inline">📋 Siparişlerim</span>
+                      <span className="sm:hidden">📋</span>
+                    </button>
+                  )}
                   {(user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
                     <button 
                       onClick={() => router.push('/admin')}
@@ -406,12 +408,14 @@ export default function Home() {
                   >
                     👤 Profilim
                   </button>
-                  <button 
-                    onClick={() => router.push('/orders')}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
-                  >
-                    📋 Siparişlerim
-                  </button>
+                  {user.role === 'CUSTOMER' && (
+                    <button 
+                      onClick={() => router.push('/orders')}
+                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-3 rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+                    >
+                      📋 Siparişlerim
+                    </button>
+                  )}
                   {(user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
                     <button 
                       onClick={() => router.push('/admin')}

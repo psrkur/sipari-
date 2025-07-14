@@ -37,6 +37,11 @@ interface Order {
     name: string;
     address: string;
   };
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
   orderItems: OrderItem[];
 }
 
@@ -207,19 +212,35 @@ export default function OrdersPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Siparişlerim</h1>
-            <p className="text-gray-600">Tüm siparişlerinizi buradan takip edebilirsiniz</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {user?.role === 'CUSTOMER' ? 'Siparişlerim' : 'Müşteri Siparişleri'}
+            </h1>
+            <p className="text-gray-600">
+              {user?.role === 'CUSTOMER' 
+                ? 'Tüm siparişlerinizi buradan takip edebilirsiniz'
+                : 'Tüm müşteri siparişlerini buradan görüntüleyebilirsiniz'
+              }
+            </p>
           </div>
 
           {orders.length === 0 ? (
             <Card className="text-center py-12">
               <CardContent>
                 <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Henüz siparişiniz yok</h3>
-                <p className="text-gray-600 mb-6">İlk siparişinizi vermek için ana sayfaya dönün</p>
-                <Button onClick={() => router.push('/')} className="bg-blue-600 hover:bg-blue-700">
-                  Sipariş Ver
-                </Button>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {user?.role === 'CUSTOMER' ? 'Henüz siparişiniz yok' : 'Henüz müşteri siparişi yok'}
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  {user?.role === 'CUSTOMER' 
+                    ? 'İlk siparişinizi vermek için ana sayfaya dönün'
+                    : 'Henüz hiç müşteri siparişi bulunmuyor'
+                  }
+                </p>
+                {user?.role === 'CUSTOMER' && (
+                  <Button onClick={() => router.push('/')} className="bg-blue-600 hover:bg-blue-700">
+                    Sipariş Ver
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -249,6 +270,11 @@ export default function OrdersPage() {
                         <div>
                           <p className="font-medium">{order.branch.name}</p>
                           <p className="text-sm text-gray-600">{order.branch.address}</p>
+                          {user?.role !== 'CUSTOMER' && order.user && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Müşteri: {order.user.name} ({order.user.email})
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div className="text-center">

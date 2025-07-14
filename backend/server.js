@@ -557,19 +557,26 @@ app.get('/api/customer/orders', authenticateToken, async (req, res) => {
       email: req.user.email
     });
 
-    // Sadece CUSTOMER rolündeki kullanıcılar kendi siparişlerini görebilir
-    if (req.user.role !== 'CUSTOMER') {
+    let whereClause = {
+      orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
+    };
+
+    // CUSTOMER rolündeki kullanıcılar sadece kendi siparişlerini görebilir
+    if (req.user.role === 'CUSTOMER') {
+      whereClause.userId = req.user.userId;
+    } else if (req.user.role === 'SUPER_ADMIN' || req.user.role === 'BRANCH_MANAGER') {
+      // Admin kullanıcılar tüm müşteri siparişlerini görebilir
+      console.log('✅ Admin kullanıcı tüm müşteri siparişlerini görüntülüyor');
+    } else {
       console.log('❌ Yetkisiz erişim:', req.user.role);
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
     const orders = await prisma.order.findMany({
-      where: {
-        userId: req.user.userId,
-        orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
-      },
+      where: whereClause,
       include: {
         branch: true,
+        user: req.user.role !== 'CUSTOMER', // Admin kullanıcılar için müşteri bilgilerini de getir
         orderItems: {
           include: {
             product: true
@@ -581,6 +588,7 @@ app.get('/api/customer/orders', authenticateToken, async (req, res) => {
 
     console.log('✅ Müşteri siparişleri getirildi:', {
       userId: req.user.userId,
+      role: req.user.role,
       orderCount: orders.length,
       orders: orders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status }))
     });
@@ -595,21 +603,25 @@ app.get('/api/customer/orders', authenticateToken, async (req, res) => {
 // Müşteri sipariş detayını getir
 app.get('/api/customer/orders/:id', authenticateToken, async (req, res) => {
   try {
-    // Sadece CUSTOMER rolündeki kullanıcılar kendi siparişlerini görebilir
-    if (req.user.role !== 'CUSTOMER') {
+    const { id } = req.params;
+
+    let whereClause = {
+      id: parseInt(id),
+      orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
+    };
+
+    // CUSTOMER rolündeki kullanıcılar sadece kendi siparişlerini görebilir
+    if (req.user.role === 'CUSTOMER') {
+      whereClause.userId = req.user.userId;
+    } else if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
-    const { id } = req.params;
-
     const order = await prisma.order.findFirst({
-      where: {
-        id: parseInt(id),
-        userId: req.user.userId,
-        orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
-      },
+      where: whereClause,
       include: {
         branch: true,
+        user: req.user.role !== 'CUSTOMER', // Admin kullanıcılar için müşteri bilgilerini de getir
         orderItems: {
           include: {
             product: true
