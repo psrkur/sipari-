@@ -479,17 +479,7 @@ app.get('/api/products/:branchId', async (req, res) => {
         {
           name: 'asc'
         }
-      ],
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        image: true,
-        isActive: true,
-        branch: true,
-        category: true
-      }
+      ]
     });
     res.json(products);
   } catch (error) {
@@ -596,16 +586,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
         },
         orderItems: {
           include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                image: true,
-                isActive: true
-              }
-            }
+            product: true
           }
         }
       },
@@ -1860,16 +1841,7 @@ app.get('/api/table/:tableId/products', async (req, res) => {
       orderBy: [
         { category: { name: 'asc' } },
         { name: 'asc' }
-      ],
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        image: true,
-        isActive: true,
-        category: true
-      }
+      ]
     });
     
     res.json(products);
