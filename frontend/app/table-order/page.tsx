@@ -65,6 +65,7 @@ export default function TableOrder() {
   const [orderNumber, setOrderNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [showCart, setShowCart] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('Tümü');
 
   useEffect(() => {
     const dataParam = searchParams.get('data');
@@ -163,6 +164,37 @@ export default function TableOrder() {
     setCart(prevCart => prevCart.map(item =>
       item.productId === productId ? { ...item, note } : item
     ));
+  };
+
+  // Kategori filtreleme fonksiyonları
+  const getAvailableCategories = () => {
+    const categories = products.map(product => product.category.name);
+    const uniqueCategories = Array.from(new Set(categories));
+    return ['Tümü', ...uniqueCategories];
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: { [key: string]: string } = {
+      'Pizza': '🍕',
+      'Burger': '🍔',
+      'İçecek': '🥤',
+      'Tatlı': '🍰',
+      'Salata': '🥗',
+      'Çorba': '🍲',
+      'Ana Yemek': '🍖',
+      'Kahvaltı': '🍳',
+      'Döner': '🥙',
+      'Kebap': '🍖',
+      'Tümü': '🍽️'
+    };
+    return icons[category] || '🍽️';
+  };
+
+  const getFilteredProducts = () => {
+    if (selectedCategory === 'Tümü') {
+      return products;
+    }
+    return products.filter(product => product.category.name === selectedCategory);
   };
 
   const handlePlaceOrder = async () => {
@@ -318,44 +350,64 @@ export default function TableOrder() {
               </h2>
               <p className="text-gray-600">Lezzetli yemeklerimizi keşfedin</p>
             </div>
+
+            {/* Kategori Filtreleme */}
+            <div className="mb-6">
+              <div className="flex flex-wrap gap-2">
+                {getAvailableCategories().map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      selectedCategory === category
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                        : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+                    }`}
+                  >
+                    <span className="mr-2">{getCategoryIcon(category)}</span>
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map(product => (
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {getFilteredProducts().map(product => (
                 <Card key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm">
                   <CardContent className="p-0">
                     <div className="relative overflow-hidden rounded-t-xl">
                       <img 
                         src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${product.id}/image`}
                         alt={product.name} 
-                        className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                        className="w-full h-32 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => {
                           e.currentTarget.src = '/placeholder-image.png';
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                      <div className="absolute top-3 right-3">
-                        <Badge className="bg-orange-500 text-white">
+                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                        <Badge className="bg-orange-500 text-white text-xs">
                           {product.category.name}
                         </Badge>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg text-gray-800 mb-2 group-hover:text-orange-600 transition-colors">
+                    <div className="p-3 sm:p-4">
+                      <h3 className="font-bold text-sm sm:text-lg text-gray-800 mb-1 sm:mb-2 group-hover:text-orange-600 transition-colors line-clamp-1">
                         {product.name}
                       </h3>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 hidden sm:block">
                         {product.description}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                        <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                           ₺{product.price.toFixed(2)}
                         </span>
                         <Button
                           onClick={() => addToCart(product)}
-                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg"
+                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2"
                         >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Ekle
+                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Ekle</span>
                         </Button>
                       </div>
                     </div>
