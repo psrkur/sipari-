@@ -9,7 +9,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "node deploy-tables.js",
     "build": "npx prisma generate",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "migrate": "node deploy-migration.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
