@@ -43,6 +43,14 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   }
 };
 
+// Resim yükleme hatası için handler
+export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const img = event.currentTarget;
+  console.log('Resim yüklenemedi, placeholder gösteriliyor:', img.src);
+  img.src = '/placeholder-image.svg';
+  img.onerror = null; // Sonsuz döngüyü önle
+};
+
 export const API_ENDPOINTS = {
   // Auth
   REGISTER: `${API_BASE_URL}/api/auth/register`,
@@ -102,7 +110,20 @@ export const API_ENDPOINTS = {
   TABLE_ORDER: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/order`,
   
   // Images
-  IMAGE_URL: (imagePath: string) => `${API_BASE_URL}${imagePath}`,
+  IMAGE_URL: (imagePath: string) => {
+    // Eğer imagePath zaten tam URL ise, olduğu gibi döndür
+    if (imagePath && (imagePath.startsWith('http://') || imagePath.startsWith('https://'))) {
+      return imagePath;
+    }
+    
+    // Eğer imagePath yoksa veya boşsa, placeholder resim döndür
+    if (!imagePath || imagePath.trim() === '') {
+      return '/placeholder-image.svg';
+    }
+    
+    // Normal resim URL'si oluştur
+    return `${API_BASE_URL}${imagePath}`;
+  },
 };
 
 export { apiRequest };

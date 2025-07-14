@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { handleImageError } from '@/lib/api';
 
 interface Product {
   id: number;
@@ -87,15 +88,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                           alt={product.name}
                           className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                           crossOrigin="anonymous"
-                          onError={(e) => { 
-                            console.error('Resim yüklenemedi:', product.image);
-                            console.error('Resim URL:', API_ENDPOINTS.IMAGE_URL(product.image));
-                            (e.target as HTMLImageElement).style.display = 'none'; 
-                          }}
-                          onLoad={() => {
-                            console.log('Resim başarıyla yüklendi:', product.image);
-                            console.log('Resim URL:', API_ENDPOINTS.IMAGE_URL(product.image));
-                          }}
+                          onError={handleImageError}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                       </div>
@@ -155,10 +148,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                     alt={selectedProduct.name}
                     className="w-full h-64 sm:h-80 object-cover"
                     crossOrigin="anonymous"
-                    onError={(e) => { 
-                      console.error('Resim yüklenemedi:', selectedProduct.image);
-                      (e.target as HTMLImageElement).style.display = 'none'; 
-                    }}
+                    onError={handleImageError}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>

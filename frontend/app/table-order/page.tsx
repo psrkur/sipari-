@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { API_ENDPOINTS, apiRequest } from '@/lib/api';
+import { API_ENDPOINTS, apiRequest, handleImageError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -377,12 +377,10 @@ export default function TableOrder() {
                   <CardContent className="p-0">
                     <div className="relative overflow-hidden rounded-t-xl">
                       <img 
-                        src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${product.id}/image`}
+                        src={API_ENDPOINTS.IMAGE_URL(product.image)}
                         alt={product.name} 
                         className="w-full h-32 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-image.png';
-                        }}
+                        onError={handleImageError}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                       <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
@@ -444,12 +442,10 @@ export default function TableOrder() {
                       {cart.map(item => (
                         <div key={item.productId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
                           <img 
-                            src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${item.productId}/image`}
+                            src={API_ENDPOINTS.IMAGE_URL(item.image)}
                             alt={item.name}
                             className="w-12 h-12 object-cover rounded-lg"
-                            onError={(e) => {
-                              e.currentTarget.src = '/placeholder-image.png';
-                            }}
+                            onError={handleImageError}
                           />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
