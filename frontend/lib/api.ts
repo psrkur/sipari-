@@ -43,11 +43,21 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
   }
 };
 
+// Base64 encoded placeholder image
+const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2YzZjRmNiIvPgogIDxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjMwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNlNWU3ZWIiIHN0cm9rZT0iI2QxZDU5YiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iIzljYTNhZiIvPgogIDxwYXRoIGQ9Ik0xODAgMTMwIEwyMjAgMTUwIEwxODAgMTcwIFoiIGZpbGw9IiM2YjcyODAiLz4KICA8dGV4dCB4PSIyMDAiIHk9IjIyMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE2IiBmaWxsPSIjNmI3MjgwIj5SZXNpbSBZb2s8L3RleHQ+Cjwvc3ZnPgo=';
+
 // Resim yükleme hatası için handler
 export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
   const img = event.currentTarget;
   console.log('Resim yüklenemedi, placeholder gösteriliyor:', img.src);
-  img.src = '/placeholder-image.svg';
+  
+  // Eğer zaten placeholder gösteriliyorsa, sonsuz döngüyü önle
+  if (img.src.includes('data:image/svg+xml') || img.src.includes('placeholder-image.svg')) {
+    console.log('Placeholder zaten gösteriliyor, döngü önlendi');
+    return;
+  }
+  
+  img.src = PLACEHOLDER_IMAGE;
   img.onerror = null; // Sonsuz döngüyü önle
 };
 
@@ -118,7 +128,7 @@ export const API_ENDPOINTS = {
     
     // Eğer imagePath yoksa veya boşsa, placeholder resim döndür
     if (!imagePath || imagePath.trim() === '') {
-      return '/placeholder-image.svg';
+      return PLACEHOLDER_IMAGE;
     }
     
     // Normal resim URL'si oluştur
