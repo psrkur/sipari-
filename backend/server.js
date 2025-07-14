@@ -461,6 +461,8 @@ app.delete('/api/admin/branches/:id', authenticateToken, async (req, res) => {
 app.get('/api/products/:branchId', async (req, res) => {
   try {
     const { branchId } = req.params;
+    console.log('🔍 Products endpoint çağrıldı, branchId:', branchId);
+    
     const products = await prisma.product.findMany({
       where: {
         branchId: parseInt(branchId),
@@ -481,9 +483,13 @@ app.get('/api/products/:branchId', async (req, res) => {
         }
       ]
     });
+    
+    console.log('✅ Ürünler başarıyla getirildi, sayı:', products.length);
     res.json(products);
   } catch (error) {
-    console.error('Ürünler getirilemedi:', error);
+    console.error('❌ Ürünler getirilemedi:', error);
+    console.error('❌ Hata detayı:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Ürünler getirilemedi' });
   }
 });
@@ -1813,6 +1819,7 @@ app.get('/api/table/:tableId', async (req, res) => {
 app.get('/api/table/:tableId/products', async (req, res) => {
   try {
     const { tableId } = req.params;
+    console.log('🔍 Table products endpoint çağrıldı, tableId:', tableId);
     
     const table = await prisma.table.findUnique({
       where: { id: parseInt(tableId) },
@@ -1822,12 +1829,16 @@ app.get('/api/table/:tableId/products', async (req, res) => {
     });
 
     if (!table) {
+      console.log('❌ Masa bulunamadı, tableId:', tableId);
       return res.status(404).json({ error: 'Masa bulunamadı' });
     }
 
     if (!table.isActive) {
+      console.log('❌ Masa aktif değil, tableId:', tableId);
       return res.status(400).json({ error: 'Bu masa aktif değil' });
     }
+
+    console.log('✅ Masa bulundu, branchId:', table.branchId);
 
     // Şubeye ait ürünleri getir
     const products = await prisma.product.findMany({
@@ -1844,9 +1855,12 @@ app.get('/api/table/:tableId/products', async (req, res) => {
       ]
     });
     
+    console.log('✅ Masa ürünleri başarıyla getirildi, sayı:', products.length);
     res.json(products);
   } catch (error) {
-    console.error('Masa ürünleri getirilemedi:', error);
+    console.error('❌ Masa ürünleri getirilemedi:', error);
+    console.error('❌ Hata detayı:', error.message);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Masa ürünleri getirilemedi' });
   }
 });
