@@ -776,7 +776,6 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
 
     const { name, description, price, categoryId, branchId } = req.body;
     let image = null;
-    let imageData = null;
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
       const fs = require('fs');
@@ -784,7 +783,6 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
       if (!fs.existsSync(fullPath)) {
         return res.status(500).json({ error: 'Resim yüklenemedi' });
       }
-      imageData = fs.readFileSync(fullPath);
     }
 
     if (!name || !price || !categoryId) {
@@ -822,7 +820,6 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
             price: Number(price),
             categoryId: parseInt(categoryId),
             image,
-            imageData,
             branchId: branch.id
           },
           include: {
@@ -842,7 +839,6 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
           price: Number(price),
           categoryId: parseInt(categoryId),
           image,
-          imageData,
           branchId: targetBranchId
         },
         include: {
@@ -869,7 +865,6 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
     const { id } = req.params;
     const { name, description, price, categoryId, branchId, isActive } = req.body;
     let image = undefined;
-    let imageData = undefined;
     if (req.file) {
       image = `/uploads/${req.file.filename}`;
       const fs = require('fs');
@@ -877,7 +872,6 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       if (!fs.existsSync(fullPath)) {
         return res.status(500).json({ error: 'Resim yüklenemedi' });
       }
-      imageData = fs.readFileSync(fullPath);
     }
 
     // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
@@ -960,7 +954,6 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
       }
       
       if (image !== undefined) updateData.image = image;
-      if (imageData !== undefined) updateData.imageData = imageData;
     }
 
     if (req.user.role === 'SUPER_ADMIN' && branchId === 'all') {
@@ -979,7 +972,6 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
             price: Number(price),
             categoryId: parseInt(categoryId),
             image: image || null,
-            imageData: imageData || null,
             branchId: branch.id,
             isActive: isActiveBool !== undefined ? isActiveBool : true
           },
@@ -3007,11 +2999,11 @@ app.post('/api/admin/fix-database', async (req, res) => {
 app.get('/api/products/:id/image', async (req, res) => {
   try {
     const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
-    if (!product || !product.imageData) {
+    if (!product || !product.image) {
       return res.status(404).send('Resim yok');
     }
     res.set('Content-Type', 'image/png');
-    res.send(product.imageData);
+    res.sendFile(path.join(__dirname, product.image));
   } catch (error) {
     res.status(500).send('Resim getirilemedi');
   }
