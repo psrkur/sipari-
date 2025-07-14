@@ -329,7 +329,7 @@ export default function TableOrder() {
                         alt={product.name} 
                         className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
                         onError={(e) => {
-                          e.currentTarget.src = 'https://via.placeholder.com/300x200?text=Resim+Yüklenemedi';
+                          e.currentTarget.src = '/placeholder-image.png';
                         }}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
@@ -395,6 +395,9 @@ export default function TableOrder() {
                             src={`${process.env.NEXT_PUBLIC_API_URL || ''}/api/products/${item.productId}/image`}
                             alt={item.name}
                             className="w-12 h-12 object-cover rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-image.png';
+                            }}
                           />
                           <div className="flex-1 min-w-0">
                             <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>

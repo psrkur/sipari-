@@ -2999,3 +2999,17 @@ app.get('/api/products/:id/image', async (req, res) => {
   }
 });
 
+app.put('/api/admin/users/:id/activate', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    const { id } = req.params;
+    const user = await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { isActive: true }
+    });
+    res.json({ message: 'Kullanıcı onaylandı', user });
+  } catch (e) {
+    res.status(500).json({ error: 'Kullanıcı onaylanamadı' });
+  }
+});
+
