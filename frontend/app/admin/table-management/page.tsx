@@ -123,15 +123,21 @@ export default function TableManagement() {
 
   const loadTableOrders = async (tableId: number) => {
     try {
-      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId), {
+      const url = API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId);
+      console.log('🔍 API URL:', url);
+      console.log('🔍 Table ID:', tableId);
+      console.log('🔍 Token:', token ? 'Mevcut' : 'Yok');
+      
+      const response = await apiRequest(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      console.log('✅ API Response:', response);
       setSelectedTableOrders(response);
       setShowOrdersModal(true);
     } catch (error) {
-      console.error('Masa siparişleri yüklenemedi:', error);
+      console.error('❌ Masa siparişleri yüklenemedi:', error);
       toast.error('Masa siparişleri yüklenemedi');
     }
   };

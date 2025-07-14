@@ -1427,7 +1427,186 @@ app.get('/api/admin/tables', authenticateToken, async (req, res) => {
   }
 });
 
-// Şubeye göre masaları getir
+// Masa siparişlerini getir (admin için) - ÖNCE TANIMLANMALI
+app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { tableId } = req.params;
+    
+    // Masayı kontrol et
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: { branch: true }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    // Masanın tüm bekleyen siparişlerini getir
+    const orders = await prisma.order.findMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { in: ['PENDING', 'PREPARING', 'READY'] } // Teslim edilmemiş siparişler
+      },
+      include: {
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'asc' }
+    });
+
+    // Toplam tutarı hesapla
+    const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+    res.json({
+      table,
+      orders,
+      totalAmount,
+      orderCount: orders.length
+    });
+
+  } catch (error) {
+    console.error('Masa siparişleri getirilemedi:', error);
+    res.status(500).json({ error: 'Masa siparişleri getirilemedi' });
+  }
+});
+
+// Masa tahsilatı yap - ÖNCE TANIMLANMALI
+app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { tableId } = req.params;
+    const { paymentMethod = 'CASH', notes = '' } = req.body;
+    
+    // Masayı kontrol et
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: { branch: true }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    // Masanın tüm bekleyen siparişlerini getir
+    const orders = await prisma.order.findMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { in: ['PENDING', 'PREPARING', 'READY'] }
+      }
+    });
+
+    if (orders.length === 0) {
+      return res.status(400).json({ error: 'Bu masada tahsilat yapılacak sipariş yok' });
+    }
+
+    // Toplam tutarı hesapla
+    const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+    // Tüm siparişleri COMPLETED yap
+    await prisma.order.updateMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { in: ['PENDING', 'PREPARING', 'READY'] }
+      },
+      data: {
+        status: 'COMPLETED',
+        notes: `${orders[0].notes || ''} - Tahsilat: ${paymentMethod} - ${notes}`.trim()
+      }
+    });
+
+    // Tahsilat kaydı oluştur
+    const collection = await prisma.order.create({
+      data: {
+        orderNumber: `COLLECT-${Date.now()}`,
+        branchId: table.branchId,
+        tableId: parseInt(tableId),
+        status: 'COMPLETED',
+        totalAmount: totalAmount,
+        notes: `Masa ${table.number} toplu tahsilat - ${paymentMethod} - ${notes}`,
+        orderType: 'COLLECTION'
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Masa ${table.number} tahsilatı tamamlandı`,
+      collection,
+      totalAmount,
+      orderCount: orders.length
+    });
+
+  } catch (error) {
+    console.error('Masa tahsilat hatası:', error);
+    res.status(500).json({ error: 'Tahsilat yapılamadı' });
+  }
+});
+
+// Masa verilerini sıfırla (tahsilat sonrası) - ÖNCE TANIMLANMALI
+app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { tableId } = req.params;
+    
+    // Masayı kontrol et
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: { branch: true }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    // Masanın tüm siparişlerini kontrol et
+    const pendingOrders = await prisma.order.findMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { in: ['PENDING', 'PREPARING', 'READY'] }
+      }
+    });
+
+    if (pendingOrders.length > 0) {
+      return res.status(400).json({ 
+        error: 'Bu masada henüz tahsilat yapılmamış siparişler var',
+        pendingCount: pendingOrders.length
+      });
+    }
+
+    // Masanın tüm siparişlerini sil (COMPLETED olanlar)
+    const deletedOrders = await prisma.order.deleteMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: 'COMPLETED'
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Masa ${table.number} verileri sıfırlandı`,
+      deletedCount: deletedOrders.count
+    });
+
+  } catch (error) {
+    console.error('Masa sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Masa sıfırlanamadı' });
+  }
+});
+
+// Şubeye göre masaları getir - SONRA TANIMLANMALI
 app.get('/api/admin/tables/:branchId', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') {
@@ -2817,181 +2996,3 @@ app.post('/api/admin/fix-database', async (req, res) => {
   }
 }); 
 
-// Masa siparişlerini getir (admin için)
-app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
-
-    const { tableId } = req.params;
-    
-    // Masayı kontrol et
-    const table = await prisma.table.findUnique({
-      where: { id: parseInt(tableId) },
-      include: { branch: true }
-    });
-
-    if (!table) {
-      return res.status(404).json({ error: 'Masa bulunamadı' });
-    }
-
-    // Masanın tüm bekleyen siparişlerini getir
-    const orders = await prisma.order.findMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: { in: ['PENDING', 'PREPARING', 'READY'] } // Teslim edilmemiş siparişler
-      },
-      include: {
-        orderItems: {
-          include: {
-            product: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'asc' }
-    });
-
-    // Toplam tutarı hesapla
-    const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-    res.json({
-      table,
-      orders,
-      totalAmount,
-      orderCount: orders.length
-    });
-
-  } catch (error) {
-    console.error('Masa siparişleri getirilemedi:', error);
-    res.status(500).json({ error: 'Masa siparişleri getirilemedi' });
-  }
-});
-
-// Masa tahsilatı yap
-app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
-
-    const { tableId } = req.params;
-    const { paymentMethod = 'CASH', notes = '' } = req.body;
-    
-    // Masayı kontrol et
-    const table = await prisma.table.findUnique({
-      where: { id: parseInt(tableId) },
-      include: { branch: true }
-    });
-
-    if (!table) {
-      return res.status(404).json({ error: 'Masa bulunamadı' });
-    }
-
-    // Masanın tüm bekleyen siparişlerini getir
-    const orders = await prisma.order.findMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: { in: ['PENDING', 'PREPARING', 'READY'] }
-      }
-    });
-
-    if (orders.length === 0) {
-      return res.status(400).json({ error: 'Bu masada tahsilat yapılacak sipariş yok' });
-    }
-
-    // Toplam tutarı hesapla
-    const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-
-    // Tüm siparişleri COMPLETED yap
-    await prisma.order.updateMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: { in: ['PENDING', 'PREPARING', 'READY'] }
-      },
-      data: {
-        status: 'COMPLETED',
-        notes: `${orders[0].notes || ''} - Tahsilat: ${paymentMethod} - ${notes}`.trim()
-      }
-    });
-
-    // Tahsilat kaydı oluştur
-    const collection = await prisma.order.create({
-      data: {
-        orderNumber: `COLLECT-${Date.now()}`,
-        branchId: table.branchId,
-        tableId: parseInt(tableId),
-        status: 'COMPLETED',
-        totalAmount: totalAmount,
-        notes: `Masa ${table.number} toplu tahsilat - ${paymentMethod} - ${notes}`,
-        orderType: 'COLLECTION'
-      }
-    });
-
-    res.json({
-      success: true,
-      message: `Masa ${table.number} tahsilatı tamamlandı`,
-      collection,
-      totalAmount,
-      orderCount: orders.length
-    });
-
-  } catch (error) {
-    console.error('Masa tahsilat hatası:', error);
-    res.status(500).json({ error: 'Tahsilat yapılamadı' });
-  }
-});
-
-// Masa verilerini sıfırla (tahsilat sonrası)
-app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
-
-    const { tableId } = req.params;
-    
-    // Masayı kontrol et
-    const table = await prisma.table.findUnique({
-      where: { id: parseInt(tableId) },
-      include: { branch: true }
-    });
-
-    if (!table) {
-      return res.status(404).json({ error: 'Masa bulunamadı' });
-    }
-
-    // Masanın tüm siparişlerini kontrol et
-    const pendingOrders = await prisma.order.findMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: { in: ['PENDING', 'PREPARING', 'READY'] }
-      }
-    });
-
-    if (pendingOrders.length > 0) {
-      return res.status(400).json({ 
-        error: 'Bu masada henüz tahsilat yapılmamış siparişler var',
-        pendingCount: pendingOrders.length
-      });
-    }
-
-    // Masanın tüm siparişlerini sil (COMPLETED olanlar)
-    const deletedOrders = await prisma.order.deleteMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: 'COMPLETED'
-      }
-    });
-
-    res.json({
-      success: true,
-      message: `Masa ${table.number} verileri sıfırlandı`,
-      deletedCount: deletedOrders.count
-    });
-
-  } catch (error) {
-    console.error('Masa sıfırlama hatası:', error);
-    res.status(500).json({ error: 'Masa sıfırlanamadı' });
-  }
-});
