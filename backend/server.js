@@ -524,6 +524,7 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
         branchId: parseInt(branchId),
         customerId: customer?.id,
         userId: req.user.userId,
+        orderType: 'DELIVERY', // Sipariş tipini belirt
         notes: `${deliveryType === 'delivery' ? 'Adrese Teslim' : 'Şubeden Al'} - Ödeme: ${paymentText} - ${notes || ''}`
       }
     });
@@ -550,8 +551,15 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
 // Müşteri siparişlerini getir (sadece giriş yapmış kullanıcılar için)
 app.get('/api/customer/orders', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 Müşteri siparişleri isteği:', {
+      userId: req.user.userId,
+      role: req.user.role,
+      email: req.user.email
+    });
+
     // Sadece CUSTOMER rolündeki kullanıcılar kendi siparişlerini görebilir
     if (req.user.role !== 'CUSTOMER') {
+      console.log('❌ Yetkisiz erişim:', req.user.role);
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
@@ -571,9 +579,15 @@ app.get('/api/customer/orders', authenticateToken, async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
+    console.log('✅ Müşteri siparişleri getirildi:', {
+      userId: req.user.userId,
+      orderCount: orders.length,
+      orders: orders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status }))
+    });
+
     res.json(orders);
   } catch (error) {
-    console.error('Müşteri siparişleri getirilemedi:', error);
+    console.error('❌ Müşteri siparişleri getirilemedi:', error);
     res.status(500).json({ error: 'Siparişler getirilemedi' });
   }
 });
