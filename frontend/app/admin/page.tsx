@@ -365,9 +365,9 @@ export default function AdminPage() {
         // Süper admin tüm alanları güncelleyebilir
         formData.append('name', editProductForm.name);
         formData.append('description', editProductForm.description);
-        formData.append('price', editProductForm.price);
-        formData.append('categoryId', editProductForm.categoryId);
-        formData.append('branchId', editProductForm.branchId);
+        formData.append('price', Number(editProductForm.price).toString());
+        formData.append('categoryId', Number(editProductForm.categoryId).toString());
+        formData.append('branchId', Number(editProductForm.branchId).toString());
         formData.append('isActive', editProductForm.isActive.toString());
         
         if (editProductImage) {
