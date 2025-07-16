@@ -94,6 +94,37 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  // Yazıcı seçimi için state
+  const [printerName, setPrinterName] = useState<string>(typeof window !== 'undefined' ? localStorage.getItem('printerName') || '' : '');
+
+  // Yazıcı adı değiştiğinde localStorage'a kaydet
+  const handlePrinterNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPrinterName(e.target.value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('printerName', e.target.value);
+    }
+  };
+
+  // Sipariş yazdırma fonksiyonu (web için window.print ile temel örnek)
+  const printOrder = (order: Order) => {
+    // Sipariş detaylarını yazdırılabilir bir formata çevir
+    const printWindow = window.open('', '', 'width=600,height=800');
+    if (!printWindow) return;
+    printWindow.document.write('<html><head><title>Sipariş Fişi</title></head><body>');
+    printWindow.document.write('<h2>Sipariş Fişi</h2>');
+    printWindow.document.write(`<p><b>Sipariş No:</b> ${order.orderNumber}</p>`);
+    printWindow.document.write(`<p><b>Tarih:</b> ${new Date(order.createdAt).toLocaleString('tr-TR')}</p>`);
+    printWindow.document.write('<hr/>');
+    printWindow.document.write('<ul>');
+    order.items.forEach(item => {
+      printWindow.document.write(`<li>${item.quantity} x ${item.product.name} - ${item.price}₺</li>`);
+    });
+    printWindow.document.write('</ul>');
+    printWindow.document.write(`<p><b>Toplam:</b> ${order.totalAmount}₺</p>`);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
 
   useEffect(() => {
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
@@ -241,6 +272,12 @@ export default function AdminPage() {
     if (orders.length > lastOrderCount && lastOrderCount > 0) {
       playNotificationSound();
       toast.success('Yeni sipariş geldi! 🎉');
+      // Otomatik yazdırma
+      const newOrders = orders.slice(0, orders.length - lastOrderCount);
+      // Sadece en son gelen siparişi yazdır (veya istenirse tüm yeni siparişleri döngüyle yazdır)
+      if (orders.length > 0) {
+        printOrder(orders[0]);
+      }
     }
     setLastOrderCount(orders.length);
   }, [orders.length, lastOrderCount]);
@@ -570,6 +607,20 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="p-4 bg-white shadow flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Admin Paneli</h1>
+        <div className="flex items-center space-x-4">
+          <label className="font-medium">Yazıcı Adı:</label>
+          <input
+            type="text"
+            value={printerName}
+            onChange={handlePrinterNameChange}
+            placeholder="Yazıcı adı girin (ör: POS-80)"
+            className="border px-2 py-1 rounded"
+            style={{ minWidth: 180 }}
+          />
+        </div>
+      </div>
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
