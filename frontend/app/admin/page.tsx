@@ -96,6 +96,9 @@ export default function AdminPage() {
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
+  // Kullanıcıları sırala
+  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
+
 
   useEffect(() => {
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
@@ -690,31 +693,64 @@ export default function AdminPage() {
             )}
             
             {activeTab === 'users' && user && user.role === 'SUPER_ADMIN' && (
-              <UserList
-                users={sortedUsers}
-                onDeleteUser={deleteUser}
-                onActivateUser={activateUser}
-              />
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Kullanıcılar</h2>
+                  <button
+                    onClick={() => setShowUserModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Kullanıcı Ekle
+                  </button>
+                </div>
+                <UserList
+                  users={sortedUsers}
+                  onDeleteUser={deleteUser}
+                  onActivateUser={activateUser}
+                />
+              </div>
             )}
             
             {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
-              <BranchManagement
-                branches={branches}
-                onEditBranch={editBranch}
-                onDeleteBranch={deleteBranch}
-              />
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Şubeler</h2>
+                  <button
+                    onClick={() => setShowBranchModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Şube Ekle
+                  </button>
+                </div>
+                <BranchManagement
+                  branches={branches}
+                  onEditBranch={editBranch}
+                  onDeleteBranch={deleteBranch}
+                />
+              </div>
             )}
             
             {activeTab === 'products' && (
-              <ProductManagement
-                products={products}
-                categories={categories}
-                branches={branches}
-                onEditProduct={editProduct}
-                onDeleteProduct={deleteProduct}
-                onToggleProductStatus={toggleProductStatus}
-                user={user}
-              />
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Ürünler</h2>
+                  <button
+                    onClick={() => setShowProductModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Ürün Ekle
+                  </button>
+                </div>
+                <ProductManagement
+                  products={products}
+                  categories={categories}
+                  branches={branches}
+                  onEditProduct={editProduct}
+                  onDeleteProduct={deleteProduct}
+                  onToggleProductStatus={toggleProductStatus}
+                  user={user}
+                />
+              </div>
             )}
             
             {activeTab === 'categories' && (
@@ -978,6 +1014,348 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* Kullanıcı Ekleme Modal */}
+      {showUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Yeni Kullanıcı Ekle</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Kullanıcı ekleme işlemi burada yapılacak
+              setShowUserModal(false);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ad Soyad
+                  </label>
+                  <input
+                    type="text"
+                    value={userForm.name}
+                    onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-posta
+                  </label>
+                  <input
+                    type="email"
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şifre
+                  </label>
+                  <input
+                    type="password"
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Rol
+                  </label>
+                  <select
+                    value={userForm.role}
+                    onChange={(e) => setUserForm({...userForm, role: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="CUSTOMER">Müşteri</option>
+                    <option value="BRANCH_MANAGER">Şube Müdürü</option>
+                    <option value="SUPER_ADMIN">Süper Admin</option>
+                  </select>
+                </div>
+                {userForm.role === 'BRANCH_MANAGER' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Şube
+                    </label>
+                    <select
+                      value={userForm.branchId}
+                      onChange={(e) => setUserForm({...userForm, branchId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      required
+                    >
+                      <option value="">Şube Seçin</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün Ekleme Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Yeni Ürün Ekle</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Ürün ekleme işlemi burada yapılacak
+              setShowProductModal(false);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ürün Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.name}
+                    onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Açıklama
+                  </label>
+                  <textarea
+                    value={productForm.description}
+                    onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fiyat (₺)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={productForm.price}
+                    onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori
+                  </label>
+                  <select
+                    value={productForm.categoryId}
+                    onChange={(e) => setProductForm({...productForm, categoryId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  >
+                    <option value="">Kategori Seçin</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {user && user.role === 'SUPER_ADMIN' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Şube
+                    </label>
+                    <select
+                      value={productForm.branchId}
+                      onChange={(e) => setProductForm({...productForm, branchId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      required
+                    >
+                      <option value="">Şube Seçin</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ürün Resmi
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setProductImage(e.target.files?.[0] || null)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowProductModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Kategori Ekleme Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Yeni Kategori Ekle</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Kategori ekleme işlemi burada yapılacak
+              setShowCategoryModal(false);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Açıklama
+                  </label>
+                  <textarea
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Şube Ekleme Modal */}
+      {showBranchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Yeni Şube Ekle</h2>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Şube ekleme işlemi burada yapılacak
+              setShowBranchModal(false);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şube Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={branchForm.name}
+                    onChange={(e) => setBranchForm({...branchForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Adres
+                  </label>
+                  <textarea
+                    value={branchForm.address}
+                    onChange={(e) => setBranchForm({...branchForm, address: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={branchForm.phone}
+                    onChange={(e) => setBranchForm({...branchForm, phone: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowBranchModal(false)}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
