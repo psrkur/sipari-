@@ -73,10 +73,13 @@ export default function TableOrder() {
 
   useEffect(() => {
     console.log('URL Parametreleri:', { tableId, branchId });
+    console.log('API Base URL:', API_ENDPOINTS.PRODUCTS(1).replace('/api/products/1', ''));
     
     if (tableId) {
+      console.log('Table ID ile yükleme:', tableId);
       loadTableInfo(parseInt(tableId));
     } else if (branchId) {
+      console.log('Branch ID ile yükleme:', branchId);
       loadProducts(parseInt(branchId));
     } else {
       // Eğer hiçbir parametre yoksa, varsayılan olarak branch 1'i yükle
@@ -87,7 +90,7 @@ export default function TableOrder() {
 
   const loadTableInfo = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/api/table/${tableId}`);
+      const response = await apiRequest(API_ENDPOINTS.TABLE_INFO(tableId));
       setTable(response);
       await loadProducts(response.branchId);
     } catch (error) {
@@ -99,7 +102,7 @@ export default function TableOrder() {
 
   const loadProducts = async (branchId: number) => {
     try {
-      const response = await apiRequest(`/api/products/${branchId}`);
+      const response = await apiRequest(API_ENDPOINTS.PRODUCTS(branchId));
       setProducts(response);
     } catch (error) {
       console.error('Ürünler yüklenemedi:', error);
@@ -199,7 +202,7 @@ export default function TableOrder() {
         notes: notes
       };
 
-      const response = await apiRequest(`/api/table/${table.id}/order`, {
+      const response = await apiRequest(API_ENDPOINTS.TABLE_ORDER(table.id), {
         method: 'POST',
         body: JSON.stringify(orderData)
       });
