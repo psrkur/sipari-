@@ -72,28 +72,35 @@ export default function TableOrder() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
+    console.log('URL Parametreleri:', { tableId, branchId });
+    
     if (tableId) {
       loadTableInfo(parseInt(tableId));
     } else if (branchId) {
       loadProducts(parseInt(branchId));
+    } else {
+      // Eğer hiçbir parametre yoksa, varsayılan olarak branch 1'i yükle
+      console.log('Parametre bulunamadı, varsayılan branch yükleniyor...');
+      loadProducts(1);
     }
   }, [tableId, branchId]);
 
   const loadTableInfo = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/tables/${tableId}`);
-      setTable(response.data);
-      loadProducts(response.data.branchId);
+      const response = await apiRequest(`/api/tables/${tableId}`);
+      setTable(response);
+      await loadProducts(response.branchId);
     } catch (error) {
       console.error('Masa bilgisi yüklenemedi:', error);
       toast.error('Masa bilgisi yüklenemedi');
+      setLoading(false);
     }
   };
 
   const loadProducts = async (branchId: number) => {
     try {
-      const response = await apiRequest(`/products?branchId=${branchId}`);
-      setProducts(response.data);
+      const response = await apiRequest(`/api/products?branchId=${branchId}`);
+      setProducts(response);
     } catch (error) {
       console.error('Ürünler yüklenemedi:', error);
       toast.error('Ürünler yüklenemedi');
@@ -194,7 +201,7 @@ export default function TableOrder() {
         orderType: 'TABLE'
       };
 
-      const response = await apiRequest('/orders', {
+      const response = await apiRequest('/api/orders', {
         method: 'POST',
         body: JSON.stringify(orderData)
       });
