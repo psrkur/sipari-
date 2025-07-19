@@ -793,7 +793,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
+            {activeTab === 'users' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
@@ -812,7 +812,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
+            {activeTab === 'branches' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
