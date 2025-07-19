@@ -857,7 +857,8 @@ export default function AdminPage() {
                             {orders.filter(order => 
                               order.branch.id === branch.id && 
                               order.orderType === 'TABLE' && 
-                              order.status !== 'COMPLETED'
+                              order.status !== 'COMPLETED' &&
+                              order.orderType !== 'COLLECTION'
                             ).length}
                           </span>
                         </div>
@@ -867,7 +868,8 @@ export default function AdminPage() {
                             ₺{orders
                               .filter(order => 
                                 order.branch.id === branch.id && 
-                                order.orderType === 'TABLE'
+                                order.orderType === 'TABLE' &&
+                                order.orderType !== 'COLLECTION'
                               )
                               .reduce((total, order) => total + order.totalAmount, 0)
                               .toFixed(2)}
@@ -915,7 +917,7 @@ export default function AdminPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {orders
-                          .filter(order => order.orderType === 'TABLE')
+                          .filter(order => order.orderType === 'TABLE' && order.orderType !== 'COLLECTION')
                           .map((order) => (
                             <tr key={order.id}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

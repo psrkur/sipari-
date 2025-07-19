@@ -658,12 +658,14 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
-    let whereClause = {};
+    let whereClause = {
+      orderType: { not: 'COLLECTION' } // Tahsilat kayıtlarını hariç tut
+    };
     
     if (user.role === 'BRANCH_MANAGER') {
       whereClause.branchId = user.branchId;
     } else if (user.role === 'SUPER_ADMIN') {
-      // Süper admin tüm siparişleri getir
+      // Süper admin tüm siparişleri getir (tahsilat hariç)
     }
 
     const orders = await prisma.order.findMany({
