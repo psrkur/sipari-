@@ -5,7 +5,7 @@ const getApiBaseUrl = (): string => {
   }
   
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return 'http://localhost:3001';
+    return 'http://localhost:3002';
   }
   
   return 'https://yemek5-backend.onrender.com';

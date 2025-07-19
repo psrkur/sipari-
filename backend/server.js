@@ -1,7 +1,7 @@
 // Environment variables - Otomatik bağlantı
 require('dotenv').config();
 const isProduction = process.env.NODE_ENV === 'production';
-const SERVER_PORT = process.env.PORT || 3001;
+const SERVER_PORT = process.env.PORT || 3002;
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
