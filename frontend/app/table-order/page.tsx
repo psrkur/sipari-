@@ -96,11 +96,16 @@ export default function TableOrder() {
 
   const loadTableInfo = async (tableId: number) => {
     try {
+      console.log('🔍 Masa bilgisi yükleniyor, tableId:', tableId);
+      console.log('🔗 API URL:', API_ENDPOINTS.TABLE_INFO(tableId));
+      
       const response = await apiRequest(API_ENDPOINTS.TABLE_INFO(tableId));
+      console.log('✅ Masa bilgisi yüklendi:', response);
       setTable(response);
       await loadProducts(response.branchId);
     } catch (error) {
-      console.error('Masa bilgisi yüklenemedi:', error);
+      console.error('❌ Masa bilgisi yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error instanceof Error ? error.message : String(error));
       toast.error('Masa bilgisi yüklenemedi');
       setLoading(false);
     }
@@ -108,10 +113,15 @@ export default function TableOrder() {
 
   const loadProducts = async (branchId: number) => {
     try {
+      console.log('🔍 Ürünler yükleniyor, branchId:', branchId);
+      console.log('🔗 API URL:', API_ENDPOINTS.PRODUCTS(branchId));
+      
       const response = await apiRequest(API_ENDPOINTS.PRODUCTS(branchId));
+      console.log('✅ Ürünler yüklendi:', response);
       setProducts(response);
     } catch (error) {
-      console.error('Ürünler yüklenemedi:', error);
+      console.error('❌ Ürünler yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error instanceof Error ? error.message : String(error));
       toast.error('Ürünler yüklenemedi');
     } finally {
       setLoading(false);
