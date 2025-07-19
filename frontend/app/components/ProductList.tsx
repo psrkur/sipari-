@@ -37,6 +37,12 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
 
   const grouped = groupProductsByCategory(products);
 
+  // Açıklamayı kısalt
+  const truncateDescription = (text: string, maxLength: number = 60) => {
+    if (text.length <= maxLength) return text
+    return text.substring(0, maxLength) + '...'
+  }
+
   const handleProductClick = (product: Product) => {
     setSelectedProduct(product);
     setQuantity(1);
@@ -78,7 +84,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                 {categoryProducts.map((product) => (
                   <div 
                     key={product.id} 
-                    className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer"
+                    className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
                     onClick={() => handleProductClick(product)}
                   >
                     {product.image && (
@@ -93,25 +99,38 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                       </div>
                     )}
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-2 sm:mb-3">
-                      <h5 className="text-sm sm:text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-1 sm:mb-0 line-clamp-1">{product.name}</h5>
-                      <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                        ₺{product.price.toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-base text-gray-600 mb-3 sm:mb-4 line-clamp-2 hidden sm:block">{product.description}</p>
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
-                      <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold self-start">
-                        {typeof product.category === 'object' && product.category !== null ? product.category.name : product.category}
-                      </span>
+                    
+                    {/* Ürün adı - tam yazılacak */}
+                    <h5 className="text-sm sm:text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-2 sm:mb-3 leading-tight">
+                      {product.name}
+                    </h5>
+                    
+                    {/* Açıklama - kısaltılacak */}
+                    <p className="text-xs sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow line-clamp-2">
+                      {truncateDescription(product.description)}
+                    </p>
+                    
+                    {/* Alt kısım - kategori, fiyat ve buton */}
+                    <div className="mt-auto">
+                      <div className="flex justify-between items-center mb-2 sm:mb-3">
+                        <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold">
+                          {typeof product.category === 'object' && product.category !== null ? product.category.name : product.category}
+                        </span>
+                        
+                        {/* Fiyat - alt kısma taşındı */}
+                        <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                          ₺{product.price.toFixed(2)}
+                        </span>
+                      </div>
+                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           onAddToCart(product);
                         }}
-                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                       >
-                        🛒
+                        🛒 Sepete Ekle
                       </button>
                     </div>
                   </div>
