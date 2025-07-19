@@ -86,7 +86,9 @@ export default function TableOrder() {
       loadTableInfo(parseInt(tableId));
     } else if (branchId) {
       console.log('Branch ID ile yükleme:', branchId);
+      // Branch ID ile direkt ürünleri yükle, masa bilgisi olmadan
       loadProducts(parseInt(branchId));
+      setLoading(false);
     } else {
       // Eğer hiçbir parametre yoksa, varsayılan olarak branch 1'i yükle
       console.log('Parametre bulunamadı, varsayılan branch yükleniyor...');
@@ -203,8 +205,8 @@ export default function TableOrder() {
       return;
     }
 
-    if (!table) {
-      toast.error('Masa bilgisi bulunamadı');
+    if (!table && !branchId) {
+      toast.error('Masa veya şube bilgisi bulunamadı');
       return;
     }
 
@@ -218,12 +220,26 @@ export default function TableOrder() {
         notes: notes
       };
 
-      const response = await apiRequest(API_ENDPOINTS.TABLE_ORDER(table.id), {
-        method: 'POST',
-        body: JSON.stringify(orderData)
-      });
+      if (table) {
+        // Masa siparişi
+        const response = await apiRequest(API_ENDPOINTS.TABLE_ORDER(table.id), {
+          method: 'POST',
+          body: JSON.stringify(orderData)
+        });
+        toast.success('Masa siparişiniz başarıyla alındı!');
+      } else if (branchId) {
+        // Normal sipariş (masa olmadan)
+        const response = await apiRequest(API_ENDPOINTS.ORDERS, {
+          method: 'POST',
+          body: JSON.stringify({
+            ...orderData,
+            branchId: parseInt(branchId),
+            orderType: 'DELIVERY'
+          })
+        });
+        toast.success('Siparişiniz başarıyla alındı!');
+      }
 
-      toast.success('Siparişiniz başarıyla alındı!');
       setCart([]);
       setNotes('');
       setShowCart(false);
@@ -276,7 +292,7 @@ export default function TableOrder() {
                   <h1 className="text-xl font-bold text-gray-800">Masa Siparişi</h1>
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Building className="h-4 w-4" />
-                    {table?.branch.name}
+                    {table?.branch.name || (branchId ? `Şube ${branchId}` : 'Şube Bilgisi Yok')}
                   </p>
                 </div>
               </div>
