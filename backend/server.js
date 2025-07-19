@@ -2,9 +2,9 @@
 require('dotenv').config();
 const isProduction = process.env.NODE_ENV === 'production';
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
-// PORT değişkenini zorla 3004'e ayarla
-process.env.PORT = '3004';
-const SERVER_PORT = process.env.PORT || 3004;
+// PORT değişkenini zorla 3005'e ayarla
+process.env.PORT = '3005';
+const SERVER_PORT = process.env.PORT || 3005;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
