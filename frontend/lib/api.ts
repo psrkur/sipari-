@@ -1,13 +1,21 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
+  console.log('🔧 getApiBaseUrl çağrıldı');
+  console.log('🔧 NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+  console.log('🔧 typeof window:', typeof window);
+  console.log('🔧 window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
+  
   if (process.env.NEXT_PUBLIC_API_URL) {
+    console.log('🔧 NEXT_PUBLIC_API_URL kullanılıyor:', process.env.NEXT_PUBLIC_API_URL);
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    console.log('🔧 localhost tespit edildi, localhost:3002 kullanılıyor');
     return 'http://localhost:3002';
   }
   
+  console.log('🔧 Production URL kullanılıyor: https://yemek5-backend.onrender.com');
   return 'https://yemek5-backend.onrender.com';
 };
 

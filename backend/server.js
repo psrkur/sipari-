@@ -1,7 +1,12 @@
 // Environment variables - Otomatik bağlantı
 require('dotenv').config();
 const isProduction = process.env.NODE_ENV === 'production';
+console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
+// PORT değişkenini zorla 3002'ye ayarla
+process.env.PORT = '3002';
 const SERVER_PORT = process.env.PORT || 3002;
+console.log('🔧 SERVER_PORT:', SERVER_PORT);
+console.log('🔧 process.env.PORT son:', process.env.PORT);
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
 const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
@@ -119,7 +124,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const app = express();
-const PORT = process.env.PORT || 3002;
+// PORT değişkeni kaldırıldı, SERVER_PORT kullanılıyor
 
 // Render/proxy ortamı için gerçek IP ve rate limit desteği
 app.set('trust proxy', 1);
