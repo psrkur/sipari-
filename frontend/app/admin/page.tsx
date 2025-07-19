@@ -102,10 +102,14 @@ export default function AdminPage() {
   useEffect(() => {
     console.log('Current user:', user);
     console.log('User role:', user?.role);
+    console.log('User ID:', user?.id);
+    console.log('User email:', user?.email);
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
+      console.log('User not authorized, redirecting to login');
       router.push('/login');
       return;
     }
+    console.log('User authorized, fetching orders');
     fetchOrders();
   }, [user, router]);
 
@@ -789,7 +793,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
+            {activeTab === 'users' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
@@ -808,7 +812,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
+            {activeTab === 'branches' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
