@@ -106,6 +106,10 @@ export default function AdminPage() {
     console.log('User email:', user?.email);
     console.log('Environment:', process.env.NODE_ENV);
     console.log('Is production:', process.env.NODE_ENV === 'production');
+    console.log('User object full:', JSON.stringify(user, null, 2));
+    console.log('User role type:', typeof user?.role);
+    console.log('User role comparison:', user?.role === 'SUPER_ADMIN');
+    console.log('User role comparison (strict):', user?.role === 'SUPER_ADMIN' ? 'true' : 'false');
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
       console.log('User not authorized, redirecting to login');
       router.push('/login');
@@ -795,7 +799,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
+            {activeTab === 'users' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
@@ -814,7 +818,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
+            {activeTab === 'branches' && user && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
