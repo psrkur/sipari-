@@ -88,7 +88,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [stats, setStats] = useState<any[]>([]);
@@ -657,6 +657,14 @@ export default function AdminPage() {
             >
               İstatistikler
             </button>
+            <button
+              onClick={() => setActiveTab('table-orders')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'table-orders' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Masa Siparişleri
+            </button>
           </div>
 
           {/* İçerik alanı */}
@@ -805,6 +813,127 @@ export default function AdminPage() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+            
+            {activeTab === 'table-orders' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Masa Sipariş Yönetimi</h2>
+                  <button
+                    onClick={() => window.open('/table-order', '_blank')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Masa Siparişi
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {branches.map((branch) => (
+                    <div key={branch.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold text-lg">{branch.name}</h3>
+                        <span className="text-sm text-gray-500">{branch.address}</span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Masa Sayısı:</span>
+                          <span className="font-medium">3</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Aktif Siparişler:</span>
+                          <span className="font-medium text-green-600">
+                            {orders.filter(order => 
+                              order.branch.id === branch.id && 
+                              order.orderType === 'TABLE' && 
+                              order.status !== 'COMPLETED'
+                            ).length}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Toplam Gelir:</span>
+                          <span className="font-medium text-blue-600">
+                            ₺{orders
+                              .filter(order => 
+                                order.branch.id === branch.id && 
+                                order.orderType === 'TABLE'
+                              )
+                              .reduce((total, order) => total + order.totalAmount, 0)
+                              .toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-4 pt-3 border-t">
+                        <button
+                          onClick={() => window.open(`/table-order?branch=${branch.id}`, '_blank')}
+                          className="w-full bg-green-600 text-white py-2 px-3 rounded text-sm hover:bg-green-700"
+                        >
+                          Masa Siparişi Al
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Aktif Masa Siparişleri</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Sipariş No
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Masa
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Şube
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tutar
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Durum
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tarih
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {orders
+                          .filter(order => order.orderType === 'TABLE')
+                          .map((order) => (
+                            <tr key={order.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {order.orderNumber}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {order.table?.number || 'N/A'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {order.branch.name}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                ₺{order.totalAmount.toFixed(2)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                                  {getStatusText(order.status)}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {formatDate(order.createdAt)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             )}
           </div>
