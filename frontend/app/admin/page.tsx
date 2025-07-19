@@ -104,6 +104,8 @@ export default function AdminPage() {
     console.log('User role:', user?.role);
     console.log('User ID:', user?.id);
     console.log('User email:', user?.email);
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Is production:', process.env.NODE_ENV === 'production');
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
       console.log('User not authorized, redirecting to login');
       router.push('/login');
@@ -793,7 +795,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && (
+            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
@@ -812,7 +814,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'branches' && user && (
+            {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
