@@ -372,46 +372,64 @@ export default function TableOrder() {
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {getFilteredProducts().map(product => (
-                <Card key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm">
-                  <CardContent className="p-0">
-                    <div className="relative overflow-hidden rounded-t-xl">
-                      <img 
-                        src={API_ENDPOINTS.IMAGE_URL(product.image)}
-                        alt={product.name} 
-                        className="w-full h-32 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={handleImageError}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                        <Badge className="bg-orange-500 text-white text-xs">
-                          {product.category.name}
-                        </Badge>
+              {getFilteredProducts().map(product => {
+                // Açıklamayı kısalt
+                const truncateDescription = (text: string, maxLength: number = 60) => {
+                  if (text.length <= maxLength) return text
+                  return text.substring(0, maxLength) + '...'
+                }
+
+                return (
+                  <Card key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm flex flex-col h-full">
+                    <CardContent className="p-0 flex flex-col h-full">
+                      <div className="relative overflow-hidden rounded-t-xl">
+                        <img 
+                          src={API_ENDPOINTS.IMAGE_URL(product.image)}
+                          alt={product.name} 
+                          className="w-full h-32 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                          onError={handleImageError}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                        <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                          <Badge className="bg-orange-500 text-white text-xs">
+                            {product.category.name}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    <div className="p-3 sm:p-4">
-                      <h3 className="font-bold text-sm sm:text-lg text-gray-800 mb-1 sm:mb-2 group-hover:text-orange-600 transition-colors line-clamp-1">
-                        {product.name}
-                      </h3>
-                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2 hidden sm:block">
-                        {product.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                          ₺{product.price.toFixed(2)}
-                        </span>
-                        <Button
-                          onClick={() => addToCart(product)}
-                          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2"
-                        >
-                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Ekle</span>
-                        </Button>
+                      
+                      <div className="p-3 sm:p-4 flex flex-col flex-grow">
+                        {/* Ürün adı - tam yazılacak */}
+                        <h3 className="font-bold text-sm sm:text-lg text-gray-800 mb-2 sm:mb-3 group-hover:text-orange-600 transition-colors leading-tight">
+                          {product.name}
+                        </h3>
+                        
+                        {/* Açıklama - kısaltılacak */}
+                        <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex-grow line-clamp-2">
+                          {truncateDescription(product.description)}
+                        </p>
+                        
+                        {/* Alt kısım - fiyat ve buton */}
+                        <div className="mt-auto">
+                          <div className="flex items-center justify-between mb-2 sm:mb-3">
+                            {/* Fiyat - alt kısma taşındı */}
+                            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                              ₺{product.price.toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          <Button
+                            onClick={() => addToCart(product)}
+                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2"
+                          >
+                            <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Sepete Ekle</span>
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </div>
 
