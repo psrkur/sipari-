@@ -87,7 +87,7 @@ export default function TableOrder() {
 
   const loadTableInfo = async (tableId: number) => {
     try {
-      const response = await apiRequest(`/api/tables/${tableId}`);
+      const response = await apiRequest(`/api/table/${tableId}`);
       setTable(response);
       await loadProducts(response.branchId);
     } catch (error) {
@@ -99,7 +99,7 @@ export default function TableOrder() {
 
   const loadProducts = async (branchId: number) => {
     try {
-      const response = await apiRequest(`/api/products?branchId=${branchId}`);
+      const response = await apiRequest(`/api/products/${branchId}`);
       setProducts(response);
     } catch (error) {
       console.error('Ürünler yüklenemedi:', error);
@@ -191,17 +191,15 @@ export default function TableOrder() {
 
     try {
       const orderData = {
-        tableId: table.id,
         items: cart.map(item => ({
           productId: item.productId,
           quantity: item.quantity,
           note: item.note || ''
         })),
-        notes: notes,
-        orderType: 'TABLE'
+        notes: notes
       };
 
-      const response = await apiRequest('/api/orders', {
+      const response = await apiRequest(`/api/table/${table.id}/order`, {
         method: 'POST',
         body: JSON.stringify(orderData)
       });
