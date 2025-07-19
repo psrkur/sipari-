@@ -90,11 +90,9 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 truncate max-w-[100px]" title={order.orderNumber}>{order.orderNumber}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${order.orderType === 'TABLE' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                      {order.orderType === 'TABLE' ? 'Masa' : 'Teslimat'}
-                    </span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${order.orderType === 'TABLE' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{order.orderType === 'TABLE' ? 'Masa' : 'Teslimat'}</span>
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 truncate max-w-[120px]" title={order.orderType === 'TABLE' && order.table ? `Masa ${order.table.number}` : order.customer?.name || 'Anonim'}">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 truncate max-w-[120px]" title={order.orderType === 'TABLE' && order.table ? `Masa ${order.table.number}` : order.customer?.name || 'Anonim'}>
                     {order.orderType === 'TABLE' && order.table ? (
                       <span className="font-bold text-blue-700">Masa {order.table.number}</span>
                     ) : (
@@ -106,9 +104,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">₺{order.totalAmount.toFixed(2)}</td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                      {getStatusText(order.status)}
-                    </span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>{getStatusText(order.status)}</span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">{formatDate(order.createdAt)}</td>
                   <td className="px-4 py-4 whitespace-nowrap">

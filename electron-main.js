@@ -1,31 +1,45 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const { spawn } = require('child_process');
+
+let mainWindow;
+let backendProcess;
 
 function createWindow () {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js') // Preload script for IPC
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
-  // Next.js local sunucusunu başlatmışsan şunu kullan:
-  win.loadURL('http://localhost:3000');
-  // Eğer build edilmiş statik dosyaları kullanacaksan:
-  // win.loadFile(path.join(__dirname, 'frontend/out/index.html'));
+  const configPath = path.join(__dirname, 'setup', 'config.json');
+  if (!fs.existsSync(configPath)) {
+    mainWindow.loadFile(path.join(__dirname, 'setup', 'setup.html'));
+  } else {
+    // Backend'i başlat
+    backendProcess = spawn('node', [path.join(__dirname, 'backend', 'server.js')], {
+      env: { ...process.env, CONFIG_PATH: configPath }
+    });
+    backendProcess.stdout.on('data', data => console.log(`[backend]: ${data}`));
+    backendProcess.stderr.on('data', data => console.error(`[backend]: ${data}`));
+
+    // Next.js build edilmişse:
+    mainWindow.loadFile(path.join(__dirname, 'frontend', 'out', 'index.html'));
+    // Geliştirme için:
+    // mainWindow.loadURL('http://localhost:3000');
+  }
 }
 
-// IPC handler to get printers
-ipcMain.handle('get-printers', (event) => {
-  const win = BrowserWindow.getFocusedWindow();
-  return win.webContents.getPrinters();
-});
+
 
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
+  if (backendProcess) backendProcess.kill();
   if (process.platform !== 'darwin') app.quit();
 }); 

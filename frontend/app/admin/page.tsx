@@ -10,6 +10,7 @@ import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
 import ProductManagement from '../components/ProductManagement';
 import BranchManagement from '../components/BranchManagement';
+import Link from 'next/link';
 
 interface OrderItem {
   id: number;
@@ -94,47 +95,7 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  // Yazıcı seçimi için state
-  const [printerName, setPrinterName] = useState<string>(typeof window !== 'undefined' ? localStorage.getItem('printerName') || '' : '');
-  const [printers, setPrinters] = useState<{name: string}[]>([]);
 
-  // Electron ortamında yazıcıları çek
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).electronAPI?.getPrinters) {
-      (window as any).electronAPI.getPrinters().then((printerList: any[]) => {
-        setPrinters(printerList);
-      });
-    }
-  }, []);
-
-  // Yazıcı adı değiştiğinde localStorage'a kaydet
-  const handlePrinterNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPrinterName(e.target.value);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('printerName', e.target.value);
-    }
-  };
-
-  // Sipariş yazdırma fonksiyonu (web için window.print ile temel örnek)
-  const printOrder = (order: Order) => {
-    // Sipariş detaylarını yazdırılabilir bir formata çevir
-    const printWindow = window.open('', '', 'width=600,height=800');
-    if (!printWindow) return;
-    printWindow.document.write('<html><head><title>Sipariş Fişi</title></head><body>');
-    printWindow.document.write('<h2>Sipariş Fişi</h2>');
-    printWindow.document.write(`<p><b>Sipariş No:</b> ${order.orderNumber}</p>`);
-    printWindow.document.write(`<p><b>Tarih:</b> ${new Date(order.createdAt).toLocaleString('tr-TR')}</p>`);
-    printWindow.document.write('<hr/>');
-    printWindow.document.write('<ul>');
-    order.items.forEach(item => {
-      printWindow.document.write(`<li>${item.quantity} x ${item.product.name} - ${item.price}₺</li>`);
-    });
-    printWindow.document.write('</ul>');
-    printWindow.document.write(`<p><b>Toplam:</b> ${order.totalAmount}₺</p>`);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
-  };
 
   useEffect(() => {
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
@@ -184,6 +145,31 @@ export default function AdminPage() {
         }
         setCategories([]);
       }
+
+      // Fetch products for all users
+      try {
+        let productsResponse;
+        if (user && user.role === 'BRANCH_MANAGER') {
+          productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
+            headers: { Authorization: `Bearer ${token}` },
+            params: { branchId: user.branchId }
+          });
+        } else {
+          productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+        }
+        setProducts(productsResponse.data);
+        console.log('Products loaded:', productsResponse.data);
+      } catch (error: any) {
+        console.error('Products fetch error:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+          router.push('/login');
+          return;
+        }
+        setProducts([]);
+      }
       
       if (user && user.role === 'SUPER_ADMIN') {
         try {
@@ -200,37 +186,23 @@ export default function AdminPage() {
           }
           setUsers([]);
         }
-        
-        try {
-          const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
-            headers: { Authorization: `Bearer ${token}` } 
-          });
-          setProducts(productsResponse.data);
-        } catch (error: any) {
-          console.error('Products fetch error:', error);
-          if (error.response?.status === 401 || error.response?.status === 403) {
-            toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-            router.push('/login');
-            return;
-          }
-          setProducts([]);
+      }
+
+      // Fetch orders for all users
+      try {
+        const ordersResponse = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setOrders(ordersResponse.data);
+        console.log('Orders loaded:', ordersResponse.data);
+      } catch (error: any) {
+        console.error('Orders fetch error:', error);
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+          router.push('/login');
+          return;
         }
-      } else if (user && user.role === 'BRANCH_MANAGER') {
-        try {
-          const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, { 
-            headers: { Authorization: `Bearer ${token}` },
-            params: { branchId: user.branchId }
-          });
-          setProducts(productsResponse.data);
-        } catch (error: any) {
-          console.error('Products fetch error:', error);
-          if (error.response?.status === 401 || error.response?.status === 403) {
-            toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-            router.push('/login');
-            return;
-          }
-          setProducts([]);
-        }
+        setOrders([]);
       }
     };
 
@@ -282,12 +254,6 @@ export default function AdminPage() {
     if (orders.length > lastOrderCount && lastOrderCount > 0) {
       playNotificationSound();
       toast.success('Yeni sipariş geldi! 🎉');
-      // Otomatik yazdırma
-      const newOrders = orders.slice(0, orders.length - lastOrderCount);
-      // Sadece en son gelen siparişi yazdır (veya istenirse tüm yeni siparişleri döngüyle yazdır)
-      if (orders.length > 0) {
-        printOrder(orders[0]);
-      }
     }
     setLastOrderCount(orders.length);
   }, [orders.length, lastOrderCount]);
@@ -407,15 +373,15 @@ export default function AdminPage() {
       
       if (user && user.role === 'BRANCH_MANAGER') {
         // Şube müdürleri sadece isActive değerini güncelleyebilir
-        formData.append('isActive', editProductForm.isActive.toString());
+        formData.append('isActive', editProductForm.isActive ? 'true' : 'false');
       } else {
         // Süper admin tüm alanları güncelleyebilir
         formData.append('name', editProductForm.name);
         formData.append('description', editProductForm.description);
-        formData.append('price', Number(editProductForm.price).toString());
-        formData.append('categoryId', Number(editProductForm.categoryId).toString());
-        formData.append('branchId', Number(editProductForm.branchId).toString());
-        formData.append('isActive', editProductForm.isActive.toString());
+        formData.append('price', String(Number(editProductForm.price)));
+        formData.append('categoryId', String(Number(editProductForm.categoryId)));
+        formData.append('branchId', String(Number(editProductForm.branchId)));
+        formData.append('isActive', editProductForm.isActive ? 'true' : 'false');
         
         if (editProductImage) {
           console.log('Güncelleme için resim yükleniyor:', editProductImage.name);
@@ -589,7 +555,22 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${token}` },
         params
       });
-      setStats(res.data);
+      
+      // Backend'den gelen veriyi frontend formatına dönüştür
+      const formattedStats = [];
+      
+      if (res.data && Array.isArray(res.data)) {
+        for (const branchStats of res.data) {
+          formattedStats.push(
+            { label: 'Toplam Sipariş', value: branchStats.orders },
+            { label: 'Toplam Gelir', value: `${branchStats.revenue.toFixed(2)} ₺` },
+            { label: 'Ortalama Sipariş', value: `${branchStats.averageOrder.toFixed(2)} ₺` },
+            { label: 'Günlük Ortalama', value: `${branchStats.dailyAverage.toFixed(2)} ₺` }
+          );
+        }
+      }
+      
+      setStats(formattedStats);
     } catch (error) {
       console.error('İstatistik hatası:', error);
       setStats([]);
@@ -617,35 +598,217 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-2 sm:px-4 md:px-8" style={{ maxWidth: 1200 }}>
-        {/* Yazıcı seçme menüsü ve üst menü */}
-        <div className="flex flex-col md:flex-row gap-2 items-center justify-between mb-4">
-          <div className="flex items-center space-x-4 w-full md:w-auto">
-            <label className="font-medium">Yazıcı Adı:</label>
-            <select
-              value={printerName}
-              onChange={handlePrinterNameChange}
-              className="border px-2 py-2 rounded w-full md:w-auto text-base"
-              style={{ minWidth: 180 }}
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Admin Paneli</h1>
+        </div>
+        <div className="container mx-auto px-2 sm:px-4 md:px-8" style={{ maxWidth: 1200 }}>
+          {/* Tab/menü alanı */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('orders')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'orders' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
             >
-              <option value="">Yazıcı seçiniz</option>
-              {printers.map((printer) => (
-                <option key={printer.name} value={printer.name}>{printer.name}</option>
-              ))}
-            </select>
+              Siparişler ({orders.length})
+            </button>
+            {user && user.role === 'SUPER_ADMIN' && (
+              <>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    activeTab === 'users' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Kullanıcılar ({users.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('branches')}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    activeTab === 'branches' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Şubeler ({branches.length})
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setActiveTab('products')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'products' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Ürünler ({products.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('categories')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'categories' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              Kategoriler ({categories.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('daily-stats')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'daily-stats' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              İstatistikler
+            </button>
           </div>
-          {/* Diğer üst menü elemanları buraya */}
+
+          {/* İçerik alanı */}
+          <div className="bg-white rounded-lg shadow">
+            {activeTab === 'orders' && (
+              <OrderList
+                orders={orders}
+                onUpdateStatus={updateOrderStatus}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+                formatDate={formatDate}
+              />
+            )}
+            
+            {activeTab === 'users' && user && user.role === 'SUPER_ADMIN' && (
+              <UserList
+                users={sortedUsers}
+                onDeleteUser={deleteUser}
+                onActivateUser={activateUser}
+              />
+            )}
+            
+            {activeTab === 'branches' && user && user.role === 'SUPER_ADMIN' && (
+              <BranchManagement
+                branches={branches}
+                onEditBranch={editBranch}
+                onDeleteBranch={deleteBranch}
+              />
+            )}
+            
+            {activeTab === 'products' && (
+              <ProductManagement
+                products={products}
+                categories={categories}
+                branches={branches}
+                onEditProduct={editProduct}
+                onDeleteProduct={deleteProduct}
+                onToggleProductStatus={toggleProductStatus}
+                user={user}
+              />
+            )}
+            
+            {activeTab === 'categories' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Kategoriler</h2>
+                  <button
+                    onClick={() => setShowCategoryModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Kategori Ekle
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Kategori Adı
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Açıklama
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Durum
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          İşlemler
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {categories.map((category) => (
+                        <tr key={category.id}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {category.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {category.description}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {category.isActive ? 'Aktif' : 'Pasif'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => deleteCategory(category.id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Sil
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'daily-stats' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Günlük İstatistikler</h2>
+                  <div className="flex gap-2">
+                    <select
+                      value={statsPeriod}
+                      onChange={(e) => setStatsPeriod(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                      className="border border-gray-300 rounded-lg px-3 py-2"
+                    >
+                      <option value="daily">Günlük</option>
+                      <option value="weekly">Haftalık</option>
+                      <option value="monthly">Aylık</option>
+                    </select>
+                    {user && user.role === 'SUPER_ADMIN' && (
+                      <select
+                        value={statsBranchId}
+                        onChange={(e) => setStatsBranchId(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2"
+                      >
+                        <option value="">Tüm Şubeler</option>
+                        {branches.map((branch) => (
+                          <option key={branch.id} value={branch.id}>
+                            {branch.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </div>
+                {statsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-600">İstatistikler yükleniyor...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {stats.map((stat, index) => (
+                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="font-semibold text-gray-900">{stat.label}</h3>
+                        <p className="text-2xl font-bold text-blue-600">{stat.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        {/* Tab/menü alanı */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-4">
-          {/* Tablar veya menü butonları burada */}
-        </div>
-        {/* İçerik alanı */}
-        <div className="overflow-x-auto">
-          {/* Tabloları veya gridleri buraya koyun */}
-          {/* Örnek: <OrderList ... /> veya <table> ... */}
-        </div>
-        {/* Diğer içerikler */}
       </div>
     </div>
   );

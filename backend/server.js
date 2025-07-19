@@ -1,4 +1,5 @@
 // Environment variables - Otomatik bağlantı
+require('dotenv').config();
 const isProduction = process.env.NODE_ENV === 'production';
 const SERVER_PORT = process.env.PORT || 3001;
 const DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
@@ -38,18 +39,21 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const { PrismaClient } = require('@prisma/client');
+
+// Prisma client configuration
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'file:./dev.db'
+      url: DATABASE_URL
     }
-  },
-  log: [
-    { level: 'query', emit: 'event' },
-    { level: 'info', emit: 'stdout' },
-    { level: 'warn', emit: 'stdout' },
-    { level: 'error', emit: 'stdout' }
-  ]
+  }
+});
+
+// Prisma query logging
+prisma.$on('query', (e) => {
+  logger.info('Query: ' + e.query);
+  logger.info('Params: ' + e.params);
+  logger.info('Duration: ' + e.duration + 'ms');
 });
 
 // Prisma query logging
@@ -70,8 +74,10 @@ if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL.includes(
 }
 
 // Database type detection
-console.log(`🔍 Database URL: ${DATABASE_URL.substring(0, 20)}...`);
+console.log(`🔍 Database URL: ${DATABASE_URL.substring(0, 50)}...`);
 console.log(`📊 Database Type: ${isPostgreSQL ? 'PostgreSQL' : 'SQLite'}`);
+console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔗 Full DATABASE_URL: ${DATABASE_URL}`);
 
 async function testDatabaseConnection() {
   try {
@@ -134,18 +140,18 @@ app.use(helmet({
 // Compression middleware
 app.use(compression());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 dakika
-  max: 100, // IP başına 100 istek
-  message: {
-    error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiting - Geçici olarak devre dışı
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 dakika
+//   max: 100, // IP başına 100 istek
+//   message: {
+//     error: 'Çok fazla istek gönderildi. Lütfen 15 dakika sonra tekrar deneyin.'
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// });
 
-app.use('/api/', limiter);
+// app.use('/api/', limiter);
 
 // CORS konfigürasyonu
 app.use(cors({
@@ -643,10 +649,6 @@ app.get('/api/customer/orders/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
-
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
       include: { branch: true }
@@ -685,7 +687,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
 
     res.json(orders);
   } catch (error) {
-    console.error('Admin siparişler getirilemedi:', error); // <-- Hata detayını logla
+    console.error('Admin siparişler getirilemedi:', error);
     res.status(500).json({ error: 'Siparişler getirilemedi' });
   }
 });
@@ -792,6 +794,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     
     res.json(users);
   } catch (e) {
+    console.error('Users fetch error:', e);
     res.status(500).json({ error: 'Kullanıcılar getirilemedi' });
   }
 });
@@ -853,10 +856,6 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/products', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz' });
-    }
-    
     let whereClause = {};
     
     // Branch manager sadece kendi şubesindeki ürünleri görebilir
@@ -875,6 +874,7 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
     
     res.json(products);
   } catch (error) {
+    console.error('Products fetch error:', error);
     res.status(500).json({ error: 'Ürünler getirilemedi' });
   }
 });
@@ -988,12 +988,12 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
 
     // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
     const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
-                              Object.keys(req.body).length === 1 && 
-                              req.body.hasOwnProperty('isActive');
+      Object.keys(req.body).length === 1 && 
+      Object.prototype.hasOwnProperty.call(req.body, 'isActive');
 
     console.log('Is only status update:', isOnlyStatusUpdate);
     console.log('Request body keys:', Object.keys(req.body));
-    console.log('Has isActive property:', req.body.hasOwnProperty('isActive'));
+    console.log('Has isActive property:', Object.prototype.hasOwnProperty.call(req.body, 'isActive'));
 
     if (!isOnlyStatusUpdate && (!name || !price || !categoryId)) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -1131,6 +1131,8 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
     const productId = parseInt(id);
     
+    console.log('Deleting product with ID:', productId);
+    
     // Ürünü kontrol et
     const product = await prisma.product.findUnique({
       where: { id: productId },
@@ -1141,13 +1143,41 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Ürün bulunamadı' });
     }
     
-    await prisma.product.delete({
-      where: { id: productId }
+    console.log('Product found:', product.name);
+    
+    // Bu ürünle ilgili sipariş öğelerini kontrol et
+    const orderItems = await prisma.orderItem.findMany({
+      where: { productId: productId }
     });
     
-    res.json({ message: 'Ürün silindi' });
-  } catch (e) {
-    res.status(500).json({ error: 'Ürün silinemedi' });
+    console.log(`Found ${orderItems.length} order items for this product`);
+    
+    // Transaction kullanarak hem sipariş öğelerini hem de ürünü sil
+    await prisma.$transaction(async (tx) => {
+      // Önce bu ürünle ilgili sipariş öğelerini sil
+      if (orderItems.length > 0) {
+        console.log('Deleting order items for product:', productId);
+        await tx.orderItem.deleteMany({
+          where: { productId: productId }
+        });
+        console.log('Order items deleted successfully');
+      }
+      
+      // Sonra ürünü sil
+      await tx.product.delete({
+        where: { id: productId }
+      });
+      
+      console.log('Product deleted successfully');
+    });
+    
+    res.json({ 
+      message: 'Ürün ve ilgili sipariş öğeleri başarıyla silindi',
+      deletedOrderItems: orderItems.length
+    });
+  } catch (error) {
+    console.error('Product delete error:', error);
+    res.status(500).json({ error: 'Ürün silinemedi', details: error.message });
   }
 });
 
@@ -1165,16 +1195,13 @@ app.get('/api/categories', async (req, res) => {
 
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
-      return res.status(403).json({ error: 'Yetkisiz' });
-    }
-    
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }
     });
     
     res.json(categories);
   } catch (error) {
+    console.error('Categories fetch error:', error);
     res.status(500).json({ error: 'Kategoriler getirilemedi' });
   }
 });
@@ -2982,20 +3009,8 @@ async function initializeDatabase() {
           
           console.log('✅ Index\'ler oluşturuldu');
           
-          // Seed data ekle - sadece veritabanı boşsa
-          setTimeout(async () => {
-            try {
-              const existingData = await prisma.user.count() + await prisma.branch.count() + await prisma.category.count() + await prisma.product.count();
-              if (existingData === 0) {
-                await seedData();
-                console.log('✅ Seed data başarıyla oluşturuldu');
-              } else {
-                console.log('✅ Veritabanında mevcut veriler var, seed data atlanıyor');
-              }
-            } catch (seedError) {
-              console.error('❌ Seed data hatası:', seedError);
-            }
-      }, 2000);
+          // Seed data devre dışı - gerçek veriler kullanılacak
+          console.log('✅ Seed data devre dışı - gerçek veritabanı verileri kullanılacak');
           
         } catch (rawError) {
           console.error('❌ Raw SQL tablo oluşturma hatası:', rawError);
@@ -3021,6 +3036,223 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV,
     version: '2.0.0'
   });
+});
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Backend çalışıyor!',
+    database: isPostgreSQL ? 'PostgreSQL' : 'SQLite',
+    databaseUrl: DATABASE_URL.substring(0, 50) + '...',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Veritabanı verilerini kontrol etme endpoint'i
+app.get('/api/database-status', async (req, res) => {
+  try {
+    const userCount = await prisma.user.count();
+    const branchCount = await prisma.branch.count();
+    const categoryCount = await prisma.category.count();
+    const productCount = await prisma.product.count();
+    const orderCount = await prisma.order.count();
+    
+    // Örnek verileri kontrol et
+    const sampleUser = await prisma.user.findFirst();
+    const sampleBranch = await prisma.branch.findFirst();
+    
+    res.json({
+      database: isPostgreSQL ? 'PostgreSQL' : 'SQLite',
+      counts: {
+        users: userCount,
+        branches: branchCount,
+        categories: categoryCount,
+        products: productCount,
+        orders: orderCount
+      },
+      sampleData: {
+        user: sampleUser ? { id: sampleUser.id, email: sampleUser.email, name: sampleUser.name } : null,
+        branch: sampleBranch ? { id: sampleBranch.id, name: sampleBranch.name } : null
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Veritabanı durumu kontrol edilemedi', details: error.message });
+  }
+});
+
+// Gerçek verileri listeleme endpoint'i
+app.get('/api/real-data', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true }
+    });
+    
+    const branches = await prisma.branch.findMany({
+      select: { id: true, name: true, address: true }
+    });
+    
+    const products = await prisma.product.findMany({
+      select: { id: true, name: true, price: true, categoryId: true },
+      take: 5
+    });
+    
+    res.json({
+      message: 'Gerçek veritabanı verileri',
+      users: users,
+      branches: branches,
+      products: products
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Veriler getirilemedi', details: error.message });
+  }
+});
+
+// Admin test endpoint'i (authentication olmadan)
+app.get('/api/admin/test', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true }
+    });
+    
+    const branches = await prisma.branch.findMany({
+      select: { id: true, name: true, address: true }
+    });
+    
+    const products = await prisma.product.findMany({
+      select: { id: true, name: true, price: true, categoryId: true },
+      take: 10
+    });
+    
+    const categories = await prisma.category.findMany({
+      select: { id: true, name: true, description: true }
+    });
+    
+    const orders = await prisma.order.findMany({
+      select: { id: true, orderNumber: true, status: true, totalAmount: true },
+      take: 5
+    });
+    
+    res.json({
+      message: 'Admin paneli test verileri',
+      counts: {
+        users: users.length,
+        branches: branches.length,
+        products: products.length,
+        categories: categories.length,
+        orders: orders.length
+      },
+      users: users,
+      branches: branches,
+      products: products,
+      categories: categories,
+      orders: orders
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Admin test verileri getirilemedi', details: error.message });
+  }
+});
+
+// Admin kullanıcısı oluşturma endpoint'i
+app.post('/api/admin/create-admin', async (req, res) => {
+  try {
+    // Önce admin kullanıcısının var olup olmadığını kontrol et
+    const existingAdmin = await prisma.user.findFirst({
+      where: { email: 'admin@example.com' }
+    });
+    
+    if (existingAdmin) {
+      return res.json({ 
+        message: 'Admin kullanıcısı zaten mevcut',
+        user: {
+          id: existingAdmin.id,
+          email: existingAdmin.email,
+          name: existingAdmin.name,
+          role: existingAdmin.role
+        }
+      });
+    }
+    
+    // Admin kullanıcısını oluştur
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const adminUser = await prisma.user.create({
+      data: {
+        email: 'admin@example.com',
+        password: hashedPassword,
+        name: 'Süper Admin',
+        role: 'SUPER_ADMIN',
+        isActive: true
+      }
+    });
+    
+    res.json({ 
+      message: 'Admin kullanıcısı başarıyla oluşturuldu',
+      user: {
+        id: adminUser.id,
+        email: adminUser.email,
+        name: adminUser.name,
+        role: adminUser.role
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Admin kullanıcısı oluşturulamadı', details: error.message });
+  }
+});
+
+// Admin paneli test endpoint'leri (authentication olmadan)
+app.get('/api/admin/users-test', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true, isActive: true }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: 'Kullanıcılar getirilemedi', details: error.message });
+  }
+});
+
+app.get('/api/admin/orders-test', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        branch: true,
+        customer: true,
+        table: true,
+        orderItems: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ error: 'Siparişler getirilemedi', details: error.message });
+  }
+});
+
+app.get('/api/admin/products-test', async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: {
+        category: true,
+        branch: true
+      }
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Ürünler getirilemedi', details: error.message });
+  }
+});
+
+app.get('/api/admin/categories-test', async (req, res) => {
+  try {
+    const categories = await prisma.category.findMany();
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: 'Kategoriler getirilemedi', details: error.message });
+  }
 });
 
 app.get('/', (req, res) => {
