@@ -718,7 +718,7 @@ export default function AdminPage() {
             >
               Siparişler ({orders.length})
             </button>
-            {user && user.role === 'SUPER_ADMIN' && (
+            {(user && user.role === 'SUPER_ADMIN' || user && user.role === 'BRANCH_MANAGER') && (
               <>
                 <button
                   onClick={() => setActiveTab('users')}
@@ -770,7 +770,7 @@ export default function AdminPage() {
             >
               Masa Siparişleri
             </button>
-            {user && user.role === 'SUPER_ADMIN' && (
+            {(user && user.role === 'SUPER_ADMIN' || user && user.role === 'BRANCH_MANAGER') && (
               <button
                 onClick={() => setActiveTab('tables')}
                 className={`px-4 py-2 rounded-lg font-medium ${
@@ -799,7 +799,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && (
+            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
@@ -818,7 +818,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'branches' && user && (
+            {activeTab === 'branches' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
@@ -935,7 +935,7 @@ export default function AdminPage() {
                       <option value="weekly">Haftalık</option>
                       <option value="monthly">Aylık</option>
                     </select>
-                    {user && user.role === 'SUPER_ADMIN' && (
+                    {(user && user.role === 'SUPER_ADMIN' || user && user.role === 'BRANCH_MANAGER') && (
                       <select
                         value={statsBranchId}
                         onChange={(e) => setStatsBranchId(e.target.value)}
@@ -1000,8 +1000,7 @@ export default function AdminPage() {
                             {orders.filter(order => 
                               order.branch.id === branch.id && 
                               order.orderType === 'TABLE' && 
-                              order.status !== 'COMPLETED' &&
-                              order.orderType !== 'COLLECTION'
+                              order.status !== 'COMPLETED'
                             ).length}
                           </span>
                         </div>
@@ -1011,8 +1010,7 @@ export default function AdminPage() {
                             ₺{orders
                               .filter(order => 
                                 order.branch.id === branch.id && 
-                                order.orderType === 'TABLE' &&
-                                order.orderType !== 'COLLECTION'
+                                order.orderType === 'TABLE'
                               )
                               .reduce((total, order) => total + order.totalAmount, 0)
                               .toFixed(2)}
@@ -1060,7 +1058,7 @@ export default function AdminPage() {
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
                         {orders
-                          .filter(order => order.orderType === 'TABLE' && order.orderType !== 'COLLECTION')
+                          .filter(order => order.orderType === 'TABLE')
                           .map((order) => (
                             <tr key={order.id}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -1092,7 +1090,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'tables' && user && user.role === 'SUPER_ADMIN' && (
+            {activeTab === 'tables' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Masa Yönetimi</h2>
@@ -1179,7 +1177,7 @@ export default function AdminPage() {
                     <option value="SUPER_ADMIN">Süper Admin</option>
                   </select>
                 </div>
-                {userForm.role === 'BRANCH_MANAGER' && (
+                {(userForm.role === 'BRANCH_MANAGER' || (user && user.role === 'BRANCH_MANAGER')) && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Şube
@@ -1281,7 +1279,7 @@ export default function AdminPage() {
                     ))}
                   </select>
                 </div>
-                {user && user.role === 'SUPER_ADMIN' && (
+                {(user && user.role === 'SUPER_ADMIN' || user && user.role === 'BRANCH_MANAGER') && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Şube
