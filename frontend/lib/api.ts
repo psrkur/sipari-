@@ -12,6 +12,8 @@ const getApiBaseUrl = (): string => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('🔧 API Base URL:', API_BASE_URL);
+console.log('🔧 Window location:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
 
 // API isteği wrapper'ı
 const apiRequest = async (url: string, options: RequestInit = {}) => {

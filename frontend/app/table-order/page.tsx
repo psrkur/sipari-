@@ -90,9 +90,9 @@ export default function TableOrder() {
       loadProducts(parseInt(branchId));
       setLoading(false);
     } else {
-      // Eğer hiçbir parametre yoksa, varsayılan olarak branch 1'i yükle
-      console.log('Parametre bulunamadı, varsayılan branch yükleniyor...');
-      loadProducts(1);
+      // Eğer hiçbir parametre yoksa, varsayılan olarak branch 3'ü yükle (ürünler var)
+      console.log('Parametre bulunamadı, varsayılan branch 3 yükleniyor...');
+      loadProducts(3);
     }
   }, [tableId, branchId]);
 

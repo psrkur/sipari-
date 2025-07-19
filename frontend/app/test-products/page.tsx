@@ -27,9 +27,9 @@ export default function TestProducts() {
   const loadProducts = async () => {
     try {
       console.log('🔍 Test: Ürünler yükleniyor...');
-      console.log('🔗 API URL:', API_ENDPOINTS.PRODUCTS(1));
+      console.log('🔗 API URL:', API_ENDPOINTS.PRODUCTS(3));
       
-      const response = await apiRequest(API_ENDPOINTS.PRODUCTS(1));
+      const response = await apiRequest(API_ENDPOINTS.PRODUCTS(3));
       console.log('✅ Test: Ürünler yüklendi:', response);
       setProducts(response);
     } catch (error) {
@@ -75,8 +75,8 @@ export default function TestProducts() {
         
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">API Bilgileri</h2>
-          <p><strong>API Base URL:</strong> {API_ENDPOINTS.PRODUCTS(1).replace('/api/products/1', '')}</p>
-          <p><strong>Products URL:</strong> {API_ENDPOINTS.PRODUCTS(1)}</p>
+          <p><strong>API Base URL:</strong> {API_ENDPOINTS.PRODUCTS(3).replace('/api/products/3', '')}</p>
+          <p><strong>Products URL:</strong> {API_ENDPOINTS.PRODUCTS(3)}</p>
           <p><strong>Ürün Sayısı:</strong> {products.length}</p>
         </div>
 
