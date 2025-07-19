@@ -55,6 +55,12 @@ interface CartItem {
   note?: string;
 }
 
+// Açıklamayı kısalt fonksiyonu
+const truncateDescription = (text: string, maxLength: number = 60) => {
+  if (text.length <= maxLength) return text
+  return text.substring(0, maxLength) + '...'
+}
+
 export default function TableOrder() {
   const searchParams = useSearchParams();
   const branchId = searchParams.get('branch');
@@ -316,14 +322,7 @@ export default function TableOrder() {
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {getFilteredProducts().map(product => {
-                // Açıklamayı kısalt
-                const truncateDescription = (text: string, maxLength: number = 60) => {
-                  if (text.length <= maxLength) return text
-                  return text.substring(0, maxLength) + '...'
-                }
-
-                return (
+              {getFilteredProducts().map(product => (
                   <div key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm flex flex-col h-full cursor-pointer rounded-lg shadow-md" onClick={() => handleProductClick(product)}>
                     <CardContent className="p-4 flex flex-col h-full">
                       {/* Ürün adı - tam yazılacak */}
@@ -362,8 +361,7 @@ export default function TableOrder() {
                       </div>
                     </CardContent>
                   </div>
-                )
-              })}
+                ))}
             </div>
           </div>
 
