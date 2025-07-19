@@ -115,20 +115,27 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                       >
                         Detay
                       </button>
-                      {order.status === 'DELIVERED' || order.status === 'CANCELLED' ? (
-                        <span className="text-gray-500 text-xs italic">Değiştirilemez</span>
-                      ) : (
-                        <select
-                          value={order.status}
-                          onChange={(e) => onUpdateStatus(order.id, e.target.value)}
-                          className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-                        >
-                          <option value="PENDING">Bekliyor</option>
-                          <option value="PREPARING">Hazırlanıyor</option>
-                          <option value="READY">Hazır</option>
-                          <option value="DELIVERED">Teslim Edildi</option>
-                          <option value="CANCELLED">İptal Edildi</option>
-                        </select>
+                      {/* Sadece online siparişler için durum değiştirme */}
+                      {order.orderType !== 'TABLE' && (
+                        order.status === 'DELIVERED' || order.status === 'CANCELLED' ? (
+                          <span className="text-gray-500 text-xs italic">Değiştirilemez</span>
+                        ) : (
+                          <select
+                            value={order.status}
+                            onChange={(e) => onUpdateStatus(order.id, e.target.value)}
+                            className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                          >
+                            <option value="PENDING">Bekliyor</option>
+                            <option value="PREPARING">Hazırlanıyor</option>
+                            <option value="READY">Hazır</option>
+                            <option value="DELIVERED">Teslim Edildi</option>
+                            <option value="CANCELLED">İptal Edildi</option>
+                          </select>
+                        )
+                      )}
+                      {/* Masa siparişleri için sadece görüntüleme */}
+                      {order.orderType === 'TABLE' && (
+                        <span className="text-gray-500 text-xs italic">Masa siparişi - durum değiştirilemez</span>
                       )}
                     </div>
                   </td>

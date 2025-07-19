@@ -728,6 +728,14 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Sipariş bulunamadı' });
     }
 
+    // Masa siparişleri için durum güncelleme kısıtlaması
+    if (existingOrder.orderType === 'TABLE') {
+      return res.status(400).json({ 
+        error: 'Masa siparişleri için durum güncelleme yapılamaz',
+        message: 'Masa siparişleri için durum değişikliği yapılamaz. Sadece online siparişler için geçerlidir.'
+      });
+    }
+
     // Eğer sipariş zaten teslim edildiyse veya iptal edildiyse, güncellemeye izin verme
     if (existingOrder.status === 'DELIVERED') {
       return res.status(400).json({ 
