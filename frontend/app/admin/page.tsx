@@ -774,13 +774,18 @@ export default function AdminPage() {
           {/* İçerik alanı */}
           <div className="bg-white rounded-lg shadow">
             {activeTab === 'orders' && (
-              <OrderList
-                orders={orders}
-                onUpdateStatus={updateOrderStatus}
-                getStatusColor={getStatusColor}
-                getStatusText={getStatusText}
-                formatDate={formatDate}
-              />
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Siparişler</h2>
+                </div>
+                <OrderList
+                  orders={orders}
+                  onUpdateStatus={updateOrderStatus}
+                  getStatusColor={getStatusColor}
+                  getStatusText={getStatusText}
+                  formatDate={formatDate}
+                />
+              </div>
             )}
             
             {activeTab === 'users' && user && user.role === 'SUPER_ADMIN' && (
