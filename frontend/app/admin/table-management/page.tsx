@@ -156,7 +156,7 @@ export default function TableManagement() {
         })
       });
 
-      toast.success(response.message);
+      toast.success(response.message || 'Tahsilat tamamlandı ve masa sıfırlandı');
       setShowCollectionModal(false);
       setShowOrdersModal(false);
       setSelectedTableOrders(null);

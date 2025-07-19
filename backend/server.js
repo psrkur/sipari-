@@ -753,16 +753,28 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       }
     });
 
-    // Müşteri bilgilendirme mesajı oluştur
-    const statusMessages = {
-      'PENDING': 'Siparişiniz alındı ve hazırlanmaya başlandı.',
-      'PREPARING': 'Siparişiniz hazırlanıyor.',
-      'READY': 'Siparişiniz hazır! Teslimata çıkıyoruz.',
-      'DELIVERED': 'Siparişiniz teslim edildi. Afiyet olsun!',
-      'CANCELLED': 'Siparişiniz iptal edildi.'
-    };
-
-    const statusMessage = statusMessages[status] || 'Sipariş durumunuz güncellendi.';
+    // Masa siparişleri için özel durum mesajları
+    let statusMessage;
+    if (order.orderType === 'TABLE') {
+      const tableStatusMessages = {
+        'PENDING': 'Masa siparişiniz alındı ve hazırlanmaya başlandı.',
+        'PREPARING': 'Masa siparişiniz hazırlanıyor.',
+        'READY': 'Masa siparişiniz hazır! Servis ediliyor.',
+        'DELIVERED': 'Masa siparişiniz teslim edildi. Afiyet olsun! (Ödeme yapıldıktan sonra masa sıfırlanacak)',
+        'CANCELLED': 'Masa siparişiniz iptal edildi.'
+      };
+      statusMessage = tableStatusMessages[status] || 'Masa sipariş durumunuz güncellendi.';
+    } else {
+      // Normal teslimat siparişleri için
+      const deliveryStatusMessages = {
+        'PENDING': 'Siparişiniz alındı ve hazırlanmaya başlandı.',
+        'PREPARING': 'Siparişiniz hazırlanıyor.',
+        'READY': 'Siparişiniz hazır! Teslimata çıkıyoruz.',
+        'DELIVERED': 'Siparişiniz teslim edildi. Afiyet olsun!',
+        'CANCELLED': 'Siparişiniz iptal edildi.'
+      };
+      statusMessage = deliveryStatusMessages[status] || 'Sipariş durumunuz güncellendi.';
+    }
 
     res.json({
       order,
@@ -1668,12 +1680,21 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
+    // Tahsilat sonrası masanın tüm siparişlerini sil (COMPLETED olanlar)
+    const deletedOrders = await prisma.order.deleteMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: 'COMPLETED'
+      }
+    });
+
     res.json({
       success: true,
-      message: `Masa ${table.number} tahsilatı tamamlandı`,
+      message: `Masa ${table.number} tahsilatı tamamlandı ve masa sıfırlandı`,
       collection,
       totalAmount,
-      orderCount: orders.length
+      orderCount: orders.length,
+      deletedCount: deletedOrders.count
     });
 
   } catch (error) {
