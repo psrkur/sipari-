@@ -96,11 +96,12 @@ export default function AdminPage() {
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
-  // Kullanıcıları sırala
-  const sortedUsers = users.sort((a, b) => a.name.localeCompare(b.name));
+  // Kullanıcıları sırala - bu satırı kaldırıyoruz çünkü aşağıda tekrar tanımlanıyor
 
 
   useEffect(() => {
+    console.log('Current user:', user);
+    console.log('User role:', user?.role);
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
       router.push('/login');
       return;
@@ -788,7 +789,7 @@ export default function AdminPage() {
               </div>
             )}
             
-            {activeTab === 'users' && user && user.role === 'SUPER_ADMIN' && (
+            {activeTab === 'users' && user && (user.role === 'SUPER_ADMIN' || user.role === 'BRANCH_MANAGER') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Kullanıcılar</h2>
