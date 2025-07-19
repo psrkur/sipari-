@@ -539,6 +539,97 @@ export default function AdminPage() {
     }
   };
 
+  // Kullanıcı ekleme fonksiyonu
+  const addUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_USERS, userForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Kullanıcı başarıyla eklendi');
+      setUsers([...users, response.data]);
+      setShowUserModal(false);
+      setUserForm({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
+    } catch (error: any) {
+      console.error('Kullanıcı ekleme hatası:', error);
+      toast.error(error.response?.data?.error || 'Kullanıcı eklenirken hata oluştu');
+    }
+  };
+
+  // Ürün ekleme fonksiyonu
+  const addProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const formData = new FormData();
+      formData.append('name', productForm.name);
+      formData.append('description', productForm.description);
+      formData.append('price', productForm.price);
+      formData.append('categoryId', productForm.categoryId);
+      formData.append('branchId', productForm.branchId);
+      
+      if (productImage) {
+        formData.append('image', productImage);
+      }
+      
+      const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      toast.success('Ürün başarıyla eklendi');
+      setProducts([...products, response.data]);
+      setShowProductModal(false);
+      setProductForm({ name: '', description: '', price: '', categoryId: '', branchId: '' });
+      setProductImage(null);
+    } catch (error: any) {
+      console.error('Ürün ekleme hatası:', error);
+      toast.error(error.response?.data?.error || 'Ürün eklenirken hata oluştu');
+    }
+  };
+
+  // Kategori ekleme fonksiyonu
+  const addCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Kategori başarıyla eklendi');
+      setCategories([...categories, response.data]);
+      setShowCategoryModal(false);
+      setCategoryForm({ name: '', description: '' });
+    } catch (error: any) {
+      console.error('Kategori ekleme hatası:', error);
+      toast.error(error.response?.data?.error || 'Kategori eklenirken hata oluştu');
+    }
+  };
+
+  // Şube ekleme fonksiyonu
+  const addBranch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_BRANCHES, branchForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Şube başarıyla eklendi');
+      setBranches([...branches, response.data]);
+      setShowBranchModal(false);
+      setBranchForm({ name: '', address: '', phone: '' });
+    } catch (error: any) {
+      console.error('Şube ekleme hatası:', error);
+      toast.error(error.response?.data?.error || 'Şube eklenirken hata oluştu');
+    }
+  };
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('tr-TR');
   };
@@ -1020,11 +1111,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Yeni Kullanıcı Ekle</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Kullanıcı ekleme işlemi burada yapılacak
-              setShowUserModal(false);
-            }}>
+            <form onSubmit={addUser}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1122,11 +1209,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Yeni Ürün Ekle</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Ürün ekleme işlemi burada yapılacak
-              setShowProductModal(false);
-            }}>
+            <form onSubmit={addProduct}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1239,11 +1322,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Yeni Kategori Ekle</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Kategori ekleme işlemi burada yapılacak
-              setShowCategoryModal(false);
-            }}>
+            <form onSubmit={addCategory}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1294,11 +1373,7 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Yeni Şube Ekle</h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              // Şube ekleme işlemi burada yapılacak
-              setShowBranchModal(false);
-            }}>
+            <form onSubmit={addBranch}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
