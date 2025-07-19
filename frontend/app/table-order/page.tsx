@@ -200,6 +200,11 @@ export default function TableOrder() {
   };
 
   const handlePlaceOrder = async () => {
+    console.log('🔍 Sipariş tamamlama başlatıldı');
+    console.log('📦 Sepet içeriği:', cart);
+    console.log('🏠 Masa bilgisi:', table);
+    console.log('🏢 Branch ID:', branchId);
+    
     if (cart.length === 0) {
       toast.error('Sepetiniz boş');
       return;
@@ -220,15 +225,25 @@ export default function TableOrder() {
         notes: notes
       };
 
+      console.log('📤 Gönderilecek sipariş verisi:', orderData);
+
       if (table) {
         // Masa siparişi
+        console.log('🍽️ Masa siparişi gönderiliyor, masa ID:', table.id);
+        console.log('🔗 API URL:', API_ENDPOINTS.TABLE_ORDER(table.id));
+        
         const response = await apiRequest(API_ENDPOINTS.TABLE_ORDER(table.id), {
           method: 'POST',
           body: JSON.stringify(orderData)
         });
+        
+        console.log('✅ Masa siparişi başarılı:', response);
         toast.success('Masa siparişiniz başarıyla alındı!');
       } else if (branchId) {
         // Normal sipariş (masa olmadan)
+        console.log('🚚 Normal sipariş gönderiliyor, branch ID:', branchId);
+        console.log('🔗 API URL:', API_ENDPOINTS.ORDERS);
+        
         const response = await apiRequest(API_ENDPOINTS.ORDERS, {
           method: 'POST',
           body: JSON.stringify({
@@ -237,6 +252,8 @@ export default function TableOrder() {
             orderType: 'DELIVERY'
           })
         });
+        
+        console.log('✅ Normal sipariş başarılı:', response);
         toast.success('Siparişiniz başarıyla alındı!');
       }
 
@@ -244,7 +261,8 @@ export default function TableOrder() {
       setNotes('');
       setShowCart(false);
     } catch (error) {
-      console.error('Sipariş hatası:', error);
+      console.error('❌ Sipariş hatası:', error);
+      console.error('❌ Hata detayı:', error instanceof Error ? error.message : String(error));
       toast.error('Sipariş alınamadı');
     }
   };
