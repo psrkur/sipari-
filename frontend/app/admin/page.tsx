@@ -665,6 +665,16 @@ export default function AdminPage() {
             >
               Masa Siparişleri
             </button>
+            {user && user.role === 'SUPER_ADMIN' && (
+              <button
+                onClick={() => setActiveTab('tables')}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeTab === 'tables' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Masa Yönetimi
+              </button>
+            )}
           </div>
 
           {/* İçerik alanı */}
@@ -933,6 +943,33 @@ export default function AdminPage() {
                       </tbody>
                     </table>
                   </div>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'tables' && user && user.role === 'SUPER_ADMIN' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Masa Yönetimi</h2>
+                  <Link
+                    href="/admin/table-management"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Masa Yönetimi Sayfasına Git
+                  </Link>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-blue-800 mb-2">Masa Yönetimi Özellikleri</h3>
+                  <ul className="space-y-2 text-blue-700">
+                    <li>• Şube bazlı masa oluşturma ve düzenleme</li>
+                    <li>• Her masa için QR kod oluşturma</li>
+                    <li>• Masa siparişlerini görüntüleme ve yönetme</li>
+                    <li>• Masa tahsilat işlemleri</li>
+                    <li>• Masa sıfırlama işlemleri</li>
+                  </ul>
+                  <p className="mt-3 text-sm text-blue-600">
+                    Detaylı masa yönetimi için yukarıdaki butona tıklayın.
+                  </p>
                 </div>
               </div>
             )}
