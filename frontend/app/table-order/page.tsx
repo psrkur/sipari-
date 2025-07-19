@@ -78,21 +78,23 @@ export default function TableOrder() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    console.log('URL Parametreleri:', { tableId, branchId });
-    console.log('API Base URL:', API_ENDPOINTS.PRODUCTS(1).replace('/api/products/1', ''));
+    console.log('🔍 URL Parametreleri:', { tableId, branchId });
+    console.log('🔗 API Base URL:', API_ENDPOINTS.PRODUCTS(1).replace('/api/products/1', ''));
     
     if (tableId) {
-      console.log('Table ID ile yükleme:', tableId);
+      console.log('🍽️ Table ID ile yükleme:', tableId);
       loadTableInfo(parseInt(tableId));
     } else if (branchId) {
-      console.log('Branch ID ile yükleme:', branchId);
+      console.log('🏢 Branch ID ile yükleme:', branchId);
       // Branch ID ile direkt ürünleri yükle, masa bilgisi olmadan
       loadProducts(parseInt(branchId));
       setLoading(false);
     } else {
       // Eğer hiçbir parametre yoksa, varsayılan olarak branch 3'ü yükle (ürünler var)
-      console.log('Parametre bulunamadı, varsayılan branch 3 yükleniyor...');
+      console.log('⚠️ Parametre bulunamadı, varsayılan branch 3 yükleniyor...');
+      console.log('⚠️ Bu durumda sipariş tamamlama çalışmayacak!');
       loadProducts(3);
+      setLoading(false);
     }
   }, [tableId, branchId]);
 
@@ -210,8 +212,10 @@ export default function TableOrder() {
       return;
     }
 
+    // Eğer hem masa hem de branch bilgisi yoksa, kullanıcıya uyarı ver
     if (!table && !branchId) {
-      toast.error('Masa veya şube bilgisi bulunamadı');
+      console.log('❌ Masa ve branch bilgisi yok!');
+      toast.error('Masa veya şube bilgisi bulunamadı. Lütfen doğru URL ile erişin.');
       return;
     }
 
@@ -290,6 +294,31 @@ export default function TableOrder() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Eğer masa ve branch bilgisi yoksa uyarı göster
+  if (!table && !branchId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">⚠️</span>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">URL Parametresi Eksik</h2>
+            <p className="text-gray-600 mb-6">
+              Masa veya şube bilgisi bulunamadı. Lütfen doğru URL ile erişin.
+            </p>
+            <div className="space-y-2 text-sm text-gray-500">
+              <p><strong>Masa siparişi için:</strong></p>
+              <code className="bg-gray-100 px-2 py-1 rounded">/table-order?table=1</code>
+              <p><strong>Şube siparişi için:</strong></p>
+              <code className="bg-gray-100 px-2 py-1 rounded">/table-order?branch=3</code>
+            </div>
+          </div>
         </div>
       </div>
     );

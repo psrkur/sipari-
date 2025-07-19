@@ -46,6 +46,16 @@ export default function TestTableOrder() {
     }
   };
 
+  const testURLs = () => {
+    const urls = [
+      'http://localhost:3001/table-order?table=1',
+      'http://localhost:3001/table-order?branch=3',
+      'http://localhost:3001/test-table-order'
+    ];
+    
+    setTestResult(`🔗 Test URL'leri:\n${urls.join('\n')}\n\nBu URL'leri kopyalayıp test edebilirsiniz.`);
+  };
+
   const testProducts = async () => {
     try {
       setTestResult('Ürünler test ediliyor...');
@@ -95,6 +105,9 @@ export default function TestTableOrder() {
               </Button>
               <Button onClick={testTableOrder} className="w-full">
                 Masa Siparişi Test Et
+              </Button>
+              <Button onClick={testURLs} className="w-full bg-blue-500 hover:bg-blue-600">
+                Test URL'leri Göster
               </Button>
             </div>
           </div>
