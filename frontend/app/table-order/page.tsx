@@ -65,6 +65,7 @@ export default function TableOrder() {
   const searchParams = useSearchParams();
   const branchId = searchParams.get('branch');
   const tableId = searchParams.get('table');
+  const qrData = searchParams.get('data');
 
   const [table, setTable] = useState<Table | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -78,7 +79,7 @@ export default function TableOrder() {
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    console.log('🔍 URL Parametreleri:', { tableId, branchId });
+    console.log('🔍 URL Parametreleri:', { tableId, branchId, qrData });
     console.log('🔗 API Base URL:', API_ENDPOINTS.PRODUCTS(1).replace('/api/products/1', ''));
     
     if (tableId) {
@@ -89,12 +90,29 @@ export default function TableOrder() {
       // Branch ID ile direkt ürünleri yükle, masa bilgisi olmadan
       loadProducts(parseInt(branchId));
       setLoading(false);
+    } else if (qrData) {
+      console.log('📱 QR kod verisi ile yükleme:', qrData);
+      try {
+        const decodedData = JSON.parse(decodeURIComponent(qrData));
+        console.log('📱 Decoded QR data:', decodedData);
+        
+        if (decodedData.tableId) {
+          console.log('🍽️ QR kod table ID ile yükleme:', decodedData.tableId);
+          loadTableInfo(decodedData.tableId);
+        } else {
+          console.log('❌ QR kod verisinde tableId bulunamadı');
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('❌ QR kod verisi parse edilemedi:', error);
+        setLoading(false);
+      }
     } else {
       // Eğer hiçbir parametre yoksa, kullanıcıya uyarı göster
       console.log('⚠️ Parametre bulunamadı, uyarı sayfası gösteriliyor...');
       setLoading(false);
     }
-  }, [tableId, branchId]);
+  }, [tableId, branchId, qrData]);
 
   const loadTableInfo = async (tableId: number) => {
     try {
@@ -327,6 +345,9 @@ export default function TableOrder() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-500">
                 💡 İpucu: QR kod ile masa siparişi veriyorsanız, QR kodunuzu tekrar tarayın.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                🔗 QR kodlar otomatik olarak doğru URL'yi oluşturur.
               </p>
             </div>
           </div>
