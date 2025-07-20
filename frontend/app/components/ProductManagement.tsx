@@ -96,18 +96,29 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                     {user && user.role === 'SUPER_ADMIN' ? (
                       <>
                         <button
-                          onClick={() => {
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('🔧 Düzenle butonu tıklandı:', product);
                             console.log('🔧 User role:', user?.role);
                             console.log('🔧 onEditProduct function:', typeof onEditProduct);
+                            console.log('🔧 Event target:', e.target);
+                            console.log('🔧 Event currentTarget:', e.currentTarget);
+                            
                             try {
-                              onEditProduct(product);
-                              console.log('✅ onEditProduct başarıyla çağrıldı');
+                              if (typeof onEditProduct === 'function') {
+                                onEditProduct(product);
+                                console.log('✅ onEditProduct başarıyla çağrıldı');
+                              } else {
+                                console.error('❌ onEditProduct bir fonksiyon değil:', onEditProduct);
+                              }
                             } catch (error) {
                               console.error('❌ onEditProduct hatası:', error);
                             }
                           }}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 cursor-pointer"
+                          style={{ cursor: 'pointer' }}
                         >
                           Düzenle
                         </button>

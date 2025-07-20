@@ -112,6 +112,9 @@ export default function AdminPage() {
     console.log('🔧 User role type:', typeof user?.role);
     console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
     console.log('🔧 User role comparison (strict):', user?.role === 'SUPER_ADMIN' ? 'true' : 'false');
+    console.log('🔧 Window location:', typeof window !== 'undefined' ? window.location.href : 'SSR');
+    console.log('🔧 Document ready state:', typeof document !== 'undefined' ? document.readyState : 'SSR');
+    
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
       console.log('User not authorized, redirecting to login');
       router.push('/login');
@@ -893,18 +896,38 @@ export default function AdminPage() {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Ürünler</h2>
-                  <button
-                    onClick={() => setShowProductModal(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    Yeni Ürün Ekle
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        console.log('🔧 Test butonu tıklandı');
+                        console.log('🔧 editProduct fonksiyonu:', typeof editProduct);
+                        console.log('🔧 showEditProductModal:', showEditProductModal);
+                        console.log('🔧 editingProduct:', editingProduct);
+                      }}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                    >
+                      Test Butonu
+                    </button>
+                    <button
+                      onClick={() => setShowProductModal(true)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    >
+                      Yeni Ürün Ekle
+                    </button>
+                  </div>
                 </div>
                 <ProductManagement
                   products={products}
                   categories={categories}
                   branches={branches}
-                  onEditProduct={editProduct}
+                  onEditProduct={(product) => {
+                    console.log('🔧 ProductManagement onEditProduct çağrıldı:', product);
+                    try {
+                      editProduct(product);
+                    } catch (error) {
+                      console.error('❌ editProduct hatası:', error);
+                    }
+                  }}
                   onDeleteProduct={deleteProduct}
                   onToggleProductStatus={toggleProductStatus}
                   user={user}
