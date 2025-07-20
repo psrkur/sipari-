@@ -66,6 +66,8 @@ export default function TableManagement() {
   const [showCollectionModal, setShowCollectionModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [collectionNotes, setCollectionNotes] = useState('');
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Form state
   const [newTableNumber, setNewTableNumber] = useState('');
@@ -157,13 +159,9 @@ export default function TableManagement() {
       });
 
       // Başarılı tahsilat mesajı
-      const successMessage = response.message || `Masa ${selectedTableOrders?.table.number} için tahsilat tamamlandı ve masa sıfırlandı!`;
-      toast.success(successMessage, {
-        duration: 4000,
-        description: `Ödeme yöntemi: ${paymentMethod === 'CASH' ? 'Nakit' : paymentMethod === 'CARD' ? 'Kart' : 'Online'}`
-      });
-
-      // Modal'ları kapat
+      const message = response.message || `Masa ${selectedTableOrders?.table.number} için tahsilat tamamlandı ve masa sıfırlandı!`;
+      
+      // Modal'ları hemen kapat
       setShowCollectionModal(false);
       setShowOrdersModal(false);
       setSelectedTableOrders(null);
@@ -171,6 +169,16 @@ export default function TableManagement() {
       // Form verilerini sıfırla
       setPaymentMethod('CASH');
       setCollectionNotes('');
+      
+      // Başarı popup'ını göster
+      setSuccessMessage(message);
+      setShowSuccessPopup(true);
+      
+      // 2 saniye sonra popup'ı kapat
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        setSuccessMessage('');
+      }, 2000);
       
       // Masaları yeniden yükle
       loadTables();
@@ -654,6 +662,40 @@ export default function TableManagement() {
                     ❌ İptal
                   </Button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Başarı Popup */}
+        {showSuccessPopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center animate-in fade-in duration-300">
+              <div className="mb-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">✅</span>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  Tahsilat Tamamlandı!
+                </h3>
+                <p className="text-gray-600">
+                  {successMessage}
+                </p>
+              </div>
+              
+              <div className="bg-green-50 p-4 rounded-lg mb-4">
+                <div className="text-sm text-green-800">
+                  <strong>💰 Ödeme Yöntemi:</strong> {paymentMethod === 'CASH' ? '💵 Nakit' : paymentMethod === 'CARD' ? '💳 Kart' : '🌐 Online'}
+                </div>
+                {collectionNotes && (
+                  <div className="text-sm text-green-800 mt-2">
+                    <strong>📝 Not:</strong> {collectionNotes}
+                  </div>
+                )}
+              </div>
+              
+              <div className="text-xs text-gray-500">
+                Bu popup 2 saniye sonra otomatik kapanacak...
               </div>
             </div>
           </div>
