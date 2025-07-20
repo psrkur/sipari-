@@ -97,106 +97,8 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                       <>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('🔧 Düzenle butonu tıklandı:', product);
-                            console.log('🔧 User role:', user?.role);
-                            console.log('🔧 User role type:', typeof user?.role);
-                            console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
-                            console.log('🔧 onEditProduct function:', typeof onEditProduct);
-                            console.log('🔧 Event target:', e.target);
-                            console.log('🔧 Event currentTarget:', e.currentTarget);
-                            console.log('🔧 Product data:', JSON.stringify(product, null, 2));
-                            
-                            // Basit test - sadece console.log
-                            console.log('🔧 Test: Buton tıklandı ve çalışıyor');
-                            
-                            // Multiple fallback mechanisms
-                            let success = false;
-                            
-                            // Method 1: Direct function call
-                            try {
-                              if (typeof onEditProduct === 'function') {
-                                console.log('🔧 Method 1: Direct onEditProduct çağrılıyor...');
-                                onEditProduct(product);
-                                console.log('✅ Method 1: onEditProduct başarıyla çağrıldı');
-                                success = true;
-                              }
-                            } catch (error) {
-                              console.error('❌ Method 1 hatası:', error);
-                            }
-                            
-                            // Method 2: Global window function
-                            if (!success) {
-                              try {
-                                if (typeof window !== 'undefined' && (window as any).editProductTest) {
-                                  console.log('🔧 Method 2: Global editProductTest çağrılıyor...');
-                                  (window as any).editProductTest(product);
-                                  console.log('✅ Method 2: Global editProductTest başarıyla çağrıldı');
-                                  success = true;
-                                }
-                              } catch (error) {
-                                console.error('❌ Method 2 hatası:', error);
-                              }
-                            }
-                            
-                            // Method 3: Manual modal trigger
-                            if (!success) {
-                              try {
-                                console.log('🔧 Method 3: Manuel modal tetikleme...');
-                                if (typeof window !== 'undefined') {
-                                  // Global state'leri manuel olarak set et
-                                  if ((window as any).setEditingProduct) {
-                                    (window as any).setEditingProduct(product);
-                                  }
-                                                                     if ((window as any).setEditProductForm) {
-                                     const formData = {
-                                       name: product.name,
-                                       description: product.description || '',
-                                       price: product.price.toString(),
-                                       categoryId: (product.category?.id || '').toString(),
-                                       branchId: (product.branch?.id || '').toString(),
-                                       isActive: product.isActive
-                                     };
-                                     (window as any).setEditProductForm(formData);
-                                   }
-                                  if ((window as any).showEditProductModal) {
-                                    (window as any).showEditProductModal(true);
-                                  }
-                                  console.log('✅ Method 3: Manuel modal tetikleme başarılı');
-                                  success = true;
-                                }
-                              } catch (error) {
-                                console.error('❌ Method 3 hatası:', error);
-                              }
-                            }
-                            
-                            // Method 4: DOM manipulation
-                            if (!success) {
-                              try {
-                                console.log('🔧 Method 4: DOM manipulation...');
-                                // Modal'ı manuel olarak göster
-                                const modal = document.querySelector('[data-modal="edit-product"]');
-                                if (modal) {
-                                  (modal as HTMLElement).style.display = 'block';
-                                  console.log('✅ Method 4: DOM manipulation başarılı');
-                                  success = true;
-                                }
-                              } catch (error) {
-                                console.error('❌ Method 4 hatası:', error);
-                              }
-                            }
-                            
-                            if (!success) {
-                              console.error('❌ Tüm yöntemler başarısız oldu!');
-                              alert('Düzenleme butonu çalışmıyor. Lütfen sayfayı yenileyin.');
-                            }
-                          }}
+                          onClick={() => onEditProduct(product)}
                           className="text-blue-600 hover:text-blue-900 cursor-pointer"
-                          style={{ cursor: 'pointer' }}
-                          data-testid="edit-product-button"
-                          data-product-id={product.id}
                         >
                           Düzenle
                         </button>
@@ -209,15 +111,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                       </>
                     ) : user && user.role === 'BRANCH_MANAGER' && onToggleProductStatus ? (
                       <button
-                        onClick={() => {
-                          console.log('Toggle butonu tıklandı:', { 
-                            productId: product.id, 
-                            currentStatus: product.isActive, 
-                            newStatus: !product.isActive,
-                            onToggleProductStatus: !!onToggleProductStatus
-                          });
-                          onToggleProductStatus(product.id, !product.isActive);
-                        }}
+                        onClick={() => onToggleProductStatus(product.id, !product.isActive)}
                         className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                           product.isActive 
                             ? 'bg-red-100 text-red-700 hover:bg-red-200' 

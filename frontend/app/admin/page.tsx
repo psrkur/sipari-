@@ -418,46 +418,22 @@ export default function AdminPage() {
   };
 
   const editProduct = (product: any) => {
-    console.log('🔧 editProduct fonksiyonu çağrıldı:', product);
-    console.log('🔧 Product ID:', product.id);
-    console.log('🔧 Product name:', product.name);
-    console.log('🔧 Product category:', product.category);
-    console.log('🔧 Product branch:', product.branch);
+    setEditingProduct(product);
     
-    try {
-      setEditingProduct(product);
-      console.log('✅ editingProduct set edildi');
-      
-      const formData = {
-        name: product.name,
-        description: product.description || '',
-        price: product.price.toString(),
-        categoryId: (product.categoryId || product.category?.id || '').toString(),
-        branchId: (product.branchId || product.branch?.id || '').toString(),
-        isActive: product.isActive
-      };
-      
-      console.log('🔧 Form data:', formData);
-      setEditProductForm(formData);
-      console.log('✅ editProductForm set edildi');
-      
-      setShowEditProductModal(true);
-      console.log('✅ Modal açıldı, showEditProductModal:', true);
-    } catch (error) {
-      console.error('❌ editProduct hatası:', error);
-    }
+    const formData = {
+      name: product.name,
+      description: product.description || '',
+      price: product.price.toString(),
+      categoryId: (product.categoryId || product.category?.id || '').toString(),
+      branchId: (product.branchId || product.branch?.id || '').toString(),
+      isActive: product.isActive
+    };
+    
+    setEditProductForm(formData);
+    setShowEditProductModal(true);
   };
 
-  // Global test fonksiyonu (canlı ortam için)
-  if (typeof window !== 'undefined') {
-    (window as any).editProductTest = editProduct;
-    (window as any).showEditProductModal = setShowEditProductModal;
-    (window as any).setEditingProduct = setEditingProduct;
-    (window as any).setEditProductForm = setEditProductForm;
-    console.log('🔧 Global fonksiyonlar eklendi');
-    console.log('🔧 editProductTest:', typeof (window as any).editProductTest);
-    console.log('🔧 showEditProductModal:', typeof (window as any).showEditProductModal);
-  }
+
 
   const updateProduct = async () => {
     try {
@@ -947,80 +923,18 @@ export default function AdminPage() {
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Ürünler</h2>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        console.log('🔧 Test butonu tıklandı');
-                        console.log('🔧 editProduct fonksiyonu:', typeof editProduct);
-                        console.log('🔧 showEditProductModal:', showEditProductModal);
-                        console.log('🔧 editingProduct:', editingProduct);
-                        console.log('🔧 Current user:', user);
-                        console.log('🔧 User role:', user?.role);
-                        console.log('🔧 User role type:', typeof user?.role);
-                        console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
-                        console.log('🔧 Products count:', products.length);
-                        console.log('🔧 Window object:', typeof window);
-                        console.log('🔧 Document object:', typeof document);
-                        console.log('🔧 Location:', window?.location?.href);
-                      }}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                    >
-                      Test Butonu
-                    </button>
-                    <button
-                      onClick={() => setShowProductModal(true)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                    >
-                      Yeni Ürün Ekle
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('🔧 Manuel test butonu tıklandı');
-                        if (products.length > 0) {
-                          const testProduct = products[0];
-                          console.log('🔧 Test ürünü:', testProduct);
-                          if (typeof (window as any).editProductTest === 'function') {
-                            console.log('🔧 Global editProductTest çağrılıyor...');
-                            (window as any).editProductTest(testProduct);
-                          } else {
-                            console.error('❌ Global editProductTest fonksiyonu bulunamadı');
-                          }
-                        } else {
-                          console.log('❌ Test edilecek ürün bulunamadı');
-                        }
-                      }}
-                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
-                    >
-                      Manuel Test
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowProductModal(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    Yeni Ürün Ekle
+                  </button>
                 </div>
                 <ProductManagement
                   products={products}
                   categories={categories}
                   branches={branches}
-                  onEditProduct={(product) => {
-                    console.log('🔧 ProductManagement onEditProduct çağrıldı:', product);
-                    console.log('🔧 Product ID:', product.id);
-                    console.log('🔧 Product name:', product.name);
-                    console.log('🔧 Current user:', user);
-                    console.log('🔧 User role:', user?.role);
-                    console.log('🔧 User role type:', typeof user?.role);
-                    console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
-                    console.log('🔧 editProduct function type:', typeof editProduct);
-                    
-                    try {
-                      if (typeof editProduct === 'function') {
-                        console.log('🔧 editProduct fonksiyonu bulundu, çağrılıyor...');
-                        editProduct(product);
-                        console.log('✅ editProduct başarıyla çağrıldı');
-                      } else {
-                        console.error('❌ editProduct bir fonksiyon değil:', editProduct);
-                      }
-                    } catch (error) {
-                      console.error('❌ editProduct hatası:', error);
-                    }
-                  }}
+                  onEditProduct={editProduct}
                   onDeleteProduct={deleteProduct}
                   onToggleProductStatus={toggleProductStatus}
                   user={user}
