@@ -2319,7 +2319,9 @@ async function seedData() {
         email: 'admin@example.com',
         password: hashedPassword,
         name: 'Süper Admin',
-        role: 'SUPER_ADMIN'
+        role: 'SUPER_ADMIN',
+        isActive: true,
+        isApproved: true
       }
     });
 
@@ -2333,7 +2335,9 @@ async function seedData() {
         password: managerPassword,
         name: 'Merkez Şube Müdürü',
         role: 'BRANCH_MANAGER',
-        branchId: 1
+        branchId: 1,
+        isActive: true,
+        isApproved: true
       }
     });
 
@@ -3437,14 +3441,16 @@ app.post('/api/admin/reset-super-admin', async (req, res) => {
         password: hashedPassword,
         name: 'Süper Admin',
         role: 'SUPER_ADMIN',
-        isActive: true
+        isActive: true,
+        isApproved: true
       },
       create: {
         email: 'admin@example.com',
         password: hashedPassword,
         name: 'Süper Admin',
         role: 'SUPER_ADMIN',
-        isActive: true
+        isActive: true,
+        isApproved: true
       }
     });
     
@@ -3477,7 +3483,8 @@ app.post('/api/admin/reset-manager', async (req, res) => {
         name: 'Merkez Şube Müdürü',
         role: 'BRANCH_MANAGER',
         branchId: 1,
-        isActive: true
+        isActive: true,
+        isApproved: true
       },
       create: {
         email: 'manager@example.com',
@@ -3485,7 +3492,8 @@ app.post('/api/admin/reset-manager', async (req, res) => {
         name: 'Merkez Şube Müdürü',
         role: 'BRANCH_MANAGER',
         branchId: 1,
-        isActive: true
+        isActive: true,
+        isApproved: true
       }
     });
     
