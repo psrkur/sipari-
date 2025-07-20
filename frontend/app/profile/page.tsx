@@ -52,6 +52,7 @@ export default function ProfilePage() {
     phone: '',
     address: ''
   })
+  const [isFormInitialized, setIsFormInitialized] = useState(false)
 
   useEffect(() => {
     if (!user || !token) {
@@ -80,12 +81,17 @@ export default function ProfilePage() {
       }
       
       setProfileData(response.data)
-      setFormData({
-        name: response.data.user.name || '',
-        email: response.data.user.email || '',
-        phone: response.data.user.phone || '',
-        address: response.data.user.address || ''
-      })
+      
+      // Form verilerini sadece ilk kez set et
+      if (!isFormInitialized) {
+        setFormData({
+          name: response.data.user.name || '',
+          email: response.data.user.email || '',
+          phone: response.data.user.phone || '',
+          address: response.data.user.address || ''
+        })
+        setIsFormInitialized(true)
+      }
       
       // Update auth store with latest user data
       if (token) {
@@ -264,7 +270,18 @@ export default function ProfilePage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Kişisel Bilgiler</h2>
               <button
-                onClick={() => setEditing(!editing)}
+                onClick={() => {
+                  if (!editing) {
+                    // Düzenleme modunu açarken form verilerini güncelle
+                    setFormData({
+                      name: profileData?.user.name || '',
+                      email: profileData?.user.email || '',
+                      phone: profileData?.user.phone || '',
+                      address: profileData?.user.address || ''
+                    })
+                  }
+                  setEditing(!editing)
+                }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
               >
                 {editing ? 'İptal' : 'Düzenle'}
