@@ -53,6 +53,9 @@ const prisma = new PrismaClient({
   }
 });
 
+// Firma yönetimi modülünü import et
+const companyManagement = require('./company-management');
+
 // Prisma query logging
 prisma.$on('query', (e) => {
   logger.info('Query: ' + e.query);
@@ -3511,4 +3514,24 @@ app.post('/api/admin/reset-manager', async (req, res) => {
     res.status(500).json({ error: 'Şube müdürü hesabı sıfırlanamadı: ' + error.message });
   }
 });
+
+// ===== FIRMA YÖNETİMİ API ENDPOINT'LERİ =====
+
+// Firma oluşturma
+app.post('/api/companies', companyManagement.createCompany);
+
+// Firma listesi
+app.get('/api/companies', companyManagement.getCompanies);
+
+// Firma detayı
+app.get('/api/companies/:id', companyManagement.getCompany);
+
+// Firma güncelleme
+app.put('/api/companies/:id', companyManagement.updateCompany);
+
+// Firma silme
+app.delete('/api/companies/:id', companyManagement.deleteCompany);
+
+// Firma istatistikleri
+app.get('/api/companies/:id/stats', companyManagement.getCompanyStats);
 
