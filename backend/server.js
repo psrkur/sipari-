@@ -1681,7 +1681,7 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
-    // Tahsilat kaydı oluştur
+    // Tahsilat kaydı oluştur (orderType olmadan)
     const collection = await prisma.order.create({
       data: {
         orderNumber: `COLLECT-${Date.now()}`,
@@ -1689,8 +1689,7 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
         tableId: parseInt(tableId),
         status: 'COMPLETED',
         totalAmount: totalAmount,
-        notes: `Masa ${table.number} toplu tahsilat - ${paymentMethod} - ${notes}`,
-        orderType: 'COLLECTION'
+        notes: `Masa ${table.number} toplu tahsilat - ${paymentMethod} - ${notes}`
       }
     });
 
