@@ -138,6 +138,17 @@ export default function TableOrder() {
       
       const response = await apiRequest(API_ENDPOINTS.PRODUCTS(branchId));
       console.log('✅ Ürünler yüklendi:', response);
+      
+      // Kategori bilgilerini kontrol et
+      console.log('📊 Kategori analizi:');
+      const categoryCounts: Record<string, number> = {};
+      response.forEach((product: any) => {
+        const categoryName = product.category?.name || 'Kategori Yok';
+        categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
+        console.log(`  - ${product.name}: ${categoryName}`);
+      });
+      console.log('📈 Kategori dağılımı:', categoryCounts);
+      
       setProducts(response);
     } catch (error) {
       console.error('❌ Ürünler yüklenemedi:', error);
