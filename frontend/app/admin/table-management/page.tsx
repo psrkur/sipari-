@@ -145,7 +145,10 @@ export default function TableManagement() {
   };
 
   const collectPayment = async (tableId: number) => {
+    console.log('🔍 Tahsilat başlatılıyor...', { tableId, paymentMethod, collectionNotes });
+    
     try {
+      console.log('📤 API çağrısı yapılıyor...');
       const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_COLLECT(tableId), {
         method: 'POST',
         headers: {
@@ -158,32 +161,43 @@ export default function TableManagement() {
         })
       });
 
+      console.log('✅ API başarılı:', response);
+
       // Başarılı tahsilat mesajı
       const message = response.message || `Masa ${selectedTableOrders?.table.number} için tahsilat tamamlandı ve masa sıfırlandı!`;
       
+      console.log('🔧 Modal\'ları kapatıyorum...');
       // Modal'ları hemen kapat
       setShowCollectionModal(false);
       setShowOrdersModal(false);
       setSelectedTableOrders(null);
       
+      console.log('🔧 Form verilerini sıfırlıyorum...');
       // Form verilerini sıfırla
       setPaymentMethod('CASH');
       setCollectionNotes('');
       
+      console.log('🔧 Başarı popup\'ını gösteriyorum...');
       // Başarı popup'ını göster
       setSuccessMessage(message);
       setShowSuccessPopup(true);
       
       // 2 saniye sonra popup'ı kapat
       setTimeout(() => {
+        console.log('🔧 Popup\'ı kapatıyorum...');
         setShowSuccessPopup(false);
         setSuccessMessage('');
       }, 2000);
       
+      console.log('🔧 Masaları yeniden yüklüyorum...');
       // Masaları yeniden yükle
       loadTables();
+      
+      console.log('✅ Tahsilat işlemi tamamlandı!');
     } catch (error: any) {
-      console.error('Tahsilat hatası:', error);
+      console.error('❌ Tahsilat hatası:', error);
+      console.error('❌ Hata detayı:', error.message);
+      console.error('❌ Response:', error.response);
       toast.error(error.message || 'Tahsilat yapılamadı');
     }
   };
