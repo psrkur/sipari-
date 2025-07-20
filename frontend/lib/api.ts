@@ -11,12 +11,12 @@ const getApiBaseUrl = (): string => {
   }
   
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    console.log('🔧 localhost tespit edildi, localhost:3005 kullanılıyor');
-    return 'http://localhost:3005';
+    console.log('🔧 localhost tespit edildi, localhost:3006 kullanılıyor');
+    return 'http://localhost:3006';
   }
   
-  console.log('🔧 Production URL kullanılıyor: https://arsut.net.tr');
-  return 'https://arsut.net.tr';
+  console.log('🔧 Production URL kullanılıyor: https://yemek5-backend.onrender.com');
+  return 'https://yemek5-backend.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();
