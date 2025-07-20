@@ -156,10 +156,19 @@ export default function TableManagement() {
         })
       });
 
-      toast.success(response.message || 'Tahsilat tamamlandı ve masa sıfırlandı');
+      // Başarılı tahsilat mesajı
+      const successMessage = response.message || `Masa ${selectedTableOrders?.table.number} için tahsilat tamamlandı ve masa sıfırlandı!`;
+      toast.success(successMessage, {
+        duration: 4000,
+        description: `Ödeme yöntemi: ${paymentMethod === 'CASH' ? 'Nakit' : paymentMethod === 'CARD' ? 'Kart' : 'Online'}`
+      });
+
+      // Modal'ları kapat
       setShowCollectionModal(false);
       setShowOrdersModal(false);
       setSelectedTableOrders(null);
+      
+      // Form verilerini sıfırla
       setPaymentMethod('CASH');
       setCollectionNotes('');
       
@@ -576,7 +585,7 @@ export default function TableManagement() {
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold">
-                  Tahsilat - Masa {selectedTableOrders.table.number}
+                  💰 Tahsilat - Masa {selectedTableOrders.table.number}
                 </h3>
                 <button
                   onClick={() => setShowCollectionModal(false)}
@@ -588,30 +597,33 @@ export default function TableManagement() {
               
               <div className="space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-3xl font-bold text-green-600">
                     ₺{selectedTableOrders.totalAmount.toFixed(2)}
                   </div>
                   <div className="text-sm text-gray-600">Tahsilat Tutarı</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {selectedTableOrders.orderCount} sipariş • {selectedTableOrders.orders.length} adet ürün
+                  </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ödeme Yöntemi
+                    💳 Ödeme Yöntemi
                   </label>
                   <select
                     value={paymentMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="border border-gray-300 rounded-md px-3 py-2 w-full"
                   >
-                    <option value="CASH">Nakit</option>
-                    <option value="CARD">Kart</option>
-                    <option value="ONLINE">Online</option>
+                    <option value="CASH">💵 Nakit</option>
+                    <option value="CARD">💳 Kart</option>
+                    <option value="ONLINE">🌐 Online</option>
                   </select>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Not (Opsiyonel)
+                    📝 Not (Opsiyonel)
                   </label>
                   <Input
                     value={collectionNotes}
@@ -620,20 +632,26 @@ export default function TableManagement() {
                   />
                 </div>
                 
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-sm text-blue-800">
+                    <strong>ℹ️ Bilgi:</strong> Tahsilat tamamlandıktan sonra masa otomatik olarak sıfırlanacak ve tüm siparişler kapatılacaktır.
+                  </div>
+                </div>
+                
                 <div className="flex space-x-3">
                   <Button
                     onClick={() => collectPayment(selectedTableOrders.table.id)}
-                    className="flex-1"
+                    className="flex-1 bg-green-600 hover:bg-green-700"
                   >
                     <DollarSign className="w-4 h-4 mr-2" />
-                    Tahsilatı Tamamla
+                    ✅ Tahsilatı Tamamla
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => setShowCollectionModal(false)}
                     className="flex-1"
                   >
-                    İptal
+                    ❌ İptal
                   </Button>
                 </div>
               </div>
