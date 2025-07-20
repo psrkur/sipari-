@@ -196,6 +196,95 @@ export default function OrdersPage() {
     setSelectedOrder(null);
   };
 
+  const printOrder = () => {
+    if (!selectedOrder) return;
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Sipariş Detayı - ${selectedOrder.orderNumber}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 20px; }
+          .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+          .order-info { margin-bottom: 20px; }
+          .order-info table { width: 100%; border-collapse: collapse; }
+          .order-info td { padding: 5px; border: 1px solid #ddd; }
+          .order-info td:first-child { font-weight: bold; background-color: #f5f5f5; }
+          .notes-info { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; }
+          .items { margin-bottom: 20px; }
+          .item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; }
+          .total { font-size: 18px; font-weight: bold; text-align: right; border-top: 2px solid #333; padding-top: 10px; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🍕 Sipariş Detayı</h1>
+          <h2>Sipariş No: ${selectedOrder.orderNumber}</h2>
+        </div>
+        
+        <div class="order-info">
+          <table>
+            <tr><td>Şube</td><td>${selectedOrder.branch.name}</td></tr>
+            <tr><td>Durum</td><td>${getStatusText(selectedOrder.status)}</td></tr>
+            <tr><td>Tarih</td><td>${formatDate(selectedOrder.createdAt)}</td></tr>
+            <tr><td>Toplam Tutar</td><td>₺${selectedOrder.totalAmount.toFixed(2)}</td></tr>
+          </table>
+        </div>
+        
+        ${selectedOrder.notes ? 
+          `<div class="notes-info">
+            <strong>Sipariş Notu:</strong> ${selectedOrder.notes}
+          </div>` : ''
+        }
+        
+        <div class="items">
+          <h3>Sipariş Öğeleri:</h3>
+          ${selectedOrder.orderItems.map((item, index) => `
+            <div class="item">
+              <div>
+                <strong>${item.product.name}</strong><br>
+                <small>${item.quantity} adet × ₺${item.price.toFixed(2)}</small>
+                ${item.note ? `<br><small style="color: #0066cc;">Not: ${item.note}</small>` : ''}
+              </div>
+              <div>
+                <strong>₺${(item.quantity * item.price).toFixed(2)}</strong>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        
+        <div class="total">
+          <strong>Toplam: ₺${selectedOrder.totalAmount.toFixed(2)}</strong>
+        </div>
+        
+        <div class="footer">
+          <p>Bu belge ${new Date().toLocaleString('tr-TR')} tarihinde yazdırılmıştır.</p>
+          <p>Teşekkür ederiz! 🍕</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Yazdırma işlemini başlat
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
@@ -355,13 +444,22 @@ export default function OrdersPage() {
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-semibold">Sipariş Detayları</h3>
-                <Button
-                  variant="outline"
-                  onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={printOrder}
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1"
+                    title="Siparişi Yazdır"
+                  >
+                    🖨️ Yazdır
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={closeModal}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-6">
