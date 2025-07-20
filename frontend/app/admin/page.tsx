@@ -1440,7 +1440,13 @@ export default function AdminPage() {
         console.log('🔧 showEditProductModal:', showEditProductModal);
         console.log('🔧 editingProduct:', editingProduct);
         console.log('🔧 Modal koşulu:', showEditProductModal && editingProduct);
-        return showEditProductModal && editingProduct;
+        
+        try {
+          return showEditProductModal && editingProduct;
+        } catch (error) {
+          console.error('❌ Modal render hatası:', error);
+          return false;
+        }
       })() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">

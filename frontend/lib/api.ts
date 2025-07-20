@@ -5,6 +5,12 @@ const getApiBaseUrl = (): string => {
   console.log('🔧 typeof window:', typeof window);
   console.log('🔧 window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
   
+  // Canlı ortamda hardcoded URL kullan (test için)
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    console.log('🔧 Canlı ortam tespit edildi, hardcoded URL kullanılıyor');
+    return 'https://yemek5-backend.onrender.com';
+  }
+  
   // Önce environment variable'ı kontrol et
   if (process.env.NEXT_PUBLIC_API_URL) {
     console.log('🔧 NEXT_PUBLIC_API_URL kullanılıyor:', process.env.NEXT_PUBLIC_API_URL);
