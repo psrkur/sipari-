@@ -124,6 +124,11 @@ export default function ProfilePage() {
     }
 
     try {
+      console.log('🔍 Profil güncelleme başlatılıyor...')
+      console.log('🔍 API Endpoint:', API_ENDPOINTS.CUSTOMER_PROFILE)
+      console.log('🔍 Form Data:', formData)
+      console.log('🔍 Token var mı:', !!token)
+      
       const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -131,7 +136,7 @@ export default function ProfilePage() {
         }
       })
       
-      console.log('Profil güncelleme başarılı:', response.data)
+      console.log('✅ Profil güncelleme başarılı:', response.data)
       toast.success('Profil başarıyla güncellendi')
       
       // Update both profileData and auth store
@@ -152,16 +157,36 @@ export default function ProfilePage() {
 
       setEditing(false)
     } catch (error: any) {
-      console.error('Profil güncelleme hatası:', error)
-      console.error('Error response:', error.response)
-      console.error('Error message:', error.message)
-      console.error('Error status:', error.response?.status)
-      console.error('Error data:', error.response?.data)
+      console.error('❌ Profil güncelleme hatası:', error)
+      console.error('❌ Error response:', error.response)
+      console.error('❌ Error message:', error.message)
+      console.error('❌ Error status:', error.response?.status)
+      console.error('❌ Error data:', error.response?.data)
+      console.error('❌ Error config:', error.config)
       
       if (error.response?.status === 401) {
+        console.error('❌ 401 Unauthorized - Token geçersiz')
         toast.error('Oturum süresi dolmuş, lütfen tekrar giriş yapın')
         logout()
         router.push('/')
+        return
+      }
+      
+      if (error.response?.status === 400) {
+        console.error('❌ 400 Bad Request - Validation hatası')
+        toast.error(error.response?.data?.error || 'Geçersiz bilgi girdiniz')
+        return
+      }
+      
+      if (error.response?.status === 500) {
+        console.error('❌ 500 Server Error - Backend hatası')
+        toast.error('Sunucu hatası, lütfen daha sonra tekrar deneyin')
+        return
+      }
+      
+      if (!error.response) {
+        console.error('❌ Network Error - Backend erişilemiyor')
+        toast.error('Sunucuya bağlanılamıyor, lütfen internet bağlantınızı kontrol edin')
         return
       }
       
