@@ -7,53 +7,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Firma/Şirket modeli
 model Company {
-  id          Int       @id @default(autoincrement())
-  name        String
-  domain      String    @unique // Firma domain'i (örn: "pizzahouse", "burgerking")
-  logo        String?
-  address     String?
-  phone       String?
-  email       String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // İlişkiler
-  users       User[]
-  branches    Branch[]
-  categories  Category[]
-  customers   Customer[]
-  products    Product[]
-  orders      Order[]
-  tables      Table[]
+  id         Int        @id @default(autoincrement())
+  name       String
+  domain     String     @unique
+  logo       String?
+  address    String?
+  phone      String?
+  email      String?
+  isActive   Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  branches   Branch[]
+  categories Category[]
+  customers  Customer[]
+  orders     Order[]
+  products   Product[]
+  tables     Table[]
+  users      User[]
 
   @@map("companies")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String
-  password  String
-  name      String
-  phone     String?
-  address   String?
-  role      String   @default("CUSTOMER") // SUPER_ADMIN, COMPANY_ADMIN, BRANCH_MANAGER, CUSTOMER
-  companyId Int
-  branchId  Int?
-  isActive  Boolean  @default(false)
-  isApproved Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // İlişkiler
-  company   Company  @relation(fields: [companyId], references: [id])
-  branch    Branch?  @relation(fields: [branchId], references: [id])
-  orders    Order[]
-  addresses UserAddress[]
+  id         Int           @id @default(autoincrement())
+  email      String
+  password   String
+  name       String
+  phone      String?
+  address    String?
+  role       String        @default("CUSTOMER")
+  companyId  Int
+  branchId   Int?
+  isActive   Boolean       @default(false)
+  isApproved Boolean       @default(false)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  orders     Order[]
+  addresses  UserAddress[]
+  branch     Branch?       @relation(fields: [branchId], references: [id])
+  company    Company       @relation(fields: [companyId], references: [id])
 
-  @@unique([email, companyId]) // Aynı firma içinde email benzersiz olmalı
+  @@unique([email, companyId])
   @@map("users")
 }
 
@@ -79,13 +74,11 @@ model Branch {
   companyId Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  
-  // İlişkiler
   company   Company   @relation(fields: [companyId], references: [id])
   orders    Order[]
   products  Product[]
-  users     User[]
   tables    Table[]
+  users     User[]
 
   @@map("branches")
 }
@@ -98,33 +91,29 @@ model Category {
   companyId   Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
-  // İlişkiler
-  company    Company   @relation(fields: [companyId], references: [id])
-  products   Product[]
+  company     Company   @relation(fields: [companyId], references: [id])
+  products    Product[]
 
-  @@unique([name, companyId]) // Aynı firma içinde kategori adı benzersiz olmalı
+  @@unique([name, companyId])
   @@map("categories")
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   description String?
   price       Float
   categoryId  Int
   image       String?
-  isActive    Boolean   @default(true)
+  isActive    Boolean     @default(true)
   branchId    Int
   companyId   Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // İlişkiler
-  branch      Branch    @relation(fields: [branchId], references: [id])
-  category    Category  @relation(fields: [categoryId], references: [id])
-  company     Company   @relation(fields: [companyId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id])
+  company     Company     @relation(fields: [companyId], references: [id])
 
   @@map("products")
 }
@@ -140,19 +129,17 @@ model Order {
   status      String      @default("PENDING")
   totalAmount Float
   notes       String?
-  orderType   String      @default("DELIVERY") // DELIVERY, TABLE
+  orderType   String      @default("DELIVERY")
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  
-  // İlişkiler
-  company     Company     @relation(fields: [companyId], references: [id])
-  user        User?       @relation(fields: [userId], references: [id])
-  branch      Branch      @relation(fields: [branchId], references: [id])
-  table       Table?      @relation(fields: [tableId], references: [id])
-  customer    Customer?   @relation(fields: [customerId], references: [id])
   orderItems  OrderItem[]
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  company     Company     @relation(fields: [companyId], references: [id])
+  customer    Customer?   @relation(fields: [customerId], references: [id])
+  table       Table?      @relation(fields: [tableId], references: [id])
+  user        User?       @relation(fields: [userId], references: [id])
 
-  @@unique([orderNumber, companyId]) // Aynı firma içinde sipariş numarası benzersiz olmalı
+  @@unique([orderNumber, companyId])
   @@map("orders")
 }
 
@@ -165,30 +152,26 @@ model Customer {
   companyId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // İlişkiler
-  company   Company   @relation(fields: [companyId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
   orders    Order[]
 
-  @@unique([phone, companyId]) // Aynı firma içinde telefon benzersiz olmalı
+  @@unique([phone, companyId])
   @@map("customers")
 }
 
 model Table {
   id        Int      @id @default(autoincrement())
-  number    String   // Masa numarası (örn: "A1", "B3")
+  number    String
   branchId  Int
   companyId Int
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // İlişkiler
-  company   Company   @relation(fields: [companyId], references: [id])
-  branch    Branch    @relation(fields: [branchId], references: [id])
   orders    Order[]
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  company   Company  @relation(fields: [companyId], references: [id])
 
-  @@unique([number, branchId]) // Aynı şube içinde masa numarası benzersiz olmalı
+  @@unique([number, branchId])
   @@map("tables")
 }
 
@@ -198,7 +181,7 @@ model OrderItem {
   productId Int
   quantity  Int
   price     Float
-  note      String? // Ürün için müşteri notu
+  note      String?
   order     Order   @relation(fields: [orderId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
 
