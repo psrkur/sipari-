@@ -70,7 +70,6 @@ export default function ProfilePage() {
     }
 
     try {
-      console.log('Token:', token);
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -125,10 +124,6 @@ export default function ProfilePage() {
     }
 
     try {
-      console.log('Profil güncelleniyor:', formData)
-      console.log('Token:', token)
-      console.log('API Endpoint:', API_ENDPOINTS.CUSTOMER_PROFILE)
-      
       const response = await axios.put(API_ENDPOINTS.CUSTOMER_PROFILE, formData, {
         headers: { 
           'Authorization': `Bearer ${token}`,

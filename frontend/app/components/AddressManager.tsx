@@ -48,7 +48,6 @@ const AddressManager: React.FC<AddressManagerProps> = ({
     }
 
     try {
-      console.log('Token:', token);
       const response = await axios.get(API_ENDPOINTS.CUSTOMER_ADDRESSES, {
         headers: { Authorization: `Bearer ${token}` }
       });

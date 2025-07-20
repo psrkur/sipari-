@@ -166,7 +166,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!token) {
-      console.log('Token bulunamadı, giriş sayfasına yönlendiriliyor');
       router.push('/login');
       return;
     }

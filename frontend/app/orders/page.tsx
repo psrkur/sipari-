@@ -116,20 +116,12 @@ export default function OrdersPage() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('Token kontrolü:', !!token);
-    console.log('User bilgisi:', user);
-    console.log('LocalStorage token:', localStorage.getItem('token'));
-    console.log('LocalStorage user:', localStorage.getItem('user'));
-    
     if (!token) {
-      console.log('Token yok, ana sayfaya yönlendiriliyor');
       toast.error('Siparişlerinizi görmek için giriş yapın');
       router.push('/');
       return;
     }
 
-    console.log('Token var, siparişler getiriliyor');
-    console.log('API URL:', API_ENDPOINTS.CUSTOMER_ORDERS);
     fetchOrders();
     
     // Her 30 saniyede bir sipariş durumlarını kontrol et

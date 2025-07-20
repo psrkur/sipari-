@@ -126,10 +126,6 @@ export default function TableManagement() {
   const loadTableOrders = async (tableId: number) => {
     try {
       const url = API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId);
-      console.log('🔍 API URL:', url);
-      console.log('🔍 Table ID:', tableId);
-      console.log('🔍 Token:', token ? 'Mevcut' : 'Yok');
-      
       const response = await apiRequest(url, {
         headers: {
           'Authorization': `Bearer ${token}`
