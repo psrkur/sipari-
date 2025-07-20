@@ -102,9 +102,12 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                             e.stopPropagation();
                             console.log('🔧 Düzenle butonu tıklandı:', product);
                             console.log('🔧 User role:', user?.role);
+                            console.log('🔧 User role type:', typeof user?.role);
+                            console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
                             console.log('🔧 onEditProduct function:', typeof onEditProduct);
                             console.log('🔧 Event target:', e.target);
                             console.log('🔧 Event currentTarget:', e.currentTarget);
+                            console.log('🔧 Product data:', JSON.stringify(product, null, 2));
                             
                             // Basit test - sadece console.log
                             console.log('🔧 Test: Buton tıklandı ve çalışıyor');
@@ -128,6 +131,8 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                           }}
                           className="text-blue-600 hover:text-blue-900 cursor-pointer"
                           style={{ cursor: 'pointer' }}
+                          data-testid="edit-product-button"
+                          data-product-id={product.id}
                         >
                           Düzenle
                         </button>

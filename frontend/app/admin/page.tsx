@@ -122,7 +122,12 @@ export default function AdminPage() {
     }
     console.log('User authorized, fetching orders');
     fetchOrders();
-  }, [user, router]);
+
+    // Canlı ortamda fallback mekanizması
+    if (typeof window !== 'undefined') {
+      console.log('🔧 Fallback mekanizması aktif');
+    }
+  }, [user, router, products]);
 
   useEffect(() => {
     if (!token) {
@@ -411,7 +416,12 @@ export default function AdminPage() {
   // Global test fonksiyonu (canlı ortam için)
   if (typeof window !== 'undefined') {
     (window as any).editProductTest = editProduct;
-    console.log('🔧 Global editProductTest fonksiyonu eklendi');
+    (window as any).showEditProductModal = setShowEditProductModal;
+    (window as any).setEditingProduct = setEditingProduct;
+    (window as any).setEditProductForm = setEditProductForm;
+    console.log('🔧 Global fonksiyonlar eklendi');
+    console.log('🔧 editProductTest:', typeof (window as any).editProductTest);
+    console.log('🔧 showEditProductModal:', typeof (window as any).showEditProductModal);
   }
 
   const updateProduct = async () => {
@@ -909,6 +919,14 @@ export default function AdminPage() {
                         console.log('🔧 editProduct fonksiyonu:', typeof editProduct);
                         console.log('🔧 showEditProductModal:', showEditProductModal);
                         console.log('🔧 editingProduct:', editingProduct);
+                        console.log('🔧 Current user:', user);
+                        console.log('🔧 User role:', user?.role);
+                        console.log('🔧 User role type:', typeof user?.role);
+                        console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
+                        console.log('🔧 Products count:', products.length);
+                        console.log('🔧 Window object:', typeof window);
+                        console.log('🔧 Document object:', typeof document);
+                        console.log('🔧 Location:', window?.location?.href);
                       }}
                       className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                     >
@@ -920,6 +938,26 @@ export default function AdminPage() {
                     >
                       Yeni Ürün Ekle
                     </button>
+                    <button
+                      onClick={() => {
+                        console.log('🔧 Manuel test butonu tıklandı');
+                        if (products.length > 0) {
+                          const testProduct = products[0];
+                          console.log('🔧 Test ürünü:', testProduct);
+                          if (typeof (window as any).editProductTest === 'function') {
+                            console.log('🔧 Global editProductTest çağrılıyor...');
+                            (window as any).editProductTest(testProduct);
+                          } else {
+                            console.error('❌ Global editProductTest fonksiyonu bulunamadı');
+                          }
+                        } else {
+                          console.log('❌ Test edilecek ürün bulunamadı');
+                        }
+                      }}
+                      className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700"
+                    >
+                      Manuel Test
+                    </button>
                   </div>
                 </div>
                 <ProductManagement
@@ -928,8 +966,22 @@ export default function AdminPage() {
                   branches={branches}
                   onEditProduct={(product) => {
                     console.log('🔧 ProductManagement onEditProduct çağrıldı:', product);
+                    console.log('🔧 Product ID:', product.id);
+                    console.log('🔧 Product name:', product.name);
+                    console.log('🔧 Current user:', user);
+                    console.log('🔧 User role:', user?.role);
+                    console.log('🔧 User role type:', typeof user?.role);
+                    console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
+                    console.log('🔧 editProduct function type:', typeof editProduct);
+                    
                     try {
-                      editProduct(product);
+                      if (typeof editProduct === 'function') {
+                        console.log('🔧 editProduct fonksiyonu bulundu, çağrılıyor...');
+                        editProduct(product);
+                        console.log('✅ editProduct başarıyla çağrıldı');
+                      } else {
+                        console.error('❌ editProduct bir fonksiyon değil:', editProduct);
+                      }
                     } catch (error) {
                       console.error('❌ editProduct hatası:', error);
                     }
