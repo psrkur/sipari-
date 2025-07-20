@@ -100,16 +100,18 @@ export default function AdminPage() {
 
 
   useEffect(() => {
-    console.log('Current user:', user);
-    console.log('User role:', user?.role);
-    console.log('User ID:', user?.id);
-    console.log('User email:', user?.email);
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('Is production:', process.env.NODE_ENV === 'production');
-    console.log('User object full:', JSON.stringify(user, null, 2));
-    console.log('User role type:', typeof user?.role);
-    console.log('User role comparison:', user?.role === 'SUPER_ADMIN');
-    console.log('User role comparison (strict):', user?.role === 'SUPER_ADMIN' ? 'true' : 'false');
+    console.log('🔧 Environment Debug:');
+    console.log('🔧 Current user:', user);
+    console.log('🔧 User role:', user?.role);
+    console.log('🔧 User ID:', user?.id);
+    console.log('🔧 User email:', user?.email);
+    console.log('🔧 Environment:', process.env.NODE_ENV);
+    console.log('🔧 Is production:', process.env.NODE_ENV === 'production');
+    console.log('🔧 NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+    console.log('🔧 User object full:', JSON.stringify(user, null, 2));
+    console.log('🔧 User role type:', typeof user?.role);
+    console.log('🔧 User role comparison:', user?.role === 'SUPER_ADMIN');
+    console.log('🔧 User role comparison (strict):', user?.role === 'SUPER_ADMIN' ? 'true' : 'false');
     if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
       console.log('User not authorized, redirecting to login');
       router.push('/login');
@@ -373,18 +375,34 @@ export default function AdminPage() {
   };
 
   const editProduct = (product: any) => {
-    console.log('editProduct fonksiyonu çağrıldı:', product);
-    setEditingProduct(product);
-    setEditProductForm({
-      name: product.name,
-      description: product.description || '',
-      price: product.price.toString(),
-      categoryId: (product.categoryId || product.category?.id || '').toString(),
-      branchId: (product.branchId || product.branch?.id || '').toString(),
-      isActive: product.isActive
-    });
-    setShowEditProductModal(true);
-    console.log('Modal açıldı, showEditProductModal:', true);
+    console.log('🔧 editProduct fonksiyonu çağrıldı:', product);
+    console.log('🔧 Product ID:', product.id);
+    console.log('🔧 Product name:', product.name);
+    console.log('🔧 Product category:', product.category);
+    console.log('🔧 Product branch:', product.branch);
+    
+    try {
+      setEditingProduct(product);
+      console.log('✅ editingProduct set edildi');
+      
+      const formData = {
+        name: product.name,
+        description: product.description || '',
+        price: product.price.toString(),
+        categoryId: (product.categoryId || product.category?.id || '').toString(),
+        branchId: (product.branchId || product.branch?.id || '').toString(),
+        isActive: product.isActive
+      };
+      
+      console.log('🔧 Form data:', formData);
+      setEditProductForm(formData);
+      console.log('✅ editProductForm set edildi');
+      
+      setShowEditProductModal(true);
+      console.log('✅ Modal açıldı, showEditProductModal:', true);
+    } catch (error) {
+      console.error('❌ editProduct hatası:', error);
+    }
   };
 
   const updateProduct = async () => {
@@ -1417,7 +1435,13 @@ export default function AdminPage() {
       )}
 
       {/* Ürün Düzenleme Modal */}
-      {showEditProductModal && editingProduct && (
+      {(() => {
+        console.log('🔧 Modal render kontrolü:');
+        console.log('🔧 showEditProductModal:', showEditProductModal);
+        console.log('🔧 editingProduct:', editingProduct);
+        console.log('🔧 Modal koşulu:', showEditProductModal && editingProduct);
+        return showEditProductModal && editingProduct;
+      })() && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Ürün Düzenle</h2>

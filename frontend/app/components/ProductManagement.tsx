@@ -97,8 +97,15 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                       <>
                         <button
                           onClick={() => {
-                            console.log('Düzenle butonu tıklandı:', product);
-                            onEditProduct(product);
+                            console.log('🔧 Düzenle butonu tıklandı:', product);
+                            console.log('🔧 User role:', user?.role);
+                            console.log('🔧 onEditProduct function:', typeof onEditProduct);
+                            try {
+                              onEditProduct(product);
+                              console.log('✅ onEditProduct başarıyla çağrıldı');
+                            } catch (error) {
+                              console.error('❌ onEditProduct hatası:', error);
+                            }
                           }}
                           className="text-blue-600 hover:text-blue-900"
                         >
