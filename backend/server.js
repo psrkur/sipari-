@@ -1637,6 +1637,8 @@ app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res)
 // Masa tahsilatı yap - ÖNCE TANIMLANMALI
 app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 Tahsilat başlatılıyor...', { tableId: req.params.tableId, body: req.body });
+    
     if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
@@ -1644,11 +1646,15 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
     const { tableId } = req.params;
     const { paymentMethod = 'CASH', notes = '' } = req.body;
     
+    console.log('🔍 Parametreler:', { tableId, paymentMethod, notes });
+    
     // Masayı kontrol et
     const table = await prisma.table.findUnique({
       where: { id: parseInt(tableId) },
       include: { branch: true }
     });
+
+    console.log('🔍 Masa bulundu:', table);
 
     if (!table) {
       return res.status(404).json({ error: 'Masa bulunamadı' });
@@ -1662,14 +1668,18 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
+    console.log('🔍 Bekleyen siparişler:', orders);
+
     if (orders.length === 0) {
       return res.status(400).json({ error: 'Bu masada tahsilat yapılacak sipariş yok' });
     }
 
     // Toplam tutarı hesapla
     const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    console.log('🔍 Toplam tutar:', totalAmount);
 
     // Tüm siparişleri COMPLETED yap
+    console.log('🔍 Siparişleri COMPLETED yapıyorum...');
     await prisma.order.updateMany({
       where: {
         tableId: parseInt(tableId),
@@ -1681,6 +1691,7 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
+    console.log('🔍 Tahsilat kaydı oluşturuyorum...');
     // Tahsilat kaydı oluştur (orderType olmadan)
     const collection = await prisma.order.create({
       data: {
@@ -1693,7 +1704,10 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
+    console.log('🔍 Tahsilat kaydı oluşturuldu:', collection);
+
     // Tahsilat sonrası masanın tüm siparişlerini sil (COMPLETED olanlar)
+    console.log('🔍 COMPLETED siparişleri siliyorum...');
     const deletedOrders = await prisma.order.deleteMany({
       where: {
         tableId: parseInt(tableId),
@@ -1701,18 +1715,25 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       }
     });
 
-    res.json({
+    console.log('🔍 Silinen sipariş sayısı:', deletedOrders.count);
+
+    const response = {
       success: true,
       message: `Masa ${table.number} tahsilatı tamamlandı ve masa sıfırlandı`,
       collection,
       totalAmount,
       orderCount: orders.length,
       deletedCount: deletedOrders.count
-    });
+    };
+
+    console.log('✅ Tahsilat başarılı, response:', response);
+    res.json(response);
 
   } catch (error) {
-    console.error('Masa tahsilat hatası:', error);
-    res.status(500).json({ error: 'Tahsilat yapılamadı' });
+    console.error('❌ Masa tahsilat hatası:', error);
+    console.error('❌ Hata stack:', error.stack);
+    console.error('❌ Hata mesajı:', error.message);
+    res.status(500).json({ error: 'Tahsilat yapılamadı', details: error.message });
   }
 });
 
