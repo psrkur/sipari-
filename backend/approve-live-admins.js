@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 // Canlı ortam veritabanı bağlantısı
 const prisma = new PrismaClient({
