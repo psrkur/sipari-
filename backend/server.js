@@ -1634,7 +1634,7 @@ app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res)
   }
 });
 
-// Masa tahsilatı yap - ÖNCE TANIMLANMALI
+// Test endpoint - Tahsilat işlemini basitleştir
 app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 Tahsilat başlatılıyor...', { tableId: req.params.tableId, body: req.body });
@@ -1678,7 +1678,7 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
     const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
     console.log('🔍 Toplam tutar:', totalAmount);
 
-    // Tüm siparişleri COMPLETED yap
+    // Sadece siparişleri COMPLETED yap, silme işlemi yapma
     console.log('🔍 Siparişleri COMPLETED yapıyorum...');
     await prisma.order.updateMany({
       where: {
@@ -1687,46 +1687,20 @@ app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, re
       },
       data: {
         status: 'COMPLETED',
-        notes: `${orders[0].notes || ''} - Tahsilat: ${paymentMethod} - ${notes}`.trim()
+        notes: `Tahsilat: ${paymentMethod} - ${notes}`.trim()
       }
     });
 
-    console.log('🔍 Tahsilat kaydı oluşturuyorum...');
-    // Tahsilat kaydı oluştur (orderType olmadan)
-    const collection = await prisma.order.create({
-      data: {
-        orderNumber: `COLLECT-${Date.now()}`,
-        branchId: table.branchId,
-        tableId: parseInt(tableId),
-        status: 'COMPLETED',
-        totalAmount: totalAmount,
-        notes: `Masa ${table.number} toplu tahsilat - ${paymentMethod} - ${notes}`
-      }
-    });
-
-    console.log('🔍 Tahsilat kaydı oluşturuldu:', collection);
-
-    // Tahsilat sonrası masanın tüm siparişlerini sil (COMPLETED olanlar)
-    console.log('🔍 COMPLETED siparişleri siliyorum...');
-    const deletedOrders = await prisma.order.deleteMany({
-      where: {
-        tableId: parseInt(tableId),
-        status: 'COMPLETED'
-      }
-    });
-
-    console.log('🔍 Silinen sipariş sayısı:', deletedOrders.count);
-
+    console.log('✅ Tahsilat başarılı - sadece siparişler COMPLETED yapıldı');
+    
     const response = {
       success: true,
-      message: `Masa ${table.number} tahsilatı tamamlandı ve masa sıfırlandı`,
-      collection,
+      message: `Masa ${table.number} tahsilatı tamamlandı`,
       totalAmount,
-      orderCount: orders.length,
-      deletedCount: deletedOrders.count
+      orderCount: orders.length
     };
 
-    console.log('✅ Tahsilat başarılı, response:', response);
+    console.log('✅ Response:', response);
     res.json(response);
 
   } catch (error) {
