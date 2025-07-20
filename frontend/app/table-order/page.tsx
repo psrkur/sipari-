@@ -90,10 +90,8 @@ export default function TableOrder() {
       loadProducts(parseInt(branchId));
       setLoading(false);
     } else {
-      // Eğer hiçbir parametre yoksa, varsayılan olarak branch 3'ü yükle (ürünler var)
-      console.log('⚠️ Parametre bulunamadı, varsayılan branch 3 yükleniyor...');
-      console.log('⚠️ Bu durumda sipariş tamamlama çalışmayacak!');
-      loadProducts(3);
+      // Eğer hiçbir parametre yoksa, kullanıcıya uyarı göster
+      console.log('⚠️ Parametre bulunamadı, uyarı sayfası gösteriliyor...');
       setLoading(false);
     }
   }, [tableId, branchId]);
@@ -302,8 +300,8 @@ export default function TableOrder() {
   // Eğer masa ve branch bilgisi yoksa uyarı göster
   if (!table && !branchId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-md mx-auto">
           <div className="text-center">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">⚠️</span>
@@ -312,11 +310,24 @@ export default function TableOrder() {
             <p className="text-gray-600 mb-6">
               Masa veya şube bilgisi bulunamadı. Lütfen doğru URL ile erişin.
             </p>
-            <div className="space-y-2 text-sm text-gray-500">
-              <p><strong>Masa siparişi için:</strong></p>
-              <code className="bg-gray-100 px-2 py-1 rounded">/table-order?table=1</code>
-              <p><strong>Şube siparişi için:</strong></p>
-              <code className="bg-gray-100 px-2 py-1 rounded">/table-order?branch=3</code>
+            <div className="space-y-3 text-sm text-gray-600">
+              <div>
+                <p className="font-semibold mb-2">🍽️ Masa siparişi için:</p>
+                <code className="bg-gray-100 px-3 py-2 rounded-lg block text-center font-mono">
+                  /table-order?table=1
+                </code>
+              </div>
+              <div>
+                <p className="font-semibold mb-2">🏢 Şube siparişi için:</p>
+                <code className="bg-gray-100 px-3 py-2 rounded-lg block text-center font-mono">
+                  /table-order?branch=3
+                </code>
+              </div>
+            </div>
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500">
+                💡 İpucu: QR kod ile masa siparişi veriyorsanız, QR kodunuzu tekrar tarayın.
+              </p>
             </div>
           </div>
         </div>
