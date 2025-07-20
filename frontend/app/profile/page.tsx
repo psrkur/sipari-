@@ -208,9 +208,10 @@ export default function ProfilePage() {
             <div className="flex items-center">
               <button
                 onClick={() => router.push('/')}
-                className="text-2xl font-bold text-gray-900 hover:text-red-600"
+                className="text-2xl font-bold text-gray-900 hover:text-red-600 flex items-center space-x-2"
               >
-                🍔 FastFood
+                <span className="text-2xl">🍕</span>
+                <span>Çizar Sipariş</span>
               </button>
             </div>
             

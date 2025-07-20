@@ -212,11 +212,11 @@ export default function Home() {
             {/* Logo ve Şube Seçimi - Desktop */}
             <div className="hidden md:flex items-center space-x-4 lg:space-x-6">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <span className="text-white text-sm sm:text-xl">🍔</span>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-sm sm:text-xl">🍕</span>
                 </div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                  FastFood
+                  Çizar Sipariş
                 </h1>
               </div>
               
@@ -263,11 +263,11 @@ export default function Home() {
 
             {/* Mobil Logo */}
             <div className="flex md:hidden items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                <span className="text-white text-sm">🍔</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-sm">🍕</span>
               </div>
               <h1 className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                FastFood
+                Çizar Sipariş
               </h1>
             </div>
             
