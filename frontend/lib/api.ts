@@ -13,8 +13,8 @@ const getApiBaseUrl = (): string => {
   
   // Development ortamında localhost kontrolü
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    console.log('🔧 localhost tespit edildi, localhost:3006 kullanılıyor');
-    return 'http://localhost:3006';
+    console.log('🔧 localhost tespit edildi, localhost:3001 kullanılıyor');
+    return 'http://localhost:3001';
   }
   
   // Production ortamında Render URL'i kullan
