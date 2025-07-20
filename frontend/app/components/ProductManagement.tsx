@@ -112,21 +112,85 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                             // Basit test - sadece console.log
                             console.log('🔧 Test: Buton tıklandı ve çalışıyor');
                             
+                            // Multiple fallback mechanisms
+                            let success = false;
+                            
+                            // Method 1: Direct function call
                             try {
                               if (typeof onEditProduct === 'function') {
-                                console.log('🔧 onEditProduct fonksiyonu bulundu, çağrılıyor...');
+                                console.log('🔧 Method 1: Direct onEditProduct çağrılıyor...');
                                 onEditProduct(product);
-                                console.log('✅ onEditProduct başarıyla çağrıldı');
-                              } else {
-                                console.error('❌ onEditProduct bir fonksiyon değil:', onEditProduct);
-                                // Fallback: Global window objesi üzerinden çağır
-                                if (typeof window !== 'undefined' && (window as any).editProductTest) {
-                                  console.log('🔧 Fallback: window.editProductTest çağrılıyor');
-                                  (window as any).editProductTest(product);
-                                }
+                                console.log('✅ Method 1: onEditProduct başarıyla çağrıldı');
+                                success = true;
                               }
                             } catch (error) {
-                              console.error('❌ onEditProduct hatası:', error);
+                              console.error('❌ Method 1 hatası:', error);
+                            }
+                            
+                            // Method 2: Global window function
+                            if (!success) {
+                              try {
+                                if (typeof window !== 'undefined' && (window as any).editProductTest) {
+                                  console.log('🔧 Method 2: Global editProductTest çağrılıyor...');
+                                  (window as any).editProductTest(product);
+                                  console.log('✅ Method 2: Global editProductTest başarıyla çağrıldı');
+                                  success = true;
+                                }
+                              } catch (error) {
+                                console.error('❌ Method 2 hatası:', error);
+                              }
+                            }
+                            
+                            // Method 3: Manual modal trigger
+                            if (!success) {
+                              try {
+                                console.log('🔧 Method 3: Manuel modal tetikleme...');
+                                if (typeof window !== 'undefined') {
+                                  // Global state'leri manuel olarak set et
+                                  if ((window as any).setEditingProduct) {
+                                    (window as any).setEditingProduct(product);
+                                  }
+                                                                     if ((window as any).setEditProductForm) {
+                                     const formData = {
+                                       name: product.name,
+                                       description: product.description || '',
+                                       price: product.price.toString(),
+                                       categoryId: (product.category?.id || '').toString(),
+                                       branchId: (product.branch?.id || '').toString(),
+                                       isActive: product.isActive
+                                     };
+                                     (window as any).setEditProductForm(formData);
+                                   }
+                                  if ((window as any).showEditProductModal) {
+                                    (window as any).showEditProductModal(true);
+                                  }
+                                  console.log('✅ Method 3: Manuel modal tetikleme başarılı');
+                                  success = true;
+                                }
+                              } catch (error) {
+                                console.error('❌ Method 3 hatası:', error);
+                              }
+                            }
+                            
+                            // Method 4: DOM manipulation
+                            if (!success) {
+                              try {
+                                console.log('🔧 Method 4: DOM manipulation...');
+                                // Modal'ı manuel olarak göster
+                                const modal = document.querySelector('[data-modal="edit-product"]');
+                                if (modal) {
+                                  (modal as HTMLElement).style.display = 'block';
+                                  console.log('✅ Method 4: DOM manipulation başarılı');
+                                  success = true;
+                                }
+                              } catch (error) {
+                                console.error('❌ Method 4 hatası:', error);
+                              }
+                            }
+                            
+                            if (!success) {
+                              console.error('❌ Tüm yöntemler başarısız oldu!');
+                              alert('Düzenleme butonu çalışmıyor. Lütfen sayfayı yenileyin.');
                             }
                           }}
                           className="text-blue-600 hover:text-blue-900 cursor-pointer"

@@ -126,6 +126,41 @@ export default function AdminPage() {
     // Canlı ortamda fallback mekanizması
     if (typeof window !== 'undefined') {
       console.log('🔧 Fallback mekanizması aktif');
+      
+      // Global fonksiyonları ekle
+      (window as any).editProductTest = editProduct;
+      (window as any).showEditProductModal = setShowEditProductModal;
+      (window as any).setEditingProduct = setEditingProduct;
+      (window as any).setEditProductForm = setEditProductForm;
+      
+      // Event listener'ları manuel olarak ekle
+      setTimeout(() => {
+        const editButtons = document.querySelectorAll('[data-testid="edit-product-button"]');
+        console.log('🔧 Bulunan edit butonları:', editButtons.length);
+        
+        editButtons.forEach((button, index) => {
+          const productId = button.getAttribute('data-product-id');
+          console.log(`🔧 Buton ${index}:`, productId);
+          
+          // Mevcut event listener'ları temizle
+          button.removeEventListener('click', (e) => {});
+          
+          // Yeni event listener ekle
+          button.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('🔧 Manuel event listener tetiklendi');
+            console.log('🔧 Product ID:', productId);
+            
+            // Ürünü bul
+            const product = products.find(p => p.id.toString() === productId);
+            if (product) {
+              console.log('🔧 Ürün bulundu:', product);
+              editProduct(product);
+            }
+          });
+        });
+      }, 2000);
     }
   }, [user, router, products]);
 
@@ -1529,7 +1564,7 @@ export default function AdminPage() {
           return false;
         }
       })() && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-modal="edit-product">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">Ürün Düzenle</h2>
             <form onSubmit={(e) => { e.preventDefault(); updateProduct(); }}>
