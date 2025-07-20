@@ -1544,7 +1544,7 @@ export default function AdminPage() {
                     onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     required
-                    disabled={Boolean(user && user.role === 'BRANCH_MANAGER')}
+                    disabled={user?.role === 'BRANCH_MANAGER'}
                   />
                 </div>
                 <div>
@@ -1556,7 +1556,7 @@ export default function AdminPage() {
                     onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     rows={3}
-                    disabled={Boolean(user && user.role === 'BRANCH_MANAGER')}
+                    disabled={user?.role === 'BRANCH_MANAGER'}
                   />
                 </div>
                 <div>
@@ -1570,7 +1570,7 @@ export default function AdminPage() {
                     onChange={(e) => setEditProductForm({...editProductForm, price: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     required
-                    disabled={Boolean(user && user.role === 'BRANCH_MANAGER')}
+                    disabled={user?.role === 'BRANCH_MANAGER'}
                   />
                 </div>
                 <div>
@@ -1582,7 +1582,7 @@ export default function AdminPage() {
                     onChange={(e) => setEditProductForm({...editProductForm, categoryId: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     required
-                    disabled={Boolean(user && user.role === 'BRANCH_MANAGER')}
+                    disabled={user?.role === 'BRANCH_MANAGER'}
                   >
                     <option value="">Kategori Seçin</option>
                     {categories.map((category) => (
@@ -1634,7 +1634,7 @@ export default function AdminPage() {
                     accept="image/*"
                     onChange={(e) => setEditProductImage(e.target.files?.[0] || null)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    disabled={Boolean(user && user.role === 'BRANCH_MANAGER')}
+                    disabled={user?.role === 'BRANCH_MANAGER'}
                   />
                 </div>
               </div>
