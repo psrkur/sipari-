@@ -61,6 +61,16 @@ const truncateDescription = (text: string, maxLength: number = 60) => {
   return text.substring(0, maxLength) + '...'
 }
 
+// Ürünleri kategorilere göre gruplandır
+const groupProductsByCategory = (products: Product[]) => {
+  return products.reduce((acc, product) => {
+    const categoryName = product.category?.name || 'Diğer';
+    if (!acc[categoryName]) acc[categoryName] = [];
+    acc[categoryName].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
+};
+
 export default function TableOrder() {
   const searchParams = useSearchParams();
   const branchId = searchParams.get('branch');
@@ -380,253 +390,288 @@ export default function TableOrder() {
     );
   }
 
+  const grouped = groupProductsByCategory(products);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <TableIcon className="h-6 w-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
+      {/* Responsive Header */}
+      <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            {/* Logo ve Masa Bilgisi */}
+            <div className="flex items-center space-x-4 lg:space-x-6">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <TableIcon className="text-white text-sm sm:text-xl" />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-gray-800">Masa Siparişi</h1>
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <Building className="h-4 w-4" />
-                    {table?.branch.name || (branchId ? `Şube ${branchId}` : 'Şube Bilgisi Yok')}
-                  </p>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  Masa Siparişi
+                </h1>
+              </div>
+              
+              {/* Masa/Şube Bilgisi */}
+              <div className="hidden lg:block">
+                <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700">
+                  <Building className="h-4 w-4" />
+                  <span>{table?.branch.name || (branchId ? `Şube ${branchId}` : 'Şube Bilgisi Yok')}</span>
+                  {table && (
+                    <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">
+                      Masa {table.number}
+                    </span>
+                  )}
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => setShowCart(!showCart)}
-                className="relative bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl shadow-lg"
-              >
-                <ShoppingCart className="h-5 w-5 mr-2" />
-                Sepet
-                {cart.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs">
-                    {cart.reduce((total, item) => total + item.quantity, 0)}
-                  </Badge>
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Ürünler Bölümü */}
-          <div className="lg:col-span-3">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                <ChefHat className="h-6 w-6 text-orange-600" />
-                Menü
-              </h2>
-              <p className="text-gray-600">Lezzetli yemeklerimizi keşfedin</p>
-            </div>
-
-            {/* Kategori Filtreleme */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                  <Menu className="h-5 w-5 text-orange-600" />
-                  Kategoriler
-                </h3>
-                <span className="text-sm text-gray-600">
-                  {getFilteredProducts().length} ürün bulundu
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {getAvailableCategories().map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
-                      selectedCategory === category
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25'
-                        : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 hover:shadow-md'
-                    }`}
-                  >
-                    <span className="mr-2 text-lg">{getCategoryIcon(category)}</span>
-                    {category}
-                    {selectedCategory === category && (
-                      <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full">
-                        {getFilteredProducts().length}
-                      </span>
-                    )}
-                  </button>
-                ))}
               </div>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {getFilteredProducts().length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-lg">
-                    <div className="text-6xl mb-4">🍽️</div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      {selectedCategory === 'Tümü' ? 'Henüz ürün bulunmuyor' : `${selectedCategory} kategorisinde ürün bulunamadı`}
-                    </h3>
-                    <p className="text-gray-600 mb-4">
-                      {selectedCategory === 'Tümü' 
-                        ? 'Bu şubede henüz ürün eklenmemiş.' 
-                        : 'Bu kategoride henüz ürün bulunmuyor. Diğer kategorileri deneyin.'
-                      }
-                    </p>
-                    {selectedCategory !== 'Tümü' && (
-                      <button
-                        onClick={() => setSelectedCategory('Tümü')}
-                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
-                      >
-                        Tüm Ürünleri Gör
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                getFilteredProducts().map(product => (
-                  <div key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm flex flex-col h-full cursor-pointer rounded-lg shadow-md" onClick={() => handleProductClick(product)}>
-                    <CardContent className="p-4 flex flex-col h-full">
-                      {/* Kategori etiketi - üst kısımda */}
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs text-gray-600 bg-gradient-to-r from-orange-100 to-red-100 px-2 py-1 rounded-full font-semibold border border-orange-200">
-                          {getCategoryIcon(product.category.name)} {product.category.name}
-                        </span>
-                        <span className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                          ₺{product.price.toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      {/* Ürün adı - tam yazılacak */}
-                      <h3 className="font-bold text-sm sm:text-lg text-gray-800 mb-2 sm:mb-3 group-hover:text-orange-600 transition-colors leading-tight">
-                        {product.name}
-                      </h3>
-                      
-                      {/* Açıklama - kısaltılacak */}
-                      <p className="text-gray-600 text-xs sm:text-sm mb-3 sm:mb-4 flex-grow line-clamp-2">
-                        {truncateDescription(product.description)}
-                      </p>
-                      
-                      {/* Sepete Ekle Butonu */}
-                      <div className="mt-auto">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(product);
-                          }}
-                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2 transform hover:scale-105 transition-all duration-200"
-                        >
-                          <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Sepete Ekle</span>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </div>
-                ))
-              )}
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+              {/* Desktop Sepet Butonu */}
+              <button 
+                onClick={() => setShowCart(!showCart)}
+                className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                <span className="hidden sm:inline">🛒 Sepet</span>
+                <span className="sm:hidden">🛒</span>
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center font-bold animate-pulse">
+                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Mobil Menü Butonu */}
+            <div className="flex md:hidden items-center space-x-2">
+              {/* Mobil Sepet Butonu */}
+              <button 
+                onClick={() => setShowCart(!showCart)}
+                className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white p-2 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+              >
+                🛒
+                {cart.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Sepet Bölümü */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24 bg-white/90 backdrop-blur-sm border-0 shadow-xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <ShoppingCart className="h-6 w-6 text-orange-600" />
-                  Sepetiniz
-                  {cart.length > 0 && (
-                    <Badge className="bg-orange-500 text-white">
-                      {cart.reduce((total, item) => total + item.quantity, 0)}
-                    </Badge>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {cart.length === 0 ? (
-                  <div className="text-center py-8">
-                    <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">Sepetiniz boş</p>
-                    <p className="text-sm text-gray-400">Menüden ürün seçin</p>
+      {/* Responsive Content Section */}
+      <main className="relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                  <ChefHat className="text-white text-lg sm:text-xl" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                    {table?.branch.name || (branchId ? `Şube ${branchId}` : 'Şube')} - Menü
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600">
+                    {table ? `Masa ${table.number}` : 'Masa siparişi'}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold">
+                🎯 {products.length} ürün
+              </div>
+            </div>
+            
+            {/* Responsive Kategori Filtreleme */}
+            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+              {getAvailableCategories().map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
+                    selectedCategory === category
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
+                  }`}
+                >
+                  {category === 'Tümü' ? '🍽️ Tümü' : `${getCategoryIcon(category)} ${category}`}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Ürün Listesi */}
+          <div className="space-y-8 sm:space-y-12">
+            {Object.entries(grouped)
+              .filter(([category]) => selectedCategory === 'Tümü' || category === selectedCategory)
+              .map(([category, categoryProducts]) => (
+                <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                  <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">
+                      <span className="text-2xl sm:text-3xl">{getCategoryIcon(category)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{category}</h4>
+                      <p className="text-sm sm:text-base text-gray-600">{categoryProducts.length} lezzetli seçenek</p>
+                    </div>
+                    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold mt-3 sm:mt-0">
+                      {categoryProducts.length} ürün
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {cart.map(item => (
-                        <div key={item.productId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <ChefHat className="h-6 w-6 text-orange-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => removeFromCart(item.productId)}
-                                  className="h-6 w-6 p-0 rounded-full"
-                                >
-                                  <Minus className="h-3 w-3" />
-                                </Button>
-                                <span className="font-semibold text-gray-700">{item.quantity}</span>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price, description: '', image: item.image, category: { id: 0, name: '' } })}
-                                  className="h-6 w-6 p-0 rounded-full"
-                                >
-                                  <Plus className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <span className="font-bold text-orange-600">₺{(item.price * item.quantity).toFixed(2)}</span>
-                            </div>
-                            <Input
-                              type="text"
-                              placeholder="Not ekle..."
-                              value={item.note || ''}
-                              onChange={e => updateCartItemNote(item.productId, e.target.value)}
-                              className="mt-2 text-sm"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="border-t pt-4 space-y-4">
-                      <div className="flex justify-between items-center text-lg font-bold">
-                        <span>Toplam:</span>
-                        <span className="text-2xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                          ₺{getTotalPrice().toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      <Input
-                        placeholder="Sipariş notu (opsiyonel)"
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        className="w-full"
-                      />
-                      
-                      <Button
-                        onClick={handlePlaceOrder}
-                        className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg"
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {categoryProducts.map((product) => (
+                      <div 
+                        key={product.id} 
+                        className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
+                        onClick={() => handleProductClick(product)}
                       >
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        Siparişi Tamamla
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                        {product.image && (
+                          <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
+                            <img
+                              src={API_ENDPOINTS.IMAGE_URL(product.image)}
+                              alt={product.name}
+                              className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
+                              crossOrigin="anonymous"
+                              onError={handleImageError}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                          </div>
+                        )}
+                        
+                        {/* Ürün adı - tam yazılacak */}
+                        <h5 className="text-sm sm:text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-2 sm:mb-3 leading-tight">
+                          {product.name}
+                        </h5>
+                        
+                        {/* Açıklama - kısaltılacak */}
+                        <p className="text-xs sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow line-clamp-2">
+                          {truncateDescription(product.description)}
+                        </p>
+                        
+                        {/* Alt kısım - kategori, fiyat ve buton */}
+                        <div className="mt-auto">
+                          <div className="flex justify-between items-center mb-2 sm:mb-3">
+                            <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold">
+                              {product.category.name}
+                            </span>
+                            
+                            {/* Fiyat - alt kısma taşındı */}
+                            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                              ₺{product.price.toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product);
+                            }}
+                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                          >
+                            🛒 Sepete Ekle
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
           </div>
         </div>
-      </div>
+      </main>
+
+      {/* Responsive Sepet Modal */}
+      {showCart && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 w-full max-w-sm sm:max-w-md lg:max-w-2xl max-h-[80vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">🛒 Sepetiniz</h2>
+              <button
+                onClick={() => setShowCart(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl hover:scale-110 transition-transform"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {cart.length === 0 ? (
+              <div className="text-center py-8">
+                <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Sepetiniz boş</p>
+                <p className="text-sm text-gray-400">Menüden ürün seçin</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {cart.map(item => (
+                    <div key={item.productId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <ChefHat className="h-6 w-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
+                        <div className="flex items-center justify-between mt-1">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => removeFromCart(item.productId)}
+                              className="h-6 w-6 p-0 rounded-full"
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="font-semibold text-gray-700">{item.quantity}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => addToCart({ id: item.productId, name: item.name, price: item.price, description: '', image: item.image, category: { id: 0, name: '' } })}
+                              className="h-6 w-6 p-0 rounded-full"
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <span className="font-bold text-orange-600">₺{(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                        <Input
+                          type="text"
+                          placeholder="Not ekle..."
+                          value={item.note || ''}
+                          onChange={e => updateCartItemNote(item.productId, e.target.value)}
+                          className="mt-2 text-sm"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Toplam:</span>
+                    <span className="text-2xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                      ₺{getTotalPrice().toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <Input
+                    placeholder="Sipariş notu (opsiyonel)"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full"
+                  />
+                  
+                  <Button
+                    onClick={handlePlaceOrder}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg"
+                  >
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Siparişi Tamamla
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Ürün Detay Modalı */}
       {showProductModal && selectedProduct && (
