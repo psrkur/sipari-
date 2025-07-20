@@ -373,16 +373,18 @@ export default function AdminPage() {
   };
 
   const editProduct = (product: any) => {
+    console.log('editProduct fonksiyonu çağrıldı:', product);
     setEditingProduct(product);
     setEditProductForm({
       name: product.name,
       description: product.description || '',
       price: product.price.toString(),
-      categoryId: product.categoryId.toString(),
-      branchId: product.branchId.toString(),
+      categoryId: (product.categoryId || product.category?.id || '').toString(),
+      branchId: (product.branchId || product.branch?.id || '').toString(),
       isActive: product.isActive
     });
     setShowEditProductModal(true);
+    console.log('Modal açıldı, showEditProductModal:', true);
   };
 
   const updateProduct = async () => {

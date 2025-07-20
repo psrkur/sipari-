@@ -96,7 +96,10 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                     {user && user.role === 'SUPER_ADMIN' ? (
                       <>
                         <button
-                          onClick={() => onEditProduct(product)}
+                          onClick={() => {
+                            console.log('Düzenle butonu tıklandı:', product);
+                            onEditProduct(product);
+                          }}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Düzenle
