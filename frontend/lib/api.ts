@@ -5,16 +5,19 @@ const getApiBaseUrl = (): string => {
   console.log('🔧 typeof window:', typeof window);
   console.log('🔧 window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
   
+  // Önce environment variable'ı kontrol et
   if (process.env.NEXT_PUBLIC_API_URL) {
     console.log('🔧 NEXT_PUBLIC_API_URL kullanılıyor:', process.env.NEXT_PUBLIC_API_URL);
     return process.env.NEXT_PUBLIC_API_URL;
   }
   
+  // Development ortamında localhost kontrolü
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     console.log('🔧 localhost tespit edildi, localhost:3006 kullanılıyor');
     return 'http://localhost:3006';
   }
   
+  // Production ortamında Render URL'i kullan
   console.log('🔧 Production URL kullanılıyor: https://yemek5-backend.onrender.com');
   return 'https://yemek5-backend.onrender.com';
 };
@@ -23,10 +26,11 @@ const API_BASE_URL = getApiBaseUrl();
 console.log('🔧 API Base URL:', API_BASE_URL);
 console.log('🔧 Window location:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
 
-// API isteği wrapper'ı
+// API isteği wrapper'ı - Geliştirilmiş hata yönetimi
 const apiRequest = async (url: string, options: RequestInit = {}) => {
   try {
-    console.log('API isteği:', url, options);
+    console.log('🔍 API isteği başlatılıyor:', url);
+    console.log('🔍 Request options:', options);
     
     const response = await fetch(url, {
       ...options,
@@ -36,19 +40,37 @@ const apiRequest = async (url: string, options: RequestInit = {}) => {
       },
     });
     
-    console.log('API yanıtı:', response.status, response.statusText);
+    console.log('📡 API yanıtı alındı:', response.status, response.statusText);
+    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API hatası:', response.status, errorText);
-      throw new Error(`HTTP ${response.status}: ${errorText || response.statusText}`);
+      console.error('❌ API hatası:', response.status, errorText);
+      
+      // Detaylı hata mesajı
+      const errorMessage = `HTTP ${response.status}: ${errorText || response.statusText}`;
+      console.error('❌ Hata detayı:', errorMessage);
+      
+      // 404 hatası için özel mesaj
+      if (response.status === 404) {
+        throw new Error(`Endpoint bulunamadı: ${url}. Backend çalışıyor mu?`);
+      }
+      
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
-    console.log('API verisi:', data);
+    console.log('✅ API verisi başarıyla alındı:', data);
     return data;
   } catch (error) {
-    console.error('API isteği hatası:', error);
+    console.error('❌ API isteği hatası:', error);
+    
+    // Network hatası için özel mesaj
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error('❌ Network hatası - Backend çalışmıyor olabilir');
+      throw new Error('Backend sunucusuna bağlanılamıyor. Lütfen backend\'in çalıştığından emin olun.');
+    }
+    
     throw error;
   }
 };
