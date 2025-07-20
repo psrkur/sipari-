@@ -199,7 +199,17 @@ export default function TableOrder() {
 
   const getAvailableCategories = () => {
     const categories = Array.from(new Set(products.map(p => p.category.name)));
-    return ['Tümü', ...categories];
+    // Kategorileri öncelik sırasına göre sırala
+    const priorityCategories = ['İçecek', 'Soğuk Sandviç', 'Ana Yemek', 'Pizza', 'Burger', 'Tatlı'];
+    const sortedCategories = categories.sort((a, b) => {
+      const aIndex = priorityCategories.indexOf(a);
+      const bIndex = priorityCategories.indexOf(b);
+      if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+    return ['Tümü', ...sortedCategories];
   };
 
   const getCategoryIcon = (category: string) => {
@@ -209,6 +219,7 @@ export default function TableOrder() {
       'Burger': '🍔',
       'Yan Ürün': '🍟',
       'İçecek': '🥤',
+      'Teneke İçecek': '🥤',
       'Tatlı': '🍰',
       'Döner': '🥙',
       'Kebap': '🍖',
@@ -216,6 +227,8 @@ export default function TableOrder() {
       'Salata': '🥗',
       'Çorba': '🍲',
       'Kahvaltı': '🍳',
+      'Soğuk Sandviç': '🥪',
+      'Sandviç': '🥪',
       'Diğer': '🍽️'
     };
     return icons[category] || '🍽️';
@@ -419,28 +432,76 @@ export default function TableOrder() {
 
             {/* Kategori Filtreleme */}
             <div className="mb-6">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Menu className="h-5 w-5 text-orange-600" />
+                  Kategoriler
+                </h3>
+                <span className="text-sm text-gray-600">
+                  {getFilteredProducts().length} ürün bulundu
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-3">
                 {getAvailableCategories().map((category) => (
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ${
                       selectedCategory === category
-                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                        : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200'
+                        ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25'
+                        : 'bg-white text-gray-700 hover:bg-orange-50 border border-gray-200 hover:border-orange-300 hover:shadow-md'
                     }`}
                   >
-                    <span className="mr-2">{getCategoryIcon(category)}</span>
+                    <span className="mr-2 text-lg">{getCategoryIcon(category)}</span>
                     {category}
+                    {selectedCategory === category && (
+                      <span className="ml-2 text-xs bg-white/20 px-2 py-1 rounded-full">
+                        {getFilteredProducts().length}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {getFilteredProducts().map(product => (
+              {getFilteredProducts().length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-lg">
+                    <div className="text-6xl mb-4">🍽️</div>
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      {selectedCategory === 'Tümü' ? 'Henüz ürün bulunmuyor' : `${selectedCategory} kategorisinde ürün bulunamadı`}
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      {selectedCategory === 'Tümü' 
+                        ? 'Bu şubede henüz ürün eklenmemiş.' 
+                        : 'Bu kategoride henüz ürün bulunmuyor. Diğer kategorileri deneyin.'
+                      }
+                    </p>
+                    {selectedCategory !== 'Tümü' && (
+                      <button
+                        onClick={() => setSelectedCategory('Tümü')}
+                        className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-2 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+                      >
+                        Tüm Ürünleri Gör
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                getFilteredProducts().map(product => (
                   <div key={product.id} className="group hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-0 bg-white/80 backdrop-blur-sm flex flex-col h-full cursor-pointer rounded-lg shadow-md" onClick={() => handleProductClick(product)}>
                     <CardContent className="p-4 flex flex-col h-full">
+                      {/* Kategori etiketi - üst kısımda */}
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs text-gray-600 bg-gradient-to-r from-orange-100 to-red-100 px-2 py-1 rounded-full font-semibold border border-orange-200">
+                          {getCategoryIcon(product.category.name)} {product.category.name}
+                        </span>
+                        <span className="text-lg font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                          ₺{product.price.toFixed(2)}
+                        </span>
+                      </div>
+                      
                       {/* Ürün adı - tam yazılacak */}
                       <h3 className="font-bold text-sm sm:text-lg text-gray-800 mb-2 sm:mb-3 group-hover:text-orange-600 transition-colors leading-tight">
                         {product.name}
@@ -451,25 +512,14 @@ export default function TableOrder() {
                         {truncateDescription(product.description)}
                       </p>
                       
-                      {/* Alt kısım - kategori, fiyat ve buton */}
+                      {/* Sepete Ekle Butonu */}
                       <div className="mt-auto">
-                        <div className="flex justify-between items-center mb-2 sm:mb-3">
-                          <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold">
-                            {product.category.name}
-                          </span>
-                          
-                          {/* Fiyat - alt kısma taşındı */}
-                          <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                            ₺{product.price.toFixed(2)}
-                          </span>
-                        </div>
-                        
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
                             addToCart(product);
                           }}
-                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2"
+                          className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg sm:rounded-xl shadow-lg p-2 sm:px-3 sm:py-2 transform hover:scale-105 transition-all duration-200"
                         >
                           <Plus className="h-3 w-3 sm:h-4 sm:w-4 sm:mr-2" />
                           <span className="hidden sm:inline">Sepete Ekle</span>
@@ -477,7 +527,8 @@ export default function TableOrder() {
                       </div>
                     </CardContent>
                   </div>
-                ))}
+                ))
+              )}
             </div>
           </div>
 
