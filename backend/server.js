@@ -3424,3 +3424,83 @@ app.listen(SERVER_PORT, () => {
   console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 });
 
+app.post('/api/admin/reset-super-admin', async (req, res) => {
+  try {
+    console.log('🔄 Süper admin hesabı sıfırlanıyor...');
+    
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    
+    // Süper admin hesabını güncelle veya oluştur
+    const superAdmin = await prisma.user.upsert({
+      where: { email: 'admin@example.com' },
+      update: {
+        password: hashedPassword,
+        name: 'Süper Admin',
+        role: 'SUPER_ADMIN',
+        isActive: true
+      },
+      create: {
+        email: 'admin@example.com',
+        password: hashedPassword,
+        name: 'Süper Admin',
+        role: 'SUPER_ADMIN',
+        isActive: true
+      }
+    });
+    
+    console.log('✅ Süper admin hesabı başarıyla sıfırlandı:', superAdmin.email);
+    
+    res.json({ 
+      message: 'Süper admin hesabı başarıyla sıfırlandı',
+      credentials: {
+        email: 'admin@example.com',
+        password: 'admin123'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Süper admin sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Süper admin hesabı sıfırlanamadı: ' + error.message });
+  }
+});
+
+app.post('/api/admin/reset-manager', async (req, res) => {
+  try {
+    console.log('🔄 Şube müdürü hesabı sıfırlanıyor...');
+    
+    const hashedPassword = await bcrypt.hash('manager123', 10);
+    
+    // Şube müdürü hesabını güncelle veya oluştur
+    const manager = await prisma.user.upsert({
+      where: { email: 'manager@example.com' },
+      update: {
+        password: hashedPassword,
+        name: 'Merkez Şube Müdürü',
+        role: 'BRANCH_MANAGER',
+        branchId: 1,
+        isActive: true
+      },
+      create: {
+        email: 'manager@example.com',
+        password: hashedPassword,
+        name: 'Merkez Şube Müdürü',
+        role: 'BRANCH_MANAGER',
+        branchId: 1,
+        isActive: true
+      }
+    });
+    
+    console.log('✅ Şube müdürü hesabı başarıyla sıfırlandı:', manager.email);
+    
+    res.json({ 
+      message: 'Şube müdürü hesabı başarıyla sıfırlandı',
+      credentials: {
+        email: 'manager@example.com',
+        password: 'manager123'
+      }
+    });
+  } catch (error) {
+    console.error('❌ Şube müdürü sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Şube müdürü hesabı sıfırlanamadı: ' + error.message });
+  }
+});
+
