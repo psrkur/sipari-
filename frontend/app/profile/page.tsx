@@ -210,7 +210,7 @@ export default function ProfilePage() {
                 onClick={() => router.push('/')}
                 className="text-2xl font-bold text-gray-900 hover:text-red-600 flex items-center space-x-2"
               >
-                <span className="text-2xl">🍕</span>
+                <span className="text-2xl">🥪</span>
                 <span>Çizar Sipariş</span>
               </button>
             </div>
