@@ -141,12 +141,20 @@ export default function ProfilePage() {
       
       // Update both profileData and auth store
       setProfileData(prev => prev ? { ...prev, user: response.data.user } : null)
-      
+
       // Update auth store with new user data
       if (token) {
         login(response.data.user, token)
       }
-      
+
+      // Formu yeni değerlerle güncelle
+      setFormData({
+        name: response.data.user.name || '',
+        email: response.data.user.email || '',
+        phone: response.data.user.phone || '',
+        address: response.data.user.address || ''
+      })
+
       setEditing(false)
     } catch (error: any) {
       console.error('Profil güncelleme hatası:', error)
