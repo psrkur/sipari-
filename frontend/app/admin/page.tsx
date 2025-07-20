@@ -83,11 +83,11 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '' });
-  const [editProductForm, setEditProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '', isActive: true });
+  const [editProductForm, setEditProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '', isActive: true as boolean });
   const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
-  const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true });
+  const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
-  const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true });
+  const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
   const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
@@ -500,6 +500,34 @@ export default function AdminPage() {
       setCategories(response.data);
     } catch (error: any) {
       toast.error(`Kategori silinemedi: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const editCategory = (category: Category) => {
+    setEditingCategory(category);
+    setEditCategoryForm({
+      name: category.name,
+      description: category.description || '',
+      isActive: category.isActive
+    });
+    setShowEditCategoryModal(true);
+  };
+
+  const updateCategory = async () => {
+    try {
+      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_CATEGORY(editingCategory!.id), editCategoryForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Kategori başarıyla güncellendi');
+      setShowEditCategoryModal(false);
+      setEditingCategory(null);
+      
+      const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(response.data);
+    } catch (error: any) {
+      toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
   };
 
@@ -1379,6 +1407,288 @@ export default function AdminPage() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün Düzenleme Modal */}
+      {showEditProductModal && editingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Ürün Düzenle</h2>
+            <form onSubmit={(e) => { e.preventDefault(); updateProduct(); }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ürün Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={editProductForm.name}
+                    onChange={(e) => setEditProductForm({...editProductForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                    disabled={user && user.role === 'BRANCH_MANAGER'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Açıklama
+                  </label>
+                  <textarea
+                    value={editProductForm.description}
+                    onChange={(e) => setEditProductForm({...editProductForm, description: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                    disabled={user && user.role === 'BRANCH_MANAGER'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Fiyat (₺)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editProductForm.price}
+                    onChange={(e) => setEditProductForm({...editProductForm, price: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                    disabled={user && user.role === 'BRANCH_MANAGER'}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori
+                  </label>
+                  <select
+                    value={editProductForm.categoryId}
+                    onChange={(e) => setEditProductForm({...editProductForm, categoryId: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                    disabled={user && user.role === 'BRANCH_MANAGER'}
+                  >
+                    <option value="">Kategori Seçin</option>
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {(user && user.role === 'SUPER_ADMIN') && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Şube
+                    </label>
+                    <select
+                      value={editProductForm.branchId}
+                      onChange={(e) => setEditProductForm({...editProductForm, branchId: e.target.value})}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                      required
+                    >
+                      <option value="">Şube Seçin</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Durum
+                  </label>
+                  <select
+                    value={Boolean(editProductForm.isActive) ? 'true' : 'false'}
+                    onChange={(e) => setEditProductForm({...editProductForm, isActive: e.target.value === 'true'})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="true">Aktif</option>
+                    <option value="false">Pasif</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ürün Resmi
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setEditProductImage(e.target.files?.[0] || null)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    disabled={user && user.role === 'BRANCH_MANAGER'}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditProductModal(false);
+                    setEditingProduct(null);
+                    setEditProductImage(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Kategori Düzenleme Modal */}
+      {showEditCategoryModal && editingCategory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Kategori Düzenle</h2>
+            <form onSubmit={(e) => { e.preventDefault(); updateCategory(); }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Kategori Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={editCategoryForm.name}
+                    onChange={(e) => setEditCategoryForm({...editCategoryForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Açıklama
+                  </label>
+                  <textarea
+                    value={editCategoryForm.description}
+                    onChange={(e) => setEditCategoryForm({...editCategoryForm, description: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Durum
+                  </label>
+                  <select
+                    value={Boolean(editCategoryForm.isActive) ? 'true' : 'false'}
+                    onChange={(e) => setEditCategoryForm({...editCategoryForm, isActive: e.target.value === 'true'})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="true">Aktif</option>
+                    <option value="false">Pasif</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditCategoryModal(false);
+                    setEditingCategory(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Şube Düzenleme Modal */}
+      {showEditBranchModal && editingBranch && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Şube Düzenle</h2>
+            <form onSubmit={(e) => { e.preventDefault(); updateBranch(); }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şube Adı
+                  </label>
+                  <input
+                    type="text"
+                    value={editBranchForm.name}
+                    onChange={(e) => setEditBranchForm({...editBranchForm, name: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Adres
+                  </label>
+                  <textarea
+                    value={editBranchForm.address}
+                    onChange={(e) => setEditBranchForm({...editBranchForm, address: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    value={editBranchForm.phone}
+                    onChange={(e) => setEditBranchForm({...editBranchForm, phone: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Durum
+                  </label>
+                  <select
+                    value={Boolean(editBranchForm.isActive) ? 'true' : 'false'}
+                    onChange={(e) => setEditBranchForm({...editBranchForm, isActive: e.target.value === 'true'})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  >
+                    <option value="true">Aktif</option>
+                    <option value="false">Pasif</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditBranchModal(false);
+                    setEditingBranch(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Güncelle
                 </button>
               </div>
             </form>
