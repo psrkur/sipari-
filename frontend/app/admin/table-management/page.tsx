@@ -182,12 +182,12 @@ export default function TableManagement() {
       setSuccessMessage(message);
       setShowSuccessPopup(true);
       
-      // 2 saniye sonra popup'ı kapat
+      // 5 saniye sonra popup'ı kapat
       setTimeout(() => {
         console.log('🔧 Popup\'ı kapatıyorum...');
         setShowSuccessPopup(false);
         setSuccessMessage('');
-      }, 2000);
+      }, 5000);
       
       console.log('🔧 Masaları yeniden yüklüyorum...');
       // Masaları yeniden yükle
@@ -709,7 +709,7 @@ export default function TableManagement() {
               </div>
               
               <div className="text-xs text-gray-500">
-                Bu popup 2 saniye sonra otomatik kapanacak...
+                Bu popup 5 saniye sonra otomatik kapanacak...
               </div>
             </div>
           </div>
