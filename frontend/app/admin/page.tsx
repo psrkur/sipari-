@@ -277,6 +277,10 @@ export default function AdminPage() {
       const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('📊 Siparişler yüklendi:', response.data);
+      console.log('📊 Masa siparişleri:', response.data.filter((order: Order) => order.orderType === 'TABLE'));
+      console.log('📊 Masa bilgisi olan siparişler:', response.data.filter((order: Order) => order.orderType === 'TABLE' && order.table));
+      console.log('📊 Masa bilgisi olmayan siparişler:', response.data.filter((order: Order) => order.orderType === 'TABLE' && !order.table));
       setOrders(response.data);
     } catch (error: any) {
       console.error('Orders fetch error:', error);

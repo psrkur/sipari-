@@ -95,6 +95,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 truncate max-w-[120px]" title={order.orderType === 'TABLE' && order.table ? `Masa ${order.table.number}` : order.customer?.name || 'Anonim'}>
                     {order.orderType === 'TABLE' && order.table ? (
                       <span className="font-bold text-blue-700">Masa {order.table.number}</span>
+                    ) : order.orderType === 'TABLE' && !order.table ? (
+                      <span className="font-bold text-red-700">Masa Bilgisi Yok</span>
                     ) : (
                       <span>{order.customer?.name || 'Anonim'}</span>
                     )}
