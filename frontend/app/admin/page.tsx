@@ -408,6 +408,12 @@ export default function AdminPage() {
     }
   };
 
+  // Global test fonksiyonu (canlı ortam için)
+  if (typeof window !== 'undefined') {
+    (window as any).editProductTest = editProduct;
+    console.log('🔧 Global editProductTest fonksiyonu eklendi');
+  }
+
   const updateProduct = async () => {
     try {
       const formData = new FormData();

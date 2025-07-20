@@ -106,12 +106,21 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                             console.log('🔧 Event target:', e.target);
                             console.log('🔧 Event currentTarget:', e.currentTarget);
                             
+                            // Basit test - sadece console.log
+                            console.log('🔧 Test: Buton tıklandı ve çalışıyor');
+                            
                             try {
                               if (typeof onEditProduct === 'function') {
+                                console.log('🔧 onEditProduct fonksiyonu bulundu, çağrılıyor...');
                                 onEditProduct(product);
                                 console.log('✅ onEditProduct başarıyla çağrıldı');
                               } else {
                                 console.error('❌ onEditProduct bir fonksiyon değil:', onEditProduct);
+                                // Fallback: Global window objesi üzerinden çağır
+                                if (typeof window !== 'undefined' && (window as any).editProductTest) {
+                                  console.log('🔧 Fallback: window.editProductTest çağrılıyor');
+                                  (window as any).editProductTest(product);
+                                }
                               }
                             } catch (error) {
                               console.error('❌ onEditProduct hatası:', error);
