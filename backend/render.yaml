@@ -9,6 +9,8 @@ services:
         value: postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: JWT_SECRET
         value: your-super-secret-jwt-key-change-this-in-production
       - key: FRONTEND_URL
