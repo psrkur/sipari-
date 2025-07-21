@@ -731,9 +731,18 @@ export default function AdminPage() {
     e.preventDefault();
     
     try {
-      const response = await axios.post(API_ENDPOINTS.ADMIN_BRANCHES, branchForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // companyId'yi şirketler listesinden al
+      const companyId = companies.length > 0 ? companies[0].id : undefined;
+      const response = await axios.post(
+        API_ENDPOINTS.ADMIN_BRANCHES,
+        {
+          ...branchForm,
+          ...(companyId && { companyId })
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       
       toast.success('Şube başarıyla eklendi');
       setBranches([...branches, response.data]);
