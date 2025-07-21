@@ -810,20 +810,31 @@ export default function AdminPage() {
     }
   };
 
+  // Firma ekleme modalını açan fonksiyon
+  const openCompanyModal = () => {
+    if (!user || user.role !== 'SUPER_ADMIN' || !token) {
+      toast.error('Firma eklemek için yetkiniz yok veya oturumunuz yok.');
+      return;
+    }
+    setCompanyForm({ name: '', domain: '', logo: '', address: '', phone: '', email: '' });
+    setShowCompanyModal(true);
+  };
+
+  // Firma ekleme fonksiyonu
   const addCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!companyForm.name || !companyForm.domain) {
+      toast.error('Firma adı ve domain zorunludur.');
+      return;
+    }
     try {
       const response = await axios.post(API_ENDPOINTS.COMPANIES, companyForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
       toast.success('Firma başarıyla oluşturuldu!');
       setShowCompanyModal(false);
       setCompanyForm({ name: '', domain: '', logo: '', address: '', phone: '', email: '' });
       fetchCompanies();
-      
-      // Admin bilgilerini göster
       if (response.data.admin) {
         alert(`Firma Admin Bilgileri:\nEmail: ${response.data.admin.email}\nŞifre: ${response.data.admin.password}`);
       }
@@ -1956,7 +1967,7 @@ export default function AdminPage() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Firma Yönetimi</h2>
             <button
-              onClick={() => setShowCompanyModal(true)}
+              onClick={openCompanyModal}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
             >
               Yeni Firma Ekle
@@ -2031,7 +2042,7 @@ export default function AdminPage() {
             <div className="text-center py-12">
               <p className="text-gray-500">Henüz firma bulunmuyor.</p>
               <button
-                onClick={() => setShowCompanyModal(true)}
+                onClick={openCompanyModal}
                 className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               >
                 İlk Firmayı Oluştur
