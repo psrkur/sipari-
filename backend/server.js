@@ -54,7 +54,7 @@ const prisma = new PrismaClient({
 });
 
 // Firma yönetimi modülünü import et
-const companyManagement = require('./company-management');
+// const companyManagement = require('./company-management');
 
 // Prisma query logging
 prisma.$on('query', (e) => {
@@ -3161,20 +3161,38 @@ app.post('/api/admin/reset-manager', async (req, res) => {
 // ===== FIRMA YÖNETİMİ API ENDPOINT'LERİ =====
 
 // Firma oluşturma
-app.post('/api/companies', companyManagement.createCompany);
+// app.post('/api/companies', companyManagement.createCompany);
 
 // Firma listesi
-app.get('/api/companies', companyManagement.getCompanies);
+// app.get('/api/companies', companyManagement.getCompanies);
 
 // Firma detayı
-app.get('/api/companies/:id', companyManagement.getCompany);
+// app.get('/api/companies/:id', companyManagement.getCompany);
 
 // Firma güncelleme
-app.put('/api/companies/:id', companyManagement.updateCompany);
+// app.put('/api/companies/:id', companyManagement.updateCompany);
 
 // Firma silme
-app.delete('/api/companies/:id', companyManagement.deleteCompany);
+// app.delete('/api/companies/:id', companyManagement.deleteCompany);
 
 // Firma istatistikleri
-app.get('/api/companies/:id/stats', companyManagement.getCompanyStats);
+// app.get('/api/companies/:id/stats', companyManagement.getCompanyStats);
 
+// === COMPANY MANAGEMENT ENDPOINTS ===
+
+app.post('/api/companies', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    const { name, domain, logo, address, phone, email } = req.body;
+    if (!name || !domain) return res.status(400).json({ error: 'Firma adı ve domain zorunludur.' });
+    const existing = await prisma.company.findUnique({ where: { domain } });
+    if (existing) return res.status(400).json({ error: 'Bu domain zaten kayıtlı.' });
+    const company = await prisma.company.create({
+      data: { name, domain, logo: logo || '', address: address || '', phone: phone || '', email: email || '' }
+    });
+    res.status(201).json(company);
+  } catch (e) {
+    console.error('Firma ekleme hatası:', e);
+    res.status(500).json({ error: 'Firma eklenemedi' });
+  }
+});

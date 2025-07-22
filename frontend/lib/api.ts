@@ -174,12 +174,6 @@ export const API_ENDPOINTS = {
     return `${API_BASE_URL}${imagePath}`;
   },
   
-  // Company Management
-  COMPANIES: `${API_BASE_URL}/api/companies`,
-  COMPANY_DETAIL: (companyId: number) => `${API_BASE_URL}/api/companies/${companyId}`,
-  COMPANY_UPDATE: (companyId: number) => `${API_BASE_URL}/api/companies/${companyId}`,
-  COMPANY_DELETE: (companyId: number) => `${API_BASE_URL}/api/companies/${companyId}`,
-  COMPANY_STATS: (companyId: number) => `${API_BASE_URL}/api/companies/${companyId}/stats`,
 };
 
 export { apiRequest };

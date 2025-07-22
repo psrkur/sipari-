@@ -7,28 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Company {
-  id         Int        @id @default(autoincrement())
-  name       String
-  domain     String     @unique
-  logo       String?
-  address    String?
-  phone      String?
-  email      String?
-  isActive   Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  branches   Branch[]
-  categories Category[]
-  customers  Customer[]
-  orders     Order[]
-  products   Product[]
-  tables     Table[]
-  users      User[]
-
-  @@map("companies")
-}
-
 model User {
   id         Int           @id @default(autoincrement())
   email      String
@@ -37,7 +15,6 @@ model User {
   phone      String?
   address    String?
   role       String        @default("CUSTOMER")
-  companyId  Int
   branchId   Int?
   isActive   Boolean       @default(false)
   isApproved Boolean       @default(false)
@@ -46,9 +23,8 @@ model User {
   orders     Order[]
   addresses  UserAddress[]
   branch     Branch?       @relation(fields: [branchId], references: [id])
-  company    Company       @relation(fields: [companyId], references: [id])
 
-  @@unique([email, companyId])
+  @@unique([email])
   @@map("users")
 }
 
@@ -71,10 +47,8 @@ model Branch {
   address   String
   phone     String
   isActive  Boolean   @default(true)
-  companyId Int
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  company   Company   @relation(fields: [companyId], references: [id])
   orders    Order[]
   products  Product[]
   tables    Table[]
@@ -88,13 +62,11 @@ model Category {
   name        String
   description String?
   isActive    Boolean   @default(true)
-  companyId   Int
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  company     Company   @relation(fields: [companyId], references: [id])
   products    Product[]
 
-  @@unique([name, companyId])
+  @@unique([name])
   @@map("categories")
 }
 
@@ -107,13 +79,11 @@ model Product {
   image       String?
   isActive    Boolean     @default(true)
   branchId    Int
-  companyId   Int
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
   branch      Branch      @relation(fields: [branchId], references: [id])
   category    Category    @relation(fields: [categoryId], references: [id])
-  company     Company     @relation(fields: [companyId], references: [id])
 
   @@map("products")
 }
@@ -125,7 +95,6 @@ model Order {
   branchId    Int
   tableId     Int?
   customerId  Int?
-  companyId   Int
   status      String      @default("PENDING")
   totalAmount Float
   notes       String?
@@ -134,12 +103,11 @@ model Order {
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
   branch      Branch      @relation(fields: [branchId], references: [id])
-  company     Company     @relation(fields: [companyId], references: [id])
   customer    Customer?   @relation(fields: [customerId], references: [id])
   table       Table?      @relation(fields: [tableId], references: [id])
   user        User?       @relation(fields: [userId], references: [id])
 
-  @@unique([orderNumber, companyId])
+  @@unique([orderNumber])
   @@map("orders")
 }
 
@@ -149,13 +117,11 @@ model Customer {
   phone     String
   email     String?
   address   String?
-  companyId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  company   Company  @relation(fields: [companyId], references: [id])
   orders    Order[]
 
-  @@unique([phone, companyId])
+  @@unique([phone])
   @@map("customers")
 }
 
@@ -163,13 +129,11 @@ model Table {
   id        Int      @id @default(autoincrement())
   number    String
   branchId  Int
-  companyId Int
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
   branch    Branch   @relation(fields: [branchId], references: [id])
-  company   Company  @relation(fields: [companyId], references: [id])
 
   @@unique([number, branchId])
   @@map("tables")
