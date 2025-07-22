@@ -90,16 +90,6 @@ async function testDatabaseConnection() {
   try {
     await prisma.$connect();
     console.log('✅ Veritabanı bağlantısı başarılı');
-    
-    try {
-      const branchCount = await prisma.branch.count();
-      const userCount = await prisma.user.count();
-      console.log(`📊 Mevcut veriler: ${branchCount} şube, ${userCount} kullanıcı`);
-      return true;
-    } catch (tableError) {
-      console.log('⚠️ Tablolar henüz oluşturulmamış');
-      return false;
-    }
   } catch (error) {
     console.error('❌ Veritabanı bağlantı hatası:', error);
     return false;
@@ -107,6 +97,7 @@ async function testDatabaseConnection() {
 }
 
 testDatabaseConnection();
+    
 
 const multer = require('multer');
 const path = require('path');
@@ -3195,4 +3186,4 @@ app.post('/api/companies', authenticateToken, async (req, res) => {
     console.error('Firma ekleme hatası:', e);
     res.status(500).json({ error: 'Firma eklenemedi' });
   }
-});
+})

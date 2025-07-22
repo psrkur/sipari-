@@ -88,7 +88,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'companies'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [stats, setStats] = useState<any[]>([]);
@@ -96,29 +96,6 @@ export default function AdminPage() {
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   
-  // Firma yönetimi state'leri
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [showCompanyModal, setShowCompanyModal] = useState(false);
-  const [showEditCompanyModal, setShowEditCompanyModal] = useState(false);
-  const [editingCompany, setEditingCompany] = useState<any>(null);
-  const [companyForm, setCompanyForm] = useState({ 
-    name: '', 
-    domain: '', 
-    logo: '', 
-    address: '', 
-    phone: '', 
-    email: '' 
-  });
-  const [editCompanyForm, setEditCompanyForm] = useState({ 
-    name: '', 
-    domain: '', 
-    logo: '', 
-    address: '', 
-    phone: '', 
-    email: '', 
-    isActive: true 
-  });
-
   // Kullanıcıları sırala - bu satırı kaldırıyoruz çünkü aşağıda tekrar tanımlanıyor
 
 
@@ -729,27 +706,17 @@ export default function AdminPage() {
   // Şube ekleme fonksiyonu
   const addBranch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      // companyId'yi şirketler listesinden al
-      const companyId = companies.length > 0 ? companies[0].id : undefined;
       const response = await axios.post(
         API_ENDPOINTS.ADMIN_BRANCHES,
-        {
-          ...branchForm,
-          ...(companyId && { companyId })
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        branchForm,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      
       toast.success('Şube başarıyla eklendi');
       setBranches([...branches, response.data]);
       setShowBranchModal(false);
       setBranchForm({ name: '', address: '', phone: '' });
     } catch (error: any) {
-      console.error('Şube ekleme hatası:', error);
       toast.error(error.response?.data?.error || 'Şube eklenirken hata oluştu');
     }
   };
@@ -758,156 +725,20 @@ export default function AdminPage() {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 
-  const fetchStats = async () => {
-    setStatsLoading(true);
-    try {
-      const params: any = { period: statsPeriod };
-      
-      if (user && user.role === 'BRANCH_MANAGER' && user.branchId) {
-        params.branchId = user.branchId;
-      } else if (statsBranchId) {
-        params.branchId = statsBranchId;
-      }
-      
-      const res = await axios.get(API_ENDPOINTS.ADMIN_STATS, {
-        headers: { Authorization: `Bearer ${token}` },
-        params
-      });
+  
       
       // Backend'den gelen veriyi frontend formatına dönüştür
       const formattedStats = [];
       
-      if (res.data && Array.isArray(res.data)) {
-        for (const branchStats of res.data) {
-          formattedStats.push(
-            { label: 'Toplam Sipariş', value: branchStats.orders },
-            { label: 'Toplam Gelir', value: `${branchStats.revenue.toFixed(2)} ₺` },
-            { label: 'Ortalama Sipariş', value: `${branchStats.averageOrder.toFixed(2)} ₺` },
-            { label: 'Günlük Ortalama', value: `${branchStats.dailyAverage.toFixed(2)} ₺` }
-          );
-        }
-      }
       
-      setStats(formattedStats);
-    } catch (error) {
-      console.error('İstatistik hatası:', error);
-      setStats([]);
-    } finally {
-      setStatsLoading(false);
-    }
-  };
 
-  // Firma yönetimi fonksiyonları
-  const fetchCompanies = async () => {
-    try {
-      const response = await axios.get(API_ENDPOINTS.COMPANIES, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCompanies(response.data);
-    } catch (error: any) {
-      console.error('Companies fetch error:', error);
-      toast.error('Firmalar yüklenirken hata oluştu');
-    }
-  };
 
-  // Firma ekleme modalını açan fonksiyon
-  const openCompanyModal = () => {
-    if (!user || user.role !== 'SUPER_ADMIN' || !token) {
-      toast.error('Firma eklemek için yetkiniz yok veya oturumunuz yok.');
-      return;
-    }
-    setCompanyForm({ name: '', domain: '', logo: '', address: '', phone: '', email: '' });
-    setShowCompanyModal(true);
-  };
 
-  // Firma ekleme fonksiyonu
-  const addCompany = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!companyForm.name || !companyForm.domain) {
-      toast.error('Firma adı ve domain zorunludur.');
-      return;
-    }
-    try {
-      const response = await axios.post(API_ENDPOINTS.COMPANIES, companyForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success('Firma başarıyla oluşturuldu!');
-      setShowCompanyModal(false);
-      setCompanyForm({ name: '', domain: '', logo: '', address: '', phone: '', email: '' });
-      fetchCompanies();
-      if (response.data.admin) {
-        alert(`Firma Admin Bilgileri:\nEmail: ${response.data.admin.email}\nŞifre: ${response.data.admin.password}`);
-      }
-    } catch (error: any) {
-      console.error('Company creation error:', error);
-      toast.error(error.response?.data?.error || 'Firma oluşturulurken hata oluştu');
-    }
-  };
+  
 
-  const editCompany = (company: any) => {
-    setEditingCompany(company);
-    setEditCompanyForm({
-      name: company.name,
-      domain: company.domain,
-      logo: company.logo || '',
-      address: company.address || '',
-      phone: company.phone || '',
-      email: company.email || '',
-      isActive: company.isActive
-    });
-    setShowEditCompanyModal(true);
-  };
+ 
 
-  const updateCompany = async () => {
-    try {
-      await axios.put(API_ENDPOINTS.COMPANY_UPDATE(editingCompany.id), editCompanyForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      toast.success('Firma başarıyla güncellendi!');
-      setShowEditCompanyModal(false);
-      setEditingCompany(null);
-      fetchCompanies();
-    } catch (error: any) {
-      console.error('Company update error:', error);
-      toast.error(error.response?.data?.error || 'Firma güncellenirken hata oluştu');
-    }
-  };
-
-  const deleteCompany = async (companyId: number) => {
-    if (!confirm('Bu firmayı ve tüm verilerini silmek istediğinizden emin misiniz?')) {
-      return;
-    }
-
-    try {
-      await axios.delete(API_ENDPOINTS.COMPANY_DELETE(companyId), {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      toast.success('Firma başarıyla silindi!');
-      fetchCompanies();
-    } catch (error: any) {
-      console.error('Company deletion error:', error);
-      toast.error(error.response?.data?.error || 'Firma silinirken hata oluştu');
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'daily-stats') {
-      fetchStats();
-    }
-  }, [activeTab, statsBranchId, statsPeriod]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Siparişler yükleniyor...</p>
-        </div>
-      </div>
-    );
-  }
+    
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -986,19 +817,6 @@ export default function AdminPage() {
                 }`}
               >
                 Masa Yönetimi
-              </button>
-            )}
-            {user && user.role === 'SUPER_ADMIN' && (
-              <button
-                onClick={() => {
-                  setActiveTab('companies');
-                  fetchCompanies();
-                }}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  activeTab === 'companies' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-                }`}
-              >
-                Firma Yönetimi ({companies.length})
               </button>
             )}
           </div>
@@ -1954,311 +1772,6 @@ export default function AdminPage() {
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   Ekle
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Firma Yönetimi İçeriği */}
-      {activeTab === 'companies' && user && user.role === 'SUPER_ADMIN' && (
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Firma Yönetimi</h2>
-            <button
-              onClick={openCompanyModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-            >
-              Yeni Firma Ekle
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {companies.map((company) => (
-              <div key={company.id} className="bg-white border rounded-lg p-6 shadow-sm">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold">{company.name}</h3>
-                    <p className="text-sm text-gray-600">@{company.domain}</p>
-                  </div>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    company.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {company.isActive ? 'Aktif' : 'Pasif'}
-                  </span>
-                </div>
-                
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span>Kullanıcılar:</span>
-                    <span className="font-medium">{company._count?.users || 0}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Şubeler:</span>
-                    <span className="font-medium">{company._count?.branches || 0}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Ürünler:</span>
-                    <span className="font-medium">{company._count?.products || 0}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Siparişler:</span>
-                    <span className="font-medium">{company._count?.orders || 0}</span>
-                  </div>
-                  
-                  {company.phone && (
-                    <div className="text-sm text-gray-600">
-                      📞 {company.phone}
-                    </div>
-                  )}
-                  
-                  {company.email && (
-                    <div className="text-sm text-gray-600">
-                      📧 {company.email}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => editCompany(company)}
-                    className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
-                  >
-                    Düzenle
-                  </button>
-                  <button
-                    onClick={() => deleteCompany(company.id)}
-                    className="flex-1 bg-red-600 text-white px-3 py-2 rounded text-sm hover:bg-red-700"
-                  >
-                    Sil
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {companies.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">Henüz firma bulunmuyor.</p>
-              <button
-                onClick={openCompanyModal}
-                className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                İlk Firmayı Oluştur
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Firma Ekleme Modal */}
-      {showCompanyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Yeni Firma Ekle</h2>
-            <form onSubmit={addCompany}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Firma Adı *
-                  </label>
-                  <input
-                    type="text"
-                    value={companyForm.name}
-                    onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    placeholder="Örn: Pizza House"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain *
-                  </label>
-                  <input
-                    type="text"
-                    value={companyForm.domain}
-                    onChange={(e) => setCompanyForm({...companyForm, domain: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    placeholder="Örn: pizzahouse"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Logo URL
-                  </label>
-                  <input
-                    type="url"
-                    value={companyForm.logo}
-                    onChange={(e) => setCompanyForm({...companyForm, logo: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    placeholder="https://example.com/logo.png"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    value={companyForm.phone}
-                    onChange={(e) => setCompanyForm({...companyForm, phone: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    placeholder="+90 555 123 4567"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={companyForm.email}
-                    onChange={(e) => setCompanyForm({...companyForm, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    placeholder="info@pizzahouse.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Adres
-                  </label>
-                  <textarea
-                    value={companyForm.address}
-                    onChange={(e) => setCompanyForm({...companyForm, address: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    rows={3}
-                    placeholder="Merkez Mahallesi, No:123"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowCompanyModal(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  İptal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Firma Oluştur
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Firma Düzenleme Modal */}
-      {showEditCompanyModal && editingCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Firma Düzenle</h2>
-            <form onSubmit={(e) => { e.preventDefault(); updateCompany(); }}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Firma Adı
-                  </label>
-                  <input
-                    type="text"
-                    value={editCompanyForm.name}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Domain
-                  </label>
-                  <input
-                    type="text"
-                    value={editCompanyForm.domain}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, domain: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Logo URL
-                  </label>
-                  <input
-                    type="url"
-                    value={editCompanyForm.logo}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, logo: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Telefon
-                  </label>
-                  <input
-                    type="tel"
-                    value={editCompanyForm.phone}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, phone: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={editCompanyForm.email}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Adres
-                  </label>
-                  <textarea
-                    value={editCompanyForm.address}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, address: e.target.value})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Durum
-                  </label>
-                  <select
-                    value={Boolean(editCompanyForm.isActive) ? 'true' : 'false'}
-                    onChange={(e) => setEditCompanyForm({...editCompanyForm, isActive: e.target.value === 'true'})}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  >
-                    <option value="true">Aktif</option>
-                    <option value="false">Pasif</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditCompanyModal(false);
-                    setEditingCompany(null);
-                  }}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  İptal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                >
-                  Güncelle
                 </button>
               </div>
             </form>
