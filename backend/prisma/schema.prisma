@@ -155,3 +155,19 @@ model OrderItem {
 
   @@map("order_items")
 }
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  domain    String   @unique
+  logo      String?
+  address   String?
+  phone     String?
+  email     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branches   Branch[]
+  categories Category[]
+}
