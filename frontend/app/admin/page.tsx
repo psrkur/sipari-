@@ -84,9 +84,9 @@ export default function AdminPage() {
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '' });
   const [editProductForm, setEditProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '', isActive: true as boolean });
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', companyId: '' });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
-  const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '', companyId: '' });
+  const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
   const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
@@ -700,14 +700,13 @@ export default function AdminPage() {
     e.preventDefault();
     
     try {
-      const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const data = { ...categoryForm, companyId: companies[0]?.id };
+      const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, data, { headers: { Authorization: `Bearer ${token}` } });
       
       toast.success('Kategori başarıyla eklendi');
       setCategories([...categories, response.data]);
       setShowCategoryModal(false);
-      setCategoryForm({ name: '', description: '', companyId: '' });
+      setCategoryForm({ name: '', description: '' });
     } catch (error: any) {
       console.error('Kategori ekleme hatası:', error);
       toast.error(error.response?.data?.error || 'Kategori eklenirken hata oluştu');
@@ -717,16 +716,13 @@ export default function AdminPage() {
   // Şube ekleme fonksiyonu
   const addBranch = async (e: React.FormEvent) => {
     e.preventDefault();
+    const data = { ...branchForm, companyId: companies[0]?.id };
     try {
-      const response = await axios.post(
-        API_ENDPOINTS.ADMIN_BRANCHES,
-        branchForm,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await axios.post(API_ENDPOINTS.ADMIN_BRANCHES, data, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Şube başarıyla eklendi');
       setBranches([...branches, response.data]);
       setShowBranchModal(false);
-      setBranchForm({ name: '', address: '', phone: '', companyId: '' });
+      setBranchForm({ name: '', address: '', phone: '' });
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Şube eklenirken hata oluştu');
     }
@@ -1411,15 +1407,6 @@ export default function AdminPage() {
                     rows={3}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Şirket
-                  </label>
-                  <select value={categoryForm.companyId} onChange={e => setCategoryForm({...categoryForm, companyId: e.target.value})} required>
-                    <option value=''>Şirket Seçin</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
@@ -1777,15 +1764,6 @@ export default function AdminPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     required
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Şirket
-                  </label>
-                  <select value={branchForm.companyId} onChange={e => setBranchForm({...branchForm, companyId: e.target.value})} required>
-                    <option value=''>Şirket Seçin</option>
-                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
