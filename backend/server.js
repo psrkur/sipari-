@@ -1782,9 +1782,14 @@ app.post('/api/admin/tables', authenticateToken, async (req, res) => {
     }
 
     const { number, branchId } = req.body;
-    
     if (!number || !branchId) {
       return res.status(400).json({ error: 'Masa numarası ve şube ID gerekli' });
+    }
+
+    // branchId üzerinden companyId'yi çek
+    const branch = await prisma.branch.findUnique({ where: { id: parseInt(branchId) } });
+    if (!branch) {
+      return res.status(400).json({ error: 'Geçersiz şube' });
     }
 
     // Aynı şubede aynı masa numarası var mı kontrol et
@@ -1803,6 +1808,7 @@ app.post('/api/admin/tables', authenticateToken, async (req, res) => {
       data: {
         number,
         branchId: parseInt(branchId),
+        companyId: branch.companyId, // <-- companyId eklendi
         isActive: true
       },
       include: {
@@ -1813,7 +1819,7 @@ app.post('/api/admin/tables', authenticateToken, async (req, res) => {
     res.status(201).json(newTable);
   } catch (error) {
     console.error('Masa ekleme hatası:', error);
-    res.status(500).json({ error: 'Masa eklenemedi' });
+    res.status(500).json({ error: 'Masa eklenemedi', details: error.message, stack: error.stack });
   }
 });
 
