@@ -1220,10 +1220,10 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
     
-    const { name, description } = req.body;
+    const { name, description, companyId } = req.body;
     
-    if (!name) {
-      return res.status(400).json({ error: 'Kategori adı gerekli' });
+    if (!name || !companyId) {
+      return res.status(400).json({ error: 'Kategori adı ve şirket ID zorunludur.' });
     }
 
     const existingCategory = await prisma.category.findUnique({
@@ -1237,7 +1237,8 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
     const category = await prisma.category.create({
       data: {
         name,
-        description: description || ''
+        description: description || '',
+        companyId: Number(companyId)
       }
     });
 
