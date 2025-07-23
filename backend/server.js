@@ -932,7 +932,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
             categoryId: parseInt(categoryId),
             image,
             branchId: branch.id,
-            companyId: branch.companyId
+            companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
           },
           include: {
             branch: true,
@@ -961,7 +961,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
           categoryId: parseInt(categoryId),
           image,
           branchId: targetBranchId,
-          companyId: branch.company.id
+          companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
         },
         include: {
           branch: true,
@@ -973,7 +973,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
     }
   } catch (error) {
     console.error('Ürün ekleme hatası:', error);
-    res.status(500).json({ error: 'Ürün eklenemedi' });
+    res.status(500).json({ error: 'Ürün eklenemedi', details: error.message, stack: error.stack });
   }
 });
 
