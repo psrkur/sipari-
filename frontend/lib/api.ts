@@ -154,6 +154,7 @@ export const API_ENDPOINTS = {
     return `${API_BASE_URL}${imagePath}`;
   },
   
+  COMPANIES: `${API_BASE_URL}/api/companies`,
 };
 
 export { apiRequest };

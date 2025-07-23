@@ -84,9 +84,9 @@ export default function AdminPage() {
   const [userForm, setUserForm] = useState({ name: '', email: '', password: '', role: 'CUSTOMER', branchId: '' });
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '' });
   const [editProductForm, setEditProductForm] = useState({ name: '', description: '', price: '', categoryId: '', branchId: '', isActive: true as boolean });
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '' });
+  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', companyId: '' });
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
-  const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
+  const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '', companyId: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
   const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
@@ -95,6 +95,7 @@ export default function AdminPage() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsBranchId, setStatsBranchId] = useState('');
   const [statsPeriod, setStatsPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [companies, setCompanies] = useState<{id:number, name:string}[]>([]);
   
   // Kullanıcıları sırala - bu satırı kaldırıyoruz çünkü aşağıda tekrar tanımlanıyor
 
@@ -266,6 +267,16 @@ export default function AdminPage() {
 
     fetchData();
   }, [token, user, router]);
+
+  useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        const response = await axios.get(API_ENDPOINTS.COMPANIES, { headers: { Authorization: `Bearer ${token}` } });
+        setCompanies(response.data);
+      } catch (e) { /* hata yönetimi */ }
+    }
+    fetchCompanies();
+  }, [token]);
 
   const sortedUsers = [...users].sort((a, b) => {
     if (a.role === 'SUPER_ADMIN') return -1;
@@ -696,7 +707,7 @@ export default function AdminPage() {
       toast.success('Kategori başarıyla eklendi');
       setCategories([...categories, response.data]);
       setShowCategoryModal(false);
-      setCategoryForm({ name: '', description: '' });
+      setCategoryForm({ name: '', description: '', companyId: '' });
     } catch (error: any) {
       console.error('Kategori ekleme hatası:', error);
       toast.error(error.response?.data?.error || 'Kategori eklenirken hata oluştu');
@@ -715,7 +726,7 @@ export default function AdminPage() {
       toast.success('Şube başarıyla eklendi');
       setBranches([...branches, response.data]);
       setShowBranchModal(false);
-      setBranchForm({ name: '', address: '', phone: '' });
+      setBranchForm({ name: '', address: '', phone: '', companyId: '' });
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Şube eklenirken hata oluştu');
     }
@@ -1400,6 +1411,15 @@ export default function AdminPage() {
                     rows={3}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şirket
+                  </label>
+                  <select value={categoryForm.companyId} onChange={e => setCategoryForm({...categoryForm, companyId: e.target.value})} required>
+                    <option value=''>Şirket Seçin</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
@@ -1757,6 +1777,15 @@ export default function AdminPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
                     required
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şirket
+                  </label>
+                  <select value={branchForm.companyId} onChange={e => setBranchForm({...branchForm, companyId: e.target.value})} required>
+                    <option value=''>Şirket Seçin</option>
+                    {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
