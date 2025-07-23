@@ -946,7 +946,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
     } else {
       const branch = await prisma.branch.findUnique({
         where: { id: targetBranchId },
-        select: { id: true, companyId: true }
+        include: { company: true }
       });
       
       if (!branch) {
@@ -961,7 +961,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
           categoryId: parseInt(categoryId),
           image,
           branchId: targetBranchId,
-          companyId: branch.companyId
+          companyId: branch.company.id
         },
         include: {
           branch: true,
