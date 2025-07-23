@@ -705,12 +705,8 @@ export default function AdminPage() {
       toast.error('Kategori adı zorunludur.');
       return;
     }
-    if (!companies[0]?.id) {
-      toast.error('Şirket bilgisi yüklenemedi. Lütfen sayfayı yenileyin.');
-      return;
-    }
+    const data = { ...categoryForm, companyId: 1 };
     try {
-      const data = { ...categoryForm, companyId: companies[0].id };
       const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, data, { headers: { Authorization: `Bearer ${token}` } });
       
       toast.success('Kategori başarıyla eklendi');
@@ -718,7 +714,6 @@ export default function AdminPage() {
       setShowCategoryModal(false);
       setCategoryForm({ name: '', description: '' });
     } catch (error: any) {
-      console.error('Kategori ekleme hatası:', error);
       toast.error(error.response?.data?.error || 'Kategori eklenirken hata oluştu');
     }
   };
@@ -730,7 +725,7 @@ export default function AdminPage() {
       toast.error('Tüm alanlar (isim, adres, telefon) zorunludur.');
       return;
     }
-    const data = { ...branchForm, companyId: companies[0]?.id };
+    const data = { ...branchForm, companyId: 1 };
     try {
       const response = await axios.post(API_ENDPOINTS.ADMIN_BRANCHES, data, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('Şube başarıyla eklendi');
@@ -883,7 +878,13 @@ export default function AdminPage() {
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
                   <button
-                    onClick={() => setShowBranchModal(true)}
+                    onClick={() => {
+                      if (!companies[0]?.id) {
+                        toast.error('Şirket bilgisi yüklenmeden şube eklenemez. Lütfen sayfayı yenileyin.');
+                        return;
+                      }
+                      setShowBranchModal(true);
+                    }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     Yeni Şube Ekle
