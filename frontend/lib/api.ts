@@ -1,31 +1,11 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
-  console.log('🔧 getApiBaseUrl çağrıldı');
-  console.log('🔧 NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
-  console.log('🔧 typeof window:', typeof window);
-  console.log('🔧 window.location.hostname:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
-  
-  // Canlı ortamda hardcoded URL kullan (test için)
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    console.log('🔧 Canlı ortam tespit edildi, hardcoded URL kullanılıyor');
-    return 'https://yemek5-backend.onrender.com';
-  }
-  
-  // Önce environment variable'ı kontrol et
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    console.log('🔧 NEXT_PUBLIC_API_URL kullanılıyor:', process.env.NEXT_PUBLIC_API_URL);
-    return process.env.NEXT_PUBLIC_API_URL;
-  }
-  
-  // Development ortamında localhost kontrolü
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    console.log('🔧 localhost tespit edildi, localhost:3001 kullanılıyor');
+  // SSR veya localde her zaman localhost:3001 kullan
+  if (process.env.NODE_ENV !== 'production') {
     return 'http://localhost:3001';
   }
-  
-  // Production ortamında Render URL'i kullan
-  console.log('🔧 Production URL kullanılıyor: https://yemek5-backend.onrender.com');
-  return 'https://yemek5-backend.onrender.com';
+  // Production ortamında environment variable veya fallback production URL kullan
+  return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();

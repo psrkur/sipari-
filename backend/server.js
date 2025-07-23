@@ -239,54 +239,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Kullanılmayan resimleri temizleme endpoint'i
-app.post('/api/admin/cleanup-images', authenticateToken, async (req, res) => {
-  try {
-    if (req.user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: 'Yetkisiz erişim' });
-    }
 
-    const fs = require('fs');
-    const uploadsDir = path.join(__dirname, 'uploads');
-    
-    // Uploads klasörü var mı kontrol et
-    if (!fs.existsSync(uploadsDir)) {
-      return res.json({ message: 'Uploads klasörü bulunamadı', deletedCount: 0 });
-    }
-
-    // Tüm ürünlerdeki resim yollarını al
-    const products = await prisma.product.findMany({
-      select: { image: true }
-    });
-    
-    const usedImages = new Set(products.map(p => p.image).filter(Boolean));
-    
-    // Uploads klasöründeki tüm dosyaları al
-    const files = fs.readdirSync(uploadsDir);
-    let deletedCount = 0;
-    
-    for (const file of files) {
-      const filePath = `/uploads/${file}`;
-      if (!usedImages.has(filePath)) {
-        try {
-          fs.unlinkSync(path.join(uploadsDir, file));
-          deletedCount++;
-          console.log('Silinen dosya:', file);
-        } catch (error) {
-          console.error('Dosya silinemedi:', file, error);
-        }
-      }
-    }
-    
-    res.json({ 
-      message: `${deletedCount} kullanılmayan resim dosyası silindi`,
-      deletedCount 
-    });
-  } catch (error) {
-    console.error('Resim temizleme hatası:', error);
-    res.status(500).json({ error: 'Resim temizleme hatası' });
-  }
-});
 
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -385,18 +338,14 @@ app.post('/api/branches', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
-    const { name, address, phone, companyId } = req.body;
-    if (!companyId) {
-      return res.status(400).json({ error: 'companyId zorunlu' });
-    }
+    const { name, address, phone } = req.body;
     
     const branch = await prisma.branch.create({
       data: {
         name,
         address,
         phone,
-        isActive: true,
-        companyId
+        isActive: true
       }
     });
 
