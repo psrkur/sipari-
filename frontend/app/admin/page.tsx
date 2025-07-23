@@ -878,13 +878,7 @@ export default function AdminPage() {
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Şubeler</h2>
                   <button
-                    onClick={() => {
-                      if (!companies[0]?.id) {
-                        toast.error('Şirket bilgisi yüklenmeden şube eklenemez. Lütfen sayfayı yenileyin.');
-                        return;
-                      }
-                      setShowBranchModal(true);
-                    }}
+                    onClick={() => setShowBranchModal(true)}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     Yeni Şube Ekle
