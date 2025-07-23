@@ -705,8 +705,12 @@ export default function AdminPage() {
       toast.error('Kategori adı zorunludur.');
       return;
     }
+    if (!companies[0]?.id) {
+      toast.error('Şirket bilgisi yüklenemedi. Lütfen sayfayı yenileyin.');
+      return;
+    }
     try {
-      const data = { ...categoryForm, companyId: companies[0]?.id };
+      const data = { ...categoryForm, companyId: companies[0].id };
       const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, data, { headers: { Authorization: `Bearer ${token}` } });
       
       toast.success('Kategori başarıyla eklendi');
