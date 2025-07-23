@@ -88,6 +88,8 @@ model Product {
   orderItems  OrderItem[]
   branch      Branch      @relation(fields: [branchId], references: [id])
   category    Category    @relation(fields: [categoryId], references: [id])
+  companyId   Int
+  company     Company     @relation(fields: [companyId], references: [id])
 
   @@map("products")
 }
@@ -170,4 +172,5 @@ model Company {
 
   branches   Branch[]
   categories Category[]
+  products   Product[]
 }
