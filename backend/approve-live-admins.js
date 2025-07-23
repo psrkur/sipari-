@@ -29,6 +29,22 @@ async function approveLiveAdmins() {
     
     console.log('📊 Mevcut kullanıcı sayısı:', existingUsers.length);
     
+    // Varsayılan şirketi ekle (id=1)
+    const existingCompany = await prisma.company.findUnique({ where: { id: 1 } });
+    if (!existingCompany) {
+      await prisma.company.create({
+        data: {
+          id: 1,
+          name: 'Varsayılan Şirket',
+          domain: 'tekfirma',
+          isActive: true
+        }
+      });
+      console.log('✅ Varsayılan şirket eklendi (id=1)');
+    } else {
+      console.log('ℹ️ Varsayılan şirket zaten mevcut (id=1)');
+    }
+    
     // Süper admin hesabını onayla/oluştur
     const hashedPassword = await bcrypt.hash('admin123', 10);
     
