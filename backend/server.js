@@ -2918,9 +2918,11 @@ app.get('/', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  res.status(500).json({ 
+  console.error('Global error handler:', err);
+  res.status(500).json({
     error: 'Sunucu hatası',
-    message: isProduction ? 'Bir hata oluştu' : err.message 
+    details: err.message,
+    stack: err.stack
   });
 });
 
