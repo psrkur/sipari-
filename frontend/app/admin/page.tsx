@@ -756,6 +756,32 @@ export default function AdminPage() {
 
     
 
+  useEffect(() => {
+    if (activeTab !== 'daily-stats') return;
+    setStatsLoading(true);
+
+    axios.get(API_ENDPOINTS.ADMIN_STATS, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: {
+        period: statsPeriod,
+        branchId: statsBranchId || undefined
+      }
+    })
+      .then((response) => {
+        // Backend'den gelen veriyi frontend formatına dönüştür
+        const formattedStats = response.data.map((stat: any) => ({
+          label: `${stat.branchName} - ${statsPeriod === 'daily' ? 'Günlük' : statsPeriod === 'weekly' ? 'Haftalık' : 'Aylık'} Gelir`,
+          value: `₺${stat.revenue.toFixed(2)} (${stat.orders} sipariş)`
+        }));
+        setStats(formattedStats);
+      })
+      .catch((error) => {
+        setStats([]);
+        // Hata mesajı göster
+      })
+      .finally(() => setStatsLoading(false));
+  }, [activeTab, statsPeriod, statsBranchId, token]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-4">
