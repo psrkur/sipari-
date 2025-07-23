@@ -338,14 +338,19 @@ app.post('/api/branches', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
-    const { name, address, phone } = req.body;
-    
+    const { name, address, phone, companyId } = req.body;
+
+    if (!name || !address || !phone || !companyId) {
+      return res.status(400).json({ error: 'Tüm alanlar (isim, adres, telefon, şirket) zorunludur.' });
+    }
+
     const branch = await prisma.branch.create({
       data: {
         name,
         address,
         phone,
-        isActive: true
+        isActive: true,
+        companyId: Number(companyId)
       }
     });
 
