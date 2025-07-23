@@ -1808,7 +1808,6 @@ app.post('/api/admin/tables', authenticateToken, async (req, res) => {
       data: {
         number,
         branchId: parseInt(branchId),
-        companyId: branch.companyId, // <-- companyId eklendi
         isActive: true
       },
       include: {
