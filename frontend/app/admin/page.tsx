@@ -664,7 +664,10 @@ export default function AdminPage() {
   // Ürün ekleme fonksiyonu
   const addProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!productForm.name || !productForm.price || !productForm.categoryId || !productForm.branchId) {
+      toast.error('Tüm gerekli alanları doldurun ve şube seçin.');
+      return;
+    }
     try {
       const formData = new FormData();
       formData.append('name', productForm.name);
@@ -698,7 +701,10 @@ export default function AdminPage() {
   // Kategori ekleme fonksiyonu
   const addCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    if (!categoryForm.name) {
+      toast.error('Kategori adı zorunludur.');
+      return;
+    }
     try {
       const data = { ...categoryForm, companyId: companies[0]?.id };
       const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, data, { headers: { Authorization: `Bearer ${token}` } });
@@ -716,6 +722,10 @@ export default function AdminPage() {
   // Şube ekleme fonksiyonu
   const addBranch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!branchForm.name || !branchForm.address || !branchForm.phone) {
+      toast.error('Tüm alanlar (isim, adres, telefon) zorunludur.');
+      return;
+    }
     const data = { ...branchForm, companyId: companies[0]?.id };
     try {
       const response = await axios.post(API_ENDPOINTS.ADMIN_BRANCHES, data, { headers: { Authorization: `Bearer ${token}` } });
