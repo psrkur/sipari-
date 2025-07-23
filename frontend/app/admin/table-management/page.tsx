@@ -250,6 +250,7 @@ export default function TableManagement() {
         body: JSON.stringify({
           number: newTableNumber,
           branchId: selectedBranchForNew
+          // companyId gönderilmeyecek
         })
       });
 
