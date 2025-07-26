@@ -3,7 +3,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const isProduction = process.env.NODE_ENV === 'production';
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
 // PORT değişkenini kullan, eğer yoksa 3006'yı varsayılan olarak kullan
-const SERVER_PORT = process.env.PORT || 3006;
+const SERVER_PORT = process.env.PORT || 3001;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
 const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis';
@@ -1195,7 +1195,7 @@ app.get('/api/categories', async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { name: 'asc' }
+      orderBy: { sortOrder: 'asc', name: 'asc' }
     });
     res.json(categories);
   } catch (error) {
@@ -1206,7 +1206,7 @@ app.get('/api/categories', async (req, res) => {
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { name: 'asc' }
+      orderBy: { sortOrder: 'asc', name: 'asc' }
     });
     
     res.json(categories);
@@ -1308,6 +1308,32 @@ app.delete('/api/admin/categories/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'Kategori başarıyla silindi' });
   } catch (error) {
     res.status(500).json({ error: 'Kategori silinemedi' });
+  }
+});
+
+// Kategori sıralama API'si
+app.put('/api/admin/categories/reorder', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    
+    const { categories } = req.body;
+    
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ error: 'Kategoriler listesi gerekli' });
+    }
+
+    // Her kategori için sortOrder güncelle
+    for (let i = 0; i < categories.length; i++) {
+      await prisma.category.update({
+        where: { id: parseInt(categories[i].id) },
+        data: { sortOrder: i }
+      });
+    }
+
+    res.json({ message: 'Kategori sıralaması güncellendi' });
+  } catch (error) {
+    console.error('Category reorder error:', error);
+    res.status(500).json({ error: 'Kategori sıralaması güncellenemedi' });
   }
 });
 

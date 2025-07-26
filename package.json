@@ -2,7 +2,7 @@
   "name": "fastfood-sales-app",
   "version": "1.0.0",
   "description": "Fastfood hızlı satış uygulaması",
-  "main": "index.js",
+  "main": "electron-main.js",
   "build": {
     "appId": "com.yemek5.desktop",
     "productName": "Yemek5 Masaüstü",
@@ -17,13 +17,7 @@
       "setup/config.json"
     ],
     "win": {
-      "target": "nsis"
-    },
-    "mac": {
-      "target": "dmg"
-    },
-    "linux": {
-      "target": "AppImage"
+      "target": "dir"
     }
   },
   "scripts": {
