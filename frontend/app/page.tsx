@@ -44,6 +44,7 @@ export default function Home() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
   const { user, logout } = useAuthStore()
   const { addItem, getItemCount } = useCartStore()
 
@@ -90,14 +91,50 @@ export default function Home() {
     if (selectedBranch) {
       setProductsLoading(true);
       // API'den ürünleri çek
-              axios.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id))
+      axios.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id))
         .then((response: any) => {
           console.log('Ürünler yüklendi:', response.data);
           setProducts(response.data);
+          
+          // Kategorileri yükle ve sırala
+          const productCategories = Array.from(new Set(response.data.map((p: any) => 
+            typeof p.category === 'object' && p.category !== null ? p.category.name : p.category || 'Diğer'
+          )));
+          
+          // LocalStorage'dan kayıtlı sıralamayı kontrol et
+          const savedOrder = localStorage.getItem('categoryOrder');
+          if (savedOrder) {
+            try {
+              const orderIds = JSON.parse(savedOrder);
+              // Backend'den kategorileri çek ve sırala
+              axios.get(API_ENDPOINTS.CATEGORIES)
+                .then((catResponse: any) => {
+                  const backendCategories = catResponse.data;
+                  const orderedCategories = orderIds.map((id: number) => 
+                    backendCategories.find((cat: any) => cat.id === id)
+                  ).filter(Boolean);
+                  
+                  const orderedCategoryNames = orderedCategories.map((cat: any) => cat.name);
+                  const remainingCategories = productCategories.filter((cat: string) => !orderedCategoryNames.includes(cat));
+                  
+                  setCategories(['Tümü', ...orderedCategoryNames, ...remainingCategories]);
+                })
+                .catch(() => {
+                  // Hata durumunda normal sıralama
+                  setCategories(['Tümü', ...productCategories]);
+                });
+            } catch (error) {
+              console.error('Kategori sıralama hatası:', error);
+              setCategories(['Tümü', ...productCategories]);
+            }
+          } else {
+            setCategories(['Tümü', ...productCategories]);
+          }
         })
         .catch((error: any) => {
           console.error('Ürünler yüklenemedi:', error);
           setProducts([]);
+          setCategories(['Tümü']);
         })
         .finally(() => {
           setProductsLoading(false);
@@ -154,10 +191,9 @@ export default function Home() {
     return icons[category] || '🍽️'
   }
 
-  // Kategorileri çıkar
+  // Kategorileri çıkar ve sırala
   const getAvailableCategories = () => {
-    const categories = Array.from(new Set(products.map(p => typeof p.category === 'object' && p.category !== null ? p.category.name : p.category || 'Diğer')));
-    return ['Tümü', ...categories];
+    return categories.length > 0 ? categories : ['Tümü'];
   };
 
   // Sepete ekle fonksiyonu
