@@ -1,15 +1,15 @@
 // Environment variables - Manuel yükleme
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = false; // Development modunda çalıştır
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
 // PORT değişkenini kullan, eğer yoksa 3006'yı varsayılan olarak kullan
 const SERVER_PORT = process.env.PORT || 3001;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis';
+const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30';
 const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
-const FRONTEND_URL = isProduction ? 'https://siparisnet.netlify.app' : (process.env.FRONTEND_URL || 'https://siparisnet.netlify.app');
+const FRONTEND_URL = isProduction ? 'https://siparisnet.netlify.app' : (process.env.FRONTEND_URL || 'http://localhost:3000');
 
 const express = require('express');
 const cors = require('cors');
@@ -50,7 +50,8 @@ const prisma = new PrismaClient({
     db: {
       url: DATABASE_URL
     }
-  }
+  },
+  log: ['query', 'info', 'warn', 'error'],
 });
 
 // Firma yönetimi modülünü import et
@@ -1322,18 +1323,24 @@ app.put('/api/admin/categories/reorder', authenticateToken, async (req, res) => 
       return res.status(400).json({ error: 'Kategoriler listesi gerekli' });
     }
 
+    console.log('Kategori sıralama güncelleniyor:', categories);
+
     // Her kategori için sortOrder güncelle
     for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
+      console.log(`Kategori ${category.id} için sortOrder: ${i}`);
+      
       await prisma.category.update({
-        where: { id: parseInt(categories[i].id) },
+        where: { id: parseInt(category.id) },
         data: { sortOrder: i }
       });
     }
 
+    console.log('Kategori sıralama başarıyla güncellendi');
     res.json({ message: 'Kategori sıralaması güncellendi' });
   } catch (error) {
     console.error('Category reorder error:', error);
-    res.status(500).json({ error: 'Kategori sıralaması güncellenemedi' });
+    res.status(500).json({ error: 'Kategori sıralaması güncellenemedi', details: error.message });
   }
 });
 

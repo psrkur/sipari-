@@ -195,7 +195,27 @@ export default function AdminPage() {
         const categoriesResponse = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, { 
           headers: { Authorization: `Bearer ${token}` } 
         });
-        setCategories(categoriesResponse.data);
+        
+        // LocalStorage'dan kayıtlı sıralamayı kontrol et
+        const savedOrder = localStorage.getItem('categoryOrder');
+        if (savedOrder) {
+          const orderIds = JSON.parse(savedOrder);
+          const categories = categoriesResponse.data;
+          
+          // Kayıtlı sıralamaya göre kategorileri düzenle
+          const reorderedCategories = orderIds.map((id: number) => 
+            categories.find((cat: any) => cat.id === id)
+          ).filter(Boolean);
+          
+          // Kayıtlı sıralamada olmayan kategorileri sona ekle
+          const remainingCategories = categories.filter((cat: any) => 
+            !orderIds.includes(cat.id)
+          );
+          
+          setCategories([...reorderedCategories, ...remainingCategories]);
+        } else {
+          setCategories(categoriesResponse.data);
+        }
       } catch (error: any) {
         console.error('Categories fetch error:', error);
         if (error.response?.status === 401 || error.response?.status === 403) {
@@ -600,7 +620,11 @@ export default function AdminPage() {
     const [reorderedItem] = items.splice(result.source.index, 1);
     items.splice(result.destination.index, 0, reorderedItem);
 
+    // Önce UI'ı güncelle
     setCategories(items);
+
+    // LocalStorage'a kaydet
+    localStorage.setItem('categoryOrder', JSON.stringify(items.map(cat => cat.id)));
 
     try {
       await axios.put(API_ENDPOINTS.ADMIN_REORDER_CATEGORIES, 
@@ -610,11 +634,17 @@ export default function AdminPage() {
       toast.success('Kategori sıralaması güncellendi');
     } catch (error: any) {
       toast.error(`Sıralama güncellenemedi: ${error.response?.data?.error || error.message}`);
-      // Hata durumunda orijinal sıralamayı geri yükle
-      const response = await axios.get(API_ENDPOINTS.ADMIN_CATEGORIES, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCategories(response.data);
+      console.log('Sıralama hatası, localStorage\'dan geri yükleniyor...');
+      
+      // Hata durumunda localStorage'dan geri yükle
+      const savedOrder = localStorage.getItem('categoryOrder');
+      if (savedOrder) {
+        const orderIds = JSON.parse(savedOrder);
+        const reorderedCategories = orderIds.map((id: number) => 
+          categories.find(cat => cat.id === id)
+        ).filter(Boolean);
+        setCategories(reorderedCategories);
+      }
     }
   };
 
