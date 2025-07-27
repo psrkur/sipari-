@@ -40,6 +40,12 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     try {
       setLoading(true);
       
+      // Eğer images zaten yüklüyse, tekrar yükleme
+      if (images.length > 0) {
+        console.log('🔍 Resimler zaten yüklü, tekrar yüklemiyor');
+        return;
+      }
+      
       // Geçici olarak mock data kullan
       console.log('🔍 Mock data kullanılıyor');
       
