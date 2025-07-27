@@ -313,10 +313,48 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
-// Resim proxy endpoint'i - CORS sorunu için
+// Resim proxy endpoint'i - Base64 ve dosya desteği
 app.get('/api/images/:filename', (req, res) => {
   const { filename } = req.params;
   
+  console.log('🖼️ /api/images/ çağrıldı:', filename);
+  
+  // Base64 data URL kontrolü
+  if (filename.startsWith('data:image/')) {
+    console.log('📊 Base64 data URL tespit edildi');
+    
+    // CORS ayarları
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+    res.set('Access-Control-Max-Age', '86400');
+    res.set('Access-Control-Allow-Credentials', 'false');
+    
+    // OPTIONS request için
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    
+    // Base64 data URL'den content type'ı çıkar
+    const match = filename.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      const contentType = match[1];
+      const base64Data = match[2];
+      
+      console.log('✅ Base64 data başarıyla parse edildi, content type:', contentType);
+      
+      res.set('Content-Type', contentType);
+      res.send(Buffer.from(base64Data, 'base64'));
+      return;
+    } else {
+      console.log('❌ Geçersiz base64 format');
+      res.set('Content-Type', 'image/svg+xml');
+      return res.status(400).send(getPlaceholderSvg());
+    }
+  }
+  
+  // Normal dosya işleme
   // Güvenlik kontrolü
   if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
     console.error('Geçersiz dosya adı:', filename);
