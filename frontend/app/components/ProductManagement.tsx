@@ -15,6 +15,7 @@ interface Product {
   } | null;
   isActive: boolean;
   image?: string;
+  imagePath?: string;
 }
 
 interface Category {
@@ -62,9 +63,9 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
               <tr key={product.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    {product.image && (
+                    {(product.image || product.imagePath) && (
                       <img
-                        src={product.image}
+                        src={product.image || product.imagePath}
                         alt={product.name}
                         className="w-10 h-10 rounded-md object-cover mr-3"
                       />
