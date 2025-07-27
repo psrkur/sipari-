@@ -33,76 +33,88 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Gerçek API\'den resimler yükleniyor');
+      console.log('🔍 Resimler yükleniyor...');
       
-      console.log('🔍 API URL:', API_ENDPOINTS.GET_IMAGES);
+      // Önce localStorage'dan resimleri yükle
+      const savedImages = localStorage.getItem('uploaded-images');
+      let localImages: Image[] = [];
       
-      // CORS sorunları için headers ekle
-      const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        timeout: 10000 // 10 saniye timeout
-      });
+      if (savedImages) {
+        try {
+          localImages = JSON.parse(savedImages);
+          console.log('✅ localStorage\'dan resimler yüklendi:', localImages.length);
+        } catch (error) {
+          console.error('❌ localStorage parse hatası:', error);
+        }
+      }
       
-      console.log('✅ API response:', response.data);
-      console.log('✅ Response status:', response.status);
-      console.log('✅ Response headers:', response.headers);
-      
-      if (Array.isArray(response.data)) {
-        setImages(response.data);
-        console.log('✅ Resimler başarıyla yüklendi, sayı:', response.data.length);
-      } else {
-        console.error('❌ Response data array değil:', response.data);
-        setImages([]);
+      // API'den resimleri yüklemeyi dene
+      try {
+        console.log('🔍 API\'den resimler yükleniyor...');
+        const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        if (Array.isArray(response.data)) {
+          // API resimleri ile localStorage resimlerini birleştir
+          const allImages = [...localImages, ...response.data];
+          setImages(allImages);
+          console.log('✅ Tüm resimler yüklendi, sayı:', allImages.length);
+        } else {
+          setImages(localImages);
+          console.log('✅ Sadece localStorage resimleri yüklendi:', localImages.length);
+        }
+      } catch (error: any) {
+        console.error('❌ API resimleri yüklenemedi:', error);
+        // API başarısız olursa sadece localStorage resimlerini göster
+        setImages(localImages);
+        console.log('✅ Sadece localStorage resimleri yüklendi:', localImages.length);
+        
+        if (localImages.length === 0) {
+          // Hiç resim yoksa fallback resimleri göster
+          const fallbackImages = [
+            { 
+              filename: 'Ayvalık Tostu', 
+              path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+              size: 95, 
+              uploadedAt: new Date().toISOString() 
+            },
+            { 
+              filename: 'Köfte Ekmek', 
+              path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+              size: 95, 
+              uploadedAt: new Date().toISOString() 
+            },
+            { 
+              filename: 'Coca-Cola 2.5 lt', 
+              path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+              size: 95, 
+              uploadedAt: new Date().toISOString() 
+            },
+            { 
+              filename: 'Fanta 330 ml', 
+              path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+              size: 95, 
+              uploadedAt: new Date().toISOString() 
+            },
+            { 
+              filename: 'Sanayi Tostu', 
+              path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+              size: 95, 
+              uploadedAt: new Date().toISOString() 
+            }
+          ];
+          setImages(fallbackImages);
+          console.log('✅ Fallback resimler yüklendi:', fallbackImages.length);
+        }
       }
     } catch (error: any) {
-      console.error('❌ Resimler yüklenemedi:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        config: error.config
-      });
-      
-      // API çağrısı başarısız olduğunda gerçek base64 resimleri göster
-      console.log('🔄 API çağrısı başarısız, gerçek base64 resimler gösteriliyor...');
-      const fallbackImages = [
-        { 
-          filename: 'Ayvalık Tostu', 
-          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
-          size: 95, 
-          uploadedAt: new Date().toISOString() 
-        },
-        { 
-          filename: 'Köfte Ekmek', 
-          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
-          size: 95, 
-          uploadedAt: new Date().toISOString() 
-        },
-        { 
-          filename: 'Coca-Cola 2.5 lt', 
-          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
-          size: 95, 
-          uploadedAt: new Date().toISOString() 
-        },
-        { 
-          filename: 'Fanta 330 ml', 
-          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
-          size: 95, 
-          uploadedAt: new Date().toISOString() 
-        },
-        { 
-          filename: 'Sanayi Tostu', 
-          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
-          size: 95, 
-          uploadedAt: new Date().toISOString() 
-        }
-      ];
-      setImages(fallbackImages);
-      console.log('✅ Gerçek base64 fallback resimler yüklendi, sayı:', fallbackImages.length);
-      toast.error(`API bağlantısı başarısız, gerçek base64 resimler gösteriliyor`);
+      console.error('❌ Resim yükleme hatası:', error);
+      toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
     }
@@ -162,8 +174,18 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           console.log('✅ Resim bilgisi oluşturuldu:', imageInfo);
           
           // Resim listesine ekle
-          setImages(prev => [imageInfo, ...prev]);
-          toast.success('Resim başarıyla yüklendi');
+          const newImages = [imageInfo, ...images];
+          setImages(newImages);
+          
+          // localStorage'a kaydet
+          try {
+            localStorage.setItem('uploaded-images', JSON.stringify(newImages));
+            console.log('✅ Resim localStorage\'a kaydedildi');
+          } catch (error) {
+            console.error('❌ localStorage kaydetme hatası:', error);
+          }
+          
+          toast.success('Resim başarıyla yüklendi ve kaydedildi');
           
         } catch (error: any) {
           console.error('Base64 işleme hatası:', error);
@@ -196,41 +218,47 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   const handleDeleteImage = async (filename: string) => {
     try {
-      console.log('🔍 Gerçek API\'den siliniyor:', filename);
+      console.log('🔍 Resim siliniyor:', filename);
       
-      // Authentication header'ı ekle
-      const headers: any = {};
+      // Önce localStorage'dan sil
+      const currentImages = images.filter(img => img.filename !== filename);
+      setImages(currentImages);
       
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
+      // localStorage'ı güncelle
+      try {
+        localStorage.setItem('uploaded-images', JSON.stringify(currentImages));
+        console.log('✅ Resim localStorage\'dan silindi');
+      } catch (error) {
+        console.error('❌ localStorage güncelleme hatası:', error);
+      }
+      
+      // API'den silmeyi dene (opsiyonel)
+      try {
+        let authToken = token;
+        if (!authToken) {
+          try {
+            const authStorage = localStorage.getItem('auth-storage');
+            if (authStorage) {
+              const parsed = JSON.parse(authStorage);
+              authToken = parsed.state?.token;
+            }
+          } catch (error: any) {
+            console.error('Auth storage parse error:', error);
           }
-        } catch (error: any) {
-          console.error('Auth storage parse error:', error);
         }
+        
+        if (authToken) {
+          await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename), {
+            headers: { Authorization: `Bearer ${authToken}` },
+            timeout: 10000
+          });
+          console.log('✅ API\'den de silindi:', filename);
+        }
+      } catch (error: any) {
+        console.log('⚠️ API\'den silme başarısız (localStorage\'dan silindi):', error);
       }
       
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-        console.log('🔍 Auth token eklendi');
-      } else {
-        console.log('⚠️ Auth token yok, authentication olmadan siliniyor');
-      }
-      
-      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename), {
-        headers: headers,
-        timeout: 10000
-      });
-      
-      console.log('✅ Delete başarılı:', filename);
       toast.success('Resim silindi');
-      
-      // Resim listesini yenile
-      fetchImages();
     } catch (error: any) {
       console.error('Resim silme hatası:', error);
       toast.error('Resim silinemedi');
