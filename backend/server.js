@@ -117,6 +117,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Placeholder SVG helper function
+const getPlaceholderSvg = () => {
+  return `<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+    <rect width="400" height="300" fill="#f3f4f6"/>
+    <rect x="50" y="50" width="300" height="200" fill="#e5e7eb" stroke="#d1d5db" stroke-width="2"/>
+    <circle cx="200" cy="150" r="40" fill="#9ca3af"/>
+    <path d="M180 130 L220 150 L180 170 Z" fill="#6b7280"/>
+    <text x="200" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#6b7280">Resim Yok</text>
+  </svg>`;
+};
+
 const app = express();
 // PORT değişkeni kaldırıldı, SERVER_PORT kullanılıyor
 
@@ -201,18 +212,17 @@ app.get('/uploads/:filename', (req, res) => {
     console.error('Resim dosyası bulunamadı:', filePath);
     
     // Render'da ephemeral storage nedeniyle dosya kaybolmuş olabilir
-    // Varsayılan bir resim döndür
-    return res.status(200).json({ 
-      message: 'Resim bulunamadı, varsayılan resim kullanılıyor',
-      defaultImage: 'https://via.placeholder.com/300x200?text=Resim+Bulunamadı',
-      filename: filename
-    });
+    // Varsayılan bir SVG placeholder resim döndür
+    res.set('Content-Type', 'image/svg+xml');
+    return res.status(200).send(getPlaceholderSvg());
   }
   
   res.sendFile(filePath, (err) => {
     if (err) {
       console.error('Resim gönderilemedi:', filename, err);
-      res.status(404).json({ error: 'Resim bulunamadı' });
+      // Hata durumunda da placeholder SVG döndür
+      res.set('Content-Type', 'image/svg+xml');
+      res.status(200).send(getPlaceholderSvg());
     }
   });
 });
@@ -3033,12 +3043,30 @@ app.get('/api/products/:id/image', async (req, res) => {
   try {
     const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
     if (!product || !product.image) {
-      return res.status(404).send('Resim yok');
+      // Placeholder SVG döndür
+      res.set('Content-Type', 'image/svg+xml');
+      return res.status(200).send(getPlaceholderSvg());
     }
+    
+    const filePath = path.join(__dirname, product.image);
+    if (!require('fs').existsSync(filePath)) {
+      // Dosya yoksa placeholder SVG döndür
+      res.set('Content-Type', 'image/svg+xml');
+      return res.status(200).send(getPlaceholderSvg());
+    }
+    
     res.set('Content-Type', 'image/png');
-    res.sendFile(path.join(__dirname, product.image));
+    res.sendFile(filePath, (err) => {
+      if (err) {
+        // Hata durumunda placeholder SVG döndür
+        res.set('Content-Type', 'image/svg+xml');
+        res.status(200).send(getPlaceholderSvg());
+      }
+    });
   } catch (error) {
-    res.status(500).send('Resim getirilemedi');
+    // Hata durumunda placeholder SVG döndür
+    res.set('Content-Type', 'image/svg+xml');
+    res.status(200).send(getPlaceholderSvg());
   }
 });
 
