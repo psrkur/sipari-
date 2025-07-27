@@ -105,6 +105,16 @@ EOF
         log_warn "Lütfen .env dosyasını düzenleyin!"
     fi
     
+    # Resim senkronizasyonu
+    log_info "Canlı ortamdan resimler senkronize ediliyor..."
+    if [ -f "discover-images.js" ]; then
+        node discover-images.js
+    elif [ -f "sync-images.js" ]; then
+        node sync-images.js
+    else
+        log_warn "Resim senkronizasyon scripti bulunamadı, atlanıyor"
+    fi
+    
     log_info "Backend kurulumu tamamlandı."
 }
 

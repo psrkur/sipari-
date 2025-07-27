@@ -27,7 +27,9 @@
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "setup": "npm run install:all && cd backend && cp env.example .env && npx prisma migrate dev && cd .. && npm run dev",
     "electron": "electron electron-main.js",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "sync-images": "node sync-images-manual.js",
+    "deploy": "npm run sync-images && echo 'Resimler senkronize edildi. Şimdi deploy işlemini gerçekleştirin.'"
   },
   "keywords": [
     "fastfood",

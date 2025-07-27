@@ -11,7 +11,10 @@
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
     "migrate": "node deploy-migration.js",
-    "run-migration": "node run-migration.js"
+    "run-migration": "node run-migration.js",
+    "sync-images": "node sync-images-manual.js",
+    "download-images": "node download-images-simple.js",
+    "discover-images": "node discover-images.js"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
