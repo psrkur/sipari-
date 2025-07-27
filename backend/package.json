@@ -18,7 +18,8 @@
     "setup-images": "node setup-image-storage.js",
     "fix-images": "node fix-image-storage.js",
     "deploy-images": "node deploy-images.js",
-    "map-images": "node map-images-to-products.js"
+    "map-images": "node map-images-to-products.js",
+    "fix-production-images": "node deploy-image-fix.js"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",

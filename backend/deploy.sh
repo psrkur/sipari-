@@ -41,6 +41,9 @@ async function checkData() {
 checkData();
 "
 
+echo "🖼️ Resim sorunları düzeltiliyor..."
+node deploy-image-fix.js
+
 echo "🔒 Güvenlik kontrolleri..."
 # SSL sertifikası kontrolü
 if [ "$NODE_ENV" = "production" ]; then
