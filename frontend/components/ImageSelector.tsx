@@ -191,11 +191,13 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
               disabled={uploading}
               id="image-upload"
             />
-            <label htmlFor="image-upload" className="cursor-pointer">
-              <Button disabled={uploading} className="flex items-center space-x-2">
-                <Upload className="h-4 w-4" />
-                {uploading ? 'Yükleniyor...' : 'Resim Yükle'}
-              </Button>
+            <label 
+              htmlFor="image-upload" 
+              className={`cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => console.log('🔍 Label tıklandı!')}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              {uploading ? 'Yükleniyor...' : 'Resim Yükle'}
             </label>
             <p className="text-sm text-gray-600">
               Maksimum dosya boyutu: 5MB
