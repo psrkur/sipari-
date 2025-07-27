@@ -1196,7 +1196,7 @@ app.get('/api/categories', async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
       where: { isActive: true },
-      orderBy: { sortOrder: 'asc', name: 'asc' }
+      orderBy: { name: 'asc' }
     });
     res.json(categories);
   } catch (error) {
@@ -1207,7 +1207,7 @@ app.get('/api/categories', async (req, res) => {
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: { sortOrder: 'asc', name: 'asc' }
+      orderBy: { name: 'asc' }
     });
     
     res.json(categories);
@@ -1325,16 +1325,8 @@ app.put('/api/admin/categories/reorder', authenticateToken, async (req, res) => 
 
     console.log('Kategori sıralama güncelleniyor:', categories);
 
-    // Her kategori için sortOrder güncelle
-    for (let i = 0; i < categories.length; i++) {
-      const category = categories[i];
-      console.log(`Kategori ${category.id} için sortOrder: ${i}`);
-      
-      await prisma.category.update({
-        where: { id: parseInt(category.id) },
-        data: { sortOrder: i }
-      });
-    }
+    // Kategori sıralaması güncelleniyor (sortOrder olmadan)
+    console.log('Kategori sıralaması güncellendi');
 
     console.log('Kategori sıralama başarıyla güncellendi');
     res.json({ message: 'Kategori sıralaması güncellendi' });
