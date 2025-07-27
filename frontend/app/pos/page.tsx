@@ -39,6 +39,10 @@ export default function POSPage() {
   const [loading, setLoading] = useState(true);
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [branches, setBranches] = useState<any[]>([]);
+  const [showTableCollection, setShowTableCollection] = useState(false);
+  const [activeTables, setActiveTables] = useState<any[]>([]);
+  const [selectedTable, setSelectedTable] = useState<any>(null);
+  const [tableOrders, setTableOrders] = useState<any>(null);
   const { token, user } = useAuthStore();
   const router = useRouter();
 
@@ -192,6 +196,126 @@ export default function POSPage() {
     toast.success('Sepet temizlendi');
   };
 
+  // Masa tahsilat fonksiyonları
+  const fetchActiveTables = async () => {
+    try {
+      let authToken = token;
+      if (!authToken) {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
+      }
+
+      const response = await axios.get(API_ENDPOINTS.ADMIN_ACTIVE_TABLES, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      setActiveTables(response.data);
+    } catch (error) {
+      console.error('Aktif masalar yüklenemedi:', error);
+      toast.error('Masalar yüklenemedi');
+    }
+  };
+
+  const fetchTableOrders = async (tableId: number) => {
+    try {
+      let authToken = token;
+      if (!authToken) {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
+      }
+
+      const response = await axios.get(API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId), {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      
+      setTableOrders(response.data);
+    } catch (error) {
+      console.error('Masa siparişleri yüklenemedi:', error);
+      toast.error('Siparişler yüklenemedi');
+    }
+  };
+
+  const handleTableCollection = async (paymentMethod: 'CASH' | 'CARD') => {
+    if (!selectedTable || !tableOrders) return;
+
+    try {
+      let authToken = token;
+      if (!authToken) {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
+      }
+
+      await axios.post(API_ENDPOINTS.ADMIN_TABLE_COLLECT(selectedTable.id), {
+        paymentMethod,
+        amount: tableOrders.totalAmount
+      }, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+
+      toast.success(`Masa ${selectedTable.number} tahsilatı tamamlandı!`);
+      setShowTableCollection(false);
+      setSelectedTable(null);
+      setTableOrders(null);
+      fetchActiveTables(); // Masaları yenile
+    } catch (error) {
+      console.error('Tahsilat hatası:', error);
+      toast.error('Tahsilat yapılamadı');
+    }
+  };
+
+  const handleTableReset = async () => {
+    if (!selectedTable) return;
+
+    try {
+      let authToken = token;
+      if (!authToken) {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
+      }
+
+      await axios.post(API_ENDPOINTS.ADMIN_TABLE_RESET(selectedTable.id), {}, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+
+      toast.success(`Masa ${selectedTable.number} sıfırlandı!`);
+      setShowTableCollection(false);
+      setSelectedTable(null);
+      setTableOrders(null);
+      fetchActiveTables(); // Masaları yenile
+    } catch (error) {
+      console.error('Masa sıfırlama hatası:', error);
+      toast.error('Masa sıfırlanamadı');
+    }
+  };
+
   const handlePayment = async (paymentMethod: 'cash' | 'card') => {
     if (cart.length === 0) {
       toast.error('Sepet boş');
@@ -311,6 +435,17 @@ export default function POSPage() {
             <h1 className="text-lg md:text-2xl font-bold text-gray-800">🏪 Kasa</h1>
           </div>
           <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => {
+                setShowTableCollection(true);
+                fetchActiveTables();
+              }}
+              variant="outline"
+              size="sm"
+              className="bg-purple-600 text-white hover:bg-purple-700"
+            >
+              🍽️ Masa Tahsilatı
+            </Button>
             <Badge variant="secondary" className="text-xs md:text-sm">
               {selectedBranch?.name || 'Şube'}
             </Badge>
@@ -519,6 +654,147 @@ export default function POSPage() {
           </div>
         </div>
       </div>
+
+      {/* Masa Tahsilat Modal */}
+      {showTableCollection && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-bold text-gray-800">🍽️ Masa Tahsilatı</h2>
+              <Button
+                onClick={() => {
+                  setShowTableCollection(false);
+                  setSelectedTable(null);
+                  setTableOrders(null);
+                }}
+                variant="outline"
+                size="sm"
+              >
+                ✕
+              </Button>
+            </div>
+
+            <div className="flex h-[calc(90vh-120px)]">
+              {/* Sol Taraf - Masa Listesi */}
+              <div className="w-1/3 border-r p-4 overflow-y-auto">
+                <h3 className="font-semibold mb-4 text-gray-700">Aktif Masalar</h3>
+                {activeTables.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>Aktif masa bulunamadı</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {activeTables.map((table) => (
+                      <div
+                        key={table.id}
+                        onClick={() => {
+                          setSelectedTable(table);
+                          fetchTableOrders(table.id);
+                        }}
+                        className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
+                          selectedTable?.id === table.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Masa {table.number}</span>
+                          <Badge variant={table.orderCount > 0 ? "destructive" : "secondary"}>
+                            {table.orderCount} sipariş
+                          </Badge>
+                        </div>
+                        {table.totalAmount > 0 && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            Toplam: ₺{table.totalAmount.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Sağ Taraf - Sipariş Detayları */}
+              <div className="flex-1 p-4 overflow-y-auto">
+                {selectedTable && tableOrders ? (
+                  <div>
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-lg text-gray-800">
+                        Masa {selectedTable.number} - Siparişler
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Toplam: ₺{tableOrders.totalAmount.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Sipariş Listesi */}
+                    <div className="space-y-4 mb-6">
+                      {tableOrders.table.orders.map((order: any, index: number) => (
+                        <Card key={order.id} className="border-l-4 border-l-blue-500">
+                          <CardHeader className="pb-2">
+                            <div className="flex justify-between items-center">
+                              <CardTitle className="text-sm">
+                                Sipariş #{order.orderNumber}
+                              </CardTitle>
+                              <Badge variant="outline" className="text-xs">
+                                {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <div className="space-y-2">
+                              {order.orderItems.map((item: any, itemIndex: number) => (
+                                <div key={itemIndex} className="flex justify-between text-sm">
+                                  <span>{item.quantity}x {item.product.name}</span>
+                                  <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Tahsilat Butonları */}
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => handleTableCollection('CASH')}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+                        disabled={tableOrders.totalAmount === 0}
+                      >
+                        <DollarSign className="h-5 w-5 mr-2" />
+                        Nakit Tahsilat (₺{tableOrders.totalAmount.toFixed(2)})
+                      </Button>
+                      
+                      <Button
+                        onClick={() => handleTableCollection('CARD')}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
+                        disabled={tableOrders.totalAmount === 0}
+                      >
+                        <CreditCard className="h-5 w-5 mr-2" />
+                        Kart Tahsilat (₺{tableOrders.totalAmount.toFixed(2)})
+                      </Button>
+
+                      <Button
+                        onClick={handleTableReset}
+                        variant="outline"
+                        className="w-full py-3 border-orange-300 text-orange-600 hover:bg-orange-50"
+                      >
+                        🔄 Masa Sıfırla
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    <p>Masa seçin</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

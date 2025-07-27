@@ -3205,4 +3205,250 @@ app.post('/api/companies', authenticateToken, async (req, res) => {
     console.error('Firma ekleme hatası:', e);
     res.status(500).json({ error: 'Firma eklenemedi' });
   }
-})
+});
+
+// ===== MASA TAHSİLAT API ENDPOINT'LERİ =====
+
+// Aktif masaları getir
+app.get('/api/admin/tables/active', authenticateToken, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: { branch: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    let whereClause = {
+      isActive: true
+    };
+    
+    if (user.role === 'BRANCH_MANAGER') {
+      whereClause.branchId = user.branchId;
+    }
+
+    const tables = await prisma.table.findMany({
+      where: whereClause,
+      include: {
+        branch: true,
+        orders: {
+          where: {
+            status: { not: 'DELIVERED' },
+            orderType: 'TABLE'
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { number: 'asc' }
+    });
+
+    // Her masa için toplam tutarı hesapla
+    const tablesWithTotal = tables.map(table => {
+      const totalAmount = table.orders.reduce((sum, order) => {
+        return sum + order.orderItems.reduce((orderSum, item) => {
+          return orderSum + (item.price * item.quantity);
+        }, 0);
+      }, 0);
+
+      return {
+        ...table,
+        totalAmount,
+        orderCount: table.orders.length
+      };
+    });
+
+    res.json(tablesWithTotal);
+  } catch (error) {
+    console.error('Aktif masalar getirilemedi:', error);
+    res.status(500).json({ error: 'Masalar getirilemedi' });
+  }
+});
+
+// Masa siparişlerini getir
+app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: { branch: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        branch: true,
+        orders: {
+          where: {
+            status: { not: 'DELIVERED' },
+            orderType: 'TABLE'
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    // Toplam tutarı hesapla
+    const totalAmount = table.orders.reduce((sum, order) => {
+      return sum + order.orderItems.reduce((orderSum, item) => {
+        return orderSum + (item.price * item.quantity);
+      }, 0);
+    }, 0);
+
+    res.json({
+      table,
+      totalAmount,
+      orderCount: table.orders.length
+    });
+  } catch (error) {
+    console.error('Masa siparişleri getirilemedi:', error);
+    res.status(500).json({ error: 'Siparişler getirilemedi' });
+  }
+});
+
+// Masa tahsilatı yap
+app.post('/api/admin/tables/:tableId/collect', authenticateToken, async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    const { paymentMethod, amount } = req.body;
+    
+    if (!paymentMethod || !amount) {
+      return res.status(400).json({ error: 'Ödeme yöntemi ve tutar zorunludur' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    // Masayı ve siparişlerini getir
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        orders: {
+          where: {
+            status: { not: 'DELIVERED' },
+            orderType: 'TABLE'
+          }
+        }
+      }
+    });
+
+    if (!table) {
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    if (table.orders.length === 0) {
+      return res.status(400).json({ error: 'Bu masada tahsilat yapılacak sipariş bulunmuyor' });
+    }
+
+    // Tahsilat kaydı oluştur
+    const payment = await prisma.tablePayment.create({
+      data: {
+        tableId: parseInt(tableId),
+        amount: parseFloat(amount),
+        paymentMethod,
+        userId: user.id
+      }
+    });
+
+    // Siparişleri teslim edildi olarak işaretle
+    await prisma.order.updateMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { not: 'DELIVERED' },
+        orderType: 'TABLE'
+      },
+      data: {
+        status: 'DELIVERED'
+      }
+    });
+
+    // Masayı sıfırla
+    await prisma.table.update({
+      where: { id: parseInt(tableId) },
+      data: {
+        status: 'EMPTY',
+        totalAmount: 0
+      }
+    });
+
+    res.json({
+      message: 'Tahsilat başarıyla tamamlandı',
+      payment,
+      tableId: parseInt(tableId)
+    });
+  } catch (error) {
+    console.error('Tahsilat hatası:', error);
+    res.status(500).json({ error: 'Tahsilat yapılamadı' });
+  }
+});
+
+// Masa sıfırlama
+app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    // Masayı sıfırla
+    await prisma.table.update({
+      where: { id: parseInt(tableId) },
+      data: {
+        status: 'EMPTY',
+        totalAmount: 0
+      }
+    });
+
+    // Siparişleri teslim edildi olarak işaretle
+    await prisma.order.updateMany({
+      where: {
+        tableId: parseInt(tableId),
+        status: { not: 'DELIVERED' },
+        orderType: 'TABLE'
+      },
+      data: {
+        status: 'DELIVERED'
+      }
+    });
+
+    res.json({
+      message: 'Masa başarıyla sıfırlandı',
+      tableId: parseInt(tableId)
+    });
+  } catch (error) {
+    console.error('Masa sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Masa sıfırlanamadı' });
+  }
+});

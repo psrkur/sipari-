@@ -22,6 +22,7 @@ model User {
   updatedAt  DateTime      @updatedAt
   orders     Order[]
   addresses  UserAddress[]
+  tablePayments TablePayment[]
   branch     Branch?       @relation(fields: [branchId], references: [id])
 
   @@unique([email])
@@ -136,10 +137,13 @@ model Table {
   number    String
   branchId  Int
   isActive  Boolean  @default(true)
+  status    String   @default("EMPTY") // EMPTY, OCCUPIED, PAID
+  totalAmount Float  @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
   branch    Branch   @relation(fields: [branchId], references: [id])
+  payments  TablePayment[]
 
   @@unique([number, branchId])
   @@map("tables")
@@ -173,4 +177,17 @@ model Company {
   branches   Branch[]
   categories Category[]
   products   Product[]
+}
+
+model TablePayment {
+  id        Int      @id @default(autoincrement())
+  tableId   Int
+  amount    Float
+  paymentMethod String // CASH, CARD
+  userId    Int?     // Kasiyer ID
+  createdAt DateTime @default(now())
+  table     Table    @relation(fields: [tableId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@map("table_payments")
 }
