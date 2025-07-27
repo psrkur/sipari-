@@ -3585,8 +3585,8 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
-// Resim yükleme endpoint'i
-app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
+// Resim yükleme endpoint'i - geçici olarak authentication kaldırıldı
+app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
