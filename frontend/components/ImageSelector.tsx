@@ -220,14 +220,11 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
                 <Card key={image.filename} className="relative group">
                   <CardContent className="p-2">
                     <div className="relative">
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${image.path}`}
-                        alt={image.filename}
-                        className="w-full h-32 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.currentTarget.src = '/placeholder-image.svg';
-                        }}
-                      />
+                                             <img
+                         src="/placeholder-image.svg"
+                         alt={image.filename}
+                         className="w-full h-32 object-cover rounded-lg bg-gray-100"
+                       />
                       
                       {/* Selection Overlay */}
                       {selectedImage === image.path && (
