@@ -138,10 +138,22 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       
       console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
       console.log('🔍 FormData:', formData);
+      
+      // Authentication header'ı ekle
+      const headers: any = {
+        'Content-Type': 'multipart/form-data'
+      };
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('🔍 Auth token eklendi');
+      } else {
+        console.log('⚠️ Auth token yok, authentication olmadan yükleniyor');
+      }
+      
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+        headers: headers,
+        timeout: 30000 // 30 saniye timeout
       });
       
       console.log('✅ Upload response:', response.data);
@@ -161,7 +173,33 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     try {
       console.log('🔍 Gerçek API\'den siliniyor:', filename);
       
-      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
+      // Authentication header'ı ekle
+      const headers: any = {};
+      
+      let authToken = token;
+      if (!authToken) {
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error: any) {
+          console.error('Auth storage parse error:', error);
+        }
+      }
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('🔍 Auth token eklendi');
+      } else {
+        console.log('⚠️ Auth token yok, authentication olmadan siliniyor');
+      }
+      
+      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename), {
+        headers: headers,
+        timeout: 10000
+      });
       
       console.log('✅ Delete başarılı:', filename);
       toast.success('Resim silindi');
