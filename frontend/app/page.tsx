@@ -97,7 +97,7 @@ export default function Home() {
           setProducts(response.data);
           
           // Kategorileri yükle ve sırala
-          const productCategories = Array.from(new Set(response.data.map((p: any) => 
+          const productCategories: string[] = Array.from(new Set(response.data.map((p: any) => 
             typeof p.category === 'object' && p.category !== null ? p.category.name : p.category || 'Diğer'
           )));
           
