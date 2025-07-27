@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
-import { API_ENDPOINTS } from '@/lib/api';
+import { API_ENDPOINTS, handleImageError } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -33,40 +33,18 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
+      console.log('🔍 Gerçek API\'den resimler yükleniyor');
       
-      // Eğer images zaten yüklüyse, tekrar yükleme
-      if (images.length > 0) {
-        console.log('🔍 Resimler zaten yüklü, tekrar yüklemiyor');
-        return;
-      }
-      
-      // Geçici olarak mock data kullan
-      console.log('🔍 Mock data kullanılıyor');
-      
-      const mockImages = [
-        {
-          filename: 'test-image-1.jpg',
-          path: '/uploads/products/test-image-1.jpg',
-          size: 1024000,
-          uploadedAt: new Date().toISOString()
-        },
-        {
-          filename: 'test-image-2.png',
-          path: '/uploads/products/test-image-2.png',
-          size: 2048000,
-          uploadedAt: new Date().toISOString()
-        }
-      ];
-      
-      console.log('✅ Mock resimler yüklendi:', mockImages);
-      setImages(mockImages);
+      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
+      console.log('✅ API response:', response.data);
+      setImages(response.data);
     } catch (error: any) {
-      console.error('❌ Mock resimler yüklenemedi:', error);
+      console.error('❌ Resimler yüklenemedi:', error);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
     }
-  }, [images.length]);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -114,24 +92,23 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
-      // Geçici olarak mock upload
-      console.log('🔍 Mock upload işlemi');
+      // Gerçek API'ye yükle
+      console.log('🔍 Gerçek API\'ye yükleniyor');
       
-      // Simüle edilmiş upload süresi
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const formData = new FormData();
+      formData.append('image', file);
       
-      const mockUploadedImage = {
-        filename: file.name,
-        path: `/uploads/products/${file.name}`,
-        size: file.size,
-        uploadedAt: new Date().toISOString()
-      };
+      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       
-      console.log('✅ Mock upload başarılı:', mockUploadedImage);
-      toast.success('Resim başarıyla yüklendi (Mock)');
+      console.log('✅ Upload response:', response.data);
+      toast.success('Resim başarıyla yüklendi');
       
-      // Resim listesini güncelle
-      setImages(prev => [mockUploadedImage, ...prev]);
+      // Resim listesini yenile
+      fetchImages();
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       toast.error('Resim yüklenemedi');
@@ -142,16 +119,15 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   const handleDeleteImage = async (filename: string) => {
     try {
-      console.log('🔍 Mock delete işlemi:', filename);
+      console.log('🔍 Gerçek API\'den siliniyor:', filename);
       
-      // Geçici olarak mock delete
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simüle edilmiş silme süresi
+      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
       
-      // Resim listesinden kaldır
-      setImages(prev => prev.filter(img => img.filename !== filename));
+      console.log('✅ Delete başarılı:', filename);
+      toast.success('Resim silindi');
       
-      console.log('✅ Mock delete başarılı:', filename);
-      toast.success('Resim silindi (Mock)');
+      // Resim listesini yenile
+      fetchImages();
     } catch (error: any) {
       console.error('Resim silme hatası:', error);
       toast.error('Resim silinemedi');
@@ -222,11 +198,12 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
                 <Card key={image.filename} className="relative group">
                   <CardContent className="p-2">
                     <div className="relative">
-                                             <img
-                         src="/placeholder-image.svg"
-                         alt={image.filename}
-                         className="w-full h-32 object-cover rounded-lg bg-gray-100"
-                       />
+                                                                     <img
+                          src={`${API_ENDPOINTS.IMAGE_URL(image.path)}`}
+                          alt={image.filename}
+                          className="w-full h-32 object-cover rounded-lg bg-gray-100"
+                          onError={handleImageError}
+                        />
                       
                       {/* Selection Overlay */}
                       {selectedImage === image.path && (
