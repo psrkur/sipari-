@@ -158,17 +158,28 @@ const app = express();
 // Multer konfigürasyonu - Resim yükleme için
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, 'uploads', 'products');
-    // Klasör yoksa oluştur
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    try {
+      const uploadDir = path.join(__dirname, 'uploads', 'products');
+      // Klasör yoksa oluştur
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    } catch (error) {
+      console.error('Upload directory oluşturma hatası:', error);
+      cb(error);
     }
-    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Benzersiz dosya adı oluştur
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
+    try {
+      // Benzersiz dosya adı oluştur
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+      cb(null, uniqueSuffix + '-' + safeName);
+    } catch (error) {
+      console.error('Filename oluşturma hatası:', error);
+      cb(error);
+    }
   }
 });
 
@@ -178,11 +189,16 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
   fileFilter: function (req, file, cb) {
-    // Sadece resim dosyalarını kabul et
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Sadece resim dosyaları yüklenebilir!'), false);
+    try {
+      // Sadece resim dosyalarını kabul et
+      if (file.mimetype && file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Sadece resim dosyaları yüklenebilir!'), false);
+      }
+    } catch (error) {
+      console.error('File filter hatası:', error);
+      cb(error);
     }
   }
 });
@@ -3606,15 +3622,30 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
     const files = fs.readdirSync(uploadDir);
     const images = files
       .filter(file => {
-        const ext = path.extname(file).toLowerCase();
-        return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+        try {
+          const ext = path.extname(file).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+        } catch (error) {
+          console.error('Dosya filtresi hatası:', error);
+          return false;
+        }
       })
-      .map(file => ({
-        filename: file,
-        path: `/uploads/products/${file}`,
-        size: fs.statSync(path.join(uploadDir, file)).size,
-        uploadedAt: fs.statSync(path.join(uploadDir, file)).mtime
-      }))
+      .map(file => {
+        try {
+          const filePath = path.join(uploadDir, file);
+          const stats = fs.statSync(filePath);
+          return {
+            filename: file,
+            path: `/uploads/products/${file}`,
+            size: stats.size,
+            uploadedAt: stats.mtime
+          };
+        } catch (error) {
+          console.error('Dosya bilgisi alma hatası:', error);
+          return null;
+        }
+      })
+      .filter(image => image !== null)
       .sort((a, b) => b.uploadedAt - a.uploadedAt);
 
     res.json(images);
@@ -3628,6 +3659,12 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
 app.delete('/api/admin/images/:filename', authenticateToken, async (req, res) => {
   try {
     const { filename } = req.params;
+    
+    // Güvenlik kontrolü - sadece dosya adı
+    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Geçersiz dosya adı' });
+    }
+    
     const filePath = path.join(__dirname, 'uploads', 'products', filename);
     
     if (fs.existsSync(filePath)) {
