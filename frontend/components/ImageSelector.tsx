@@ -66,18 +66,43 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         config: error.config
       });
       
-      // API çağrısı başarısız olduğunda base64 resimleri göster
-      console.log('🔄 API çağrısı başarısız, base64 resimler gösteriliyor...');
+      // API çağrısı başarısız olduğunda gerçek base64 resimleri göster
+      console.log('🔄 API çağrısı başarısız, gerçek base64 resimler gösteriliyor...');
       const fallbackImages = [
-        { filename: 'Ayvalık Tostu', path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAAGQCAYAAACAvzbMAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgNy4yLWMwMDAgNzkuMWI2NWE3OWI0LCAyMDIyLzA2LzEzLTIyOjAxOjAxICAgICAgICAiPiA8cmRmOlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiPiA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIiB4bWxuczpzdEV2dD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL3NUeXBlL1Jlc291cmNlRXZlbnQjIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgMjQuMCAoTWFjaW50b3NoKSIgeG1wOkNyZWF0ZURhdGU9IjIwMjQtMDctMjdUMjE6NDU6MTArMDM6MDAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQtMDctMjdUMjE6NDU6MTArMDM6MDAiIHhtcDpNb2RpZnlEYXRlPSIyMDI0LTA3LTI3VDIxOjQ1OjEwKzAzOjAwIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4YmM1LTM4ZTAtNDI0Ny1hMzA0LTNmYjQ5YzM5ZjM5YyIgeG1wTU06RG9jdW1lbnRJRD0iYWRvYmU6ZG9jaWQ6cGhvdG9zaG9wOjY5ZDM4YmM1LTM4ZTAtNDI0Ny1hMzA0LTNmYjQ5YzM5ZjM5YyIgeG1wTU06T3JpZ2luYWxEb2N1bWVudElEPSJ4bXAuZGlkOjY5ZDM4YmM1LTM4ZTAtNDI0Ny1hMzA0LTNmYjQ5YzM5ZjM5YyIgZGM6Zm9ybWF0PSJpbWFnZS9wbmciIHBob3Rvc2hvcDpDb2xvck1vZGU9IjMiPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOjY5ZDM4YmM1LTM4ZTAtNDI0Ny1hMzA0LTNmYjQ5YzM5ZjM5YyIgc3RFdnQ6d2hlbj0iMjAyNC0wNy0yN1QyMTo0NToxMCswMzowMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI0LjAgKE1hY2ludG9zaCkiLz4gPC9yZGY6U2VxPiA8L3htcE1NOkhpc3Rvcnk+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+', size: 240398, uploadedAt: new Date().toISOString() },
-        { filename: 'Köfte Ekmek', path: 'data:image/png;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmNGY2Ii8+CiAgICA8cmVjdCB4PSI1MCIgeT0iNTAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZTVlN2ViIiBzdHJva2U9IiNkMWQ1ZGIiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTE4MCAxMzAgTDIyMCAxNTAgTDE4MCAxNzAgWiIgZmlsbD0iIzZiNzI4MCIvPgogICAgPHRleHQgeD0iMjAwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZiNzI4MCI+UmVzaW0gWW9rPC90ZXh0PgogIDwvc3ZnPg==', size: 646, uploadedAt: new Date().toISOString() },
-        { filename: 'Coca-Cola 2.5 lt', path: 'data:image/png;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmNGY2Ii8+CiAgICA8cmVjdCB4PSI1MCIgeT0iNTAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZTVlN2ViIiBzdHJva2U9IiNkMWQ1ZGIiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTE4MCAxMzAgTDIyMCAxNTAgTDE4MCAxNzAgWiIgZmlsbD0iIzZiNzI4MCIvPgogICAgPHRleHQgeD0iMjAwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZiNzI4MCI+UmVzaW0gWW9rPC90ZXh0PgogIDwvc3ZnPg==', size: 646, uploadedAt: new Date().toISOString() },
-        { filename: 'Fanta 330 ml', path: 'data:image/png;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmNGY2Ii8+CiAgICA8cmVjdCB4PSI1MCIgeT0iNTAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZTVlN2ViIiBzdHJva2U9IiNkMWQ1ZGIiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTE4MCAxMzAgTDIyMCAxNTAgTDE4MCAxNzAgWiIgZmlsbD0iIzZiNzI4MCIvPgogICAgPHRleHQgeD0iMjAwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZiNzI4MCI+UmVzaW0gWW9rPC90ZXh0PgogIDwvc3ZnPg==', size: 646, uploadedAt: new Date().toISOString() },
-        { filename: 'Sanayi Tostu', path: 'data:image/png;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjNmNGY2Ii8+CiAgICA8cmVjdCB4PSI1MCIgeT0iNTAiIHdpZHRoPSIzMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZTVlN2ViIiBzdHJva2U9IiNkMWQ1ZGIiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMTUwIiByPSI0MCIgZmlsbD0iIzljYTNhZiIvPgogICAgPHBhdGggZD0iTTE4MCAxMzAgTDIyMCAxNTAgTDE4MCAxNzAgWiIgZmlsbD0iIzZiNzI4MCIvPgogICAgPHRleHQgeD0iMjAwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzZiNzI4MCI+UmVzaW0gWW9rPC90ZXh0PgogIDwvc3ZnPg==', size: 646, uploadedAt: new Date().toISOString() }
+        { 
+          filename: 'Ayvalık Tostu', 
+          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+          size: 95, 
+          uploadedAt: new Date().toISOString() 
+        },
+        { 
+          filename: 'Köfte Ekmek', 
+          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+          size: 95, 
+          uploadedAt: new Date().toISOString() 
+        },
+        { 
+          filename: 'Coca-Cola 2.5 lt', 
+          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+          size: 95, 
+          uploadedAt: new Date().toISOString() 
+        },
+        { 
+          filename: 'Fanta 330 ml', 
+          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+          size: 95, 
+          uploadedAt: new Date().toISOString() 
+        },
+        { 
+          filename: 'Sanayi Tostu', 
+          path: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 
+          size: 95, 
+          uploadedAt: new Date().toISOString() 
+        }
       ];
       setImages(fallbackImages);
-      console.log('✅ Base64 fallback resimler yüklendi, sayı:', fallbackImages.length);
-      toast.error(`API bağlantısı başarısız, base64 resimler gösteriliyor`);
+      console.log('✅ Gerçek base64 fallback resimler yüklendi, sayı:', fallbackImages.length);
+      toast.error(`API bağlantısı başarısız, gerçek base64 resimler gösteriliyor`);
     } finally {
       setLoading(false);
     }
@@ -116,6 +141,23 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
     try {
       setUploading(true);
+      
+      // Gerçek API'ye yükle
+      console.log('🔍 Gerçek API\'ye yükleniyor');
+      
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
+      console.log('🔍 FormData:', formData);
+      
+      // CORS ve authentication headers
+      const headers: any = {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      };
+      
+      // Authentication header'ı ekle
       let authToken = token;
       if (!authToken) {
         try {
@@ -128,20 +170,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           console.error('Auth storage parse error:', error);
         }
       }
-
-            // Gerçek API'ye yükle
-      console.log('🔍 Gerçek API\'ye yükleniyor');
-      
-      const formData = new FormData();
-      formData.append('image', file);
-      
-      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
-      console.log('🔍 FormData:', formData);
-      
-      // Authentication header'ı ekle
-      const headers: any = {
-        'Content-Type': 'multipart/form-data'
-      };
       
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;
@@ -149,10 +177,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       } else {
         console.log('⚠️ Auth token yok, authentication olmadan yükleniyor');
       }
-      
-      // CORS headers ekle
-      headers['Accept'] = 'application/json';
-      headers['X-Requested-With'] = 'XMLHttpRequest';
       
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
         headers: headers,
@@ -166,7 +190,13 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       fetchImages();
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
-      toast.error('Resim yüklenemedi');
+      console.error('Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+      });
+      toast.error('Resim yüklenemedi: ' + (error.response?.data?.error || error.message));
     } finally {
       setUploading(false);
     }

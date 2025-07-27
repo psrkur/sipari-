@@ -3996,10 +3996,23 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
 // Resim yükleme endpoint'i - authentication olmadan
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı - v6 - DUAL SYNC');
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v7 - FIXED');
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
     console.log('🔍 Request headers:', req.headers);
+    
+    // CORS ayarları
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+    res.set('Access-Control-Max-Age', '86400');
+    res.set('Access-Control-Allow-Credentials', 'false');
+    
+    // OPTIONS request için
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
     
     if (!req.file) {
       console.log('❌ Resim dosyası yüklenmedi');
@@ -4232,7 +4245,20 @@ app.get('/api/test', (req, res) => {
 // Public endpoint - authentication olmadan (frontend için)
 app.get('/api/admin/images-public', async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint) - v3 - DEPLOYMENT TRIGGER');
+    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint) - v4 - BASE64 SUPPORT');
+    
+    // CORS ayarları
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+    res.set('Access-Control-Max-Age', '86400');
+    res.set('Access-Control-Allow-Credentials', 'false');
+    
+    // OPTIONS request için
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
     
     const uploadDir = path.join(__dirname, 'uploads', 'products');
     console.log('🔍 Upload directory:', uploadDir);
@@ -4260,12 +4286,18 @@ app.get('/api/admin/images-public', async (req, res) => {
         try {
           const filePath = path.join(uploadDir, file);
           const stats = fs.statSync(filePath);
+          
+          // Dosyayı base64'e çevir
+          const imageBuffer = fs.readFileSync(filePath);
+          const base64Image = `data:image/${path.extname(file).substring(1)};base64,${imageBuffer.toString('base64')}`;
+          
           const imageInfo = {
             filename: file,
-            path: `/uploads/products/${file}`,
+            path: base64Image, // Base64 data URL olarak döndür
             size: stats.size,
             uploadedAt: stats.mtime
           };
+          console.log('📄 Resim bilgisi:', { filename: file, size: stats.size, base64Length: base64Image.length });
           return imageInfo;
         } catch (error) {
           console.error('Dosya bilgisi alma hatası:', error);
