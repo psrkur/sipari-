@@ -149,7 +149,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-xl font-bold text-gray-800">🖼️ Resim Seçici</h2>
@@ -183,8 +183,8 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           </div>
         </div>
 
-        {/* Images Grid */}
-        <div className="flex-1 overflow-y-auto p-4">
+                 {/* Images Grid */}
+         <div className="flex-1 overflow-y-auto p-4 min-h-0">
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
