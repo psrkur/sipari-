@@ -151,12 +151,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
       console.log('🔍 FormData:', formData);
       
-      // CORS ve authentication headers
-      const headers: any = {
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
-      };
-      
       // Authentication header'ı ekle
       let authToken = token;
       if (!authToken) {
@@ -170,6 +164,9 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           console.error('Auth storage parse error:', error);
         }
       }
+      
+      // Headers - Content-Type'ı axios'a bırak
+      const headers: any = {};
       
       if (authToken) {
         headers['Authorization'] = `Bearer ${authToken}`;

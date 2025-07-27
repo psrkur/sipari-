@@ -3514,37 +3514,7 @@ app.post('/api/admin/fix-images', async (req, res) => {
   }
 });
 
-// Resim yökleme endpoint'i - geçici olarak authentication kaldırıldı
-app.post('/api/admin/upload-image', upload.single('image'), (req, res) => {
-  try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı');
-    console.log('🔍 Request headers:', req.headers);
-    console.log('🔍 Request body:', req.body);
-    console.log('🔍 Request file:', req.file);
-    
-    if (!req.file) {
-      console.log('❌ Resim dosyası yüklenmedi');
-      return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
-    }
-    
-    // Dosya yolunu oluştur
-    const imagePath = `/uploads/products/${req.file.filename}`;
-    
-    console.log('✅ Resim yüklendi:', req.file.filename);
-    console.log('✅ Dosya yolu:', req.file.path);
-    console.log('✅ Image path:', imagePath);
-    
-    res.json({
-      message: 'Resim başarıyla yüklendi',
-      imagePath: imagePath,
-      filename: req.file.filename,
-      originalName: req.file.originalname
-    });
-  } catch (error) {
-    console.error('❌ Resim yükleme hatası:', error);
-    res.status(500).json({ error: 'Resim yüklenemedi: ' + error.message });
-  }
-});
+// İlk upload endpoint'i kaldırıldı - çakışma önlendi
 
 // Resim listesi endpoint'i - Dosya tabanlı
 app.get('/api/admin/images', async (req, res) => {
