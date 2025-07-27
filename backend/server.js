@@ -965,23 +965,14 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/admin/products', authenticateToken, upload.single('image'), async (req, res) => {
+app.post('/api/admin/products', authenticateToken, async (req, res) => {
   try {
     // Şube müdürleri ürün ekleyemez
     if (req.user.role === 'BRANCH_MANAGER') {
       return res.status(403).json({ error: 'Şube müdürleri ürün ekleyemez' });
     }
 
-    const { name, description, price, categoryId, branchId } = req.body;
-    let image = null;
-    if (req.file) {
-      image = `/uploads/${req.file.filename}`;
-      const fs = require('fs');
-      const fullPath = path.join(__dirname, 'uploads', req.file.filename);
-      if (!fs.existsSync(fullPath)) {
-        return res.status(500).json({ error: 'Resim yüklenemedi' });
-      }
-    }
+    const { name, description, price, categoryId, branchId, imagePath } = req.body;
 
     if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -1017,7 +1008,8 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
             description: description || '',
             price: Number(price),
             categoryId: parseInt(categoryId),
-            image,
+            image: imagePath || null,
+            imagePath: imagePath || null,
             branchId: branch.id,
             companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
           },
@@ -1046,7 +1038,8 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
           description: description || '',
           price: Number(price),
           categoryId: parseInt(categoryId),
-          image,
+          image: imagePath || null,
+          imagePath: imagePath || null,
           branchId: targetBranchId,
           companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
         },
@@ -1064,7 +1057,7 @@ app.post('/api/admin/products', authenticateToken, upload.single('image'), async
   }
 });
 
-app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), async (req, res) => {
+app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
   try {
     console.log('=== PRODUCT UPDATE REQUEST ===');
     console.log('Request body:', req.body);
@@ -1072,16 +1065,7 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
     console.log('Product ID:', req.params.id);
     
     const { id } = req.params;
-    const { name, description, price, categoryId, branchId, isActive } = req.body;
-    let image = undefined;
-    if (req.file) {
-      image = `/uploads/${req.file.filename}`;
-      const fs = require('fs');
-      const fullPath = path.join(__dirname, 'uploads', req.file.filename);
-      if (!fs.existsSync(fullPath)) {
-        return res.status(500).json({ error: 'Resim yüklenemedi' });
-      }
-    }
+    const { name, description, price, categoryId, branchId, isActive, imagePath } = req.body;
 
     // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
     const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
@@ -1162,7 +1146,10 @@ app.put('/api/admin/products/:id', authenticateToken, upload.single('image'), as
         }
       }
       
-      if (image !== undefined) updateData.image = image;
+      if (imagePath !== undefined) {
+        updateData.image = imagePath;
+        updateData.imagePath = imagePath;
+      }
     }
 
     if (req.user.role === 'SUPER_ADMIN' && branchId === 'all') {
