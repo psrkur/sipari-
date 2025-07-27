@@ -11,6 +11,7 @@ import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
 import ProductManagement from '../components/ProductManagement';
 import BranchManagement from '../components/BranchManagement';
+import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
 
 interface OrderItem {
@@ -92,6 +93,10 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
+  const [showImageSelector, setShowImageSelector] = useState(false);
+  const [showEditImageSelector, setShowEditImageSelector] = useState(false);
+  const [selectedImagePath, setSelectedImagePath] = useState<string>('');
+  const [editSelectedImagePath, setEditSelectedImagePath] = useState<string>('');
   const [stats, setStats] = useState<any[]>([]);
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsBranchId, setStatsBranchId] = useState('');
@@ -484,6 +489,7 @@ export default function AdminPage() {
     };
     
     setEditProductForm(formData);
+    setEditSelectedImagePath(product.imagePath || '');
     setShowEditProductModal(true);
   };
 
@@ -491,42 +497,40 @@ export default function AdminPage() {
 
   const updateProduct = async () => {
     try {
-      const formData = new FormData();
-      
       if (user && user.role === 'BRANCH_MANAGER') {
         // Şube müdürleri sadece isActive değerini güncelleyebilir
-        formData.append('isActive', editProductForm.isActive ? 'true' : 'false');
+        const updateData = { isActive: editProductForm.isActive };
+        
+        await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), updateData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
       } else {
         // Süper admin tüm alanları güncelleyebilir
-        formData.append('name', editProductForm.name);
-        formData.append('description', editProductForm.description);
-        formData.append('price', String(Number(editProductForm.price)));
-        formData.append('categoryId', String(Number(editProductForm.categoryId)));
-        formData.append('branchId', String(Number(editProductForm.branchId)));
-        formData.append('isActive', editProductForm.isActive ? 'true' : 'false');
-        
-        if (editProductImage) {
-          console.log('Güncelleme için resim yükleniyor:', editProductImage.name);
-          formData.append('image', editProductImage);
-        }
+        const productData = {
+          name: editProductForm.name,
+          description: editProductForm.description,
+          price: parseFloat(editProductForm.price),
+          categoryId: parseInt(editProductForm.categoryId),
+          branchId: parseInt(editProductForm.branchId),
+          isActive: editProductForm.isActive,
+          imagePath: editSelectedImagePath || null
+        };
+
+        await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), productData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
       }
-
-      console.log('Güncelleme FormData içeriği:');
-      formData.forEach((value, key) => {
-        console.log(key, value);
-      });
-
-      await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
       
       toast.success(user && user.role === 'BRANCH_MANAGER' ? 'Ürün durumu güncellendi' : 'Ürün başarıyla güncellendi');
       setShowEditProductModal(false);
       setEditingProduct(null);
-      setEditProductImage(null);
+      setEditSelectedImagePath('');
       
       const productsResponse = await axios.get(API_ENDPOINTS.ADMIN_PRODUCTS, {
         headers: { Authorization: `Bearer ${token}` }
@@ -749,21 +753,19 @@ export default function AdminPage() {
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append('name', productForm.name);
-      formData.append('description', productForm.description);
-      formData.append('price', productForm.price);
-      formData.append('categoryId', productForm.categoryId);
-      formData.append('branchId', productForm.branchId);
+      const productData = {
+        name: productForm.name,
+        description: productForm.description,
+        price: parseFloat(productForm.price),
+        categoryId: parseInt(productForm.categoryId),
+        branchId: parseInt(productForm.branchId),
+        imagePath: selectedImagePath || null
+      };
       
-      if (productImage) {
-        formData.append('image', productImage);
-      }
-      
-      const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, formData, {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, productData, {
         headers: { 
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'application/json'
         }
       });
       
@@ -771,7 +773,7 @@ export default function AdminPage() {
       setProducts([...products, response.data]);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', categoryId: '', branchId: '' });
-      setProductImage(null);
+      setSelectedImagePath('');
     } catch (error: any) {
       console.error('Ürün ekleme hatası:', error);
       toast.error(error.response?.data?.error || 'Ürün eklenirken hata oluştu');
@@ -821,20 +823,16 @@ export default function AdminPage() {
     return new Date(date).toLocaleDateString('tr-TR');
   };
 
-  
-      
-      // Backend'den gelen veriyi frontend formatına dönüştür
-      const formattedStats = [];
-      
-      
+  // Resim seçici fonksiyonları
+  const handleImageSelect = (imagePath: string) => {
+    setSelectedImagePath(imagePath);
+    setShowImageSelector(false);
+  };
 
-
-
-  
-
- 
-
-    
+  const handleEditImageSelect = (imagePath: string) => {
+    setEditSelectedImagePath(imagePath);
+    setShowEditImageSelector(false);
+  };
 
   useEffect(() => {
     if (activeTab !== 'daily-stats') return;
@@ -1522,12 +1520,29 @@ export default function AdminPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ürün Resmi
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setProductImage(e.target.files?.[0] || null)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  />
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowImageSelector(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      🖼️ Resim Seç
+                    </button>
+                    {selectedImagePath && (
+                      <span className="text-sm text-green-600 flex items-center">
+                        ✓ Resim seçildi
+                      </span>
+                    )}
+                  </div>
+                  {selectedImagePath && (
+                    <div className="mt-2">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${selectedImagePath}`}
+                        alt="Seçilen resim"
+                        className="w-20 h-20 object-cover rounded-lg border"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -1715,13 +1730,30 @@ export default function AdminPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ürün Resmi
                   </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setEditProductImage(e.target.files?.[0] || null)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    disabled={user?.role === 'BRANCH_MANAGER'}
-                  />
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditImageSelector(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      disabled={user?.role === 'BRANCH_MANAGER'}
+                    >
+                      🖼️ Resim Seç
+                    </button>
+                    {editSelectedImagePath && (
+                      <span className="text-sm text-green-600 flex items-center">
+                        ✓ Resim seçildi
+                      </span>
+                    )}
+                  </div>
+                  {editSelectedImagePath && (
+                    <div className="mt-2">
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}${editSelectedImagePath}`}
+                        alt="Seçilen resim"
+                        className="w-20 h-20 object-cover rounded-lg border"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -1958,6 +1990,22 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* Resim Seçici Modal - Yeni Ürün */}
+      <ImageSelector
+        isOpen={showImageSelector}
+        onClose={() => setShowImageSelector(false)}
+        onSelect={handleImageSelect}
+        selectedImage={selectedImagePath}
+      />
+
+      {/* Resim Seçici Modal - Ürün Düzenleme */}
+      <ImageSelector
+        isOpen={showEditImageSelector}
+        onClose={() => setShowEditImageSelector(false)}
+        onSelect={handleEditImageSelect}
+        selectedImage={editSelectedImagePath}
+      />
     </div>
   );
 }
