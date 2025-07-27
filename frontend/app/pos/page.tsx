@@ -43,18 +43,26 @@ export default function POSPage() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log('POS sayfası yükleniyor...');
+    console.log('Token from store:', token);
+    console.log('Window opener:', window.opener);
+    
     // Ayrı pencerede açıldığında token kontrolü
     let authToken = token;
     
     // Eğer token yoksa localStorage'dan almayı dene
     if (!authToken) {
       const storedToken = localStorage.getItem('auth-token');
+      console.log('Stored token from localStorage:', storedToken);
       if (storedToken) {
         authToken = storedToken;
       }
     }
     
+    console.log('Final authToken:', authToken);
+    
     if (!authToken) {
+      console.log('Token bulunamadı, pencere kapatılıyor...');
       toast.error('Giriş yapmanız gerekiyor');
       // Ayrı pencerede açıldıysa parent window'a mesaj gönder
       if (window.opener) {
@@ -66,20 +74,27 @@ export default function POSPage() {
       return;
     }
 
+    console.log('Token bulundu, şubeler yükleniyor...');
     fetchBranches();
   }, [token, router]);
 
   const fetchBranches = async () => {
     try {
+      console.log('fetchBranches çağrıldı');
       // Token'ı al (store'dan veya localStorage'dan)
       let authToken = token;
       if (!authToken) {
         authToken = localStorage.getItem('auth-token') || '';
       }
       
+      console.log('fetchBranches için token:', authToken);
+      console.log('API endpoint:', API_ENDPOINTS.ADMIN_BRANCHES);
+      
       const response = await axios.get(API_ENDPOINTS.ADMIN_BRANCHES, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
+      
+      console.log('Şubeler başarıyla yüklendi:', response.data);
       setBranches(response.data);
       if (response.data.length > 0) {
         setSelectedBranch(response.data[0]);
@@ -88,6 +103,7 @@ export default function POSPage() {
       }
     } catch (error) {
       console.error('Şubeler yüklenemedi:', error);
+      console.error('Error details:', error.response?.data);
       toast.error('Şubeler yüklenemedi');
     }
   };
