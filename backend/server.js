@@ -3759,7 +3759,7 @@ app.get('/api/admin/images-test', async (req, res) => {
 // Public endpoint - authentication olmadan (frontend için)
 app.get('/api/admin/images-public', async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint) - v2');
+    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint) - v3 - DEPLOYMENT TRIGGER');
     
     const uploadDir = path.join(__dirname, 'uploads', 'products');
     console.log('🔍 Upload directory:', uploadDir);
