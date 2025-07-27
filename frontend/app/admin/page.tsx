@@ -943,8 +943,13 @@ export default function AdminPage() {
             )}
             <button
               onClick={() => {
-                console.log('POS button clicked, navigating to /pos');
-                router.push('/pos');
+                console.log('POS button clicked, opening in new window');
+                const posWindow = window.open('/pos', 'pos_window', 'width=1400,height=900,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no');
+                if (posWindow) {
+                  posWindow.focus();
+                } else {
+                  toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
+                }
               }}
               className="px-8 py-4 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 text-xl shadow-xl border-4 border-green-500 transform hover:scale-105 transition-all duration-200 z-50 relative"
               style={{ 
