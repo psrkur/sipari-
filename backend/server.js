@@ -3588,7 +3588,12 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
 // Resim yükleme endpoint'i - geçici olarak authentication kaldırıldı
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v4 - DEPLOYMENT TRIGGER');
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Request file:', req.file);
+    
     if (!req.file) {
+      console.log('❌ Resim dosyası yüklenmedi');
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
     }
 
@@ -3610,7 +3615,7 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
 // Resim listesi endpoint'i - geçici olarak authentication kaldırıldı
 app.get('/api/admin/images', async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images çağrıldı');
+    console.log('🔍 GET /api/admin/images çağrıldı - v4 - DEPLOYMENT TRIGGER');
     console.log('🔍 User:', req.user);
     console.log('🔍 Request headers:', req.headers);
     console.log('🔍 Request URL:', req.url);
