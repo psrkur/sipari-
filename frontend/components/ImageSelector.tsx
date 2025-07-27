@@ -109,7 +109,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
         headers: { 
-          Authorization: `Bearer ${authToken}`,
           'Content-Type': 'multipart/form-data'
         }
       });
