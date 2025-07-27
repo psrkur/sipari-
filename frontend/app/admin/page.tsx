@@ -325,25 +325,34 @@ export default function AdminPage() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        // Daha uzun ve yüksek sesli uyarı sesi
-        const duration = 1.5; // 1.5 saniye (önceden 0.3 saniye)
+        // Çok şiddetli ve yüksek melodili 3 saniye uyarı sesi
+        const duration = 3.0; // 3 saniye
         const startTime = audioContext.currentTime;
         
-        // Çoklu frekans değişimleri ile dikkat çekici ses
-        oscillator.frequency.setValueAtTime(1000, startTime); // Daha yüksek başlangıç frekansı
-        oscillator.frequency.setValueAtTime(800, startTime + 0.2);
-        oscillator.frequency.setValueAtTime(1200, startTime + 0.4);
-        oscillator.frequency.setValueAtTime(600, startTime + 0.6);
-        oscillator.frequency.setValueAtTime(1000, startTime + 0.8);
-        oscillator.frequency.setValueAtTime(800, startTime + 1.0);
-        oscillator.frequency.setValueAtTime(1200, startTime + 1.2);
+        // Yüksek melodili ve dikkat çekici frekans değişimleri
+        oscillator.frequency.setValueAtTime(1500, startTime); // Çok yüksek başlangıç
+        oscillator.frequency.setValueAtTime(800, startTime + 0.3);
+        oscillator.frequency.setValueAtTime(1800, startTime + 0.6);
+        oscillator.frequency.setValueAtTime(600, startTime + 0.9);
+        oscillator.frequency.setValueAtTime(2000, startTime + 1.2); // En yüksek frekans
+        oscillator.frequency.setValueAtTime(400, startTime + 1.5);
+        oscillator.frequency.setValueAtTime(1600, startTime + 1.8);
+        oscillator.frequency.setValueAtTime(700, startTime + 2.1);
+        oscillator.frequency.setValueAtTime(1900, startTime + 2.4);
+        oscillator.frequency.setValueAtTime(500, startTime + 2.7);
+        oscillator.frequency.setValueAtTime(1700, startTime + 3.0);
         
-        // Daha yüksek ses seviyesi
-        gainNode.gain.setValueAtTime(0.6, startTime); // 0.3'ten 0.6'ya çıkarıldı
-        gainNode.gain.setValueAtTime(0.6, startTime + 0.1);
-        gainNode.gain.setValueAtTime(0.8, startTime + 0.3); // Orta kısımda daha yüksek
-        gainNode.gain.setValueAtTime(0.8, startTime + 0.5);
-        gainNode.gain.setValueAtTime(0.6, startTime + 0.7);
+        // Çok yüksek ses seviyesi - şiddetli uyarı
+        gainNode.gain.setValueAtTime(0.9, startTime); // Maksimum ses seviyesi
+        gainNode.gain.setValueAtTime(0.9, startTime + 0.2);
+        gainNode.gain.setValueAtTime(1.0, startTime + 0.5); // Tam ses
+        gainNode.gain.setValueAtTime(1.0, startTime + 0.8);
+        gainNode.gain.setValueAtTime(0.95, startTime + 1.1);
+        gainNode.gain.setValueAtTime(1.0, startTime + 1.4);
+        gainNode.gain.setValueAtTime(0.9, startTime + 1.7);
+        gainNode.gain.setValueAtTime(1.0, startTime + 2.0);
+        gainNode.gain.setValueAtTime(0.95, startTime + 2.3);
+        gainNode.gain.setValueAtTime(0.9, startTime + 2.6);
         gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
         
         oscillator.start(startTime);
