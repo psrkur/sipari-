@@ -116,7 +116,9 @@ export default function POSPage() {
       }
     } catch (error) {
       console.error('Şubeler yüklenemedi:', error);
-      console.error('Error details:', error.response?.data);
+      if (error && typeof error === 'object' && 'response' in error) {
+        console.error('Error details:', (error as any).response?.data);
+      }
       toast.error('Şubeler yüklenemedi');
     }
   };
