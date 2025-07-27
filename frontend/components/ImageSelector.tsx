@@ -136,23 +136,16 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   const handleDeleteImage = async (filename: string) => {
     try {
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error: any) {
-          console.error('Auth storage parse error:', error);
-        }
-      }
-
-      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
-
-      toast.success('Resim silindi');
-      fetchImages(); // Resim listesini yenile
+      console.log('🔍 Mock delete işlemi:', filename);
+      
+      // Geçici olarak mock delete
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simüle edilmiş silme süresi
+      
+      // Resim listesinden kaldır
+      setImages(prev => prev.filter(img => img.filename !== filename));
+      
+      console.log('✅ Mock delete başarılı:', filename);
+      toast.success('Resim silindi (Mock)');
     } catch (error: any) {
       console.error('Resim silme hatası:', error);
       toast.error('Resim silinemedi');
