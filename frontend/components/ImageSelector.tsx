@@ -183,14 +183,15 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         {/* Upload Section */}
         <div className="p-4 border-b bg-gray-50">
           <div className="flex items-center space-x-4">
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={uploading}
-              />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+              disabled={uploading}
+              id="image-upload"
+            />
+            <label htmlFor="image-upload" className="cursor-pointer">
               <Button disabled={uploading} className="flex items-center space-x-2">
                 <Upload className="h-4 w-4" />
                 {uploading ? 'Yükleniyor...' : 'Resim Yükle'}
