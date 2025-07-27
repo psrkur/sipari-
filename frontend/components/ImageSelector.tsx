@@ -36,12 +36,49 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       console.log('🔍 Gerçek API\'den resimler yükleniyor');
       
       console.log('🔍 API URL:', API_ENDPOINTS.GET_IMAGES);
-      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
+      
+      // CORS sorunları için headers ekle
+      const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000 // 10 saniye timeout
+      });
+      
       console.log('✅ API response:', response.data);
-      setImages(response.data);
+      console.log('✅ Response status:', response.status);
+      console.log('✅ Response headers:', response.headers);
+      
+      if (Array.isArray(response.data)) {
+        setImages(response.data);
+        console.log('✅ Resimler başarıyla yüklendi, sayı:', response.data.length);
+      } else {
+        console.error('❌ Response data array değil:', response.data);
+        setImages([]);
+      }
     } catch (error: any) {
       console.error('❌ Resimler yüklenemedi:', error);
-      toast.error('Resimler yüklenemedi');
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: error.config
+      });
+      
+      // API çağrısı başarısız olduğunda mevcut resimleri göster
+      console.log('🔄 API çağrısı başarısız, mevcut resimler gösteriliyor...');
+      const fallbackImages = [
+        { filename: 'çizar_salam_kaşar_sandviç.png', path: '/uploads/products/çizar_salam_kaşar_sandviç.png', size: 466, uploadedAt: new Date().toISOString() },
+        { filename: 'izar_ayvalk.png', path: '/uploads/products/izar_ayvalk.png', size: 176000, uploadedAt: new Date().toISOString() },
+        { filename: 'izar_pizza_2_li_cola__patates__kroket_pizza.jpg', path: '/uploads/products/izar_pizza_2_li_cola__patates__kroket_pizza.jpg', size: 466, uploadedAt: new Date().toISOString() },
+        { filename: '1753558907275-637347484-__izar_k__fte_ekmek.png', path: '/uploads/products/1753558907275-637347484-__izar_k__fte_ekmek.png', size: 466, uploadedAt: new Date().toISOString() },
+        { filename: '1753555113083-893862847-__izar_ka__arl___bazlama_tost.png', path: '/uploads/products/1753555113083-893862847-__izar_ka__arl___bazlama_tost.png', size: 466, uploadedAt: new Date().toISOString() },
+        { filename: '1753605336670-981052519-__izar_salam_ka__ar_sandvi__.png', path: '/uploads/products/1753605336670-981052519-__izar_salam_ka__ar_sandvi__.png', size: 466, uploadedAt: new Date().toISOString() }
+      ];
+      setImages(fallbackImages);
+      console.log('✅ Fallback resimler yüklendi, sayı:', fallbackImages.length);
+      toast.error(`API bağlantısı başarısız, mevcut resimler gösteriliyor`);
     } finally {
       setLoading(false);
     }
