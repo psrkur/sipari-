@@ -98,6 +98,43 @@ async function testDatabaseConnection() {
 }
 
 testDatabaseConnection();
+
+// Migration kontrolü
+async function checkAndRunMigration() {
+  try {
+    console.log('🔧 Migration kontrolü başlatılıyor...');
+    
+    // Migration'ı uygula
+    const { execSync } = require('child_process');
+    execSync('npx prisma migrate deploy', { 
+      stdio: 'inherit',
+      cwd: __dirname 
+    });
+    
+    console.log('✅ Migration başarıyla uygulandı');
+    
+    // status ve totalAmount sütunlarının var olup olmadığını kontrol et
+    const result = await prisma.$queryRaw`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'tables' AND column_name IN ('status', 'totalAmount')
+    `;
+    
+    console.log('📊 Mevcut sütunlar:', result);
+    
+    if (result.length >= 2) {
+      console.log('✅ status ve totalAmount sütunları başarıyla eklendi');
+    } else {
+      console.log('❌ Sütunlar eksik:', result);
+    }
+    
+  } catch (error) {
+    console.error('❌ Migration hatası:', error);
+  }
+}
+
+// Server başlamadan önce migration'ı çalıştır
+checkAndRunMigration();
     
 
 const multer = require('multer');
