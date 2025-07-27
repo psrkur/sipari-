@@ -542,7 +542,7 @@ export default function TableOrder() {
                         {product.image && (
                           <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
                             <img
-                              src="/placeholder-image.svg"
+                              src={product.image}
                               alt={product.name}
                               className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                               crossOrigin="anonymous"
@@ -710,7 +710,7 @@ export default function TableOrder() {
               {selectedProduct.image && (
                 <div className="relative overflow-hidden rounded-xl">
                   <img
-                    src="/placeholder-image.svg"
+                    src={selectedProduct.image}
                     alt={selectedProduct.name}
                     className="w-full h-64 sm:h-80 object-cover"
                     crossOrigin="anonymous"
