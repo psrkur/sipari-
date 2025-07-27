@@ -3835,12 +3835,13 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
-// Resim yükleme endpoint'i - geçici olarak authentication kaldırıldı
+// Resim yükleme endpoint'i - authentication olmadan
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı - v4 - DEPLOYMENT TRIGGER');
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v5 - NO AUTH');
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
+    console.log('🔍 Request headers:', req.headers);
     
     if (!req.file) {
       console.log('❌ Resim dosyası yüklenmedi');
@@ -3850,6 +3851,9 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
     // Dosya yolunu oluştur
     const imagePath = `/uploads/products/${req.file.filename}`;
     
+    console.log('✅ Resim başarıyla yüklendi:', req.file.filename);
+    console.log('✅ Dosya yolu:', imagePath);
+    
     res.json({
       message: 'Resim başarıyla yüklendi',
       imagePath: imagePath,
@@ -3857,7 +3861,7 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
       originalName: req.file.originalname
     });
   } catch (error) {
-    console.error('Resim yükleme hatası:', error);
+    console.error('❌ Resim yükleme hatası:', error);
     res.status(500).json({ error: 'Resim yüklenemedi' });
   }
 });

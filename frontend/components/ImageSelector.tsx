@@ -151,6 +151,10 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         console.log('⚠️ Auth token yok, authentication olmadan yükleniyor');
       }
       
+      // CORS headers ekle
+      headers['Accept'] = 'application/json';
+      headers['X-Requested-With'] = 'XMLHttpRequest';
+      
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
         headers: headers,
         timeout: 30000 // 30 saniye timeout
