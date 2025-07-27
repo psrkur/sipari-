@@ -1825,8 +1825,8 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
-// Şubeye göre masaları getir - SONRA TANIMLANMALI
-app.get('/api/admin/tables/:branchId', authenticateToken, async (req, res) => {
+// Şubeye göre masaları getir
+app.get('/api/admin/tables/branch/:branchId', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
