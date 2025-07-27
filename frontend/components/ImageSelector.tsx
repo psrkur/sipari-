@@ -54,6 +54,18 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       console.log('🔍 GET_IMAGES endpoint:', API_ENDPOINTS.GET_IMAGES);
       console.log('🔍 Auth token:', authToken ? 'Mevcut' : 'Yok');
+      console.log('🔍 API_BASE_URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001');
+      console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+
+      // Test isteği - önce basit bir endpoint test edelim
+      try {
+        const testResponse = await axios.get(`${API_ENDPOINTS.GET_IMAGES.replace('/api/admin/images', '')}/`, {
+          headers: { Authorization: `Bearer ${authToken}` }
+        });
+        console.log('✅ Backend erişilebilir:', testResponse.status);
+      } catch (testError) {
+        console.error('❌ Backend erişim sorunu:', testError.response?.status, testError.response?.data);
+      }
 
       const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
         headers: { Authorization: `Bearer ${authToken}` }
@@ -65,6 +77,8 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       console.error('❌ Resimler yüklenemedi:', error);
       console.error('❌ Error details:', error.response?.data);
       console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error URL:', error.config?.url);
+      console.error('❌ Error headers:', error.config?.headers);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
