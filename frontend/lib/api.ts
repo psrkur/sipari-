@@ -90,6 +90,9 @@ export const API_ENDPOINTS = {
   // Products
   PRODUCTS: (branchId: number) => `${API_BASE_URL}/api/products/${branchId}`,
   
+  // Categories
+  CATEGORIES: `${API_BASE_URL}/api/categories`,
+  
   // Orders
   ORDERS: `${API_BASE_URL}/api/orders`,
   
