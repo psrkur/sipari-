@@ -271,7 +271,7 @@ app.use(compression());
 
 // CORS konfigürasyonu - Kapsamlı
 app.use(cors({
-  origin: '*', // Tüm origin'lere izin ver
+  origin: ['http://localhost:3000', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app'],
   credentials: false, // CORS credentials false
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -309,8 +309,16 @@ app.get('/api/images/:filename', (req, res) => {
   
   const filePath = path.join(__dirname, 'uploads', 'products', filename);
   
-  // Kapsamlı CORS headers
-  res.set('Access-Control-Allow-Origin', '*');
+  // Kapsamlı CORS headers - Spesifik origin'ler
+  const allowedOrigins = ['http://localhost:3000', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app'];
+  const origin = req.headers.origin;
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
+  }
+  
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');

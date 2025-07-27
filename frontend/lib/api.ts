@@ -1,7 +1,7 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
   // SSR veya localde her zaman localhost:3001 kullan
-  if (process.env.NODE_ENV !== 'production') {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:3001';
   }
   // Production ortamında environment variable veya fallback production URL kullan
