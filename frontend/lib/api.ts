@@ -67,11 +67,12 @@ const PLACEHOLDER_IMAGE = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWl
 // Resim yükleme hatası için handler
 export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
   const img = event.currentTarget;
-  console.log('Resim yüklenemedi, placeholder gösteriliyor:', img.src);
   
   // Base64 resimler için hata kontrolü yapma
   if (img.src.startsWith('data:image/')) {
-    console.log('Base64 resim için hata kontrolü yapılmıyor');
+    console.log('Base64 resim yüklenemedi, placeholder gösteriliyor:', img.src.substring(0, 50) + '...');
+    img.src = PLACEHOLDER_IMAGE;
+    img.onerror = null; // Sonsuz döngüyü önle
     return;
   }
   
@@ -81,6 +82,7 @@ export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, E
     return;
   }
   
+  console.log('Resim yüklenemedi, placeholder gösteriliyor:', img.src);
   img.src = PLACEHOLDER_IMAGE;
   img.onerror = null; // Sonsuz döngüyü önle
 };
