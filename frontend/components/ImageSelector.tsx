@@ -59,7 +59,8 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       // Test isteği - önce basit bir endpoint test edelim
       try {
-        const testResponse = await axios.get(`${API_ENDPOINTS.GET_IMAGES.replace('/api/admin/images', '')}/`, {
+        const baseUrl = API_ENDPOINTS.GET_IMAGES.replace('/api/admin/images-public', '');
+        const testResponse = await axios.get(`${baseUrl}/`, {
           headers: { Authorization: `Bearer ${authToken}` }
         });
         console.log('✅ Backend erişilebilir:', testResponse.status);
