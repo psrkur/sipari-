@@ -240,18 +240,25 @@ const upload = multer({
 // Render/proxy ortamı için gerçek IP ve rate limit desteği
 app.set('trust proxy', 1);
 
-// Güvenlik middleware'leri
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
+// Güvenlik middleware'leri - Development için CSP devre dışı
+if (process.env.NODE_ENV === 'production') {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:", "http://localhost:3001", "https://yemek5-backend.onrender.com"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: false
-}));
+    crossOriginEmbedderPolicy: false
+  }));
+} else {
+  // Development için sadece temel güvenlik
+  app.use(helmet({
+    crossOriginEmbedderPolicy: false
+  }));
+}
 
 // Compression middleware
 app.use(compression());
@@ -277,6 +284,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type']
 }));
+
+// Global CORS headers for all responses
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, HEAD');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.header('Access-Control-Max-Age', '86400');
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -309,16 +326,8 @@ app.get('/api/images/:filename', (req, res) => {
   
   const filePath = path.join(__dirname, 'uploads', 'products', filename);
   
-  // Kapsamlı CORS headers - Spesifik origin'ler
-  const allowedOrigins = ['http://localhost:3000', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app'];
-  const origin = req.headers.origin;
-  
-  if (origin && allowedOrigins.includes(origin)) {
-    res.set('Access-Control-Allow-Origin', origin);
-  } else {
-    res.set('Access-Control-Allow-Origin', 'http://localhost:3000');
-  }
-  
+  // Development için en permissive CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
@@ -410,12 +419,13 @@ app.get('/uploads/:filename', (req, res) => {
     filePath = path.join(__dirname, 'uploads', filename);
   }
   
-  // Kapsamlı CORS headers
+  // Development için en permissive CORS ayarları
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type', 'Authorization', 'X-Requested-With');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition', 'Content-Length');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
   res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
+  res.set('Access-Control-Allow-Credentials', 'false');
   
   // OPTIONS request için
   if (req.method === 'OPTIONS') {
