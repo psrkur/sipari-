@@ -731,6 +731,15 @@ app.get('/api/products/:branchId', async (req, res) => {
       ]
     });
     
+    // İlk ürünün resim durumunu logla
+    if (products.length > 0) {
+      const firstProduct = products[0];
+      console.log('🔍 İlk ürün resim durumu:');
+      console.log(`📊 Ürün: ${firstProduct.name}`);
+      console.log(`🖼️  Image: ${firstProduct.image ? firstProduct.image.substring(0, 50) + '...' : 'YOK'}`);
+      console.log(`📏 Uzunluk: ${firstProduct.image ? firstProduct.image.length : 0}`);
+    }
+    
     console.log('✅ Ürünler başarıyla getirildi, sayı:', products.length);
     res.json(products);
   } catch (error) {
