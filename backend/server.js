@@ -394,7 +394,13 @@ app.use('/uploads/products', (req, res, next) => {
 // Resim endpoint'i
 app.get('/uploads/:filename', (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', filename);
+  // Önce products klasöründe ara
+  let filePath = path.join(__dirname, 'uploads', 'products', filename);
+  
+  // Eğer products klasöründe yoksa, direkt uploads klasöründe ara
+  if (!fs.existsSync(filePath)) {
+    filePath = path.join(__dirname, 'uploads', filename);
+  }
   
   // Kapsamlı CORS headers
   res.set('Access-Control-Allow-Origin', '*');
