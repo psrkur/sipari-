@@ -33,28 +33,14 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Mock data kullanılıyor (backend henüz hazır değil)');
+      console.log('🔍 Gerçek API\'den resimler yükleniyor');
       
-      // Mock data - backend hazır olana kadar
-      const mockImages = [
-        {
-          filename: 'test-image-1.jpg',
-          path: '/placeholder-image.svg',
-          size: 1024000,
-          uploadedAt: new Date().toISOString()
-        },
-        {
-          filename: 'test-image-2.png',
-          path: '/placeholder-image.svg',
-          size: 2048000,
-          uploadedAt: new Date().toISOString()
-        }
-      ];
-      
-      console.log('✅ Mock images loaded:', mockImages);
-      setImages(mockImages);
+      console.log('🔍 API URL:', API_ENDPOINTS.GET_IMAGES);
+      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
+      console.log('✅ API response:', response.data);
+      setImages(response.data);
     } catch (error: any) {
-      console.error('❌ Mock data hatası:', error);
+      console.error('❌ Resimler yüklenemedi:', error);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
@@ -107,24 +93,25 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
-      // Mock upload - backend hazır olana kadar
-      console.log('🔍 Mock upload yapılıyor (backend henüz hazır değil)');
+            // Gerçek API'ye yükle
+      console.log('🔍 Gerçek API\'ye yükleniyor');
       
-      // Simüle edilmiş upload
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const formData = new FormData();
+      formData.append('image', file);
       
-             const newImage = {
-         filename: file.name,
-         path: '/placeholder-image.svg',
-         size: file.size,
-         uploadedAt: new Date().toISOString()
-       };
+      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
+      console.log('🔍 FormData:', formData);
+      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       
-      console.log('✅ Mock upload başarılı:', newImage);
-      toast.success('Resim başarıyla yüklendi (Mock)');
+      console.log('✅ Upload response:', response.data);
+      toast.success('Resim başarıyla yüklendi');
       
-      // Yeni resmi listeye ekle
-      setImages(prev => [newImage, ...prev]);
+      // Resim listesini yenile
+      fetchImages();
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       toast.error('Resim yüklenemedi');
@@ -135,18 +122,17 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   const handleDeleteImage = async (filename: string) => {
     try {
-      console.log('🔍 Mock delete yapılıyor (backend henüz hazır değil):', filename);
+      console.log('🔍 Gerçek API\'den siliniyor:', filename);
       
-      // Simüle edilmiş delete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
       
-      console.log('✅ Mock delete başarılı:', filename);
-      toast.success('Resim silindi (Mock)');
+      console.log('✅ Delete başarılı:', filename);
+      toast.success('Resim silindi');
       
-      // Resmi listeden çıkar
-      setImages(prev => prev.filter(img => img.filename !== filename));
+      // Resim listesini yenile
+      fetchImages();
     } catch (error: any) {
-      console.error('Mock delete hatası:', error);
+      console.error('Resim silme hatası:', error);
       toast.error('Resim silinemedi');
     }
   };
@@ -216,9 +202,10 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
                   <CardContent className="p-2">
                     <div className="relative">
                                                                                             <img
-                         src={image.path}
+                         src={`${API_ENDPOINTS.IMAGE_URL(image.path)}`}
                          alt={image.filename}
                          className="w-full h-32 object-cover rounded-lg bg-gray-100"
+                         onError={handleImageError}
                        />
                       
                       {/* Selection Overlay */}
