@@ -151,29 +151,11 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
       console.log('🔍 FormData:', formData);
       
-      // Authentication header'ı ekle
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error: any) {
-          console.error('Auth storage parse error:', error);
-        }
-      }
-      
       // Headers - Content-Type'ı axios'a bırak
       const headers: any = {};
       
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-        console.log('🔍 Auth token eklendi');
-      } else {
-        console.log('⚠️ Auth token yok, authentication olmadan yükleniyor');
-      }
+      // Authentication olmadan upload yap (backend'de authentication kaldırıldı)
+      console.log('🔍 Authentication olmadan upload yapılıyor');
       
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
         headers: headers,
