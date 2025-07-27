@@ -19,6 +19,9 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const compression = require('compression');
 const winston = require('winston');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 // İkinci dotenv yüklemesi kaldırıldı
 
 // Winston Logger Konfigürasyonu
@@ -137,22 +140,7 @@ async function checkAndRunMigration() {
 checkAndRunMigration();
     
 
-const multer = require('multer');
-const path = require('path');
 const QRCode = require('qrcode');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads'));
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Dosya adını güvenli hale getir
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, uniqueSuffix + '-' + safeName);
-  }
-});
-const upload = multer({ storage });
 
 // Placeholder SVG helper function
 const getPlaceholderSvg = () => {
@@ -166,6 +154,38 @@ const getPlaceholderSvg = () => {
 };
 
 const app = express();
+
+// Multer konfigürasyonu - Resim yükleme için
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    // Klasör yoksa oluştur
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Benzersiz dosya adı oluştur
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Sadece resim dosyalarını kabul et
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Sadece resim dosyaları yüklenebilir!'), false);
+    }
+  }
+});
 // PORT değişkeni kaldırıldı, SERVER_PORT kullanılıyor
 
 // Render/proxy ortamı için gerçek IP ve rate limit desteği
@@ -3551,3 +3571,76 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
     res.status(500).json({ error: 'Masa sıfırlanamadı' });
   }
 });
+
+// Resim yükleme endpoint'i
+app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
+    }
+
+    // Dosya yolunu oluştur
+    const imagePath = `/uploads/products/${req.file.filename}`;
+    
+    res.json({
+      message: 'Resim başarıyla yüklendi',
+      imagePath: imagePath,
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+  } catch (error) {
+    console.error('Resim yükleme hatası:', error);
+    res.status(500).json({ error: 'Resim yüklenemedi' });
+  }
+});
+
+// Resim listesi endpoint'i
+app.get('/api/admin/images', authenticateToken, async (req, res) => {
+  try {
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    
+    if (!fs.existsSync(uploadDir)) {
+      return res.json([]);
+    }
+
+    const files = fs.readdirSync(uploadDir);
+    const images = files
+      .filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+      })
+      .map(file => ({
+        filename: file,
+        path: `/uploads/products/${file}`,
+        size: fs.statSync(path.join(uploadDir, file)).size,
+        uploadedAt: fs.statSync(path.join(uploadDir, file)).mtime
+      }))
+      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+    res.json(images);
+  } catch (error) {
+    console.error('Resim listesi hatası:', error);
+    res.status(500).json({ error: 'Resim listesi alınamadı' });
+  }
+});
+
+// Resim silme endpoint'i
+app.delete('/api/admin/images/:filename', authenticateToken, async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(__dirname, 'uploads', 'products', filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ message: 'Resim başarıyla silindi' });
+    } else {
+      res.status(404).json({ error: 'Resim bulunamadı' });
+    }
+  } catch (error) {
+    console.error('Resim silme hatası:', error);
+    res.status(500).json({ error: 'Resim silinemedi' });
+  }
+});
+
+// Statik dosya servisi
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

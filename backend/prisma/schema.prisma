@@ -82,6 +82,7 @@ model Product {
   price       Float
   categoryId  Int
   image       String?
+  imagePath   String?     // Resim dosya yolu
   isActive    Boolean     @default(true)
   branchId    Int
   createdAt   DateTime    @default(now())
