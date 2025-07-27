@@ -3756,10 +3756,10 @@ app.get('/api/admin/images-test', async (req, res) => {
   }
 });
 
-// Geçici endpoint - authentication olmadan (frontend için)
+// Public endpoint - authentication olmadan (frontend için)
 app.get('/api/admin/images-public', async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint)');
+    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint) - v2');
     
     const uploadDir = path.join(__dirname, 'uploads', 'products');
     console.log('🔍 Upload directory:', uploadDir);
