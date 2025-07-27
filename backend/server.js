@@ -1825,6 +1825,68 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
+// Aktif masaları getir (tüm şubeler)
+app.get('/api/admin/tables/active', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    let whereClause = {
+      isActive: true
+    };
+    
+    // Eğer BRANCH_MANAGER ise sadece kendi şubesinin masalarını getir
+    if (req.user.role === 'BRANCH_MANAGER') {
+      whereClause.branchId = req.user.branchId;
+    }
+
+    const tables = await prisma.table.findMany({
+      where: whereClause,
+      include: {
+        branch: true,
+        orders: {
+          where: {
+            status: { not: 'DELIVERED' },
+            orderType: 'TABLE'
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { branch: { name: 'asc' } },
+        { number: 'asc' }
+      ]
+    });
+
+    // Her masa için toplam tutarı hesapla
+    const tablesWithTotal = tables.map(table => {
+      const totalAmount = table.orders.reduce((sum, order) => {
+        return sum + order.orderItems.reduce((orderSum, item) => {
+          return orderSum + (item.price * item.quantity);
+        }, 0);
+      }, 0);
+
+      return {
+        ...table,
+        totalAmount,
+        orderCount: table.orders.length
+      };
+    });
+
+    res.json(tablesWithTotal);
+  } catch (error) {
+    console.error('Aktif masalar getirilemedi:', error);
+    res.status(500).json({ error: 'Masalar getirilemedi' });
+  }
+});
+
 // Şubeye göre masaları getir
 app.get('/api/admin/tables/branch/:branchId', authenticateToken, async (req, res) => {
   try {
