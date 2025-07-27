@@ -39,32 +39,29 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     const fetchImages = async () => {
     try {
       setLoading(true);
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error: any) {
-          console.error('Auth storage parse error:', error);
+      
+      // Geçici olarak mock data kullan
+      console.log('🔍 Mock data kullanılıyor');
+      
+      const mockImages = [
+        {
+          filename: 'test-image-1.jpg',
+          path: '/uploads/products/test-image-1.jpg',
+          size: 1024000,
+          uploadedAt: new Date().toISOString()
+        },
+        {
+          filename: 'test-image-2.png',
+          path: '/uploads/products/test-image-2.png',
+          size: 2048000,
+          uploadedAt: new Date().toISOString()
         }
-      }
-
-      console.log('🔍 GET_IMAGES endpoint:', API_ENDPOINTS.GET_IMAGES);
-      console.log('🔍 Auth token:', authToken ? 'Mevcut' : 'Yok');
-
-      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
-
-      console.log('✅ Resimler başarıyla yüklendi:', response.data);
-      setImages(response.data);
+      ];
+      
+      console.log('✅ Mock resimler yüklendi:', mockImages);
+      setImages(mockImages);
     } catch (error: any) {
-      console.error('❌ Resimler yüklenemedi:', error);
-      console.error('❌ Error details:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error URL:', error.config?.url);
-      console.error('❌ Error headers:', error.config?.headers);
+      console.error('❌ Mock resimler yüklenemedi:', error);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
@@ -111,17 +108,24 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-
-      toast.success('Resim başarıyla yüklendi');
-      fetchImages(); // Resim listesini yenile
+      // Geçici olarak mock upload
+      console.log('🔍 Mock upload işlemi');
+      
+      // Simüle edilmiş upload süresi
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const mockUploadedImage = {
+        filename: file.name,
+        path: `/uploads/products/${file.name}`,
+        size: file.size,
+        uploadedAt: new Date().toISOString()
+      };
+      
+      console.log('✅ Mock upload başarılı:', mockUploadedImage);
+      toast.success('Resim başarıyla yüklendi (Mock)');
+      
+      // Resim listesini güncelle
+      setImages(prev => [mockUploadedImage, ...prev]);
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       toast.error('Resim yüklenemedi');
