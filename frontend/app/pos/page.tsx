@@ -730,30 +730,36 @@ export default function POSPage() {
 
                     {/* Sipariş Listesi */}
                     <div className="space-y-4 mb-6">
-                      {tableOrders.table.orders.map((order: any, index: number) => (
-                        <Card key={order.id} className="border-l-4 border-l-blue-500">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-center">
-                              <CardTitle className="text-sm">
-                                Sipariş #{order.orderNumber}
-                              </CardTitle>
-                              <Badge variant="outline" className="text-xs">
-                                {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="space-y-2">
-                              {order.orderItems.map((item: any, itemIndex: number) => (
-                                <div key={itemIndex} className="flex justify-between text-sm">
-                                  <span>{item.quantity}x {item.product.name}</span>
-                                  <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      {tableOrders.table?.orders && tableOrders.table.orders.length > 0 ? (
+                        tableOrders.table.orders.map((order: any, index: number) => (
+                          <Card key={order.id} className="border-l-4 border-l-blue-500">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm">
+                                  Sipariş #{order.orderNumber}
+                                </CardTitle>
+                                <Badge variant="outline" className="text-xs">
+                                  {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="space-y-2">
+                                {order.orderItems && order.orderItems.map((item: any, itemIndex: number) => (
+                                  <div key={itemIndex} className="flex justify-between text-sm">
+                                    <span>{item.quantity}x {item.product.name}</span>
+                                    <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          <p>Bu masada henüz sipariş bulunmuyor</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Tahsilat Butonları */}
