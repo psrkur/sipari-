@@ -160,6 +160,11 @@ export const API_ENDPOINTS = {
       return PLACEHOLDER_IMAGE;
     }
     
+    // Base64 data URL kontrolü - doğrudan döndür
+    if (imagePath.startsWith('data:image/')) {
+      return imagePath;
+    }
+    
     // Tüm resimler için proxy endpoint kullan
     if (imagePath.startsWith('/uploads/products/')) {
       const filename = imagePath.replace('/uploads/products/', '');
