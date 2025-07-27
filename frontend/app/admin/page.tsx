@@ -942,8 +942,18 @@ export default function AdminPage() {
               </button>
             )}
             <button
-              onClick={() => router.push('/pos')}
-              className="px-6 py-3 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 text-lg shadow-lg border-2 border-green-500"
+              onClick={() => {
+                console.log('POS button clicked, navigating to /pos');
+                router.push('/pos');
+              }}
+              className="px-8 py-4 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 text-xl shadow-xl border-4 border-green-500 transform hover:scale-105 transition-all duration-200 z-50 relative"
+              style={{ 
+                backgroundColor: '#16a34a', 
+                borderColor: '#22c55e',
+                boxShadow: '0 10px 25px rgba(34, 197, 94, 0.3)',
+                position: 'relative',
+                zIndex: 1000
+              }}
             >
               🏪 KASA EKRANI
             </button>
