@@ -3612,6 +3612,9 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
   try {
     console.log('🔍 GET /api/admin/images çağrıldı');
     console.log('🔍 User:', req.user);
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request URL:', req.url);
+    console.log('🔍 Request method:', req.method);
     
     const uploadDir = path.join(__dirname, 'uploads', 'products');
     console.log('🔍 Upload directory:', uploadDir);
@@ -3657,6 +3660,7 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
       .sort((a, b) => b.uploadedAt - a.uploadedAt);
 
     console.log('✅ Toplam resim sayısı:', images.length);
+    console.log('✅ Response gönderiliyor:', images);
     res.json(images);
   } catch (error) {
     console.error('❌ Resim listesi hatası:', error);
