@@ -325,15 +325,29 @@ export default function AdminPage() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+        // Daha uzun ve yüksek sesli uyarı sesi
+        const duration = 1.5; // 1.5 saniye (önceden 0.3 saniye)
+        const startTime = audioContext.currentTime;
         
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        // Çoklu frekans değişimleri ile dikkat çekici ses
+        oscillator.frequency.setValueAtTime(1000, startTime); // Daha yüksek başlangıç frekansı
+        oscillator.frequency.setValueAtTime(800, startTime + 0.2);
+        oscillator.frequency.setValueAtTime(1200, startTime + 0.4);
+        oscillator.frequency.setValueAtTime(600, startTime + 0.6);
+        oscillator.frequency.setValueAtTime(1000, startTime + 0.8);
+        oscillator.frequency.setValueAtTime(800, startTime + 1.0);
+        oscillator.frequency.setValueAtTime(1200, startTime + 1.2);
         
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
+        // Daha yüksek ses seviyesi
+        gainNode.gain.setValueAtTime(0.6, startTime); // 0.3'ten 0.6'ya çıkarıldı
+        gainNode.gain.setValueAtTime(0.6, startTime + 0.1);
+        gainNode.gain.setValueAtTime(0.8, startTime + 0.3); // Orta kısımda daha yüksek
+        gainNode.gain.setValueAtTime(0.8, startTime + 0.5);
+        gainNode.gain.setValueAtTime(0.6, startTime + 0.7);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration);
       } catch (error) {
         console.log('Ses çalınamadı:', error);
       }
