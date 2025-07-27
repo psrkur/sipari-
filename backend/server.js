@@ -174,9 +174,26 @@ const getPlaceholderSvg = () => {
 
 const app = express();
 
-// Basit Multer konfigürasyonu
+// Multer konfigürasyonu - Dosya tabanlı
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    // Klasör yoksa oluştur
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // Benzersiz dosya adı oluştur
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, uniqueSuffix + '-' + safeName);
+  }
+});
+
 const upload = multer({ 
-  dest: 'uploads/products/',
+  storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -3282,18 +3299,11 @@ app.get('/api/test', (req, res) => {
 });
 
 // Resim yökleme endpoint'i - geçici olarak authentication kaldırıldı
-app.post('/api/admin/upload-image', (req, res) => {
-  console.log('🔍 POST /api/admin/upload-image çağrıldı');
-  console.log('🔍 Request headers:', req.headers);
-  console.log('🔍 Request body:', req.body);
-  
-  // Multer middleware'ini manuel olarak çağır
-  upload.single('image')(req, res, (err) => {
-    if (err) {
-      console.error('❌ Multer hatası:', err);
-      return res.status(400).json({ error: 'Dosya yükleme hatası: ' + err.message });
-    }
-    
+app.post('/api/admin/upload-image', upload.single('image'), (req, res) => {
+  try {
+    console.log('🔍 POST /api/admin/upload-image çağrıldı');
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
     
     if (!req.file) {
@@ -3301,24 +3311,23 @@ app.post('/api/admin/upload-image', (req, res) => {
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
     }
     
-    try {
-      // Dosya yolunu oluştur
-      const imagePath = `/uploads/products/${req.file.filename}`;
-      
-      console.log('✅ Resim yüklendi:', req.file.filename);
-      console.log('✅ Dosya yolu:', req.file.path);
-      
-      res.json({
-        message: 'Resim başarıyla yüklendi',
-        imagePath: imagePath,
-        filename: req.file.filename,
-        originalName: req.file.originalname
-      });
-    } catch (error) {
-      console.error('❌ Resim yükleme hatası:', error);
-      res.status(500).json({ error: 'Resim yüklenemedi: ' + error.message });
-    }
-  });
+    // Dosya yolunu oluştur
+    const imagePath = `/uploads/products/${req.file.filename}`;
+    
+    console.log('✅ Resim yüklendi:', req.file.filename);
+    console.log('✅ Dosya yolu:', req.file.path);
+    console.log('✅ Image path:', imagePath);
+    
+    res.json({
+      message: 'Resim başarıyla yüklendi',
+      imagePath: imagePath,
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+  } catch (error) {
+    console.error('❌ Resim yükleme hatası:', error);
+    res.status(500).json({ error: 'Resim yüklenemedi: ' + error.message });
+  }
 });
 
 // Resim listesi endpoint'i - Dosya tabanlı
