@@ -47,7 +47,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
             const parsed = JSON.parse(authStorage);
             authToken = parsed.state?.token;
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Auth storage parse error:', error);
         }
       }
@@ -63,7 +63,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           headers: { Authorization: `Bearer ${authToken}` }
         });
         console.log('✅ Backend erişilebilir:', testResponse.status);
-      } catch (testError) {
+      } catch (testError: any) {
         console.error('❌ Backend erişim sorunu:', testError.response?.status, testError.response?.data);
       }
 
@@ -73,7 +73,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       console.log('✅ Resimler başarıyla yüklendi:', response.data);
       setImages(response.data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Resimler yüklenemedi:', error);
       console.error('❌ Error details:', error.response?.data);
       console.error('❌ Error status:', error.response?.status);
@@ -111,7 +111,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
             const parsed = JSON.parse(authStorage);
             authToken = parsed.state?.token;
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Auth storage parse error:', error);
         }
       }
@@ -128,7 +128,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       toast.success('Resim başarıyla yüklendi');
       fetchImages(); // Resim listesini yenile
-    } catch (error) {
+    } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       toast.error('Resim yüklenemedi');
     } finally {
@@ -146,7 +146,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
             const parsed = JSON.parse(authStorage);
             authToken = parsed.state?.token;
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Auth storage parse error:', error);
         }
       }
@@ -157,7 +157,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
       toast.success('Resim silindi');
       fetchImages(); // Resim listesini yenile
-    } catch (error) {
+    } catch (error: any) {
       console.error('Resim silme hatası:', error);
       toast.error('Resim silinemedi');
     }
