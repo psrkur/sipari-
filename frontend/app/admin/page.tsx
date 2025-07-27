@@ -962,6 +962,27 @@ export default function AdminPage() {
             >
               🏪 KASA EKRANI
             </button>
+            <button
+              onClick={() => {
+                console.log('Kitchen button clicked, opening in new window');
+                const kitchenWindow = window.open('/kitchen', 'kitchen_window', 'width=1400,height=900,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no');
+                if (kitchenWindow) {
+                  kitchenWindow.focus();
+                } else {
+                  toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
+                }
+              }}
+              className="px-8 py-4 rounded-lg font-bold bg-orange-600 text-white hover:bg-orange-700 text-xl shadow-xl border-4 border-orange-500 transform hover:scale-105 transition-all duration-200 z-50 relative"
+              style={{ 
+                backgroundColor: '#ea580c', 
+                borderColor: '#f97316',
+                boxShadow: '0 10px 25px rgba(249, 115, 22, 0.3)',
+                position: 'relative',
+                zIndex: 1000
+              }}
+            >
+              🍳 MUTFAK EKRANI
+            </button>
           </div>
 
           {/* İçerik alanı */}
