@@ -3,7 +3,7 @@ services:
     name: yemek5-backend
     env: node
     buildCommand: npm install && npx prisma generate
-    startCommand: npx prisma migrate deploy && npm start
+    startCommand: npm run run-migration && npm start
     envVars:
       - key: DATABASE_URL
         value: postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis

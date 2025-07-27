@@ -10,7 +10,8 @@
     "deploy": "node deploy-tables.js",
     "build": "npx prisma generate",
     "postinstall": "npx prisma generate",
-    "migrate": "node deploy-migration.js"
+    "migrate": "node deploy-migration.js",
+    "run-migration": "node run-migration.js"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
