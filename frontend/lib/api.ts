@@ -127,7 +127,7 @@ export const API_ENDPOINTS = {
   
   // Table Management
   ADMIN_TABLES: `${API_BASE_URL}/api/admin/tables`,
-  ADMIN_TABLES_BY_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/tables/${branchId}`,
+  ADMIN_TABLES_BY_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/tables/branch/${branchId}`,
   ADMIN_TABLE_QR: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/qr`,
   ADMIN_UPDATE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
   ADMIN_DELETE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
