@@ -3315,9 +3315,16 @@ app.post('/api/admin/fix-database', async (req, res) => {
   }
 }); 
 
-// Ürün resmi döndüren endpoint
+// Ürün resmi döndüren endpoint - Geçici olarak her zaman placeholder döndürür
 app.get('/api/products/:id/image', async (req, res) => {
   try {
+    console.log('🖼️ GET /api/products/:id/image çağrıldı - Placeholder döndürülüyor');
+    
+    // Geçici olarak her zaman placeholder SVG döndür
+    res.set('Content-Type', 'image/svg+xml');
+    return res.status(200).send(getPlaceholderSvg());
+    
+    /* Eski kod - şimdilik devre dışı
     const product = await prisma.product.findUnique({ where: { id: parseInt(req.params.id) } });
     if (!product || !product.image) {
       // Placeholder SVG döndür
@@ -3340,6 +3347,7 @@ app.get('/api/products/:id/image', async (req, res) => {
         res.status(200).send(getPlaceholderSvg());
       }
     });
+    */
   } catch (error) {
     // Hata durumunda placeholder SVG döndür
     res.set('Content-Type', 'image/svg+xml');
