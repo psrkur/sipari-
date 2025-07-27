@@ -571,6 +571,19 @@ const authenticateToken = (req, res, next) => {
 
 
 app.post('/api/auth/register', async (req, res) => {
+  // CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     const { email, password, name, phone, address } = req.body;
     
@@ -605,6 +618,19 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 app.post('/api/auth/login', async (req, res) => {
+  // CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   try {
     console.log('🔍 Login isteği:', req.body);
     const { email, password } = req.body;
