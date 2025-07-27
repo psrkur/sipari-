@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { API_ENDPOINTS } from '@/lib/api';
@@ -30,13 +30,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   const [loading, setLoading] = useState(false);
   const { token } = useAuthStore();
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchImages();
-    }
-  }, [isOpen]);
-
-    const fetchImages = async () => {
+  const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -72,7 +66,13 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     } finally {
       setLoading(false);
     }
-  };
+  }, [images.length]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchImages();
+    }
+  }, [isOpen, fetchImages]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('🔍 handleFileUpload çağrıldı');
