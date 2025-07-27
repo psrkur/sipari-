@@ -3205,6 +3205,131 @@ app.get('/api/products/:id/image', async (req, res) => {
   }
 });
 
+// Test endpoint - basit kontrol için
+app.get('/api/test', (req, res) => {
+  console.log('🔍 GET /api/test çağrıldı - v6 - DEPLOYMENT TRIGGER');
+  res.json({ 
+    message: 'Backend çalışıyor!', 
+    database: 'PostgreSQL',
+    databaseUrl: DATABASE_URL.substring(0, 50) + '...',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Resim yökleme endpoint'i - geçici olarak authentication kaldırıldı
+app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
+  try {
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v6 - DEPLOYMENT TRIGGER');
+    console.log('🔍 Request body:', req.body);
+    console.log('🔍 Request file:', req.file);
+    
+    if (!req.file) {
+      console.log('❌ Resim dosyası yüklenmedi');
+      return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
+    }
+    
+    // Dosya yolunu oluştur
+    const imagePath = `/uploads/products/${req.file.filename}`;
+    
+    res.json({
+      message: 'Resim başarıyla yüklendi',
+      imagePath: imagePath,
+      filename: req.file.filename,
+      originalName: req.file.originalname
+    });
+  } catch (error) {
+    console.error('Resim yükleme hatası:', error);
+    res.status(500).json({ error: 'Resim yüklenemedi' });
+  }
+});
+
+// Resim listesi endpoint'i - geçici olarak authentication kaldırıldı
+app.get('/api/admin/images', async (req, res) => {
+  try {
+    console.log('🔍 GET /api/admin/images çağrıldı - v6 - DEPLOYMENT TRIGGER');
+    console.log('🔍 User:', req.user);
+    console.log('🔍 Request headers:', req.headers);
+    console.log('🔍 Request URL:', req.url);
+    console.log('🔍 Request method:', req.method);
+    
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    console.log('🔍 Upload directory:', uploadDir);
+    
+    if (!fs.existsSync(uploadDir)) {
+      console.log('📁 Upload directory yok, boş array döndürülüyor');
+      return res.json([]);
+    }
+
+    const files = fs.readdirSync(uploadDir);
+    console.log('📁 Bulunan dosyalar:', files);
+    
+    const images = files
+      .filter(file => {
+        try {
+          const ext = path.extname(file).toLowerCase();
+          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
+          return isValid;
+        } catch (error) {
+          console.error('Dosya filtresi hatası:', error);
+          return false;
+        }
+      })
+      .map(file => {
+        try {
+          const filePath = path.join(uploadDir, file);
+          const stats = fs.statSync(filePath);
+          const imageInfo = {
+            filename: file,
+            path: `/uploads/products/${file}`,
+            size: stats.size,
+            uploadedAt: stats.mtime
+          };
+          console.log('📄 Resim bilgisi:', imageInfo);
+          return imageInfo;
+        } catch (error) {
+          console.error('Dosya bilgisi alma hatası:', error);
+          return null;
+        }
+      })
+      .filter(image => image !== null)
+      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+    console.log('✅ Toplam resim sayısı:', images.length);
+    console.log('✅ Response gönderiliyor:', images);
+    res.json(images);
+  } catch (error) {
+    console.error('❌ Resim listesi hatası:', error);
+    res.status(500).json({ error: 'Resim listesi alınamadı' });
+  }
+});
+
+// Resim silme endpoint'i - geçici olarak authentication kaldırıldı
+app.delete('/api/admin/images/:filename', async (req, res) => {
+  try {
+    console.log('🔍 DELETE /api/admin/images/:filename çağrıldı - v6 - DEPLOYMENT TRIGGER');
+    const { filename } = req.params;
+    
+    // Güvenlik kontrolü - sadece dosya adı
+    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'Geçersiz dosya adı' });
+    }
+    
+    const filePath = path.join(__dirname, 'uploads', 'products', filename);
+    
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      res.json({ message: 'Resim başarıyla silindi' });
+    } else {
+      res.status(404).json({ error: 'Resim bulunamadı' });
+    }
+  } catch (error) {
+    console.error('Resim silme hatası:', error);
+    res.status(500).json({ error: 'Resim silinemedi' });
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
