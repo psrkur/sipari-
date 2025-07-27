@@ -442,7 +442,7 @@ export default function POSPage() {
               }}
               variant="outline"
               size="sm"
-              className="bg-purple-600 text-white hover:bg-purple-700"
+              className="bg-purple-600 text-black hover:bg-purple-700"
             >
               🍽️ Masa Tahsilatı
             </Button>
