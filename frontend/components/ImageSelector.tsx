@@ -55,9 +55,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       console.log('🔍 GET_IMAGES endpoint:', API_ENDPOINTS.GET_IMAGES);
       console.log('🔍 Auth token:', authToken ? 'Mevcut' : 'Yok');
 
-      const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
+      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
 
       console.log('✅ Resimler başarıyla yüklendi:', response.data);
       setImages(response.data);
@@ -138,9 +136,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
-      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename), {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
+      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
 
       toast.success('Resim silindi');
       fetchImages(); // Resim listesini yenile
