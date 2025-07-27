@@ -3694,3 +3694,64 @@ app.delete('/api/admin/images/:filename', authenticateToken, async (req, res) =>
 
 // Statik dosya servisi
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Geçici test endpoint'i - authentication olmadan
+app.get('/api/admin/images-test', async (req, res) => {
+  try {
+    console.log('🔍 GET /api/admin/images-test çağrıldı (test endpoint)');
+    
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    console.log('🔍 Upload directory:', uploadDir);
+    
+    if (!fs.existsSync(uploadDir)) {
+      console.log('📁 Upload directory yok, boş array döndürülüyor');
+      return res.json([]);
+    }
+
+    const files = fs.readdirSync(uploadDir);
+    console.log('📁 Bulunan dosyalar:', files);
+    
+    const images = files
+      .filter(file => {
+        try {
+          const ext = path.extname(file).toLowerCase();
+          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
+          return isValid;
+        } catch (error) {
+          console.error('Dosya filtresi hatası:', error);
+          return false;
+        }
+      })
+      .map(file => {
+        try {
+          const filePath = path.join(uploadDir, file);
+          const stats = fs.statSync(filePath);
+          const imageInfo = {
+            filename: file,
+            path: `/uploads/products/${file}`,
+            size: stats.size,
+            uploadedAt: stats.mtime
+          };
+          console.log('📄 Resim bilgisi:', imageInfo);
+          return imageInfo;
+        } catch (error) {
+          console.error('Dosya bilgisi alma hatası:', error);
+          return null;
+        }
+      })
+      .filter(image => image !== null)
+      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+    console.log('✅ Toplam resim sayısı:', images.length);
+    console.log('✅ Response gönderiliyor:', images);
+    res.json({
+      message: 'Test endpoint başarılı',
+      count: images.length,
+      images: images
+    });
+  } catch (error) {
+    console.error('❌ Test resim listesi hatası:', error);
+    res.status(500).json({ error: 'Test resim listesi alınamadı' });
+  }
+});
