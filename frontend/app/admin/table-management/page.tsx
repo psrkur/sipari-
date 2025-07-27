@@ -349,7 +349,7 @@ export default function TableManagement() {
                     variant="outline"
                     size="sm"
                     onClick={() => loadTableOrders(table.id)}
-                    className="w-full"
+                    className="w-full text-black"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     Siparişleri Gör
