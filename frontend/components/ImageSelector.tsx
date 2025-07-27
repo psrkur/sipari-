@@ -36,7 +36,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     }
   }, [isOpen]);
 
-  const fetchImages = async () => {
+    const fetchImages = async () => {
     try {
       setLoading(true);
       let authToken = token;
@@ -52,13 +52,19 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
+      console.log('🔍 GET_IMAGES endpoint:', API_ENDPOINTS.GET_IMAGES);
+      console.log('🔍 Auth token:', authToken ? 'Mevcut' : 'Yok');
+
       const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      
+
+      console.log('✅ Resimler başarıyla yüklendi:', response.data);
       setImages(response.data);
     } catch (error) {
-      console.error('Resimler yüklenemedi:', error);
+      console.error('❌ Resimler yüklenemedi:', error);
+      console.error('❌ Error details:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
