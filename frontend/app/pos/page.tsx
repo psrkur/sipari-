@@ -83,7 +83,7 @@ export default function POSPage() {
 
   const fetchCategories = async (branchId: number) => {
     try {
-      const response = await axios.get(API_ENDPOINTS.CATEGORIES(branchId));
+      const response = await axios.get(API_ENDPOINTS.CATEGORIES);
       setCategories(response.data);
     } catch (error) {
       console.error('Kategoriler yüklenemedi:', error);
