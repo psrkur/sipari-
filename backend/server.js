@@ -3755,3 +3755,57 @@ app.get('/api/admin/images-test', async (req, res) => {
     res.status(500).json({ error: 'Test resim listesi alınamadı' });
   }
 });
+
+// Geçici endpoint - authentication olmadan (frontend için)
+app.get('/api/admin/images-public', async (req, res) => {
+  try {
+    console.log('🔍 GET /api/admin/images-public çağrıldı (public endpoint)');
+    
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    console.log('🔍 Upload directory:', uploadDir);
+    
+    if (!fs.existsSync(uploadDir)) {
+      console.log('📁 Upload directory yok, boş array döndürülüyor');
+      return res.json([]);
+    }
+
+    const files = fs.readdirSync(uploadDir);
+    console.log('📁 Bulunan dosyalar:', files);
+    
+    const images = files
+      .filter(file => {
+        try {
+          const ext = path.extname(file).toLowerCase();
+          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+          return isValid;
+        } catch (error) {
+          console.error('Dosya filtresi hatası:', error);
+          return false;
+        }
+      })
+      .map(file => {
+        try {
+          const filePath = path.join(uploadDir, file);
+          const stats = fs.statSync(filePath);
+          const imageInfo = {
+            filename: file,
+            path: `/uploads/products/${file}`,
+            size: stats.size,
+            uploadedAt: stats.mtime
+          };
+          return imageInfo;
+        } catch (error) {
+          console.error('Dosya bilgisi alma hatası:', error);
+          return null;
+        }
+      })
+      .filter(image => image !== null)
+      .sort((a, b) => b.uploadedAt - a.uploadedAt);
+
+    console.log('✅ Toplam resim sayısı:', images.length);
+    res.json(images);
+  } catch (error) {
+    console.error('❌ Public resim listesi hatası:', error);
+    res.status(500).json({ error: 'Resim listesi alınamadı' });
+  }
+});
