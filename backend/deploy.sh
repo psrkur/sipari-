@@ -15,7 +15,7 @@ echo "🔧 Prisma client oluşturuluyor..."
 npx prisma generate
 
 echo "🗄️ Veritabanı şeması güncelleniyor..."
-npx prisma db push
+npx prisma migrate deploy
 
 echo "📊 Seed data kontrol ediliyor..."
 node -e "
