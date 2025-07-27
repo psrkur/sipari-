@@ -11,6 +11,13 @@ const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.st
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const FRONTEND_URL = isProduction ? 'https://siparisnet.netlify.app' : (process.env.FRONTEND_URL || 'http://localhost:3000');
 
+// Cloudinary konfigürasyonu
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
+  api_key: process.env.CLOUDINARY_API_KEY || 'your-api-key',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'your-api-secret'
+});
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -22,6 +29,8 @@ const winston = require('winston');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 // İkinci dotenv yüklemesi kaldırıldı
 
 // Winston Logger Konfigürasyonu
@@ -165,36 +174,19 @@ const getPlaceholderSvg = () => {
 
 const app = express();
 
-// Multer konfigürasyonu - Resim yükleme için
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    try {
-      const uploadDir = path.join(__dirname, 'uploads', 'products');
-      // Klasör yoksa oluştur
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    } catch (error) {
-      console.error('Upload directory oluşturma hatası:', error);
-      cb(error);
-    }
-  },
-  filename: function (req, file, cb) {
-    try {
-      // Benzersiz dosya adı oluştur
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-      cb(null, uniqueSuffix + '-' + safeName);
-    } catch (error) {
-      console.error('Filename oluşturma hatası:', error);
-      cb(error);
-    }
+// Cloudinary storage konfigürasyonu
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'yemek5-products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 800, height: 600, crop: 'limit' }]
   }
 });
 
+// Multer konfigürasyonu - Cloudinary ile
 const upload = multer({ 
-  storage: storage,
+  storage: cloudinaryStorage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   },
@@ -212,6 +204,8 @@ const upload = multer({
     }
   }
 });
+
+
 // PORT değişkeni kaldırıldı, SERVER_PORT kullanılıyor
 
 // Render/proxy ortamı için gerçek IP ve rate limit desteği
@@ -3305,7 +3299,7 @@ app.get('/api/test', (req, res) => {
 // Resim yökleme endpoint'i - geçici olarak authentication kaldırıldı
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı - v6 - DEPLOYMENT TRIGGER');
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - Cloudinary');
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
     
@@ -3314,14 +3308,19 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
     }
     
-    // Dosya yolunu oluştur
-    const imagePath = `/uploads/products/${req.file.filename}`;
+    // Cloudinary'den gelen bilgiler
+    const imageUrl = req.file.path; // Cloudinary URL
+    const publicId = req.file.filename; // Cloudinary public ID
+    
+    console.log('✅ Cloudinary URL:', imageUrl);
+    console.log('✅ Public ID:', publicId);
     
     res.json({
       message: 'Resim başarıyla yüklendi',
-      imagePath: imagePath,
-      filename: req.file.filename,
-      originalName: req.file.originalname
+      imagePath: imageUrl, // Cloudinary URL'ini döndür
+      filename: publicId,
+      originalName: req.file.originalname,
+      cloudinaryUrl: imageUrl
     });
   } catch (error) {
     console.error('Resim yükleme hatası:', error);
@@ -3329,58 +3328,27 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
   }
 });
 
-// Resim listesi endpoint'i - geçici olarak authentication kaldırıldı
+// Resim listesi endpoint'i - Cloudinary ile
 app.get('/api/admin/images', async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images çağrıldı - v6 - DEPLOYMENT TRIGGER');
-    console.log('🔍 User:', req.user);
-    console.log('🔍 Request headers:', req.headers);
-    console.log('🔍 Request URL:', req.url);
-    console.log('🔍 Request method:', req.method);
+    console.log('🔍 GET /api/admin/images çağrıldı - Cloudinary');
     
-    const uploadDir = path.join(__dirname, 'uploads', 'products');
-    console.log('🔍 Upload directory:', uploadDir);
+    // Cloudinary'den resimleri listele
+    const result = await cloudinary.search
+      .expression('folder:yemek5-products')
+      .sort_by('created_at', 'desc')
+      .max_results(100)
+      .execute();
     
-    if (!fs.existsSync(uploadDir)) {
-      console.log('📁 Upload directory yok, boş array döndürülüyor');
-      return res.json([]);
-    }
-
-    const files = fs.readdirSync(uploadDir);
-    console.log('📁 Bulunan dosyalar:', files);
+    console.log('✅ Cloudinary search result:', result);
     
-    const images = files
-      .filter(file => {
-        try {
-          const ext = path.extname(file).toLowerCase();
-          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
-          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
-          return isValid;
-        } catch (error) {
-          console.error('Dosya filtresi hatası:', error);
-          return false;
-        }
-      })
-      .map(file => {
-        try {
-          const filePath = path.join(uploadDir, file);
-          const stats = fs.statSync(filePath);
-          const imageInfo = {
-            filename: file,
-            path: `/uploads/products/${file}`,
-            size: stats.size,
-            uploadedAt: stats.mtime
-          };
-          console.log('📄 Resim bilgisi:', imageInfo);
-          return imageInfo;
-        } catch (error) {
-          console.error('Dosya bilgisi alma hatası:', error);
-          return null;
-        }
-      })
-      .filter(image => image !== null)
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
-
+    const images = result.resources.map(resource => ({
+      filename: resource.public_id.split('/').pop(), // Dosya adını al
+      path: resource.secure_url, // Cloudinary URL
+      size: resource.bytes,
+      uploadedAt: new Date(resource.created_at)
+    }));
+    
     console.log('✅ Toplam resim sayısı:', images.length);
     console.log('✅ Response gönderiliyor:', images);
     res.json(images);
@@ -3390,21 +3358,24 @@ app.get('/api/admin/images', async (req, res) => {
   }
 });
 
-// Resim silme endpoint'i - geçici olarak authentication kaldırıldı
+// Resim silme endpoint'i - Cloudinary ile
 app.delete('/api/admin/images/:filename', async (req, res) => {
   try {
-    console.log('🔍 DELETE /api/admin/images/:filename çağrıldı - v6 - DEPLOYMENT TRIGGER');
+    console.log('🔍 DELETE /api/admin/images/:filename çağrıldı - Cloudinary');
     const { filename } = req.params;
     
-    // Güvenlik kontrolü - sadece dosya adı
+    // Güvenlik kontrolü
     if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
       return res.status(400).json({ error: 'Geçersiz dosya adı' });
     }
     
-    const filePath = path.join(__dirname, 'uploads', 'products', filename);
+    // Cloudinary'den resmi sil
+    const publicId = `yemek5-products/${filename}`;
+    const result = await cloudinary.uploader.destroy(publicId);
     
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    console.log('✅ Cloudinary delete result:', result);
+    
+    if (result.result === 'ok') {
       res.json({ message: 'Resim başarıyla silindi' });
     } else {
       res.status(404).json({ error: 'Resim bulunamadı' });
