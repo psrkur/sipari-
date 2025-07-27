@@ -72,8 +72,17 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('🔍 handleFileUpload çağrıldı');
+    console.log('🔍 Event:', event);
+    console.log('🔍 Files:', event.target.files);
+    
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('❌ Dosya seçilmedi');
+      return;
+    }
+    
+    console.log('✅ Dosya seçildi:', file.name, file.size, file.type);
 
     // Dosya boyutu kontrolü (5MB)
     if (file.size > 5 * 1024 * 1024) {
