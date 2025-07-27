@@ -195,6 +195,20 @@ export default function TableOrder() {
     setCart(cart.filter(item => item.productId !== productId));
   };
 
+  const updateQuantity = (productId: number, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      // Adet 0 veya daha az ise ürünü sepetten kaldır
+      removeFromCart(productId);
+      return;
+    }
+    
+    setCart(cart.map(item => 
+      item.productId === productId 
+        ? { ...item, quantity: newQuantity }
+        : item
+    ));
+  };
+
   const getTotalPrice = () => {
     return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
@@ -615,7 +629,7 @@ export default function TableOrder() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => removeFromCart(item.productId)}
+                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                               className="h-6 w-6 p-0 rounded-full"
                             >
                               <Minus className="h-3 w-3" />
