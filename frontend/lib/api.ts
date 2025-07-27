@@ -69,6 +69,12 @@ export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, E
   const img = event.currentTarget;
   console.log('Resim yüklenemedi, placeholder gösteriliyor:', img.src);
   
+  // Base64 resimler için hata kontrolü yapma
+  if (img.src.startsWith('data:image/')) {
+    console.log('Base64 resim için hata kontrolü yapılmıyor');
+    return;
+  }
+  
   // Eğer zaten placeholder gösteriliyorsa, sonsuz döngüyü önle
   if (img.src.includes('data:image/svg+xml') || img.src.includes('placeholder-image.svg')) {
     console.log('Placeholder zaten gösteriliyor, döngü önlendi');
