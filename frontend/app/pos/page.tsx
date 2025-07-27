@@ -710,17 +710,9 @@ export default function POSPage() {
                             : 'border-gray-200 hover:border-purple-300'
                         }`}
                       >
-                        <div className="flex justify-between items-center">
-                          <span className="font-semibold">Masa {table.number}</span>
-                          <Badge variant={table.orderCount > 0 ? "destructive" : "secondary"}>
-                            {table.orderCount} sipariş
-                          </Badge>
-                        </div>
-                        {table.totalAmount > 0 && (
-                          <div className="text-sm text-gray-600 mt-1">
-                            Toplam: ₺{table.totalAmount.toFixed(2)}
-                          </div>
-                        )}
+                                                 <div className="flex justify-between items-center">
+                           <span className="font-semibold">Masa {table.number}</span>
+                         </div>
                       </div>
                     ))}
                   </div>
