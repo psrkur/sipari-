@@ -292,14 +292,12 @@ export default function POSPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
             <Button
               onClick={() => {
                 if (window.opener) {
-                  // Ayrı pencerede açıldıysa pencereyi kapat
                   window.close();
                 } else {
-                  // Normal sayfada açıldıysa admin paneline git
                   router.push('/admin');
                 }
               }}
@@ -308,27 +306,40 @@ export default function POSPage() {
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>{window.opener ? 'Pencereyi Kapat' : 'Admin Paneli'}</span>
+              <span className="hidden sm:inline">{window.opener ? 'Kapat' : 'Admin'}</span>
             </Button>
-            <h1 className="text-2xl font-bold text-gray-800">🏪 Kasa Ekranı</h1>
+            <h1 className="text-lg md:text-2xl font-bold text-gray-800">🏪 Kasa</h1>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-sm">
-              {selectedBranch?.name || 'Şube Seçilmedi'}
+            <Badge variant="secondary" className="text-xs md:text-sm">
+              {selectedBranch?.name || 'Şube'}
             </Badge>
-            <Badge variant="outline" className="text-sm">
-              {cart.length} Ürün
+            <Badge variant="outline" className="text-xs md:text-sm">
+              {cart.length}
             </Badge>
           </div>
         </div>
       </div>
 
-      <div className="flex h-screen">
-        {/* Sol Taraf - Ürünler */}
-        <div className="flex-1 p-4 overflow-y-auto">
+      {/* Mobil Sepet Özeti - Sadece mobilde görünür */}
+      <div className="md:hidden bg-white border-b p-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <ShoppingCart className="h-5 w-5 text-blue-600" />
+            <span className="font-medium">Sepet: {cart.length} ürün</span>
+          </div>
+          <div className="text-lg font-bold text-green-600">
+            ₺{getTotalPrice().toFixed(2)}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] md:h-screen">
+        {/* Ürünler Bölümü */}
+        <div className="flex-1 p-2 md:p-4 overflow-y-auto">
           {/* Şube Seçimi */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Şube Seçimi</label>
+          <div className="mb-3 md:mb-4">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Şube</label>
             <select
               value={selectedBranch?.id || ''}
               onChange={(e) => {
@@ -339,7 +350,7 @@ export default function POSPage() {
                   fetchCategories(branch.id);
                 }
               }}
-              className="w-full p-3 border border-gray-300 rounded-lg text-lg"
+              className="w-full p-2 md:p-3 border border-gray-300 rounded-lg text-sm md:text-lg"
             >
               {branches.map(branch => (
                 <option key={branch.id} value={branch.id}>
@@ -350,13 +361,13 @@ export default function POSPage() {
           </div>
 
           {/* Kategori Filtreleri */}
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
+          <div className="mb-4 md:mb-6">
+            <div className="flex flex-wrap gap-1 md:gap-2">
               <Button
                 onClick={() => setSelectedCategory('all')}
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                size="lg"
-                className="text-lg px-6 py-3"
+                size="sm"
+                className="text-xs md:text-sm px-3 md:px-6 py-2 md:py-3"
               >
                 Tümü
               </Button>
@@ -365,8 +376,8 @@ export default function POSPage() {
                   key={category.id}
                   onClick={() => setSelectedCategory(category.name)}
                   variant={selectedCategory === category.name ? 'default' : 'outline'}
-                  size="lg"
-                  className="text-lg px-6 py-3"
+                  size="sm"
+                  className="text-xs md:text-sm px-3 md:px-6 py-2 md:py-3"
                 >
                   {category.name}
                 </Button>
@@ -374,8 +385,8 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Ürün Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {/* Ürün Grid - Mobil için 2 sütun, desktop için daha fazla */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
             {filteredProducts.map(product => (
               <div
                 key={product.id}
@@ -383,8 +394,8 @@ export default function POSPage() {
                 onClick={() => addToCart(product)}
               >
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                  <CardContent className="p-2 md:p-4">
+                    <div className="aspect-square bg-gray-100 rounded-lg mb-2 md:mb-3 flex items-center justify-center">
                       {product.image ? (
                         <img
                           src={product.image}
@@ -392,12 +403,12 @@ export default function POSPage() {
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <div className="text-4xl">🍕</div>
+                        <div className="text-2xl md:text-4xl">🍕</div>
                       )}
                     </div>
-                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-2xl font-bold text-green-600">₺{product.price.toFixed(2)}</p>
-                    <Badge variant="secondary" className="mt-2">
+                    <h3 className="font-semibold text-sm md:text-lg mb-1 md:mb-2 line-clamp-2">{product.name}</h3>
+                    <p className="text-lg md:text-2xl font-bold text-green-600">₺{product.price.toFixed(2)}</p>
+                    <Badge variant="secondary" className="mt-1 md:mt-2 text-xs">
                       {product.category.name}
                     </Badge>
                   </CardContent>
@@ -407,9 +418,10 @@ export default function POSPage() {
           </div>
         </div>
 
-        {/* Sağ Taraf - Sepet */}
-        <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
-          <div className="p-4 border-b border-gray-200">
+        {/* Sepet Bölümü - Mobilde bottom sheet, desktop'ta sidebar */}
+        <div className="md:w-96 bg-white border-t md:border-l border-gray-200 flex flex-col">
+          {/* Desktop Sepet Header */}
+          <div className="hidden md:block p-4 border-b border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center">
                 <ShoppingCart className="h-5 w-5 mr-2" />
@@ -427,48 +439,48 @@ export default function POSPage() {
           </div>
 
           {/* Sepet İçeriği */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4">
             {cart.length === 0 ? (
               <div className="text-center text-gray-500 mt-8">
                 <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p>Sepet boş</p>
-                <p className="text-sm">Ürün seçmek için sol taraftan ürünlere tıklayın</p>
+                <p className="text-sm md:text-base">Sepet boş</p>
+                <p className="text-xs md:text-sm">Ürün seçmek için ürünlere tıklayın</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {cart.map(item => (
-                  <div key={item.productId} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <h3 className="font-medium">{item.name}</h3>
-                      <p className="text-sm text-gray-600">₺{item.price.toFixed(2)}</p>
+                  <div key={item.productId} className="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-sm md:text-base truncate">{item.name}</h3>
+                      <p className="text-xs md:text-sm text-gray-600">₺{item.price.toFixed(2)}</p>
                     </div>
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1 md:space-x-2">
                       <Button
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                         size="sm"
                         variant="outline"
-                        className="w-8 h-8 p-0"
+                        className="w-6 h-6 md:w-8 md:h-8 p-0"
                       >
-                        <Minus className="h-4 w-4" />
+                        <Minus className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
-                      <span className="text-lg font-semibold min-w-[2rem] text-center">
+                      <span className="text-sm md:text-lg font-semibold min-w-[1.5rem] md:min-w-[2rem] text-center">
                         {item.quantity}
                       </span>
                       <Button
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         size="sm"
                         variant="outline"
-                        className="w-8 h-8 p-0"
+                        className="w-6 h-6 md:w-8 md:h-8 p-0"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
                       <Button
                         onClick={() => removeFromCart(item.productId)}
                         size="sm"
                         variant="outline"
-                        className="w-8 h-8 p-0 text-red-600"
+                        className="w-6 h-6 md:w-8 md:h-8 p-0 text-red-600"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
                     </div>
                   </div>
@@ -478,41 +490,41 @@ export default function POSPage() {
           </div>
 
           {/* Toplam ve Ödeme */}
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <div className="mb-4">
-              <div className="flex justify-between items-center text-xl font-bold">
+          <div className="p-2 md:p-4 border-t border-gray-200 bg-gray-50">
+            <div className="mb-3 md:mb-4">
+              <div className="flex justify-between items-center text-lg md:text-xl font-bold">
                 <span>Toplam:</span>
-                <span className="text-2xl text-green-600">₺{getTotalPrice().toFixed(2)}</span>
+                <span className="text-xl md:text-2xl text-green-600">₺{getTotalPrice().toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 md:space-y-3">
               <Button
                 onClick={() => handlePayment('cash')}
-                className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-4"
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm md:text-lg py-3 md:py-4"
                 disabled={cart.length === 0}
               >
-                <DollarSign className="h-5 w-5 mr-2" />
-                Nakit Ödeme
+                <DollarSign className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                Nakit
               </Button>
               
               <Button
                 onClick={() => handlePayment('card')}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-4"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-lg py-3 md:py-4"
                 disabled={cart.length === 0}
               >
-                <CreditCard className="h-5 w-5 mr-2" />
-                Kart ile Ödeme
+                <CreditCard className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                Kart
               </Button>
 
               <Button
                 onClick={printReceipt}
                 variant="outline"
-                className="w-full text-lg py-4"
+                className="w-full text-sm md:text-lg py-3 md:py-4"
                 disabled={cart.length === 0}
               >
-                <Printer className="h-5 w-5 mr-2" />
-                Fiş Yazdır
+                <Printer className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                Fiş
               </Button>
             </div>
           </div>
