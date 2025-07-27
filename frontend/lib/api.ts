@@ -98,6 +98,11 @@ export const API_ENDPOINTS = {
   
   // Customer
   CUSTOMER_PROFILE: `${API_BASE_URL}/api/customer/profile`,
+  
+  // Image Management
+  UPLOAD_IMAGE: `${API_BASE_URL}/api/admin/upload-image`,
+  GET_IMAGES: `${API_BASE_URL}/api/admin/images`,
+  DELETE_IMAGE: (filename: string) => `${API_BASE_URL}/api/admin/images/${filename}`,
   CUSTOMER_ORDERS: `${API_BASE_URL}/api/customer/orders`,
   CUSTOMER_ORDER_DETAIL: (orderId: number) => `${API_BASE_URL}/api/customer/orders/${orderId}`,
   CUSTOMER_ADDRESSES: `${API_BASE_URL}/api/customer/addresses`,
