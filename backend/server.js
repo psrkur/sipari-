@@ -650,7 +650,10 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
       orderType: { not: 'COLLECTION' } // Tahsilat kayıtlarını hariç tut
     };
     
-    if (user.role === 'BRANCH_MANAGER') {
+    // branchId parametresi varsa filtrele
+    if (req.query.branchId) {
+      whereClause.branchId = parseInt(req.query.branchId);
+    } else if (user.role === 'BRANCH_MANAGER') {
       whereClause.branchId = user.branchId;
     } else if (user.role === 'SUPER_ADMIN') {
       // Süper admin tüm siparişleri getir (tahsilat hariç)

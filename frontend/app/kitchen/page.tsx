@@ -154,7 +154,7 @@ export default function KitchenPage() {
         }
       }
 
-      const response = await axios.get(`${API_ENDPOINTS.ORDERS}?branchId=${branchId}`, {
+      const response = await axios.get(`${API_ENDPOINTS.ADMIN_ORDERS}?branchId=${branchId}`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       
@@ -182,7 +182,7 @@ export default function KitchenPage() {
         }
       }
 
-      await axios.patch(`${API_ENDPOINTS.ORDERS}/${orderId}/status`, {
+      await axios.put(`${API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId)}`, {
         status: newStatus
       }, {
         headers: { Authorization: `Bearer ${authToken}` }
