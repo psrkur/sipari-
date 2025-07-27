@@ -160,10 +160,15 @@ export const API_ENDPOINTS = {
       return PLACEHOLDER_IMAGE;
     }
     
-    // Eğer imagePath /uploads/products/ ile başlıyorsa, proxy endpoint kullan
+    // Tüm resimler için proxy endpoint kullan
     if (imagePath.startsWith('/uploads/products/')) {
       const filename = imagePath.replace('/uploads/products/', '');
       return `${API_BASE_URL}/api/images/${filename}`;
+    }
+    
+    // Eğer imagePath sadece dosya adı ise (örn: "resim.png"), proxy endpoint kullan
+    if (imagePath && !imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+      return `${API_BASE_URL}/api/images/${imagePath}`;
     }
     
     // Normal resim URL'si oluştur
