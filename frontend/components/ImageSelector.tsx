@@ -219,7 +219,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
                          src={image.path}
                          alt={image.filename}
                          className="w-full h-32 object-cover rounded-lg bg-gray-100"
-                         onError={handleImageError}
                        />
                       
                       {/* Selection Overlay */}
