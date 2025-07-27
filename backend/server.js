@@ -3996,7 +3996,7 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
 // Resim yükleme endpoint'i - authentication olmadan
 app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı - v7 - FIXED');
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v8 - FIXED FOR IMAGE SELECTOR');
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
     console.log('🔍 Request headers:', req.headers);
@@ -4019,71 +4019,24 @@ app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => 
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
     }
 
-    // Dosya yolunu oluştur
+    // Dosya yolunu oluştur - uploads/products formatında
     const imagePath = `/uploads/products/${req.file.filename}`;
-    
-    // Resim dosyasını base64'e çevir
-    const imageBuffer = fs.readFileSync(req.file.path);
-    const base64Image = `data:image/${path.extname(req.file.filename).substring(1)};base64,${imageBuffer.toString('base64')}`;
     
     console.log('✅ Resim başarıyla yüklendi:', req.file.filename);
     console.log('✅ Dosya yolu:', imagePath);
-    console.log('✅ Base64 uzunluğu:', base64Image.length);
+    console.log('✅ Fiziksel dosya yolu:', req.file.path);
     
-    // Ürün adına göre eşleştirme yap
-    const originalName = req.file.originalname.toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .replace(/ı/g, 'i')
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c');
-    
-    // Eşleşen ürünü bul
-    const products = await prisma.product.findMany({
-      select: { id: true, name: true }
-    });
-    
-    let matchedProduct = null;
-    for (const product of products) {
-      const productName = product.name.toLowerCase()
-        .replace(/[^a-z0-9]/g, '')
-        .replace(/ı/g, 'i')
-        .replace(/ğ/g, 'g')
-        .replace(/ü/g, 'u')
-        .replace(/ş/g, 's')
-        .replace(/ö/g, 'o')
-        .replace(/ç/g, 'c');
-      
-      if (originalName.includes(productName) || productName.includes(originalName.replace(/\.(png|jpg|jpeg|gif|webp)$/, ''))) {
-        matchedProduct = product;
-        break;
-      }
-    }
-    
-    if (matchedProduct) {
-      // Veritabanını güncelle
-      await prisma.product.update({
-        where: { id: matchedProduct.id },
-        data: { image: base64Image }
-      });
-      console.log(`✅ ${matchedProduct.name} -> Veritabanı güncellendi`);
-    } else {
-      console.log('⚠️  Eşleşen ürün bulunamadı, sadece dosya kaydedildi');
-    }
-    
+    // Sadece dosya yolunu döndür, base64'e çevirme
     res.json({
-      message: 'Resim başarıyla yüklendi ve senkronize edildi',
+      message: 'Resim başarıyla yüklendi',
       imagePath: imagePath,
       filename: req.file.filename,
       originalName: req.file.originalname,
-      matchedProduct: matchedProduct ? matchedProduct.name : null,
-      base64Length: base64Image.length
+      size: req.file.size
     });
   } catch (error) {
     console.error('❌ Resim yükleme hatası:', error);
-    res.status(500).json({ error: 'Resim yüklenemedi' });
+    res.status(500).json({ error: 'Resim yüklenemedi: ' + error.message });
   }
 });
 

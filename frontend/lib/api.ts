@@ -1,11 +1,7 @@
 // API Configuration - Otomatik bağlantı
 const getApiBaseUrl = (): string => {
-  // Development için her zaman localhost:3001 kullan
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    return 'http://localhost:3001';
-  }
-  // Production ortamında environment variable veya fallback production URL kullan
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  // Her zaman canlı backend'i kullan (aynı veritabanı)
+  return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
 
 const API_BASE_URL = getApiBaseUrl();
