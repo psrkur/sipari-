@@ -542,15 +542,15 @@ export default function POSPage() {
                 className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300 rounded-lg bg-white"
                 onClick={() => addToCart(product)}
               >
-                                 <Card>
-                   <CardContent className="p-3 md:p-4">
-                     <h3 className="font-semibold text-sm md:text-lg mb-2 line-clamp-2">{product.name}</h3>
-                     <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{product.price.toFixed(2)}</p>
-                     <Badge variant="secondary" className="text-xs">
-                       {product.category.name}
-                     </Badge>
-                   </CardContent>
-                 </Card>
+                <Card>
+                  <CardContent className="p-3 md:p-4">
+                    <h3 className="font-semibold text-sm md:text-lg mb-2 line-clamp-2">{product.name}</h3>
+                    <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{product.price.toFixed(2)}</p>
+                    <Badge variant="secondary" className="text-xs">
+                      {product.category.name}
+                    </Badge>
+                  </CardContent>
+                </Card>
               </div>
             ))}
           </div>
@@ -699,27 +699,26 @@ export default function POSPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                                         {activeTables.map((table) => (
-                         <div
-                           key={table.id}
-                           onClick={() => {
-                             setSelectedTable(table);
-                             fetchTableOrders(table.id);
-                           }}
-                                                       className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
-                              selectedTable?.id === table.id
-                                ? 'border-purple-500 bg-purple-50'
-                                : (table.orderCount && table.orderCount > 0) || (table.orders && table.orders.length > 0)
-                                ? 'border-orange-300 bg-orange-50 hover:border-orange-400'
-                                : 'border-gray-200 bg-white hover:border-purple-300'
-                            }`}
-                         >
-                                                       <div className="flex justify-between items-center">
-                              <span className="font-semibold">Masa {table.number}</span>
-                            </div>
-                         </div>
-                       );
-                     })}
+                    {activeTables.map((table) => (
+                      <div
+                        key={table.id}
+                        onClick={() => {
+                          setSelectedTable(table);
+                          fetchTableOrders(table.id);
+                        }}
+                        className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
+                          selectedTable?.id === table.id
+                            ? 'border-purple-500 bg-purple-50'
+                            : (table.orderCount && table.orderCount > 0) || (table.orders && table.orders.length > 0)
+                            ? 'border-orange-300 bg-orange-50 hover:border-orange-400'
+                            : 'border-gray-200 bg-white hover:border-purple-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Masa {table.number}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -737,39 +736,39 @@ export default function POSPage() {
                       </p>
                     </div>
 
-                                         {/* Sipariş Listesi */}
-                     <div className="space-y-4 mb-6">
-                       {tableOrders.orders && tableOrders.orders.length > 0 ? (
-                         tableOrders.orders.map((order: any, index: number) => (
-                           <Card key={order.id} className="border-l-4 border-l-blue-500">
-                             <CardHeader className="pb-2">
-                               <div className="flex justify-between items-center">
-                                 <CardTitle className="text-sm">
-                                   Sipariş #{order.orderNumber}
-                                 </CardTitle>
-                                 <Badge variant="outline" className="text-xs">
-                                   {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
-                                 </Badge>
-                               </div>
-                             </CardHeader>
-                             <CardContent className="pt-0">
-                               <div className="space-y-2">
-                                 {order.orderItems && order.orderItems.map((item: any, itemIndex: number) => (
-                                   <div key={itemIndex} className="flex justify-between text-sm">
-                                     <span>{item.quantity}x {item.product.name}</span>
-                                     <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
-                                   </div>
-                                 ))}
-                               </div>
-                             </CardContent>
-                           </Card>
-                         ))
-                       ) : (
-                         <div className="text-center text-gray-500 py-8">
-                           <p>Bu masada henüz sipariş bulunmuyor</p>
-                         </div>
-                       )}
-                     </div>
+                    {/* Sipariş Listesi */}
+                    <div className="space-y-4 mb-6">
+                      {tableOrders.orders && tableOrders.orders.length > 0 ? (
+                        tableOrders.orders.map((order: any, index: number) => (
+                          <Card key={order.id} className="border-l-4 border-l-blue-500">
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-center">
+                                <CardTitle className="text-sm">
+                                  Sipariş #{order.orderNumber}
+                                </CardTitle>
+                                <Badge variant="outline" className="text-xs">
+                                  {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="space-y-2">
+                                {order.orderItems && order.orderItems.map((item: any, itemIndex: number) => (
+                                  <div key={itemIndex} className="flex justify-between text-sm">
+                                    <span>{item.quantity}x {item.product.name}</span>
+                                    <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-8">
+                          <p>Bu masada henüz sipariş bulunmuyor</p>
+                        </div>
+                      )}
+                    </div>
 
                     {/* Tahsilat Butonları */}
                     <div className="space-y-3">
