@@ -33,14 +33,28 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   const fetchImages = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('🔍 Gerçek API\'den resimler yükleniyor');
+      console.log('🔍 Mock data kullanılıyor (backend henüz hazır değil)');
       
-      console.log('🔍 API URL:', API_ENDPOINTS.GET_IMAGES);
-      const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
-      console.log('✅ API response:', response.data);
-      setImages(response.data);
+      // Mock data - backend hazır olana kadar
+      const mockImages = [
+        {
+          filename: 'test-image-1.jpg',
+          path: '/uploads/products/test-image-1.jpg',
+          size: 1024000,
+          uploadedAt: new Date().toISOString()
+        },
+        {
+          filename: 'test-image-2.png',
+          path: '/uploads/products/test-image-2.png',
+          size: 2048000,
+          uploadedAt: new Date().toISOString()
+        }
+      ];
+      
+      console.log('✅ Mock images loaded:', mockImages);
+      setImages(mockImages);
     } catch (error: any) {
-      console.error('❌ Resimler yüklenemedi:', error);
+      console.error('❌ Mock data hatası:', error);
       toast.error('Resimler yüklenemedi');
     } finally {
       setLoading(false);
@@ -93,25 +107,24 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         }
       }
 
-      // Gerçek API'ye yükle
-      console.log('🔍 Gerçek API\'ye yükleniyor');
+      // Mock upload - backend hazır olana kadar
+      console.log('🔍 Mock upload yapılıyor (backend henüz hazır değil)');
       
-      const formData = new FormData();
-      formData.append('image', file);
+      // Simüle edilmiş upload
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
-      console.log('🔍 FormData:', formData);
-      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      const newImage = {
+        filename: file.name,
+        path: `/uploads/products/${Date.now()}-${file.name}`,
+        size: file.size,
+        uploadedAt: new Date().toISOString()
+      };
       
-      console.log('✅ Upload response:', response.data);
-      toast.success('Resim başarıyla yüklendi');
+      console.log('✅ Mock upload başarılı:', newImage);
+      toast.success('Resim başarıyla yüklendi (Mock)');
       
-      // Resim listesini yenile
-      fetchImages();
+      // Yeni resmi listeye ekle
+      setImages(prev => [newImage, ...prev]);
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       toast.error('Resim yüklenemedi');
@@ -122,17 +135,18 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
 
   const handleDeleteImage = async (filename: string) => {
     try {
-      console.log('🔍 Gerçek API\'den siliniyor:', filename);
+      console.log('🔍 Mock delete yapılıyor (backend henüz hazır değil):', filename);
       
-      await axios.delete(API_ENDPOINTS.DELETE_IMAGE(filename));
+      // Simüle edilmiş delete
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      console.log('✅ Delete başarılı:', filename);
-      toast.success('Resim silindi');
+      console.log('✅ Mock delete başarılı:', filename);
+      toast.success('Resim silindi (Mock)');
       
-      // Resim listesini yenile
-      fetchImages();
+      // Resmi listeden çıkar
+      setImages(prev => prev.filter(img => img.filename !== filename));
     } catch (error: any) {
-      console.error('Resim silme hatası:', error);
+      console.error('Mock delete hatası:', error);
       toast.error('Resim silinemedi');
     }
   };
