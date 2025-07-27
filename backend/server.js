@@ -273,6 +273,48 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
+// Resim proxy endpoint'i - CORS sorunu için
+app.get('/api/images/:filename', (req, res) => {
+  const { filename } = req.params;
+  
+  // Güvenlik kontrolü
+  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    console.error('Geçersiz dosya adı:', filename);
+    res.set('Content-Type', 'image/svg+xml');
+    return res.status(400).send(getPlaceholderSvg());
+  }
+  
+  const filePath = path.join(__dirname, 'uploads', 'products', filename);
+  
+  // CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Max-Age', '86400');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  // Dosya var mı kontrol et
+  if (!fs.existsSync(filePath)) {
+    console.error('Resim dosyası bulunamadı:', filePath);
+    res.set('Content-Type', 'image/svg+xml');
+    return res.status(200).send(getPlaceholderSvg());
+  }
+  
+  // Dosyayı serve et
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Resim gönderilemedi:', filename, err);
+      res.set('Content-Type', 'image/svg+xml');
+      res.status(200).send(getPlaceholderSvg());
+    }
+  });
+});
+
 // Products klasörü için özel CORS ayarları
 app.use('/uploads/products', (req, res, next) => {
   // Tüm origin'lere izin ver
