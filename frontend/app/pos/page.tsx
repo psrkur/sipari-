@@ -393,26 +393,15 @@ export default function POSPage() {
                 className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300 rounded-lg bg-white"
                 onClick={() => addToCart(product)}
               >
-                <Card>
-                  <CardContent className="p-2 md:p-4">
-                    <div className="aspect-square bg-gray-100 rounded-lg mb-2 md:mb-3 flex items-center justify-center">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <div className="text-2xl md:text-4xl">🍕</div>
-                      )}
-                    </div>
-                    <h3 className="font-semibold text-sm md:text-lg mb-1 md:mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-lg md:text-2xl font-bold text-green-600">₺{product.price.toFixed(2)}</p>
-                    <Badge variant="secondary" className="mt-1 md:mt-2 text-xs">
-                      {product.category.name}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                                 <Card>
+                   <CardContent className="p-3 md:p-4">
+                     <h3 className="font-semibold text-sm md:text-lg mb-2 line-clamp-2">{product.name}</h3>
+                     <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{product.price.toFixed(2)}</p>
+                     <Badge variant="secondary" className="text-xs">
+                       {product.category.name}
+                     </Badge>
+                   </CardContent>
+                 </Card>
               </div>
             ))}
           </div>
