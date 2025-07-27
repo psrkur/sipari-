@@ -242,13 +242,13 @@ app.use(compression());
 
 // app.use('/api/', limiter);
 
-// CORS konfigürasyonu
+// CORS konfigürasyonu - Kapsamlı
 app.use(cors({
-  origin: true, // Tüm origin'lere izin ver
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Disposition']
+  origin: '*', // Tüm origin'lere izin ver
+  credentials: false, // CORS credentials false
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -282,12 +282,13 @@ app.get('/api/images/:filename', (req, res) => {
   
   const filePath = path.join(__dirname, 'uploads', 'products', filename);
   
-  // CORS headers
+  // Kapsamlı CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
   res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
   
   // OPTIONS request için
   if (req.method === 'OPTIONS') {
@@ -300,6 +301,15 @@ app.get('/api/images/:filename', (req, res) => {
     res.set('Content-Type', 'image/svg+xml');
     return res.status(200).send(getPlaceholderSvg());
   }
+  
+  // Content-Type'ı dosya uzantısına göre ayarla
+  const ext = path.extname(filename).toLowerCase();
+  let contentType = 'image/jpeg'; // varsayılan
+  if (ext === '.png') contentType = 'image/png';
+  else if (ext === '.gif') contentType = 'image/gif';
+  else if (ext === '.webp') contentType = 'image/webp';
+  
+  res.set('Content-Type', contentType);
   
   // Dosyayı serve et
   res.sendFile(filePath, (err) => {
