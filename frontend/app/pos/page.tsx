@@ -699,27 +699,24 @@ export default function POSPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                                         {activeTables.map((table) => {
-                       console.log('🔍 Masa verisi:', table);
-                       return (
+                                         {activeTables.map((table) => (
                          <div
                            key={table.id}
                            onClick={() => {
                              setSelectedTable(table);
                              fetchTableOrders(table.id);
                            }}
-                           className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
-                             selectedTable?.id === table.id
-                               ? 'border-purple-500 bg-purple-50'
-                               : table.orderCount > 0
-                               ? 'border-orange-300 bg-orange-50 hover:border-orange-400'
-                               : 'border-gray-200 bg-white hover:border-purple-300'
-                           }`}
+                                                       className={`p-3 rounded-lg cursor-pointer border-2 transition-all ${
+                              selectedTable?.id === table.id
+                                ? 'border-purple-500 bg-purple-50'
+                                : (table.orderCount && table.orderCount > 0) || (table.orders && table.orders.length > 0)
+                                ? 'border-orange-300 bg-orange-50 hover:border-orange-400'
+                                : 'border-gray-200 bg-white hover:border-purple-300'
+                            }`}
                          >
-                           <div className="flex justify-between items-center">
-                             <span className="font-semibold">Masa {table.number}</span>
-                             <span className="text-xs text-gray-500">({table.orderCount} sipariş)</span>
-                           </div>
+                                                       <div className="flex justify-between items-center">
+                              <span className="font-semibold">Masa {table.number}</span>
+                            </div>
                          </div>
                        );
                      })}
