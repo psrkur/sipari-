@@ -8,6 +8,7 @@ interface Product {
   price: number;
   category: string | { id: number; name: string; description: string; isActive: boolean };
   image?: string;
+  imagePath?: string;
 }
 
 interface ProductListProps {
@@ -87,10 +88,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                     className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
                     onClick={() => handleProductClick(product)}
                   >
-                    {product.image && (
+                    {(product.image || product.imagePath) && (
                       <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
                         <img
-                          src={product.image}
+                          src={product.image || product.imagePath}
                           alt={product.name}
                           className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                           crossOrigin="anonymous"
@@ -160,10 +161,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
               {/* Resim */}
-              {selectedProduct.image && (
+              {(selectedProduct.image || selectedProduct.imagePath) && (
                 <div className="relative overflow-hidden rounded-xl">
                   <img
-                    src={selectedProduct.image}
+                    src={selectedProduct.image || selectedProduct.imagePath}
                     alt={selectedProduct.name}
                     className="w-full h-64 sm:h-80 object-cover"
                     crossOrigin="anonymous"

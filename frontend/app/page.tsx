@@ -28,6 +28,7 @@ interface Product {
   price: number
   category: string | { id: number; name: string; description: string; isActive: boolean }
   image?: string
+  imagePath?: string
 }
 
 export default function Home() {
