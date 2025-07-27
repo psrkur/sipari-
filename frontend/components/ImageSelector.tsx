@@ -35,6 +35,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       setLoading(true);
       console.log('🔍 Gerçek API\'den resimler yükleniyor');
       
+      console.log('🔍 API URL:', API_ENDPOINTS.GET_IMAGES);
       const response = await axios.get(API_ENDPOINTS.GET_IMAGES);
       console.log('✅ API response:', response.data);
       setImages(response.data);
@@ -98,6 +99,8 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       const formData = new FormData();
       formData.append('image', file);
       
+      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
+      console.log('🔍 FormData:', formData);
       const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
