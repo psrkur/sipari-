@@ -116,23 +116,33 @@ async function checkAndRunMigration() {
     
     console.log('✅ Migration başarıyla uygulandı');
     
-    // status ve totalAmount sütunlarının var olup olmadığını kontrol et
+    // imagePath sütununun var olup olmadığını kontrol et
     const result = await prisma.$queryRaw`
       SELECT column_name 
       FROM information_schema.columns 
-      WHERE table_name = 'tables' AND column_name IN ('status', 'totalAmount')
+      WHERE table_name = 'products' AND column_name = 'imagePath'
     `;
     
-    console.log('📊 Mevcut sütunlar:', result);
+    console.log('📊 imagePath sütunu kontrolü:', result);
     
-    if (result.length >= 2) {
-      console.log('✅ status ve totalAmount sütunları başarıyla eklendi');
+    if (result.length > 0) {
+      console.log('✅ imagePath sütunu başarıyla eklendi');
     } else {
-      console.log('❌ Sütunlar eksik:', result);
+      console.log('❌ imagePath sütunu eksik, manuel olarak ekleniyor...');
+      // Manuel olarak sütun ekle
+      await prisma.$executeRaw`ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imagePath" TEXT`;
+      console.log('✅ imagePath sütunu manuel olarak eklendi');
     }
     
   } catch (error) {
     console.error('❌ Migration hatası:', error);
+    try {
+      // Hata durumunda manuel olarak sütun eklemeyi dene
+      await prisma.$executeRaw`ALTER TABLE "products" ADD COLUMN IF NOT EXISTS "imagePath" TEXT`;
+      console.log('✅ imagePath sütunu manuel olarak eklendi');
+    } catch (manualError) {
+      console.error('❌ Manuel sütun ekleme hatası:', manualError);
+    }
   }
 }
 
