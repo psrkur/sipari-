@@ -3761,6 +3761,12 @@ app.get('/api/admin/images-test', async (req, res) => {
   }
 });
 
+// Test endpoint - basit kontrol için
+app.get('/api/test', (req, res) => {
+  console.log('🔍 GET /api/test çağrıldı - v5 - DEPLOYMENT TRIGGER');
+  res.json({ message: 'Backend çalışıyor!', timestamp: new Date().toISOString() });
+});
+
 // Public endpoint - authentication olmadan (frontend için)
 app.get('/api/admin/images-public', async (req, res) => {
   try {
