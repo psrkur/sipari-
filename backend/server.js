@@ -1243,7 +1243,7 @@ app.post('/api/admin/products', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Şube müdürleri ürün ekleyemez' });
     }
 
-    const { name, description, price, categoryId, branchId, imagePath } = req.body;
+    const { name, description, price, categoryId, branchId, imagePath, image } = req.body;
 
     if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
@@ -1279,7 +1279,7 @@ app.post('/api/admin/products', authenticateToken, async (req, res) => {
             description: description || '',
             price: Number(price),
             categoryId: parseInt(categoryId),
-            image: imagePath || null,
+            image: image || imagePath || null,
             imagePath: imagePath || null,
             branchId: branch.id,
             companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
@@ -1309,7 +1309,7 @@ app.post('/api/admin/products', authenticateToken, async (req, res) => {
           description: description || '',
           price: Number(price),
           categoryId: parseInt(categoryId),
-          image: imagePath || null,
+          image: image || imagePath || null,
           imagePath: imagePath || null,
           branchId: targetBranchId,
           companyId: branch.companyId || 1 // companyId yoksa 1 olarak ata
@@ -1336,7 +1336,7 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
     console.log('Product ID:', req.params.id);
     
     const { id } = req.params;
-    const { name, description, price, categoryId, branchId, isActive, imagePath } = req.body;
+    const { name, description, price, categoryId, branchId, isActive, imagePath, image } = req.body;
 
     // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
     const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
@@ -1417,8 +1417,8 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
         }
       }
       
-      if (imagePath !== undefined) {
-        updateData.image = imagePath;
+      if (imagePath !== undefined || image !== undefined) {
+        updateData.image = image || imagePath;
         updateData.imagePath = imagePath;
       }
     }

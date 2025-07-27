@@ -516,7 +516,8 @@ export default function AdminPage() {
           categoryId: parseInt(editProductForm.categoryId),
           branchId: parseInt(editProductForm.branchId),
           isActive: editProductForm.isActive,
-          imagePath: editSelectedImagePath || null
+          imagePath: editSelectedImagePath || null,
+          image: editSelectedImagePath?.startsWith('data:image/') ? editSelectedImagePath : null
         };
 
         await axios.put(API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id), productData, {
@@ -759,7 +760,8 @@ export default function AdminPage() {
         price: parseFloat(productForm.price),
         categoryId: parseInt(productForm.categoryId),
         branchId: parseInt(productForm.branchId),
-        imagePath: selectedImagePath || null
+        imagePath: selectedImagePath || null,
+        image: selectedImagePath?.startsWith('data:image/') ? selectedImagePath : null
       };
       
       const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, productData, {
