@@ -43,9 +43,26 @@ export default function POSPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) {
+    // Ayrı pencerede açıldığında token kontrolü
+    let authToken = token;
+    
+    // Eğer token yoksa localStorage'dan almayı dene
+    if (!authToken) {
+      const storedToken = localStorage.getItem('auth-token');
+      if (storedToken) {
+        authToken = storedToken;
+      }
+    }
+    
+    if (!authToken) {
       toast.error('Giriş yapmanız gerekiyor');
-      router.push('/login');
+      // Ayrı pencerede açıldıysa parent window'a mesaj gönder
+      if (window.opener) {
+        window.opener.postMessage({ type: 'AUTH_REQUIRED' }, '*');
+        window.close();
+      } else {
+        router.push('/login');
+      }
       return;
     }
 
@@ -54,8 +71,14 @@ export default function POSPage() {
 
   const fetchBranches = async () => {
     try {
+      // Token'ı al (store'dan veya localStorage'dan)
+      let authToken = token;
+      if (!authToken) {
+        authToken = localStorage.getItem('auth-token') || '';
+      }
+      
       const response = await axios.get(API_ENDPOINTS.ADMIN_BRANCHES, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
       setBranches(response.data);
       if (response.data.length > 0) {
@@ -168,8 +191,14 @@ export default function POSPage() {
         notes: `Kasa Satışı - ${paymentMethod === 'cash' ? 'Nakit' : 'Kart'}`
       };
 
+      // Token'ı al (store'dan veya localStorage'dan)
+      let authToken = token;
+      if (!authToken) {
+        authToken = localStorage.getItem('auth-token') || '';
+      }
+      
       await axios.post(API_ENDPOINTS.ORDERS, orderData, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
 
       toast.success(`Sipariş başarıyla oluşturuldu! (${paymentMethod === 'cash' ? 'Nakit' : 'Kart'})`);
@@ -226,13 +255,21 @@ export default function POSPage() {
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-4">
             <Button
-              onClick={() => router.push('/admin')}
+              onClick={() => {
+                if (window.opener) {
+                  // Ayrı pencerede açıldıysa pencereyi kapat
+                  window.close();
+                } else {
+                  // Normal sayfada açıldıysa admin paneline git
+                  router.push('/admin');
+                }
+              }}
               variant="outline"
               size="sm"
               className="flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              <span>Admin Paneli</span>
+              <span>{window.opener ? 'Pencereyi Kapat' : 'Admin Paneli'}</span>
             </Button>
             <h1 className="text-2xl font-bold text-gray-800">🏪 Kasa Ekranı</h1>
           </div>
