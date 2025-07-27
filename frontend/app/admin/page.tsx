@@ -943,9 +943,9 @@ export default function AdminPage() {
             )}
             <button
               onClick={() => router.push('/pos')}
-              className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700"
+              className="px-6 py-3 rounded-lg font-bold bg-green-600 text-white hover:bg-green-700 text-lg shadow-lg border-2 border-green-500"
             >
-              🏪 Kasa Ekranı
+              🏪 KASA EKRANI
             </button>
           </div>
 
