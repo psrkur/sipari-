@@ -39,13 +39,13 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       const mockImages = [
         {
           filename: 'test-image-1.jpg',
-          path: '/uploads/products/test-image-1.jpg',
+          path: '/placeholder-image.svg',
           size: 1024000,
           uploadedAt: new Date().toISOString()
         },
         {
           filename: 'test-image-2.png',
-          path: '/uploads/products/test-image-2.png',
+          path: '/placeholder-image.svg',
           size: 2048000,
           uploadedAt: new Date().toISOString()
         }
@@ -113,12 +113,12 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       // Simüle edilmiş upload
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const newImage = {
-        filename: file.name,
-        path: `/uploads/products/${Date.now()}-${file.name}`,
-        size: file.size,
-        uploadedAt: new Date().toISOString()
-      };
+             const newImage = {
+         filename: file.name,
+         path: '/placeholder-image.svg',
+         size: file.size,
+         uploadedAt: new Date().toISOString()
+       };
       
       console.log('✅ Mock upload başarılı:', newImage);
       toast.success('Resim başarıyla yüklendi (Mock)');
