@@ -150,7 +150,7 @@ export const API_ENDPOINTS = {
   
   // Images
   IMAGE_URL: (imagePath: string) => {
-    // Eğer imagePath zaten tam URL ise, olduğu gibi döndür
+    // Eğer imagePath zaten tam URL ise (Cloudinary URL), olduğu gibi döndür
     if (imagePath && (imagePath.startsWith('http://') || imagePath.startsWith('https://'))) {
       return imagePath;
     }
