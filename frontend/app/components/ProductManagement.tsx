@@ -1,4 +1,5 @@
 import React from 'react';
+import { API_ENDPOINTS } from '@/lib/api';
 
 interface Product {
   id: number;
@@ -65,7 +66,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                   <div className="flex items-center">
                     {(product.image || product.imagePath) && (
                       <img
-                        src={product.image || product.imagePath}
+                        src={API_ENDPOINTS.IMAGE_URL(product.image || product.imagePath || '')}
                         alt={product.name}
                         className="w-10 h-10 rounded-md object-cover mr-3"
                       />
