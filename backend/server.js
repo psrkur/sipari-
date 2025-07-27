@@ -111,19 +111,10 @@ async function testDatabaseConnection() {
 
 testDatabaseConnection();
 
-// Migration kontrolü
+// Migration kontrolü - geçici olarak devre dışı
 async function checkAndRunMigration() {
   try {
-    console.log('🔧 Migration kontrolü başlatılıyor...');
-    
-    // Migration'ı uygula
-    const { execSync } = require('child_process');
-    execSync('npx prisma migrate deploy', { 
-      stdio: 'inherit',
-      cwd: __dirname 
-    });
-    
-    console.log('✅ Migration başarıyla uygulandı');
+    console.log('🔧 Migration kontrolü atlanıyor (geçici olarak devre dışı)...');
     
     // imagePath sütununun var olup olmadığını kontrol et
     const result = await prisma.$queryRaw`
@@ -135,7 +126,7 @@ async function checkAndRunMigration() {
     console.log('📊 imagePath sütunu kontrolü:', result);
     
     if (result.length > 0) {
-      console.log('✅ imagePath sütunu başarıyla eklendi');
+      console.log('✅ imagePath sütunu mevcut');
     } else {
       console.log('❌ imagePath sütunu eksik, manuel olarak ekleniyor...');
       // Manuel olarak sütun ekle
