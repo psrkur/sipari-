@@ -49,7 +49,7 @@ interface Order {
       name: string;
     };
   } | null;
-  items: OrderItem[];
+  orderItems: OrderItem[];
 }
 
 export default function KitchenPage() {
@@ -440,16 +440,16 @@ export default function KitchenPage() {
                   )}
                 </div>
 
-                {/* Ürün Listesi */}
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-700">Ürünler:</p>
-                  {order.items.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>{item.quantity}x {item.product.name}</span>
-                      <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
-                    </div>
-                  ))}
-                </div>
+                                 {/* Ürün Listesi */}
+                 <div className="space-y-1">
+                   <p className="text-sm font-medium text-gray-700">Ürünler:</p>
+                   {order.orderItems && order.orderItems.map((item, index) => (
+                     <div key={index} className="flex justify-between text-sm">
+                       <span>{item.quantity}x {item.product.name}</span>
+                       <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
+                     </div>
+                   ))}
+                 </div>
 
                 {/* Notlar */}
                 {order.notes && (
