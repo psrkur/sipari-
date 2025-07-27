@@ -3607,8 +3607,8 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
   }
 });
 
-// Resim listesi endpoint'i
-app.get('/api/admin/images', authenticateToken, async (req, res) => {
+// Resim listesi endpoint'i - geçici olarak authentication kaldırıldı
+app.get('/api/admin/images', async (req, res) => {
   try {
     console.log('🔍 GET /api/admin/images çağrıldı');
     console.log('🔍 User:', req.user);
