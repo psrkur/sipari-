@@ -154,14 +154,14 @@ export const API_ENDPOINTS = {
   
   // Images
   IMAGE_URL: (imagePath: string) => {
-    // Eğer imagePath zaten tam URL ise (Cloudinary URL), olduğu gibi döndür
-    if (imagePath && (imagePath.startsWith('http://') || imagePath.startsWith('https://'))) {
-      return imagePath;
-    }
-    
     // Eğer imagePath yoksa veya boşsa, placeholder resim döndür
     if (!imagePath || imagePath.trim() === '') {
       return PLACEHOLDER_IMAGE;
+    }
+    
+    // Eğer imagePath zaten tam URL ise (Cloudinary URL), olduğu gibi döndür
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
     }
     
     // Base64 data URL kontrolü - doğrudan döndür
@@ -169,7 +169,7 @@ export const API_ENDPOINTS = {
       return imagePath;
     }
     
-    // Tüm resimler için proxy endpoint kullan
+    // /uploads/products/ formatındaki resimler için
     if (imagePath.startsWith('/uploads/products/')) {
       const filename = imagePath.replace('/uploads/products/', '');
       return `${API_BASE_URL}/api/images/${filename}`;

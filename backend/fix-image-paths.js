@@ -73,7 +73,7 @@ async function fixImagePaths() {
         }
         
         if (matchedFile) {
-          // Yeni resim yolu oluştur
+          // Yeni resim yolu oluştur - /uploads/products/ formatında
           const newImagePath = `/uploads/products/${matchedFile}`;
           
           // Veritabanını güncelle
@@ -98,13 +98,8 @@ async function fixImagePaths() {
     console.log('==================================================');
     console.log(`✅ Güncellenen ürün: ${updatedCount}`);
     console.log(`❌ Hatalı: ${errorCount}`);
-    console.log(`📊 Toplam ürün: ${products.length}`);
+    console.log(`📊 Toplam: ${products.length}`);
     console.log('==================================================\n');
-    
-    console.log('💡 Sonraki adımlar:');
-    console.log('1. Frontend\'de resimlerin doğru yüklendiğini kontrol edin');
-    console.log('2. Yeni resim yükleme sistemini test edin');
-    console.log('3. Gerekirse manuel resim eşleştirmesi yapın');
 
   } catch (error) {
     console.error('❌ Fix hatası:', error);
@@ -113,5 +108,4 @@ async function fixImagePaths() {
   }
 }
 
-// Script'i çalıştır
 fixImagePaths(); 
