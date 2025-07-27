@@ -248,7 +248,7 @@ if (process.env.NODE_ENV === 'production') {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"],
         scriptSrc: ["'self'"],
-        imgSrc: ["'self'", "data:", "https:", "http://localhost:3001", "https://yemek5-backend.onrender.com"],
+        imgSrc: ["'self'", "data:", "https:", "http://localhost:3001", "https://yemek5-backend.onrender.com", "https://arsut.net.tr"],
       },
     },
     crossOriginEmbedderPolicy: false
@@ -278,7 +278,7 @@ app.use(compression());
 
 // CORS konfigürasyonu - Kapsamlı
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app'],
+  origin: ['http://localhost:3000', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr'],
   credentials: false, // CORS credentials false
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
