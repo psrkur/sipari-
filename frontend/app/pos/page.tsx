@@ -301,30 +301,32 @@ export default function POSPage() {
           {/* Ürün Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {filteredProducts.map(product => (
-              <Card
+              <div
                 key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300"
+                className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300 rounded-lg bg-white"
                 onClick={() => addToCart(product)}
               >
-                <CardContent className="p-4">
-                  <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="text-4xl">🍕</div>
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
-                  <p className="text-2xl font-bold text-green-600">₺{product.price.toFixed(2)}</p>
-                  <Badge variant="secondary" className="mt-2">
-                    {product.category.name}
-                  </Badge>
-                </CardContent>
-              </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="text-4xl">🍕</div>
+                      )}
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2 line-clamp-2">{product.name}</h3>
+                    <p className="text-2xl font-bold text-green-600">₺{product.price.toFixed(2)}</p>
+                    <Badge variant="secondary" className="mt-2">
+                      {product.category.name}
+                    </Badge>
+                  </CardContent>
+                </Card>
+              </div>
             ))}
           </div>
         </div>
