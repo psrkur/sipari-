@@ -273,6 +273,23 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
+// Products klasörü için özel CORS ayarları
+app.use('/uploads/products', (req, res, next) => {
+  // Tüm origin'lere izin ver
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+}, express.static(path.join(__dirname, 'uploads', 'products')));
+
 // Resim endpoint'i
 app.get('/uploads/:filename', (req, res) => {
   const filename = req.params.filename;
