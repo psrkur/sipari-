@@ -101,6 +101,25 @@ export default function KitchenPage() {
     fetchBranches();
   }, [token, router]);
 
+  // Otomatik yenileme için useEffect
+  useEffect(() => {
+    if (!selectedBranch) return;
+
+    // İlk yükleme
+    fetchOrders(selectedBranch.id);
+
+    // 5 saniyede bir otomatik yenileme
+    const interval = setInterval(() => {
+      console.log('Mutfak ekranı otomatik yenileniyor...');
+      fetchOrders(selectedBranch.id, false); // showLoading = false
+    }, 5000);
+
+    // Cleanup function
+    return () => {
+      clearInterval(interval);
+    };
+  }, [selectedBranch]);
+
   const fetchBranches = async () => {
     try {
       console.log('fetchBranches çağrıldı');
@@ -139,7 +158,7 @@ export default function KitchenPage() {
     }
   };
 
-  const fetchOrders = async (branchId: number) => {
+  const fetchOrders = async (branchId: number, showLoading = true) => {
     try {
       let authToken = token;
       if (!authToken) {
@@ -159,11 +178,15 @@ export default function KitchenPage() {
       });
       
       setOrders(response.data);
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     } catch (error) {
       console.error('Siparişler yüklenemedi:', error);
-      toast.error('Siparişler yüklenemedi');
-      setLoading(false);
+      if (showLoading) {
+        toast.error('Siparişler yüklenemedi');
+        setLoading(false);
+      }
     }
   };
 
@@ -330,13 +353,13 @@ export default function KitchenPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Şube</label>
             <select
               value={selectedBranch?.id || ''}
-              onChange={(e) => {
-                const branch = branches.find(b => b.id === parseInt(e.target.value));
-                setSelectedBranch(branch);
-                if (branch) {
-                  fetchOrders(branch.id);
-                }
-              }}
+                             onChange={(e) => {
+                 const branch = branches.find(b => b.id === parseInt(e.target.value));
+                 setSelectedBranch(branch);
+                 if (branch) {
+                   fetchOrders(branch.id, true); // showLoading = true
+                 }
+               }}
               className="w-full p-3 border border-gray-300 rounded-lg text-lg"
             >
               {branches.map(branch => (
