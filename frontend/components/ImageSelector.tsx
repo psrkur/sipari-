@@ -142,31 +142,45 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     try {
       setUploading(true);
       
-      // Gerçek API'ye yükle
-      console.log('🔍 Gerçek API\'ye yükleniyor');
+      // Base64'e çevir
+      console.log('🔍 Resim base64\'e çevriliyor');
       
-      const formData = new FormData();
-      formData.append('image', file);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const base64Data = e.target?.result as string;
+          console.log('✅ Base64 dönüşümü tamamlandı');
+          
+          // Base64 resmi doğrudan kullan
+          const imageInfo = {
+            filename: file.name,
+            path: base64Data,
+            size: file.size,
+            uploadedAt: new Date().toISOString()
+          };
+          
+          console.log('✅ Resim bilgisi oluşturuldu:', imageInfo);
+          
+          // Resim listesine ekle
+          setImages(prev => [imageInfo, ...prev]);
+          toast.success('Resim başarıyla yüklendi');
+          
+        } catch (error: any) {
+          console.error('Base64 işleme hatası:', error);
+          toast.error('Resim işlenemedi: ' + error.message);
+        } finally {
+          setUploading(false);
+        }
+      };
       
-      console.log('🔍 Upload URL:', API_ENDPOINTS.UPLOAD_IMAGE);
-      console.log('🔍 FormData:', formData);
+      reader.onerror = () => {
+        console.error('❌ Dosya okuma hatası');
+        toast.error('Dosya okunamadı');
+        setUploading(false);
+      };
       
-      // Headers - Content-Type'ı axios'a bırak
-      const headers: any = {};
+      reader.readAsDataURL(file);
       
-      // Authentication olmadan upload yap (backend'de authentication kaldırıldı)
-      console.log('🔍 Authentication olmadan upload yapılıyor');
-      
-      const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
-        headers: headers,
-        timeout: 30000 // 30 saniye timeout
-      });
-      
-      console.log('✅ Upload response:', response.data);
-      toast.success('Resim başarıyla yüklendi');
-      
-      // Resim listesini yenile
-      fetchImages();
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
       console.error('Error details:', {
@@ -176,7 +190,6 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         config: error.config
       });
       toast.error('Resim yüklenemedi: ' + (error.response?.data?.error || error.message));
-    } finally {
       setUploading(false);
     }
   };
