@@ -185,10 +185,37 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Benzersiz dosya adı oluştur
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, uniqueSuffix + '-' + safeName);
+    // Orijinal dosya adını koru, sadece Türkçe karakterleri ve boşlukları düzelt
+    const originalName = file.originalname;
+    const safeName = originalName
+      .replace(/[ğ]/g, 'g')
+      .replace(/[ü]/g, 'u')
+      .replace(/[ş]/g, 's')
+      .replace(/[ı]/g, 'i')
+      .replace(/[ö]/g, 'o')
+      .replace(/[ç]/g, 'c')
+      .replace(/[Ğ]/g, 'G')
+      .replace(/[Ü]/g, 'U')
+      .replace(/[Ş]/g, 'S')
+      .replace(/[İ]/g, 'I')
+      .replace(/[Ö]/g, 'O')
+      .replace(/[Ç]/g, 'C')
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9._-]/g, '');
+    
+    // Eğer aynı isimde dosya varsa, sonuna sayı ekle
+    let finalName = safeName;
+    let counter = 1;
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    
+    while (fs.existsSync(path.join(uploadDir, finalName))) {
+      const nameWithoutExt = safeName.substring(0, safeName.lastIndexOf('.'));
+      const ext = safeName.substring(safeName.lastIndexOf('.'));
+      finalName = `${nameWithoutExt}_${counter}${ext}`;
+      counter++;
+    }
+    
+    cb(null, finalName);
   }
 });
 
