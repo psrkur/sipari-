@@ -215,12 +215,12 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
                 <Card key={image.filename} className="relative group">
                   <CardContent className="p-2">
                     <div className="relative">
-                                                                     <img
-                          src={`${API_ENDPOINTS.IMAGE_URL(image.path)}`}
-                          alt={image.filename}
-                          className="w-full h-32 object-cover rounded-lg bg-gray-100"
-                          onError={handleImageError}
-                        />
+                                                                                            <img
+                         src={image.path}
+                         alt={image.filename}
+                         className="w-full h-32 object-cover rounded-lg bg-gray-100"
+                         onError={handleImageError}
+                       />
                       
                       {/* Selection Overlay */}
                       {selectedImage === image.path && (
