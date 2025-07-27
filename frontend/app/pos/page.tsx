@@ -47,15 +47,20 @@ export default function POSPage() {
     console.log('Token from store:', token);
     console.log('Window opener:', window.opener);
     
-    // Ayrı pencerede açıldığında token kontrolü
+    // Store'dan token'ı almayı dene
     let authToken = token;
     
-    // Eğer token yoksa localStorage'dan almayı dene
+    // Eğer store'dan token yoksa, localStorage'dan direkt al
     if (!authToken) {
-      const storedToken = localStorage.getItem('auth-token');
-      console.log('Stored token from localStorage:', storedToken);
-      if (storedToken) {
-        authToken = storedToken;
+      try {
+        const authStorage = localStorage.getItem('auth-storage');
+        if (authStorage) {
+          const parsed = JSON.parse(authStorage);
+          authToken = parsed.state?.token;
+          console.log('Token from auth-storage:', authToken);
+        }
+      } catch (error) {
+        console.error('Auth storage parse error:', error);
       }
     }
     
@@ -84,7 +89,15 @@ export default function POSPage() {
       // Token'ı al (store'dan veya localStorage'dan)
       let authToken = token;
       if (!authToken) {
-        authToken = localStorage.getItem('auth-token') || '';
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
       }
       
       console.log('fetchBranches için token:', authToken);
@@ -210,7 +223,15 @@ export default function POSPage() {
       // Token'ı al (store'dan veya localStorage'dan)
       let authToken = token;
       if (!authToken) {
-        authToken = localStorage.getItem('auth-token') || '';
+        try {
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
+        } catch (error) {
+          console.error('Auth storage parse error:', error);
+        }
       }
       
       await axios.post(API_ENDPOINTS.ORDERS, orderData, {
