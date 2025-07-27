@@ -3610,18 +3610,27 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
 // Resim listesi endpoint'i
 app.get('/api/admin/images', authenticateToken, async (req, res) => {
   try {
+    console.log('🔍 GET /api/admin/images çağrıldı');
+    console.log('🔍 User:', req.user);
+    
     const uploadDir = path.join(__dirname, 'uploads', 'products');
+    console.log('🔍 Upload directory:', uploadDir);
     
     if (!fs.existsSync(uploadDir)) {
+      console.log('📁 Upload directory yok, boş array döndürülüyor');
       return res.json([]);
     }
 
     const files = fs.readdirSync(uploadDir);
+    console.log('📁 Bulunan dosyalar:', files);
+    
     const images = files
       .filter(file => {
         try {
           const ext = path.extname(file).toLowerCase();
-          return ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
+          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
+          return isValid;
         } catch (error) {
           console.error('Dosya filtresi hatası:', error);
           return false;
@@ -3631,12 +3640,14 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
         try {
           const filePath = path.join(uploadDir, file);
           const stats = fs.statSync(filePath);
-          return {
+          const imageInfo = {
             filename: file,
             path: `/uploads/products/${file}`,
             size: stats.size,
             uploadedAt: stats.mtime
           };
+          console.log('📄 Resim bilgisi:', imageInfo);
+          return imageInfo;
         } catch (error) {
           console.error('Dosya bilgisi alma hatası:', error);
           return null;
@@ -3645,9 +3656,10 @@ app.get('/api/admin/images', authenticateToken, async (req, res) => {
       .filter(image => image !== null)
       .sort((a, b) => b.uploadedAt - a.uploadedAt);
 
+    console.log('✅ Toplam resim sayısı:', images.length);
     res.json(images);
   } catch (error) {
-    console.error('Resim listesi hatası:', error);
+    console.error('❌ Resim listesi hatası:', error);
     res.status(500).json({ error: 'Resim listesi alınamadı' });
   }
 });
