@@ -90,7 +90,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'qr-codes'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -942,6 +942,14 @@ export default function AdminPage() {
               </button>
             )}
             <button
+              onClick={() => setActiveTab('qr-codes')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'qr-codes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              QR Menüler
+            </button>
+            <button
               onClick={() => {
                 console.log('POS button clicked, opening in new window');
                 const posWindow = window.open('/pos', 'pos_window', 'width=1400,height=900,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no');
@@ -1331,6 +1339,33 @@ export default function AdminPage() {
                   </ul>
                   <p className="mt-3 text-sm text-blue-600">
                     Detaylı masa yönetimi için yukarıdaki butona tıklayın.
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {activeTab === 'qr-codes' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">QR Menü Yönetimi</h2>
+                  <Link
+                    href="/admin/qr-codes"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  >
+                    QR Kod Yönetimi Sayfasına Git
+                  </Link>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">QR Menü Özellikleri</h3>
+                  <ul className="space-y-2 text-green-700">
+                    <li>• Her şube için benzersiz QR kod oluşturma</li>
+                    <li>• QR kodları yazdırma ve indirme</li>
+                    <li>• Müşteriler QR kodu okutarak menüyü görüntüleyebilir</li>
+                    <li>• Sadece görüntüleme - sipariş verme yok</li>
+                    <li>• Responsive tasarım - mobil uyumlu</li>
+                  </ul>
+                  <p className="mt-3 text-sm text-green-600">
+                    QR menü kodlarını yönetmek için yukarıdaki butona tıklayın.
                   </p>
                 </div>
               </div>

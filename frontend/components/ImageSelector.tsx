@@ -217,6 +217,14 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   };
 
   const handleDeleteImage = async (filename: string) => {
+    // Onay dialogu göster
+    const isConfirmed = window.confirm(`"${filename}" resmini silmek istediğinizden emin misiniz?`);
+    
+    if (!isConfirmed) {
+      console.log('❌ Resim silme işlemi iptal edildi');
+      return;
+    }
+    
     try {
       console.log('🔍 Resim siliniyor:', filename);
       

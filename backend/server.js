@@ -4309,3 +4309,177 @@ app.get('/api/admin/images-public', async (req, res) => {
     res.status(500).json({ error: 'Resim listesi alınamadı' });
   }
 });
+
+// QR Menü endpoint'leri
+app.get('/api/qr-menu/:branchId', async (req, res) => {
+  try {
+    const { branchId } = req.params;
+    
+    // Şube bilgilerini al
+    const branch = await prisma.branch.findUnique({
+      where: { id: parseInt(branchId) },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        phone: true,
+        isActive: true
+      }
+    });
+
+    if (!branch || !branch.isActive) {
+      return res.status(404).json({ error: 'Şube bulunamadı veya aktif değil' });
+    }
+
+    // Şubenin ürünlerini al
+    const products = await prisma.product.findMany({
+      where: {
+        branchId: parseInt(branchId),
+        isActive: true
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: [
+        {
+          category: {
+            name: 'asc'
+          }
+        },
+        {
+          name: 'asc'
+        }
+      ]
+    });
+
+    // Kategorilere göre grupla
+    const menuByCategory = {};
+    products.forEach(product => {
+      const categoryName = product.category?.name || 'Diğer';
+      if (!menuByCategory[categoryName]) {
+        menuByCategory[categoryName] = [];
+      }
+      menuByCategory[categoryName].push({
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: product.image,
+        isAvailable: product.isAvailable
+      });
+    });
+
+    res.json({
+      branch: {
+        id: branch.id,
+        name: branch.name,
+        address: branch.address,
+        phone: branch.phone
+      },
+      menu: menuByCategory,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('QR Menü hatası:', error);
+    res.status(500).json({ error: 'Menü bilgileri getirilemedi' });
+  }
+});
+
+// QR kod oluşturma endpoint'i
+app.post('/api/admin/qr-codes/generate', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { branchId } = req.body;
+
+    if (!branchId) {
+      return res.status(400).json({ error: 'Şube ID gerekli' });
+    }
+
+    // Şube kontrolü
+    const branch = await prisma.branch.findUnique({
+      where: { id: parseInt(branchId) }
+    });
+
+    if (!branch) {
+      return res.status(404).json({ error: 'Şube bulunamadı' });
+    }
+
+    // QR kod URL'si oluştur
+    const qrUrl = `${FRONTEND_URL}/qr-menu/${branchId}`;
+    
+    // QR kod oluştur
+    const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+
+    res.json({
+      branchId: branch.id,
+      branchName: branch.name,
+      qrUrl: qrUrl,
+      qrCodeDataUrl: qrCodeDataUrl,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('QR kod oluşturma hatası:', error);
+    res.status(500).json({ error: 'QR kod oluşturulamadı' });
+  }
+});
+
+// Tüm şubeler için QR kod oluşturma
+app.get('/api/admin/qr-codes/all', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const branches = await prisma.branch.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        address: true
+      }
+    });
+
+    const qrCodes = [];
+
+    for (const branch of branches) {
+      const qrUrl = `${FRONTEND_URL}/qr-menu/${branch.id}`;
+      const qrCodeDataUrl = await QRCode.toDataURL(qrUrl, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      qrCodes.push({
+        branchId: branch.id,
+        branchName: branch.name,
+        branchAddress: branch.address,
+        qrUrl: qrUrl,
+        qrCodeDataUrl: qrCodeDataUrl,
+        generatedAt: new Date().toISOString()
+      });
+    }
+
+    res.json(qrCodes);
+  } catch (error) {
+    console.error('QR kodlar oluşturma hatası:', error);
+    res.status(500).json({ error: 'QR kodlar oluşturulamadı' });
+  }
+});
