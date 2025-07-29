@@ -47,20 +47,30 @@ export default function QRMenuPage() {
       try {
         console.log('🔍 Şubeler yükleniyor...');
         
-        // Basit fetch deneyelim
+        // Response text'ini önce kontrol edelim
         const response = await fetch('https://yemek5-backend.onrender.com/api/branches');
         
         console.log('🔍 Response status:', response.status);
         console.log('🔍 Response ok:', response.ok);
+        console.log('🔍 Response type:', response.type);
+        console.log('🔍 Response url:', response.url);
+        
+        // Response text'ini kontrol edelim
+        const responseText = await response.text();
+        console.log('🔍 Response text (first 200 chars):', responseText.substring(0, 200));
         
         if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Şubeler yüklendi:', data);
-          setBranches(data);
+          try {
+            const data = JSON.parse(responseText);
+            console.log('✅ Şubeler yüklendi:', data);
+            setBranches(data);
+          } catch (parseError) {
+            console.error('❌ JSON parse hatası:', parseError);
+            console.error('❌ Response text:', responseText);
+          }
         } else {
           console.error('❌ Şubeler yüklenemedi:', response.status, response.statusText);
-          const errorText = await response.text();
-          console.error('❌ Error response:', errorText);
+          console.error('❌ Error response:', responseText);
         }
       } catch (error) {
         console.error('❌ Şubeler yüklenemedi (catch):', error);
@@ -81,21 +91,32 @@ export default function QRMenuPage() {
         setLoading(true);
         console.log('🔍 Menü yükleniyor...', selectedBranch);
         
-        // Basit fetch deneyelim
+        // Response text'ini önce kontrol edelim
         const response = await fetch(`https://yemek5-backend.onrender.com/api/qr-menu/${selectedBranch}`);
         
         console.log('🔍 Menu response status:', response.status);
         console.log('🔍 Menu response ok:', response.ok);
+        console.log('🔍 Menu response type:', response.type);
+        console.log('🔍 Menu response url:', response.url);
+        
+        // Response text'ini kontrol edelim
+        const responseText = await response.text();
+        console.log('🔍 Menu response text (first 200 chars):', responseText.substring(0, 200));
         
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ Menü yükleme hatası:', response.status, response.statusText, errorText);
+          console.error('❌ Menü yükleme hatası:', response.status, response.statusText, responseText);
           throw new Error('Menü yüklenemedi');
         }
         
-        const data = await response.json();
-        console.log('✅ Menü yüklendi:', data);
-        setMenuData(data);
+        try {
+          const data = JSON.parse(responseText);
+          console.log('✅ Menü yüklendi:', data);
+          setMenuData(data);
+        } catch (parseError) {
+          console.error('❌ Menu JSON parse hatası:', parseError);
+          console.error('❌ Menu response text:', responseText);
+          throw new Error('Menü verisi parse edilemedi');
+        }
       } catch (err) {
         console.error('❌ Menü yükleme hatası:', err);
         if (err instanceof Error) {
