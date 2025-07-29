@@ -1,7 +1,7 @@
 [build]
   base = "frontend"
   command = "npm run build"
-  publish = ".next"
+  publish = "out"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -9,15 +9,10 @@
   NPM_FLAGS = "--legacy-peer-deps"
   NODE_ENV = "production"
 
-# Next.js server-side rendering için redirect'ler
-[[redirects]]
-  from = "/_next/static/*"
-  to = "/_next/static/:splat"
-  status = 200
-
+# Static export için redirect'ler
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/___netlify-handler"
+  to = "/index.html"
   status = 200
 
 [[headers]]

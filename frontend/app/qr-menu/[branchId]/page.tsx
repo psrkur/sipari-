@@ -1,8 +1,15 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
 import { ArrowLeft, Phone, MapPin, Clock, AlertCircle } from 'lucide-react';
+
+// Static export için gerekli
+export async function generateStaticParams() {
+  return [
+    { branchId: '1' },
+    { branchId: '2' },
+    { branchId: '3' },
+    { branchId: '4' },
+    { branchId: '5' }
+  ];
+}
 
 interface Product {
   id: number;
@@ -30,47 +37,26 @@ interface MenuData {
   lastUpdated: string;
 }
 
-export default function QRMenuPage() {
-  const params = useParams();
-  const branchId = params.branchId as string;
+export default async function QRMenuPage({ params }: { params: { branchId: string } }) {
+  const branchId = params.branchId;
   
-  const [menuData, setMenuData] = useState<MenuData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Server-side data fetching
+  let menuData: MenuData | null = null;
+  let error: string | null = null;
 
-  useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/qr-menu/${branchId}`);
-        
-        if (!response.ok) {
-          throw new Error('Menü yüklenemedi');
-        }
-        
-        const data = await response.json();
-        setMenuData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (branchId) {
-      fetchMenu();
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
+    const response = await fetch(`${apiUrl}/api/qr-menu/${branchId}`, {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Menü yüklenemedi');
     }
-  }, [branchId]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
-        </div>
-      </div>
-    );
+    
+    menuData = await response.json();
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Bir hata oluştu';
   }
 
   if (error) {
@@ -80,19 +66,26 @@ export default function QRMenuPage() {
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Hata</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.history.back()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          <a
+            href="javascript:history.back()"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block"
           >
             Geri Dön
-          </button>
+          </a>
         </div>
       </div>
     );
   }
 
   if (!menuData) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
+        </div>
+      </div>
+    );
   }
 
   const formatPrice = (price: number) => {
@@ -115,13 +108,13 @@ export default function QRMenuPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => window.history.back()}
+            <a
+              href="javascript:history.back()"
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
               Geri
-            </button>
+            </a>
             <div className="text-center">
               <h1 className="text-xl font-bold text-gray-900">{menuData.branch.name}</h1>
               <p className="text-sm text-gray-500">Dijital Menü</p>
@@ -175,7 +168,7 @@ export default function QRMenuPage() {
                   <h3 className="text-lg font-semibold text-gray-900">{categoryName}</h3>
                 </div>
                 <div className="divide-y">
-                  {products.map((product) => (
+                  {products.map((product: Product) => (
                     <div key={product.id} className="p-6">
                       <div className="flex gap-4">
                         {/* Product Image */}
