@@ -20,7 +20,7 @@ interface QRCodeData {
 }
 
 export default function QRCodesPage() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,7 @@ export default function QRCodesPage() {
       setLoading(true);
       const response = await fetch('/api/admin/qr-codes/all', {
         headers: {
-          'Authorization': `Bearer ${user?.token}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -72,7 +72,7 @@ export default function QRCodesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ branchId })
       });
