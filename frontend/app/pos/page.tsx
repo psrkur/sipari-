@@ -239,31 +239,35 @@ export default function POSPage() {
   };
 
   const handlePrint = () => {
+    // Popup içeriğini yazdır
+    const printContent = `
+      <html>
+        <head>
+          <title>Fiş</title>
+          <style>
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              line-height: 1.2;
+              margin: 0;
+              padding: 10px;
+              white-space: pre-line;
+            }
+            @media print {
+              body { margin: 0; }
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+        </body>
+      </html>
+    `;
+    
+    // Yeni pencere aç ve yazdır
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Fiş</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.2;
-                margin: 0;
-                padding: 10px;
-                white-space: pre-line;
-              }
-              @media print {
-                body { margin: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            ${printContent}
-          </body>
-        </html>
-      `);
+      printWindow.document.write(printContent);
       printWindow.document.close();
       
       // Yazdırma işlemini başlat
