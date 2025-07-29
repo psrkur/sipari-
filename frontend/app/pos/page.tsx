@@ -44,7 +44,7 @@ export default function POSPage() {
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [tableOrders, setTableOrders] = useState<any>(null);
   const [autoPrint, setAutoPrint] = useState(true); // Otomatik yazdırma ayarı
-  const [silentPrint, setSilentPrint] = useState(false); // Sessiz yazdırma ayarı (dialog göstermeden)
+  const [autoConfirm, setAutoConfirm] = useState(false); // Otomatik onay ayarı
   const { token, user } = useAuthStore();
   const router = useRouter();
 
@@ -236,7 +236,7 @@ export default function POSPage() {
     }
   };
 
-  const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string, silent = false) => {
+  const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string, autoConfirm = false) => {
     const receiptContent = `
       ================================
       ${selectedBranch?.name || 'Restoran'}
@@ -289,21 +289,14 @@ export default function POSPage() {
       // Yazdırma işlemini başlat
       printWindow.focus();
       setTimeout(() => {
-        if (silent) {
-          // Sessiz yazdırma - dialog göstermeden direkt yazdır
-          try {
-            printWindow.print();
-            setTimeout(() => {
-              printWindow.close();
-            }, 1000);
-          } catch (error) {
-            console.error('Sessiz yazdırma hatası:', error);
-            // Hata durumunda normal yazdırma dene
-            printWindow.print();
-            setTimeout(() => {
-              printWindow.close();
-            }, 1000);
-          }
+        if (autoConfirm) {
+          // Otomatik onaylı yazdırma - kullanıcıya bilgi ver
+          toast.success('Masa fişi otomatik yazdırılıyor...');
+          printWindow.print();
+          setTimeout(() => {
+            printWindow.close();
+            toast.success('Masa fişi yazdırıldı!');
+          }, 2000);
         } else {
           // Normal yazdırma - dialog göster
           printWindow.print();
@@ -313,7 +306,9 @@ export default function POSPage() {
         }
       }, 500);
       
-      toast.success('Masa fişi yazdırıldı');
+      if (!autoConfirm) {
+        toast.success('Masa fişi yazdırıldı');
+      }
     } else {
       toast.error('Yazdırma penceresi açılamadı');
     }
@@ -347,7 +342,7 @@ export default function POSPage() {
       
       // Otomatik yazdırma ayarına göre masa fişi yazdır
       if (autoPrint) {
-        printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod, silentPrint);
+        printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod, autoConfirm);
       }
       
       // Masa sıfırlama işlemi
@@ -456,14 +451,26 @@ export default function POSPage() {
       
       // Otomatik yazdırma ayarına göre fiş yazdır
       if (autoPrint) {
-        printReceipt(silentPrint);
+        printReceipt(autoConfirm);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı');
     }
   };
 
-  const printReceipt = (silent = false) => {
+  const printReceipt = (autoConfirm = false) => {
+    // Otomatik onay için yazdırma ayarlarını optimize et
+    const printSettings = autoConfirm ? {
+      silent: true,
+      printBackground: true,
+      color: false,
+      margin: {
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0
+      }
+    } : {};
     const receiptContent = `
       ================================
       ${selectedBranch?.name || 'Restoran'}
@@ -512,20 +519,24 @@ export default function POSPage() {
       // Yazdırma işlemini başlat
       printWindow.focus();
       setTimeout(() => {
-        if (silent) {
-          // Sessiz yazdırma - dialog göstermeden direkt yazdır
+        if (autoConfirm) {
+          // Otomatik onaylı yazdırma - kullanıcıya bilgi ver
+          toast.success('Fiş otomatik yazdırılıyor...');
           try {
+            // Gelişmiş yazdırma ayarları ile dene
             printWindow.print();
             setTimeout(() => {
               printWindow.close();
-            }, 1000);
+              toast.success('Fiş yazdırıldı!');
+            }, 2000);
           } catch (error) {
-            console.error('Sessiz yazdırma hatası:', error);
+            console.error('Otomatik yazdırma hatası:', error);
             // Hata durumunda normal yazdırma dene
             printWindow.print();
             setTimeout(() => {
               printWindow.close();
-            }, 1000);
+              toast.success('Fiş yazdırıldı!');
+            }, 2000);
           }
         } else {
           // Normal yazdırma - dialog göster
@@ -536,7 +547,9 @@ export default function POSPage() {
         }
       }, 500);
       
-      toast.success('Fiş yazdırıldı');
+      if (!autoConfirm) {
+        toast.success('Fiş yazdırıldı');
+      }
     } else {
       toast.error('Yazdırma penceresi açılamadı');
     }
@@ -594,18 +607,18 @@ export default function POSPage() {
                 <span className="sm:hidden">🖨️</span>
               </label>
               
-              {autoPrint && (
-                <label className="flex items-center space-x-1 text-xs md:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={silentPrint}
-                    onChange={(e) => setSilentPrint(e.target.checked)}
-                    className="w-3 h-3 md:w-4 md:h-4"
-                  />
-                  <span className="hidden sm:inline">Sessiz Yazdır</span>
-                  <span className="sm:hidden">🔇</span>
-                </label>
-              )}
+                             {autoPrint && (
+                 <label className="flex items-center space-x-1 text-xs md:text-sm">
+                   <input
+                     type="checkbox"
+                     checked={autoConfirm}
+                     onChange={(e) => setAutoConfirm(e.target.checked)}
+                     className="w-3 h-3 md:w-4 md:h-4"
+                   />
+                   <span className="hidden sm:inline">Otomatik Onay</span>
+                   <span className="sm:hidden">⚡</span>
+                 </label>
+               )}
             </div>
             
             <Button
@@ -814,15 +827,15 @@ export default function POSPage() {
                 Kart
               </Button>
 
-              <Button
-                onClick={() => printReceipt(silentPrint)}
-                variant="outline"
-                className="w-full text-sm md:text-lg py-3 md:py-4"
-                disabled={cart.length === 0}
-              >
-                <Printer className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-                Fiş
-              </Button>
+                             <Button
+                 onClick={() => printReceipt(autoConfirm)}
+                 variant="outline"
+                 className="w-full text-sm md:text-lg py-3 md:py-4"
+                 disabled={cart.length === 0}
+               >
+                 <Printer className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                 Fiş
+               </Button>
             </div>
           </div>
         </div>
@@ -950,7 +963,7 @@ export default function POSPage() {
                       </Button>
 
                                              <Button
-                         onClick={() => printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, 'MANUAL', silentPrint)}
+                         onClick={() => printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, 'MANUAL', autoConfirm)}
                          variant="outline"
                          className="w-full py-3 border-blue-300 text-blue-600 hover:bg-blue-50"
                        >
