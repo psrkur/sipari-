@@ -45,15 +45,22 @@ export default function QRMenuPage() {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
+        const apiUrl = 'https://yemek5-backend.onrender.com';
         console.log('Şubeler yükleniyor...', apiUrl);
-        const response = await fetch(`${apiUrl}/api/branches`);
+        const response = await fetch(`${apiUrl}/api/branches`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           console.log('Şubeler yüklendi:', data);
           setBranches(data);
         } else {
           console.error('Şubeler yüklenemedi:', response.status, response.statusText);
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
         }
       } catch (error) {
         console.error('Şubeler yüklenemedi:', error);
@@ -68,16 +75,26 @@ export default function QRMenuPage() {
     const fetchMenu = async () => {
       try {
         setLoading(true);
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
-        const response = await fetch(`${apiUrl}/api/qr-menu/${selectedBranch}`);
+        const apiUrl = 'https://yemek5-backend.onrender.com';
+        console.log('Menü yükleniyor...', `${apiUrl}/api/qr-menu/${selectedBranch}`);
+        const response = await fetch(`${apiUrl}/api/qr-menu/${selectedBranch}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Menü yükleme hatası:', response.status, response.statusText, errorText);
           throw new Error('Menü yüklenemedi');
         }
         
         const data = await response.json();
+        console.log('Menü yüklendi:', data);
         setMenuData(data);
       } catch (err) {
+        console.error('Menü yükleme hatası:', err);
         setError(err instanceof Error ? err.message : 'Bir hata oluştu');
       } finally {
         setLoading(false);
