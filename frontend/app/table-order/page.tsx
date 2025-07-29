@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import OrderTracking from './order-tracking';
 import { 
   ShoppingCart, 
   Plus, 
@@ -19,7 +20,8 @@ import {
   ChefHat,
   Star,
   Clock,
-  Sparkles
+  Sparkles,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -88,6 +90,7 @@ export default function TableOrder() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [showOrderTracking, setShowOrderTracking] = useState(false);
 
   useEffect(() => {
     console.log('🔍 URL Parametreleri:', { tableId, branchId, qrData });
@@ -440,6 +443,18 @@ export default function TableOrder() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
+              {/* Sipariş Takip Butonu */}
+              {table && (
+                <button 
+                  onClick={() => setShowOrderTracking(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">📱 Sipariş Takibi</span>
+                  <span className="sm:hidden">📱</span>
+                </button>
+              )}
+              
               {/* Desktop Sepet Butonu */}
               <button 
                 onClick={() => setShowCart(!showCart)}
@@ -457,6 +472,16 @@ export default function TableOrder() {
 
             {/* Mobil Menü Butonu */}
             <div className="flex md:hidden items-center space-x-2">
+              {/* Mobil Sipariş Takip Butonu */}
+              {table && (
+                <button 
+                  onClick={() => setShowOrderTracking(true)}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg"
+                >
+                  📱
+                </button>
+              )}
+              
               {/* Mobil Sepet Butonu */}
               <button 
                 onClick={() => setShowCart(!showCart)}
@@ -785,6 +810,25 @@ export default function TableOrder() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sipariş Takip Modalı */}
+      {showOrderTracking && table && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div className="flex justify-between items-start mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">📱 Sipariş Takibi</h2>
+              <button
+                onClick={() => setShowOrderTracking(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl sm:text-2xl hover:scale-110 transition-transform"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <OrderTracking tableId={table.id.toString()} />
           </div>
         </div>
       )}

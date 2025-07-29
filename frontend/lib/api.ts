@@ -99,6 +99,7 @@ export const API_ENDPOINTS = {
   
   // Orders
   ORDERS: `${API_BASE_URL}/api/orders`,
+  ORDER_DETAIL: (orderId: number) => `${API_BASE_URL}/api/orders/${orderId}`,
   
   // Customer
   CUSTOMER_PROFILE: `${API_BASE_URL}/api/customer/profile`,

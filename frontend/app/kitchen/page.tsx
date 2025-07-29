@@ -56,6 +56,7 @@ export default function KitchenPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedOrderType, setSelectedOrderType] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [branches, setBranches] = useState<any[]>([]);
   const { token, user } = useAuthStore();
@@ -288,6 +289,9 @@ export default function KitchenPage() {
     if (selectedStatus !== 'all' && order.status !== selectedStatus) {
       return false;
     }
+    if (selectedOrderType !== 'all' && order.orderType !== selectedOrderType) {
+      return false;
+    }
     return true;
   }).sort((a, b) => {
     // Önce duruma göre sırala (Bekliyor > Hazırlanıyor > Hazır)
@@ -408,6 +412,37 @@ export default function KitchenPage() {
               </Button>
             </div>
           </div>
+
+          {/* Sipariş Türü Filtreleri */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sipariş Türü</label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => setSelectedOrderType('all')}
+                variant={selectedOrderType === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className="text-sm"
+              >
+                Tümü ({orders.length})
+              </Button>
+              <Button
+                onClick={() => setSelectedOrderType('TABLE')}
+                variant={selectedOrderType === 'TABLE' ? 'default' : 'outline'}
+                size="sm"
+                className="text-sm"
+              >
+                🍽️ Masa ({orders.filter(o => o.orderType === 'TABLE').length})
+              </Button>
+              <Button
+                onClick={() => setSelectedOrderType('DELIVERY')}
+                variant={selectedOrderType === 'DELIVERY' ? 'default' : 'outline'}
+                size="sm"
+                className="text-sm"
+              >
+                🚚 Teslimat ({orders.filter(o => o.orderType === 'DELIVERY').length})
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Sipariş Listesi */}
@@ -424,6 +459,16 @@ export default function KitchenPage() {
                       {getStatusIcon(order.status)}
                       <span className="ml-1">{getStatusText(order.status)}</span>
                     </Badge>
+                    {order.orderType === 'TABLE' && (
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                        🍽️ Masa
+                      </Badge>
+                    )}
+                    {order.orderType === 'DELIVERY' && (
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        🚚 Teslimat
+                      </Badge>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-600">#{order.orderNumber}</p>
@@ -457,8 +502,9 @@ export default function KitchenPage() {
                     </div>
                   )}
                   {order.table && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="font-medium">Masa {order.table.number}</span>
+                    <div className="flex items-center space-x-2 text-sm bg-blue-50 p-2 rounded border border-blue-200">
+                      <span className="font-medium text-blue-800">🍽️ Masa {order.table.number}</span>
+                      <span className="text-blue-600 text-xs">({order.table.branch.name})</span>
                     </div>
                   )}
                 </div>
