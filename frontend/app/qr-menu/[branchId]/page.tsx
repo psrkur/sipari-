@@ -46,10 +46,14 @@ export default function QRMenuPage() {
     const fetchBranches = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
+        console.log('Şubeler yükleniyor...', apiUrl);
         const response = await fetch(`${apiUrl}/api/branches`);
         if (response.ok) {
           const data = await response.json();
+          console.log('Şubeler yüklendi:', data);
           setBranches(data);
+        } else {
+          console.error('Şubeler yüklenemedi:', response.status, response.statusText);
         }
       } catch (error) {
         console.error('Şubeler yüklenemedi:', error);
