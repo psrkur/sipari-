@@ -46,8 +46,10 @@ export default function QRMenuPage() {
     const fetchBranches = async () => {
       try {
         const apiUrl = 'https://yemek5-backend.onrender.com';
-        console.log('Şubeler yükleniyor...', apiUrl);
-        const response = await fetch(`${apiUrl}/api/branches`, {
+        const url = `${apiUrl}/api/branches`;
+        console.log('🔍 Şubeler yükleniyor...', url);
+        
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -56,18 +58,26 @@ export default function QRMenuPage() {
           mode: 'cors',
           credentials: 'omit',
         });
+        
+        console.log('🔍 Response status:', response.status);
+        console.log('🔍 Response headers:', response.headers);
+        
         if (response.ok) {
           const data = await response.json();
-          console.log('Şubeler yüklendi:', data);
+          console.log('✅ Şubeler yüklendi:', data);
           setBranches(data);
         } else {
-          console.error('Şubeler yüklenemedi:', response.status, response.statusText);
+          console.error('❌ Şubeler yüklenemedi:', response.status, response.statusText);
           const errorText = await response.text();
-          console.error('Error response:', errorText);
+          console.error('❌ Error response:', errorText);
         }
-      } catch (error) {
-        console.error('Şubeler yüklenemedi:', error);
-      }
+              } catch (error) {
+          console.error('❌ Şubeler yüklenemedi (catch):', error);
+          if (error instanceof Error) {
+            console.error('❌ Error details:', error.message);
+            console.error('❌ Error stack:', error.stack);
+          }
+        }
     };
 
     fetchBranches();
@@ -79,8 +89,10 @@ export default function QRMenuPage() {
       try {
         setLoading(true);
         const apiUrl = 'https://yemek5-backend.onrender.com';
-        console.log('Menü yükleniyor...', `${apiUrl}/api/qr-menu/${selectedBranch}`);
-        const response = await fetch(`${apiUrl}/api/qr-menu/${selectedBranch}`, {
+        const url = `${apiUrl}/api/qr-menu/${selectedBranch}`;
+        console.log('🔍 Menü yükleniyor...', url);
+        
+        const response = await fetch(url, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -90,18 +102,25 @@ export default function QRMenuPage() {
           credentials: 'omit',
         });
         
+        console.log('🔍 Menu response status:', response.status);
+        console.log('🔍 Menu response headers:', response.headers);
+        
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Menü yükleme hatası:', response.status, response.statusText, errorText);
+          console.error('❌ Menü yükleme hatası:', response.status, response.statusText, errorText);
           throw new Error('Menü yüklenemedi');
         }
         
         const data = await response.json();
-        console.log('Menü yüklendi:', data);
+        console.log('✅ Menü yüklendi:', data);
         setMenuData(data);
       } catch (err) {
-        console.error('Menü yükleme hatası:', err);
-        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+        console.error('❌ Menü yükleme hatası:', err);
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Bir hata oluştu');
+        }
       } finally {
         setLoading(false);
       }
