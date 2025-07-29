@@ -2590,7 +2590,7 @@ app.get('/api/table/:tableId/orders', async (req, res) => {
         orders: {
           where: {
             orderType: 'TABLE',
-            status: { in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED'] } // Tüm durumları getir
+            status: { in: ['PENDING', 'PREPARING', 'READY'] } // Teslim edilmiş siparişleri gizle
           },
           include: {
             orderItems: {
@@ -4191,7 +4191,7 @@ app.get('/api/table/:tableId/orders', async (req, res) => {
         orders: {
           where: {
             orderType: 'TABLE',
-            status: { in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED'] } // Tüm durumları getir
+            status: { in: ['PENDING', 'PREPARING', 'READY'] } // Teslim edilmiş siparişleri gizle
           },
           include: {
             orderItems: {

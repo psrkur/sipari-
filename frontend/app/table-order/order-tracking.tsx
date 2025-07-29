@@ -101,13 +101,41 @@ export default function OrderTracking({ tableId, orderId }: OrderTrackingProps) 
       if (showLoading) setLoading(true);
       
       console.log('🔍 Masa siparişleri yükleniyor, tableId:', tableId);
+      console.log('🔗 API URL:', API_ENDPOINTS.TABLE_ORDERS(tableId));
+      
       const response = await apiRequest(API_ENDPOINTS.TABLE_ORDERS(tableId));
       
       console.log('✅ Masa siparişleri yüklendi:', response);
+      console.log('📊 Sipariş sayısı:', response.orders?.length || 0);
+      
+      if (response.orders && response.orders.length > 0) {
+        console.log('📋 İlk sipariş:', response.orders[0]);
+      }
+      
       setOrders(response.orders || []);
       setLastUpdate(new Date());
+      
+      // Eğer hiç sipariş yoksa (hepsi teslim edilmişse) sayfayı kapat
+      if (!response.orders || response.orders.length === 0) {
+        console.log('✅ Tüm siparişler teslim edildi, sayfa kapatılıyor...');
+        toast.success('Tüm siparişleriniz teslim edildi! Yeni sipariş vermek için QR kodu tekrar okutun.');
+        
+        // 3 saniye sonra sayfayı kapat
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.close();
+            // Eğer window.close() çalışmazsa, ana sayfaya yönlendir
+            window.location.href = '/table-order';
+          }
+        }, 3000);
+      }
     } catch (error) {
       console.error('❌ Masa siparişleri yüklenemedi:', error);
+      console.error('🔍 Hata detayları:', {
+        message: error.message,
+        status: error.status,
+        response: error.response
+      });
       if (showLoading) {
         toast.error('Siparişler yüklenemedi');
       }

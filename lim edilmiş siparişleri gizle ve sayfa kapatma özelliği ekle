@@ -1,0 +1,31 @@
+[1mdiff --git a/frontend/app/table-order/order-tracking.tsx b/frontend/app/table-order/order-tracking.tsx[m
+[1mindex 7a89f04..38feef6 100644[m
+[1m--- a/frontend/app/table-order/order-tracking.tsx[m
+[1m+++ b/frontend/app/table-order/order-tracking.tsx[m
+[36m@@ -101,13 +101,26 @@[m [mexport default function OrderTracking({ tableId, orderId }: OrderTrackingProps)[m
+       if (showLoading) setLoading(true);[m
+       [m
+       console.log('🔍 Masa siparişleri yükleniyor, tableId:', tableId);[m
+[32m+[m[32m      console.log('🔗 API URL:', API_ENDPOINTS.TABLE_ORDERS(tableId));[m
+[32m+[m[41m      [m
+       const response = await apiRequest(API_ENDPOINTS.TABLE_ORDERS(tableId));[m
+       [m
+       console.log('✅ Masa siparişleri yüklendi:', response);[m
+[32m+[m[32m      console.log('📊 Sipariş sayısı:', response.orders?.length || 0);[m
+[32m+[m[41m      [m
+[32m+[m[32m      if (response.orders && response.orders.length > 0) {[m
+[32m+[m[32m        console.log('📋 İlk sipariş:', response.orders[0]);[m
+[32m+[m[32m      }[m
+[32m+[m[41m      [m
+       setOrders(response.orders || []);[m
+       setLastUpdate(new Date());[m
+     } catch (error) {[m
+       console.error('❌ Masa siparişleri yüklenemedi:', error);[m
+[32m+[m[32m      console.error('🔍 Hata detayları:', {[m
+[32m+[m[32m        message: error.message,[m
+[32m+[m[32m        status: error.status,[m
+[32m+[m[32m        response: error.response[m
+[32m+[m[32m      });[m
+       if (showLoading) {[m
+         toast.error('Siparişler yüklenemedi');[m
+       }[m
