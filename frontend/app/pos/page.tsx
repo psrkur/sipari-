@@ -44,6 +44,7 @@ export default function POSPage() {
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [tableOrders, setTableOrders] = useState<any>(null);
   const [autoPrint, setAutoPrint] = useState(true); // Otomatik yazdırma ayarı
+  const [silentPrint, setSilentPrint] = useState(false); // Sessiz yazdırma ayarı (dialog göstermeden)
   const { token, user } = useAuthStore();
   const router = useRouter();
 
@@ -235,7 +236,7 @@ export default function POSPage() {
     }
   };
 
-  const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string) => {
+  const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string, silent = false) => {
     const receiptContent = `
       ================================
       ${selectedBranch?.name || 'Restoran'}
@@ -288,8 +289,28 @@ export default function POSPage() {
       // Yazdırma işlemini başlat
       printWindow.focus();
       setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
+        if (silent) {
+          // Sessiz yazdırma - dialog göstermeden direkt yazdır
+          try {
+            printWindow.print();
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+          } catch (error) {
+            console.error('Sessiz yazdırma hatası:', error);
+            // Hata durumunda normal yazdırma dene
+            printWindow.print();
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+          }
+        } else {
+          // Normal yazdırma - dialog göster
+          printWindow.print();
+          setTimeout(() => {
+            printWindow.close();
+          }, 1000);
+        }
       }, 500);
       
       toast.success('Masa fişi yazdırıldı');
@@ -326,7 +347,7 @@ export default function POSPage() {
       
       // Otomatik yazdırma ayarına göre masa fişi yazdır
       if (autoPrint) {
-        printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod);
+        printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod, silentPrint);
       }
       
       // Masa sıfırlama işlemi
@@ -435,14 +456,14 @@ export default function POSPage() {
       
       // Otomatik yazdırma ayarına göre fiş yazdır
       if (autoPrint) {
-        printReceipt();
+        printReceipt(silentPrint);
       }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı');
     }
   };
 
-  const printReceipt = () => {
+  const printReceipt = (silent = false) => {
     const receiptContent = `
       ================================
       ${selectedBranch?.name || 'Restoran'}
@@ -491,8 +512,28 @@ export default function POSPage() {
       // Yazdırma işlemini başlat
       printWindow.focus();
       setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
+        if (silent) {
+          // Sessiz yazdırma - dialog göstermeden direkt yazdır
+          try {
+            printWindow.print();
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+          } catch (error) {
+            console.error('Sessiz yazdırma hatası:', error);
+            // Hata durumunda normal yazdırma dene
+            printWindow.print();
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+          }
+        } else {
+          // Normal yazdırma - dialog göster
+          printWindow.print();
+          setTimeout(() => {
+            printWindow.close();
+          }, 1000);
+        }
       }, 500);
       
       toast.success('Fiş yazdırıldı');
@@ -540,7 +581,7 @@ export default function POSPage() {
             <h1 className="text-lg md:text-2xl font-bold text-gray-800">🏪 Kasa</h1>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Otomatik Yazdırma Toggle */}
+            {/* Yazdırma Ayarları */}
             <div className="flex items-center space-x-2 mr-2">
               <label className="flex items-center space-x-1 text-xs md:text-sm">
                 <input
@@ -552,6 +593,19 @@ export default function POSPage() {
                 <span className="hidden sm:inline">Otomatik Yazdır</span>
                 <span className="sm:hidden">🖨️</span>
               </label>
+              
+              {autoPrint && (
+                <label className="flex items-center space-x-1 text-xs md:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={silentPrint}
+                    onChange={(e) => setSilentPrint(e.target.checked)}
+                    className="w-3 h-3 md:w-4 md:h-4"
+                  />
+                  <span className="hidden sm:inline">Sessiz Yazdır</span>
+                  <span className="sm:hidden">🔇</span>
+                </label>
+              )}
             </div>
             
             <Button
@@ -761,7 +815,7 @@ export default function POSPage() {
               </Button>
 
               <Button
-                onClick={printReceipt}
+                onClick={() => printReceipt(silentPrint)}
                 variant="outline"
                 className="w-full text-sm md:text-lg py-3 md:py-4"
                 disabled={cart.length === 0}
@@ -895,14 +949,14 @@ export default function POSPage() {
                         Kart Tahsilat (₺{tableOrders.totalAmount.toFixed(2)})
                       </Button>
 
-                      <Button
-                        onClick={() => printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, 'MANUAL')}
-                        variant="outline"
-                        className="w-full py-3 border-blue-300 text-blue-600 hover:bg-blue-50"
-                      >
-                        <Printer className="h-5 w-5 mr-2" />
-                        Fiş Yazdır
-                      </Button>
+                                             <Button
+                         onClick={() => printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, 'MANUAL', silentPrint)}
+                         variant="outline"
+                         className="w-full py-3 border-blue-300 text-blue-600 hover:bg-blue-50"
+                       >
+                         <Printer className="h-5 w-5 mr-2" />
+                         Fiş Yazdır
+                       </Button>
 
                       <Button
                         onClick={handleTableReset}
