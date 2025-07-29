@@ -144,6 +144,7 @@ export const API_ENDPOINTS = {
   
   // Table Orders & Collection
   ADMIN_TABLE_ORDERS: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/orders`,
+  TABLE_ORDERS: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/orders`,
   ADMIN_TABLE_COLLECT: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/collect`,
   ADMIN_TABLE_RESET: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/reset`,
   ADMIN_ACTIVE_TABLES: `${API_BASE_URL}/api/admin/tables/active`,

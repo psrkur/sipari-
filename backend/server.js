@@ -4061,7 +4061,7 @@ app.get('/api/admin/tables/active', authenticateToken, async (req, res) => {
   }
 });
 
-// Masa siparişlerini getir
+// Masa siparişlerini getir (Admin için)
 app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res) => {
   try {
     const { tableId } = req.params;
@@ -4108,11 +4108,71 @@ app.get('/api/admin/tables/:tableId/orders', authenticateToken, async (req, res)
 
     res.json({
       table,
+      orders: table.orders,
       totalAmount,
       orderCount: table.orders.length
     });
   } catch (error) {
     console.error('Masa siparişleri getirilemedi:', error);
+    res.status(500).json({ error: 'Siparişler getirilemedi' });
+  }
+});
+
+// Masa siparişlerini getir (Müşteri için - authentication gerektirmez)
+app.get('/api/table/:tableId/orders', async (req, res) => {
+  try {
+    const { tableId } = req.params;
+    
+    console.log('🔍 Müşteri masa siparişleri isteği, tableId:', tableId);
+
+    const table = await prisma.table.findUnique({
+      where: { id: parseInt(tableId) },
+      include: {
+        branch: true,
+        orders: {
+          where: {
+            orderType: 'TABLE',
+            status: { in: ['PENDING', 'PREPARING', 'READY', 'DELIVERED'] } // Tüm durumları getir
+          },
+          include: {
+            orderItems: {
+              include: {
+                product: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    });
+
+    if (!table) {
+      console.log('❌ Masa bulunamadı, tableId:', tableId);
+      return res.status(404).json({ error: 'Masa bulunamadı' });
+    }
+
+    if (!table.isActive) {
+      console.log('❌ Masa aktif değil, tableId:', tableId);
+      return res.status(400).json({ error: 'Bu masa aktif değil' });
+    }
+
+    console.log('✅ Masa bulundu, sipariş sayısı:', table.orders.length);
+
+    // Toplam tutarı hesapla
+    const totalAmount = table.orders.reduce((sum, order) => {
+      return sum + order.orderItems.reduce((orderSum, item) => {
+        return orderSum + (item.price * item.quantity);
+      }, 0);
+    }, 0);
+
+    res.json({
+      table,
+      orders: table.orders,
+      totalAmount,
+      orderCount: table.orders.length
+    });
+  } catch (error) {
+    console.error('❌ Müşteri masa siparişleri getirilemedi:', error);
     res.status(500).json({ error: 'Siparişler getirilemedi' });
   }
 });

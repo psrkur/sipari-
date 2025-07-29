@@ -101,7 +101,7 @@ export default function OrderTracking({ tableId, orderId }: OrderTrackingProps) 
       if (showLoading) setLoading(true);
       
       console.log('🔍 Masa siparişleri yükleniyor, tableId:', tableId);
-      const response = await apiRequest(API_ENDPOINTS.ADMIN_TABLE_ORDERS(tableId));
+      const response = await apiRequest(API_ENDPOINTS.TABLE_ORDERS(tableId));
       
       console.log('✅ Masa siparişleri yüklendi:', response);
       setOrders(response.orders || []);
