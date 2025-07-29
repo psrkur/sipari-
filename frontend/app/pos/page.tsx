@@ -47,10 +47,6 @@ export default function POSPage() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log('POS sayfası yükleniyor...');
-    console.log('Token from store:', token);
-    console.log('Window opener:', window.opener);
-    
     // Store'dan token'ı almayı dene
     let authToken = token;
     
@@ -61,17 +57,13 @@ export default function POSPage() {
         if (authStorage) {
           const parsed = JSON.parse(authStorage);
           authToken = parsed.state?.token;
-          console.log('Token from auth-storage:', authToken);
         }
       } catch (error) {
         console.error('Auth storage parse error:', error);
       }
     }
     
-    console.log('Final authToken:', authToken);
-    
     if (!authToken) {
-      console.log('Token bulunamadı, pencere kapatılıyor...');
       toast.error('Giriş yapmanız gerekiyor');
       // Ayrı pencerede açıldıysa parent window'a mesaj gönder
       if (window.opener) {
@@ -83,13 +75,11 @@ export default function POSPage() {
       return;
     }
 
-    console.log('Token bulundu, şubeler yükleniyor...');
     fetchBranches();
   }, [token, router]);
 
   const fetchBranches = async () => {
     try {
-      console.log('fetchBranches çağrıldı');
       // Token'ı al (store'dan veya localStorage'dan)
       let authToken = token;
       if (!authToken) {
@@ -104,14 +94,10 @@ export default function POSPage() {
         }
       }
       
-      console.log('fetchBranches için token:', authToken);
-      console.log('API endpoint:', API_ENDPOINTS.ADMIN_BRANCHES);
-      
       const response = await axios.get(API_ENDPOINTS.ADMIN_BRANCHES, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       
-      console.log('Şubeler başarıyla yüklendi:', response.data);
       setBranches(response.data);
       if (response.data.length > 0) {
         setSelectedBranch(response.data[0]);
@@ -120,9 +106,6 @@ export default function POSPage() {
       }
     } catch (error) {
       console.error('Şubeler yüklenemedi:', error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        console.error('Error details:', (error as any).response?.data);
-      }
       toast.error('Şubeler yüklenemedi');
     }
   };
