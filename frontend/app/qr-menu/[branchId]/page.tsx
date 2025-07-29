@@ -1,15 +1,8 @@
-import { ArrowLeft, Phone, MapPin, Clock, AlertCircle } from 'lucide-react';
+'use client';
 
-// Static export için gerekli
-export async function generateStaticParams() {
-  return [
-    { branchId: '1' },
-    { branchId: '2' },
-    { branchId: '3' },
-    { branchId: '4' },
-    { branchId: '5' }
-  ];
-}
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, Phone, MapPin, Clock, AlertCircle, Building } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -37,26 +30,75 @@ interface MenuData {
   lastUpdated: string;
 }
 
-export default async function QRMenuPage({ params }: { params: { branchId: string } }) {
-  const branchId = params.branchId;
+export default function QRMenuPage() {
+  const params = useParams();
+  const router = useRouter();
+  const branchId = params.branchId as string;
   
-  // Server-side data fetching
-  let menuData: MenuData | null = null;
-  let error: string | null = null;
+  const [menuData, setMenuData] = useState<MenuData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranch, setSelectedBranch] = useState<string>(branchId);
 
-  try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
-    const response = await fetch(`${apiUrl}/api/qr-menu/${branchId}`, {
-      cache: 'no-store'
-    });
-    
-    if (!response.ok) {
-      throw new Error('Menü yüklenemedi');
+  // Şubeleri yükle
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
+        const response = await fetch(`${apiUrl}/api/branches`);
+        if (response.ok) {
+          const data = await response.json();
+          setBranches(data);
+        }
+      } catch (error) {
+        console.error('Şubeler yüklenemedi:', error);
+      }
+    };
+
+    fetchBranches();
+  }, []);
+
+  // Menü verilerini yükle
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        setLoading(true);
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
+        const response = await fetch(`${apiUrl}/api/qr-menu/${selectedBranch}`);
+        
+        if (!response.ok) {
+          throw new Error('Menü yüklenemedi');
+        }
+        
+        const data = await response.json();
+        setMenuData(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Bir hata oluştu');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (selectedBranch) {
+      fetchMenu();
     }
-    
-    menuData = await response.json();
-  } catch (err) {
-    error = err instanceof Error ? err.message : 'Bir hata oluştu';
+  }, [selectedBranch]);
+
+  const handleBranchChange = (newBranchId: string) => {
+    setSelectedBranch(newBranchId);
+    router.push(`/qr-menu/${newBranchId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
@@ -66,12 +108,12 @@ export default async function QRMenuPage({ params }: { params: { branchId: strin
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Hata</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <a
-            href="javascript:history.back()"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block"
+          <button
+            onClick={() => window.history.back()}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Geri Dön
-          </a>
+          </button>
         </div>
       </div>
     );
@@ -108,13 +150,13 @@ export default async function QRMenuPage({ params }: { params: { branchId: strin
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <a
-              href="javascript:history.back()"
+            <button
+              onClick={() => window.history.back()}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
               Geri
-            </a>
+            </button>
             <div className="text-center">
               <h1 className="text-xl font-bold text-gray-900">{menuData.branch.name}</h1>
               <p className="text-sm text-gray-500">Dijital Menü</p>
@@ -123,6 +165,29 @@ export default async function QRMenuPage({ params }: { params: { branchId: strin
           </div>
         </div>
       </div>
+
+      {/* Şube Seçimi */}
+      {branches.length > 0 && (
+        <div className="bg-white border-b">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center gap-4">
+              <Building className="h-5 w-5 text-gray-400" />
+              <label className="text-sm font-medium text-gray-700">Şube Seçin:</label>
+              <select
+                value={selectedBranch}
+                onChange={(e) => handleBranchChange(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Branch Info */}
       <div className="bg-white border-b">
