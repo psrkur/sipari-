@@ -41,26 +41,17 @@ export default function QRMenuPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>(branchId);
 
-  // Şubeleri yükle
+    // Şubeleri yükle
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const apiUrl = 'https://yemek5-backend.onrender.com';
-        const url = `${apiUrl}/api/branches`;
-        console.log('🔍 Şubeler yükleniyor...', url);
+        console.log('🔍 Şubeler yükleniyor...');
         
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          mode: 'cors',
-          credentials: 'omit',
-        });
+        // Basit fetch deneyelim
+        const response = await fetch('https://yemek5-backend.onrender.com/api/branches');
         
         console.log('🔍 Response status:', response.status);
-        console.log('🔍 Response headers:', response.headers);
+        console.log('🔍 Response ok:', response.ok);
         
         if (response.ok) {
           const data = await response.json();
@@ -71,13 +62,13 @@ export default function QRMenuPage() {
           const errorText = await response.text();
           console.error('❌ Error response:', errorText);
         }
-              } catch (error) {
-          console.error('❌ Şubeler yüklenemedi (catch):', error);
-          if (error instanceof Error) {
-            console.error('❌ Error details:', error.message);
-            console.error('❌ Error stack:', error.stack);
-          }
+      } catch (error) {
+        console.error('❌ Şubeler yüklenemedi (catch):', error);
+        if (error instanceof Error) {
+          console.error('❌ Error details:', error.message);
+          console.error('❌ Error stack:', error.stack);
         }
+      }
     };
 
     fetchBranches();
@@ -88,22 +79,13 @@ export default function QRMenuPage() {
     const fetchMenu = async () => {
       try {
         setLoading(true);
-        const apiUrl = 'https://yemek5-backend.onrender.com';
-        const url = `${apiUrl}/api/qr-menu/${selectedBranch}`;
-        console.log('🔍 Menü yükleniyor...', url);
+        console.log('🔍 Menü yükleniyor...', selectedBranch);
         
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          mode: 'cors',
-          credentials: 'omit',
-        });
+        // Basit fetch deneyelim
+        const response = await fetch(`https://yemek5-backend.onrender.com/api/qr-menu/${selectedBranch}`);
         
         console.log('🔍 Menu response status:', response.status);
-        console.log('🔍 Menu response headers:', response.headers);
+        console.log('🔍 Menu response ok:', response.ok);
         
         if (!response.ok) {
           const errorText = await response.text();
