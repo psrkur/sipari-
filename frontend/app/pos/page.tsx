@@ -43,6 +43,7 @@ export default function POSPage() {
   const [activeTables, setActiveTables] = useState<any[]>([]);
   const [selectedTable, setSelectedTable] = useState<any>(null);
   const [tableOrders, setTableOrders] = useState<any>(null);
+  const [autoPrint, setAutoPrint] = useState(true); // Otomatik yazdırma ayarı
   const { token, user } = useAuthStore();
   const router = useRouter();
 
@@ -323,8 +324,10 @@ export default function POSPage() {
 
       toast.success(`Masa ${selectedTable.number} tahsilatı tamamlandı!`);
       
-      // Masa fişi yazdır
-      printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod);
+      // Otomatik yazdırma ayarına göre masa fişi yazdır
+      if (autoPrint) {
+        printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod);
+      }
       
       // Masa sıfırlama işlemi
       try {
@@ -430,8 +433,10 @@ export default function POSPage() {
       toast.success(`Sipariş başarıyla oluşturuldu! (${paymentMethod === 'cash' ? 'Nakit' : 'Kart'})`);
       clearCart();
       
-      // Fiş yazdırma simülasyonu
-      printReceipt();
+      // Otomatik yazdırma ayarına göre fiş yazdır
+      if (autoPrint) {
+        printReceipt();
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı');
     }
@@ -535,6 +540,20 @@ export default function POSPage() {
             <h1 className="text-lg md:text-2xl font-bold text-gray-800">🏪 Kasa</h1>
           </div>
           <div className="flex items-center space-x-2">
+            {/* Otomatik Yazdırma Toggle */}
+            <div className="flex items-center space-x-2 mr-2">
+              <label className="flex items-center space-x-1 text-xs md:text-sm">
+                <input
+                  type="checkbox"
+                  checked={autoPrint}
+                  onChange={(e) => setAutoPrint(e.target.checked)}
+                  className="w-3 h-3 md:w-4 md:h-4"
+                />
+                <span className="hidden sm:inline">Otomatik Yazdır</span>
+                <span className="sm:hidden">🖨️</span>
+              </label>
+            </div>
+            
             <Button
               onClick={() => {
                 setShowTableCollection(true);
