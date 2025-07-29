@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // output: 'export', // Netlify'da server-side rendering kullanacağız
   trailingSlash: true,
   images: {
     unoptimized: true
