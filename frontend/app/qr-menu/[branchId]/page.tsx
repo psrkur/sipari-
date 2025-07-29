@@ -51,7 +51,9 @@ export default function QRMenuPage() {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          mode: 'cors',
         });
         if (response.ok) {
           const data = await response.json();
@@ -81,7 +83,9 @@ export default function QRMenuPage() {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          mode: 'cors',
         });
         
         if (!response.ok) {
