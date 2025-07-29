@@ -45,6 +45,8 @@ export default function POSPage() {
   const [tableOrders, setTableOrders] = useState<any>(null);
   const [autoPrint, setAutoPrint] = useState(true); // Otomatik yazdırma ayarı
   const [autoConfirm, setAutoConfirm] = useState(false); // Otomatik onay ayarı
+  const [showPrintPopup, setShowPrintPopup] = useState(false); // Yazdırma popup'ı
+  const [printContent, setPrintContent] = useState(''); // Yazdırılacak içerik
   const { token, user } = useAuthStore();
   const router = useRouter();
 
@@ -236,6 +238,49 @@ export default function POSPage() {
     }
   };
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Fiş</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.2;
+                margin: 0;
+                padding: 10px;
+                white-space: pre-line;
+              }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      // Yazdırma işlemini başlat
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        setTimeout(() => {
+          printWindow.close();
+          setShowPrintPopup(false);
+          toast.success('Fiş yazdırıldı!');
+        }, 1000);
+      }, 500);
+    } else {
+      toast.error('Yazdırma penceresi açılamadı');
+    }
+  };
+
   const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string, autoConfirm = false) => {
     const receiptContent = `
       ================================
@@ -258,59 +303,15 @@ export default function POSPage() {
       ================================
     `;
     
-    // Yazdırma penceresi oluştur
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Masa ${tableNumber} Fişi</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.2;
-                margin: 0;
-                padding: 10px;
-                white-space: pre-line;
-              }
-              @media print {
-                body { margin: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            ${receiptContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      // Yazdırma işlemini başlat
-      printWindow.focus();
+    // Popup ile yazdırma
+    setPrintContent(receiptContent);
+    setShowPrintPopup(true);
+    
+    // Otomatik onay aktifse hemen yazdır
+    if (autoConfirm) {
       setTimeout(() => {
-        if (autoConfirm) {
-          // Otomatik onaylı yazdırma - kullanıcıya bilgi ver
-          toast.success('Masa fişi otomatik yazdırılıyor...');
-          printWindow.print();
-          setTimeout(() => {
-            printWindow.close();
-            toast.success('Masa fişi yazdırıldı!');
-          }, 2000);
-        } else {
-          // Normal yazdırma - dialog göster
-          printWindow.print();
-          setTimeout(() => {
-            printWindow.close();
-          }, 1000);
-        }
-      }, 500);
-      
-      if (!autoConfirm) {
-        toast.success('Masa fişi yazdırıldı');
-      }
-    } else {
-      toast.error('Yazdırma penceresi açılamadı');
+        handlePrint();
+      }, 100);
     }
   };
 
@@ -459,18 +460,6 @@ export default function POSPage() {
   };
 
   const printReceipt = (autoConfirm = false) => {
-    // Otomatik onay için yazdırma ayarlarını optimize et
-    const printSettings = autoConfirm ? {
-      silent: true,
-      printBackground: true,
-      color: false,
-      margin: {
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 0
-      }
-    } : {};
     const receiptContent = `
       ================================
       ${selectedBranch?.name || 'Restoran'}
@@ -488,70 +477,15 @@ export default function POSPage() {
       ================================
     `;
     
-    // Yazdırma penceresi oluştur
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Fiş</title>
-            <style>
-              body {
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                line-height: 1.2;
-                margin: 0;
-                padding: 10px;
-                white-space: pre-line;
-              }
-              @media print {
-                body { margin: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            ${receiptContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      
-      // Yazdırma işlemini başlat
-      printWindow.focus();
+    // Popup ile yazdırma
+    setPrintContent(receiptContent);
+    setShowPrintPopup(true);
+    
+    // Otomatik onay aktifse hemen yazdır
+    if (autoConfirm) {
       setTimeout(() => {
-        if (autoConfirm) {
-          // Otomatik onaylı yazdırma - kullanıcıya bilgi ver
-          toast.success('Fiş otomatik yazdırılıyor...');
-          try {
-            // Gelişmiş yazdırma ayarları ile dene
-            printWindow.print();
-            setTimeout(() => {
-              printWindow.close();
-              toast.success('Fiş yazdırıldı!');
-            }, 2000);
-          } catch (error) {
-            console.error('Otomatik yazdırma hatası:', error);
-            // Hata durumunda normal yazdırma dene
-            printWindow.print();
-            setTimeout(() => {
-              printWindow.close();
-              toast.success('Fiş yazdırıldı!');
-            }, 2000);
-          }
-        } else {
-          // Normal yazdırma - dialog göster
-          printWindow.print();
-          setTimeout(() => {
-            printWindow.close();
-          }, 1000);
-        }
-      }, 500);
-      
-      if (!autoConfirm) {
-        toast.success('Fiş yazdırıldı');
-      }
-    } else {
-      toast.error('Yazdırma penceresi açılamadı');
+        handlePrint();
+      }, 100);
     }
   };
 
@@ -986,6 +920,53 @@ export default function POSPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Yazdırma Popup */}
+      {showPrintPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            {/* Popup Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-bold text-gray-800">🖨️ Fiş Önizleme</h2>
+              <Button
+                onClick={() => setShowPrintPopup(false)}
+                variant="outline"
+                size="sm"
+              >
+                ✕
+              </Button>
+            </div>
+
+            {/* Popup Content */}
+            <div className="p-4">
+              <div className="bg-gray-50 p-4 rounded-lg border">
+                <pre className="font-mono text-sm whitespace-pre-line bg-white p-4 rounded border">
+                  {printContent}
+                </pre>
+              </div>
+            </div>
+
+            {/* Popup Actions */}
+            <div className="flex items-center justify-end space-x-3 p-4 border-t bg-gray-50">
+              <Button
+                onClick={() => setShowPrintPopup(false)}
+                variant="outline"
+                size="sm"
+              >
+                İptal
+              </Button>
+              <Button
+                onClick={handlePrint}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Yazdır
+              </Button>
             </div>
           </div>
         </div>
