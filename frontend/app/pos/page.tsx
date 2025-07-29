@@ -239,7 +239,10 @@ export default function POSPage() {
   };
 
   const handlePrint = () => {
-    // Popup içeriğini yazdır
+    // Popup'ı gizle
+    setShowPrintPopup(false);
+    
+    // Fiş içeriğini yazdır
     const printContent = `
       <html>
         <head>
@@ -276,7 +279,6 @@ export default function POSPage() {
         printWindow.print();
         setTimeout(() => {
           printWindow.close();
-          setShowPrintPopup(false);
           toast.success('Fiş yazdırıldı!');
         }, 1000);
       }, 500);
