@@ -946,7 +946,7 @@ app.get('/api/qr-menu/:branchId', async (req, res) => {
         description: product.description,
         price: product.price,
         image: product.image,
-        isAvailable: product.isAvailable
+        isActive: product.isActive
       });
     });
 

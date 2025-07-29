@@ -10,7 +10,7 @@ interface Product {
   description: string | null;
   price: number;
   image: string | null;
-  isAvailable: boolean;
+  isActive: boolean;
 }
 
 interface Category {
@@ -314,11 +314,11 @@ export default function QRMenuPage() {
                                 <span className="text-lg font-bold text-blue-600">
                                   {formatPrice(product.price)}
                                 </span>
-                                {!product.isAvailable && (
-                                  <span className="text-sm text-red-600 font-medium">
-                                    Mevcut Değil
-                                  </span>
-                                )}
+                                                                 {!product.isActive && (
+                                   <span className="text-sm text-red-600 font-medium">
+                                     Mevcut Değil
+                                   </span>
+                                 )}
                               </div>
                             </div>
                           </div>
