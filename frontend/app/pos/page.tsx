@@ -243,7 +243,7 @@ export default function POSPage() {
     setShowPrintPopup(false);
     
     // Fiş içeriğini yazdır
-    const printContent = `
+    const htmlContent = `
       <html>
         <head>
           <title>Fiş</title>
@@ -267,23 +267,38 @@ export default function POSPage() {
       </html>
     `;
     
-    // Yeni pencere aç ve yazdır
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
+    // Mevcut sayfada yazdırma işlemi
+    try {
+      // Geçici bir iframe oluştur
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
       
-      // Yazdırma işlemini başlat
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (iframeDoc) {
+        iframeDoc.open();
+        iframeDoc.write(htmlContent);
+        iframeDoc.close();
+        
+        // Yazdırma işlemini başlat
         setTimeout(() => {
-          printWindow.close();
-          toast.success('Fiş yazdırıldı!');
-        }, 1000);
-      }, 500);
-    } else {
-      toast.error('Yazdırma penceresi açılamadı');
+          iframe.contentWindow?.print();
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+            toast.success('Fiş yazdırıldı!');
+          }, 1000);
+        }, 500);
+      } else {
+        document.body.removeChild(iframe);
+        toast.error('Yazdırma işlemi başlatılamadı');
+      }
+    } catch (error) {
+      toast.error('Yazdırma işlemi başarısız');
     }
   };
 
