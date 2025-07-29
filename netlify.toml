@@ -9,6 +9,13 @@
   NPM_FLAGS = "--legacy-peer-deps"
   NODE_ENV = "production"
 
+# API çağrılarını backend'e yönlendir
+[[redirects]]
+  from = "/api/*"
+  to = "https://yemek5-backend.onrender.com/api/:splat"
+  status = 200
+  force = true
+
 # Static export için redirect'ler
 [[redirects]]
   from = "/*"

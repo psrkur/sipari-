@@ -48,7 +48,7 @@ export default function QRMenuPage() {
         console.log('🔍 Şubeler yükleniyor...');
         
         // Response text'ini önce kontrol edelim
-        const response = await fetch('https://yemek5-backend.onrender.com/api/branches');
+        const response = await fetch('/api/branches');
         
         console.log('🔍 Response status:', response.status);
         console.log('🔍 Response ok:', response.ok);
@@ -92,7 +92,7 @@ export default function QRMenuPage() {
         console.log('🔍 Menü yükleniyor...', selectedBranch);
         
         // Response text'ini önce kontrol edelim
-        const response = await fetch(`https://yemek5-backend.onrender.com/api/qr-menu/${selectedBranch}`);
+        const response = await fetch(`/api/qr-menu/${selectedBranch}`);
         
         console.log('🔍 Menu response status:', response.status);
         console.log('🔍 Menu response ok:', response.ok);
