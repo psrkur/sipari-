@@ -129,12 +129,12 @@ export default function OrderTracking({ tableId, orderId }: OrderTrackingProps) 
           }
         }, 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Masa siparişleri yüklenemedi:', error);
       console.error('🔍 Hata detayları:', {
-        message: error.message,
-        status: error.status,
-        response: error.response
+        message: error?.message,
+        status: error?.status,
+        response: error?.response
       });
       if (showLoading) {
         toast.error('Siparişler yüklenemedi');
@@ -154,7 +154,7 @@ export default function OrderTracking({ tableId, orderId }: OrderTrackingProps) 
       console.log('✅ Sipariş yüklendi:', response);
       setOrders([response]);
       setLastUpdate(new Date());
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Sipariş yüklenemedi:', error);
       if (showLoading) {
         toast.error('Sipariş yüklenemedi');
