@@ -251,6 +251,69 @@ export default function POSPage() {
     }
   };
 
+  const printTableReceipt = (tableNumber: number, orders: any, totalAmount: number, paymentMethod: string) => {
+    const receiptContent = `
+      ================================
+      ${selectedBranch?.name || 'Restoran'}
+      ================================
+      Masa: ${tableNumber}
+      Tarih: ${new Date().toLocaleString('tr-TR')}
+      Ödeme: ${paymentMethod === 'CASH' ? 'Nakit' : 'Kart'}
+      ================================
+      ${orders && orders.length > 0 ? orders.map((order: any) => `
+      Sipariş #${order.orderNumber}
+      ${order.orderItems && order.orderItems.map((item: any) => `
+      ${item.quantity}x ${item.product.name} - ₺${item.price.toFixed(2)}
+      `).join('')}
+      `).join('') : 'Sipariş bulunamadı'}
+      ================================
+      TOPLAM: ₺${totalAmount.toFixed(2)}
+      ================================
+      Teşekkürler!
+      ================================
+    `;
+    
+    // Yazdırma penceresi oluştur
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Masa ${tableNumber} Fişi</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.2;
+                margin: 0;
+                padding: 10px;
+                white-space: pre-line;
+              }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${receiptContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      // Yazdırma işlemini başlat
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+      
+      toast.success('Masa fişi yazdırıldı');
+    } else {
+      toast.error('Yazdırma penceresi açılamadı');
+    }
+  };
+
   const handleTableCollection = async (paymentMethod: 'CASH' | 'CARD') => {
     if (!selectedTable || !tableOrders) return;
 
@@ -276,6 +339,9 @@ export default function POSPage() {
       });
 
       toast.success(`Masa ${selectedTable.number} tahsilatı tamamlandı!`);
+      
+      // Masa fişi yazdır
+      printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, paymentMethod);
       
       // Masa sıfırlama işlemi
       try {
@@ -406,8 +472,45 @@ export default function POSPage() {
       ================================
     `;
     
-    console.log('Fiş yazdırılıyor:', receiptContent);
-    toast.success('Fiş yazdırıldı');
+    // Yazdırma penceresi oluştur
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Fiş</title>
+            <style>
+              body {
+                font-family: 'Courier New', monospace;
+                font-size: 12px;
+                line-height: 1.2;
+                margin: 0;
+                padding: 10px;
+                white-space: pre-line;
+              }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${receiptContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      
+      // Yazdırma işlemini başlat
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+      
+      toast.success('Fiş yazdırıldı');
+    } else {
+      toast.error('Yazdırma penceresi açılamadı');
+    }
   };
 
   const filteredProducts = selectedCategory === 'all' 
@@ -788,6 +891,15 @@ export default function POSPage() {
                       >
                         <CreditCard className="h-5 w-5 mr-2" />
                         Kart Tahsilat (₺{tableOrders.totalAmount.toFixed(2)})
+                      </Button>
+
+                      <Button
+                        onClick={() => printTableReceipt(selectedTable.number, tableOrders.orders, tableOrders.totalAmount, 'MANUAL')}
+                        variant="outline"
+                        className="w-full py-3 border-blue-300 text-blue-600 hover:bg-blue-50"
+                      >
+                        <Printer className="h-5 w-5 mr-2" />
+                        Fiş Yazdır
                       </Button>
 
                       <Button
