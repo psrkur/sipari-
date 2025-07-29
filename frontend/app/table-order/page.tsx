@@ -332,6 +332,18 @@ export default function TableOrder() {
       setCart([]);
       setNotes('');
       setShowCart(false);
+      
+      // Sipariş başarılı olduktan sonra sayfayı kapat
+      toast.success('Siparişiniz başarıyla alındı! Sayfa kapatılıyor...');
+      
+      // 3 saniye sonra sayfayı kapat
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.close();
+          // Eğer window.close() çalışmazsa, ana sayfaya yönlendir
+          window.location.href = '/';
+        }
+      }, 3000);
     } catch (error) {
       console.error('❌ Sipariş hatası:', error);
       console.error('❌ Hata detayı:', error instanceof Error ? error.message : String(error));
