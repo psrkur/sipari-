@@ -54,6 +54,7 @@ export default function QRMenuPage() {
             'Accept': 'application/json',
           },
           mode: 'cors',
+          credentials: 'omit',
         });
         if (response.ok) {
           const data = await response.json();
@@ -86,6 +87,7 @@ export default function QRMenuPage() {
             'Accept': 'application/json',
           },
           mode: 'cors',
+          credentials: 'omit',
         });
         
         if (!response.ok) {
