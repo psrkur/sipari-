@@ -35,7 +35,7 @@ export default function QRCodesPage() {
 
   const fetchBranches = async () => {
     try {
-      const response = await fetch('/api/branches');
+      const response = await fetch('https://yemek5-backend.onrender.com/api/branches');
       if (response.ok) {
         const data = await response.json();
         setBranches(data);
@@ -48,7 +48,7 @@ export default function QRCodesPage() {
   const fetchQRCodes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/qr-codes/all', {
+      const response = await fetch('https://yemek5-backend.onrender.com/api/admin/qr-codes/all', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -68,7 +68,7 @@ export default function QRCodesPage() {
   const generateQRCode = async (branchId: number) => {
     try {
       setGenerating(true);
-      const response = await fetch('/api/admin/qr-codes/generate', {
+      const response = await fetch('https://yemek5-backend.onrender.com/api/admin/qr-codes/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
