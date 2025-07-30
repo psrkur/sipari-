@@ -95,10 +95,13 @@ export default function Home() {
       axios.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id))
         .then((response: any) => {
           console.log('Ürünler yüklendi:', response.data);
-          setProducts(response.data);
+          
+          // Response.data'nın array olduğundan emin ol
+          const productsData = Array.isArray(response.data) ? response.data : [];
+          setProducts(productsData);
           
           // Kategorileri yükle ve sırala
-          const productCategories: string[] = Array.from(new Set(response.data.map((p: any) => 
+          const productCategories: string[] = Array.from(new Set(productsData.map((p: any) => 
             typeof p.category === 'object' && p.category !== null ? p.category.name : p.category || 'Diğer'
           )));
           
@@ -110,12 +113,12 @@ export default function Home() {
               // Backend'den kategorileri çek ve sırala
               axios.get(API_ENDPOINTS.CATEGORIES)
                 .then((catResponse: any) => {
-                  const backendCategories = catResponse.data;
+                  const backendCategories = Array.isArray(catResponse.data) ? catResponse.data : [];
                   const orderedCategories = orderIds.map((id: number) => 
                     backendCategories.find((cat: any) => cat.id === id)
                   ).filter(Boolean);
                   
-                  const orderedCategoryNames = orderedCategories.map((cat: any) => cat.name);
+                  const orderedCategoryNames = orderedCategories.map((cat: any) => cat.name).filter(Boolean);
                   const remainingCategories = productCategories.filter((cat: string) => !orderedCategoryNames.includes(cat));
                   
                   setCategories(['Tümü', ...orderedCategoryNames, ...remainingCategories]);

@@ -226,7 +226,12 @@ export default function TableOrder() {
   };
 
   const getAvailableCategories = () => {
-    const categories = Array.from(new Set(products.map(p => p.category.name)));
+    // Products array kontrolü ekle
+    if (!Array.isArray(products) || products.length === 0) {
+      return ['Tümü'];
+    }
+    
+    const categories = Array.from(new Set(products.map(p => p.category?.name || 'Diğer')));
     // Kategorileri öncelik sırasına göre sırala
     const priorityCategories = ['İçecek', 'Soğuk Sandviç', 'Ana Yemek', 'Pizza', 'Burger', 'Tatlı'];
     const sortedCategories = categories.sort((a, b) => {
@@ -263,10 +268,15 @@ export default function TableOrder() {
   };
 
   const getFilteredProducts = () => {
+    // Products array kontrolü ekle
+    if (!Array.isArray(products) || products.length === 0) {
+      return [];
+    }
+    
     if (selectedCategory === 'Tümü') {
       return products;
     }
-    return products.filter(product => product.category.name === selectedCategory);
+    return products.filter(product => product.category?.name === selectedCategory);
   };
 
   const handlePlaceOrder = async () => {
