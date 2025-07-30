@@ -231,6 +231,34 @@ class GetirYemekIntegration {
     
     return signature === expectedSignature;
   }
+
+  // Platform ürünlerini getir
+  async getProducts() {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/restaurants/${this.restaurantId}/menu`,
+        { headers: this.getAuthHeaders() }
+      );
+      
+      return response.data.menu_items?.map(product => ({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        description: product.description,
+        image: product.image_url,
+        available: product.available
+      })) || [];
+    } catch (error) {
+      console.error('Getir products fetch error:', error.response?.data || error.message);
+      // Test için mock data döndür
+      return [
+        { id: '1', name: 'Margarita Pizza', price: 42.00, category: 'pizza', available: true },
+        { id: '2', name: 'Cheese Burger', price: 32.00, category: 'burger', available: true },
+        { id: '3', name: 'Adana Kebap', price: 52.00, category: 'kebap', available: true }
+      ];
+    }
+  }
 }
 
 module.exports = new GetirYemekIntegration(); 

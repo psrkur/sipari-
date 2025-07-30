@@ -20,6 +20,30 @@ class EcommerceIntegration {
       getir: getirIntegration,
       migros: migrosIntegration
     };
+
+    // Varsayılan platformları kaydet (test için)
+    this.initializeDefaultPlatforms();
+  }
+
+  // Varsayılan platformları başlat
+  initializeDefaultPlatforms() {
+    const defaultPlatforms = ['getir', 'trendyol', 'yemeksepeti', 'migros'];
+    
+    defaultPlatforms.forEach(platformName => {
+      if (!this.platforms[platformName]) {
+        this.platforms[platformName] = {
+          config: {
+            baseUrl: `https://api.${platformName}.com`,
+            apiKey: '',
+            apiSecret: '',
+            enabled: false
+          },
+          isActive: false,
+          lastSync: null
+        };
+        logger.info(`Default platform initialized: ${platformName}`);
+      }
+    });
   }
 
   // Platform kaydetme
