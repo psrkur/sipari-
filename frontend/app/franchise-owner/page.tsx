@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthStore } from '@/store/auth';
 
 interface MyFranchise {
   id: number;
@@ -42,7 +42,7 @@ interface MyFranchise {
 }
 
 export default function FranchiseOwnerPage() {
-  const { user } = useAuth();
+  const { user } = useAuthStore();
   const [myFranchise, setMyFranchise] = useState<MyFranchise | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
