@@ -193,6 +193,79 @@ router.get('/platforms/:platformName/orders', authenticateToken, async (req, res
   }
 });
 
+// Son 10 sipariş geçmişi
+router.get('/platforms/:platformName/recent-orders', authenticateToken, async (req, res) => {
+  try {
+    const { platformName } = req.params;
+    
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const recentOrders = await prisma.order.findMany({
+      where: { platform: platformName },
+      include: {
+        customer: true,
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
+    
+    res.json({
+      success: true,
+      orders: recentOrders
+    });
+  } catch (error) {
+    console.error('Recent orders error:', error);
+    res.status(500).json({ error: 'Failed to get recent orders' });
+  }
+});
+
+// Platform ürünlerini getir (senkronizasyon için)
+router.get('/platforms/:platformName/products', authenticateToken, async (req, res) => {
+  try {
+    const { platformName } = req.params;
+    
+    if (!ecommerceIntegration.isPlatformActive(platformName)) {
+      return res.status(400).json({ 
+        error: `Platform ${platformName} is not active` 
+      });
+    }
+    
+    const products = await ecommerceIntegration.getPlatformProducts(platformName);
+    
+    res.json({
+      success: true,
+      products: products
+    });
+  } catch (error) {
+    console.error('Platform products error:', error);
+    res.status(500).json({ error: 'Failed to get platform products' });
+  }
+});
+
+// Platform durumunu değiştir (açma/kapama)
+router.put('/platforms/:platformName/toggle', authenticateToken, async (req, res) => {
+  try {
+    const { platformName } = req.params;
+    const { isActive } = req.body;
+    
+    ecommerceIntegration.togglePlatform(platformName, isActive);
+    
+    res.json({
+      success: true,
+      message: `Platform ${platformName} ${isActive ? 'activated' : 'deactivated'} successfully`
+    });
+  } catch (error) {
+    console.error('Platform toggle error:', error);
+    res.status(500).json({ error: 'Failed to toggle platform' });
+  }
+});
+
 // Webhook doğrulama fonksiyonu
 function validateWebhook(platformName, req) {
   // Platform'a göre webhook doğrulama

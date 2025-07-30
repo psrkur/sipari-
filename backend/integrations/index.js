@@ -37,6 +37,14 @@ class EcommerceIntegration {
     return this.platforms[platformName]?.isActive || false;
   }
 
+  // Platform açma/kapama
+  togglePlatform(platformName, isActive) {
+    if (this.platforms[platformName]) {
+      this.platforms[platformName].isActive = isActive;
+      logger.info(`Platform ${platformName} ${isActive ? 'activated' : 'deactivated'}`);
+    }
+  }
+
   // Menü senkronizasyonu
   async syncMenuToPlatform(platformName, branchId) {
     if (!this.isPlatformActive(platformName)) {
@@ -306,6 +314,33 @@ class EcommerceIntegration {
     }
     
     return healthStatus;
+  }
+
+  // Platform ürünlerini getir
+  async getPlatformProducts(platformName) {
+    if (!this.isPlatformActive(platformName)) {
+      throw new Error(`Platform ${platformName} is not active`);
+    }
+
+    try {
+      const integration = this.integrations[platformName];
+      if (!integration) {
+        throw new Error(`Integration not found for platform: ${platformName}`);
+      }
+
+      // Platform'dan ürünleri çek
+      const products = await integration.getProducts();
+      
+      return {
+        platform: platformName,
+        products: products,
+        total: products.length,
+        lastUpdated: new Date()
+      };
+    } catch (error) {
+      logger.error(`Failed to get products from ${platformName}:`, error);
+      throw error;
+    }
   }
 }
 

@@ -36,6 +36,11 @@ export default function EcommercePlatformsPage() {
     apiSecret: '',
     enabled: false
   })
+  const [showRecentOrdersModal, setShowRecentOrdersModal] = useState(false)
+  const [showProductsModal, setShowProductsModal] = useState(false)
+  const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [platformProducts, setPlatformProducts] = useState<any[]>([])
+  const [selectedPlatformForModal, setSelectedPlatformForModal] = useState('')
 
   useEffect(() => {
     loadPlatforms()
@@ -89,6 +94,49 @@ export default function EcommercePlatformsPage() {
     } catch (error) {
       console.error('Menu sync error:', error)
       toast.error('Menü senkronizasyonu başarısız')
+    }
+  }
+
+  const handleTogglePlatform = async (platformName: string, isActive: boolean) => {
+    try {
+      await axios.put(`/api/integrations/platforms/${platformName}/toggle`, {
+        isActive: !isActive
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      toast.success(`${platformName} platformu ${!isActive ? 'açıldı' : 'kapatıldı'}`)
+      loadPlatforms()
+    } catch (error) {
+      console.error('Platform toggle error:', error)
+      toast.error('Platform durumu değiştirilemedi')
+    }
+  }
+
+  const handleShowRecentOrders = async (platformName: string) => {
+    try {
+      const response = await axios.get(`/api/integrations/platforms/${platformName}/recent-orders`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setRecentOrders(response.data.orders)
+      setSelectedPlatformForModal(platformName)
+      setShowRecentOrdersModal(true)
+    } catch (error) {
+      console.error('Recent orders error:', error)
+      toast.error('Son siparişler yüklenemedi')
+    }
+  }
+
+  const handleShowProducts = async (platformName: string) => {
+    try {
+      const response = await axios.get(`/api/integrations/platforms/${platformName}/products`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setPlatformProducts(response.data.products)
+      setSelectedPlatformForModal(platformName)
+      setShowProductsModal(true)
+    } catch (error) {
+      console.error('Platform products error:', error)
+      toast.error('Platform ürünleri yüklenemedi')
     }
   }
 
@@ -193,10 +241,10 @@ export default function EcommercePlatformsPage() {
                 )}
               </div>
 
-              <div className="flex space-x-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => handlePlatformSelect(platformName)}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium ${
+                  className={`flex-1 px-3 py-2 rounded-md text-sm font-medium ${
                     isActive
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-600 text-white hover:bg-gray-700'
@@ -205,13 +253,40 @@ export default function EcommercePlatformsPage() {
                   {isActive ? 'Yapılandır' : 'Bağla'}
                 </button>
                 
+                <button
+                  onClick={() => handleTogglePlatform(platformName, isActive)}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    isActive
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  {isActive ? 'Kapat' : 'Aç'}
+                </button>
+                
                 {isActive && (
-                  <button
-                    onClick={() => handleSyncMenu(platformName, 1)} // Şube ID'si
-                    className="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
-                  >
-                    Senkronize Et
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleSyncMenu(platformName, 1)}
+                      className="px-3 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700"
+                    >
+                      Senkronize Et
+                    </button>
+                    
+                    <button
+                      onClick={() => handleShowProducts(platformName)}
+                      className="px-3 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
+                    >
+                      Ürünleri Göster
+                    </button>
+                    
+                    <button
+                      onClick={() => handleShowRecentOrders(platformName)}
+                      className="px-3 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700"
+                    >
+                      Son Siparişler
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -324,6 +399,120 @@ export default function EcommercePlatformsPage() {
                 İptal
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Son Siparişler Modal */}
+      {showRecentOrdersModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                {getPlatformName(selectedPlatformForModal)} - Son 10 Sipariş
+              </h2>
+              <button
+                onClick={() => setShowRecentOrdersModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {recentOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Henüz sipariş bulunmuyor</p>
+            ) : (
+              <div className="space-y-4">
+                {recentOrders.map((order, index) => (
+                  <div key={order.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-semibold">Sipariş #{order.id}</h3>
+                        <p className="text-sm text-gray-600">
+                          {new Date(order.createdAt).toLocaleString('tr-TR')}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {order.status === 'completed' ? 'Tamamlandı' :
+                         order.status === 'pending' ? 'Beklemede' : 'İşleniyor'}
+                      </span>
+                    </div>
+                    
+                    <div className="text-sm text-gray-600 mb-2">
+                      <p><strong>Müşteri:</strong> {order.customer?.name || 'Bilinmiyor'}</p>
+                      <p><strong>Toplam:</strong> ₺{order.totalAmount}</p>
+                    </div>
+                    
+                    <div className="text-sm">
+                      <p className="font-medium mb-1">Ürünler:</p>
+                      <ul className="list-disc list-inside space-y-1">
+                        {order.items?.map((item: any) => (
+                          <li key={item.id}>
+                            {item.product?.name} x{item.quantity} - ₺{item.price}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Platform Ürünleri Modal */}
+      {showProductsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                {getPlatformName(selectedPlatformForModal)} - Platform Ürünleri
+              </h2>
+              <button
+                onClick={() => setShowProductsModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {platformProducts.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">Platform ürünleri bulunamadı</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {platformProducts.map((product: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-center space-x-3 mb-2">
+                      {product.image && (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      )}
+                      <div>
+                        <h3 className="font-semibold text-sm">{product.name}</h3>
+                        <p className="text-sm text-gray-600">₺{product.price}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p><strong>ID:</strong> {product.id}</p>
+                      <p><strong>Kategori:</strong> {product.category}</p>
+                      <p><strong>Durum:</strong> {product.available ? 'Mevcut' : 'Mevcut Değil'}</p>
+                      {product.description && (
+                        <p><strong>Açıklama:</strong> {product.description}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
