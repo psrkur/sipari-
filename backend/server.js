@@ -1177,7 +1177,9 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
     }
 
     let whereClause = {
-      orderType: { not: 'COLLECTION' } // Tahsilat kayıtlarını hariç tut
+      orderType: { 
+        notIn: ['COLLECTION'] // Sadece COLLECTION değerini hariç tut
+      }
     };
     
     // branchId parametresi varsa filtrele
