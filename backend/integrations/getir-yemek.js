@@ -235,28 +235,17 @@ class GetirYemekIntegration {
   // Platform ürünlerini getir
   async getProducts() {
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/restaurants/${this.restaurantId}/menu`,
-        { headers: this.getAuthHeaders() }
-      );
-      
-      return response.data.menu_items?.map(product => ({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        category: product.category,
-        description: product.description,
-        image: product.image_url,
-        available: product.available
-      })) || [];
-    } catch (error) {
-      console.error('Getir products fetch error:', error.response?.data || error.message);
-      // Test için mock data döndür
+      // API key olmadığı için test verisi döndür
       return [
-        { id: '1', name: 'Margarita Pizza', price: 42.00, category: 'pizza', available: true },
-        { id: '2', name: 'Cheese Burger', price: 32.00, category: 'burger', available: true },
-        { id: '3', name: 'Adana Kebap', price: 52.00, category: 'kebap', available: true }
+        { id: '1', name: 'Karışık Pizza', price: 50.00, category: 'pizza', available: true },
+        { id: '2', name: 'Tavuk Burger', price: 30.00, category: 'burger', available: true },
+        { id: '3', name: 'Urfa Kebap', price: 60.00, category: 'kebap', available: true },
+        { id: '4', name: 'Tavuk Döner', price: 35.00, category: 'doner', available: true },
+        { id: '5', name: 'Mevsim Salata', price: 20.00, category: 'salata', available: true }
       ];
+    } catch (error) {
+      console.error('Getir products fetch error:', error.message);
+      return [];
     }
   }
 }

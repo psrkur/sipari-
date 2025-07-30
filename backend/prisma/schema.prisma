@@ -107,6 +107,8 @@ model Order {
   totalAmount Float
   notes       String?
   orderType   String      @default("DELIVERY")
+  platform    String?     // E-ticaret platformu (trendyol, getir, yemeksepeti, migros)
+  platformOrderId String? // Platform sipariş ID'si
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]

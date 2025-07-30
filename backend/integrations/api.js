@@ -202,10 +202,13 @@ router.get('/platforms/:platformName/recent-orders', authenticateToken, async (r
     const prisma = new PrismaClient();
     
     const recentOrders = await prisma.order.findMany({
-      where: { platform: platformName },
+      where: { 
+        platform: platformName,
+        platformOrderId: { not: null }
+      },
       include: {
         customer: true,
-        items: {
+        orderItems: {
           include: {
             product: true
           }

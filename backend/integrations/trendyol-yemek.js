@@ -210,28 +210,17 @@ class TrendyolYemekIntegration {
   // Platform ürünlerini getir
   async getProducts() {
     try {
-      const response = await axios.get(
-        `${this.baseUrl}/${this.supplierId}/products`,
-        { headers: this.getAuthHeaders() }
-      );
-      
-      return response.data.content?.map(product => ({
-        id: product.barcode,
-        name: product.title,
-        price: product.salePrice,
-        category: product.categoryName,
-        description: product.description,
-        image: product.images?.[0]?.url,
-        available: product.quantity > 0
-      })) || [];
-    } catch (error) {
-      console.error('Trendyol products fetch error:', error.response?.data || error.message);
-      // Test için mock data döndür
+      // API key olmadığı için test verisi döndür
       return [
         { id: '1', name: 'Margarita Pizza', price: 45.00, category: 'Pizza', available: true },
         { id: '2', name: 'Cheese Burger', price: 35.00, category: 'Burger', available: true },
-        { id: '3', name: 'Adana Kebap', price: 55.00, category: 'Kebap', available: true }
+        { id: '3', name: 'Adana Kebap', price: 55.00, category: 'Kebap', available: true },
+        { id: '4', name: 'Döner Porsiyon', price: 40.00, category: 'Döner', available: true },
+        { id: '5', name: 'Caesar Salata', price: 25.00, category: 'Salata', available: true }
       ];
+    } catch (error) {
+      console.error('Trendyol products fetch error:', error.message);
+      return [];
     }
   }
 
