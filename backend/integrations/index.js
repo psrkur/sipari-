@@ -21,8 +21,13 @@ class EcommerceIntegration {
       migros: migrosIntegration
     };
 
-    // Veritabanından platform konfigürasyonlarını yükle
-    this.loadPlatformConfigs();
+    // Varsayılan platformları başlat (sync)
+    this.initializeDefaultPlatformsSync();
+    
+    // Veritabanından platform konfigürasyonlarını yükle (async)
+    this.loadPlatformConfigs().catch(error => {
+      logger.error('Failed to load platform configs:', error);
+    });
   }
 
   // Veritabanından platform konfigürasyonlarını yükle
@@ -52,14 +57,36 @@ class EcommerceIntegration {
       }
       
       await prisma.$disconnect();
+      logger.info('Platform configs loaded successfully');
     } catch (error) {
       logger.error('Platform configs load error:', error);
       // Hata durumunda varsayılan platformları yükle
-      this.initializeDefaultPlatforms();
+      this.initializeDefaultPlatformsSync();
     }
   }
 
-  // Varsayılan platformları başlat
+  // Varsayılan platformları başlat (sync)
+  initializeDefaultPlatformsSync() {
+    const defaultPlatforms = ['getir', 'trendyol', 'yemeksepeti', 'migros'];
+    
+    defaultPlatforms.forEach(platformName => {
+      if (!this.platforms[platformName]) {
+        this.platforms[platformName] = {
+          isActive: false,
+          lastSync: null,
+          config: {
+            baseUrl: '',
+            apiKey: '',
+            apiSecret: '',
+            enabled: false
+          }
+        };
+        logger.info(`Default platform initialized: ${platformName}`);
+      }
+    });
+  }
+
+  // Varsayılan platformları başlat (async)
   async initializeDefaultPlatforms() {
     try {
       const { PrismaClient } = require('@prisma/client');
