@@ -4,7 +4,7 @@ const crypto = require('crypto');
 
 class TrendyolYemekIntegration {
   constructor() {
-    this.baseUrl = 'https://api.trendyol.com/sapigw/suppliers';
+    this.baseUrl = 'https://api.tgoapis.com/integrator/store/meal/suppliers';
     this.apiKey = process.env.TRENDYOL_API_KEY;
     this.apiSecret = process.env.TRENDYOL_API_SECRET;
     this.supplierId = process.env.TRENDYOL_SUPPLIER_ID;
@@ -16,7 +16,7 @@ class TrendyolYemekIntegration {
     const signature = this.generateSignature(timestamp);
     
     return {
-      'Authorization': `Basic ${Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString('base64')}`,
+      'Authorization': `Bearer ${this.apiKey}`,
       'User-Agent': 'Yemek5-Integration/1.0',
       'Content-Type': 'application/json',
       'X-Timestamp': timestamp,
@@ -35,7 +35,7 @@ class TrendyolYemekIntegration {
       const trendyolProduct = this.formatProductForTrendyol(productData);
       
       const response = await axios.post(
-        `${this.baseUrl}/${this.supplierId}/products`,
+        `${this.baseUrl}/${this.supplierId}/stores/products`,
         trendyolProduct,
         { headers: this.getAuthHeaders() }
       );
@@ -52,7 +52,7 @@ class TrendyolYemekIntegration {
       const trendyolProduct = this.formatProductForTrendyol(productData);
       
       const response = await axios.put(
-        `${this.baseUrl}/${this.supplierId}/products/${productId}`,
+        `${this.baseUrl}/${this.supplierId}/stores/products/${productId}`,
         trendyolProduct,
         { headers: this.getAuthHeaders() }
       );
@@ -74,7 +74,7 @@ class TrendyolYemekIntegration {
       };
       
       const response = await axios.put(
-        `${this.baseUrl}/${this.supplierId}/products/stock-updates`,
+        `${this.baseUrl}/${this.supplierId}/stores/products/stock-updates`,
         stockData,
         { headers: this.getAuthHeaders() }
       );
@@ -89,7 +89,7 @@ class TrendyolYemekIntegration {
   // Sipariş Yönetimi
   async getOrders(status = 'Created', startDate = null, endDate = null) {
     try {
-      let url = `${this.baseUrl}/${this.supplierId}/orders?status=${status}`;
+      let url = `${this.baseUrl}/${this.supplierId}/stores/orders?status=${status}`;
       
       if (startDate) url += `&startDate=${startDate}`;
       if (endDate) url += `&endDate=${endDate}`;
@@ -210,6 +210,13 @@ class TrendyolYemekIntegration {
   // Platform ürünlerini getir
   async getProducts() {
     try {
+      const response = await axios.get(
+        `${this.baseUrl}/${this.supplierId}/stores/products`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Trendyol products fetch error:', error.response?.data || error.message);
       // API key olmadığı için test verisi döndür
       return [
         { id: '1', name: 'Margarita Pizza', price: 45.00, category: 'Pizza', available: true },
@@ -218,9 +225,28 @@ class TrendyolYemekIntegration {
         { id: '4', name: 'Döner Porsiyon', price: 40.00, category: 'Döner', available: true },
         { id: '5', name: 'Caesar Salata', price: 25.00, category: 'Salata', available: true }
       ];
+    }
+  }
+
+  // Test bağlantısı
+  async testConnection() {
+    try {
+      const response = await axios.get(
+        `${this.baseUrl}/${this.supplierId}/stores`,
+        { headers: this.getAuthHeaders() }
+      );
+      return {
+        success: true,
+        message: 'Trendyol API bağlantısı başarılı',
+        data: response.data
+      };
     } catch (error) {
-      console.error('Trendyol products fetch error:', error.message);
-      return [];
+      console.error('Trendyol connection test error:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: 'Trendyol API bağlantısı başarısız',
+        error: error.response?.data || error.message
+      };
     }
   }
 

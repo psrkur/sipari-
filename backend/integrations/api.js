@@ -297,6 +297,31 @@ router.post('/platforms/reload-configs', authenticateToken, async (req, res) => 
   }
 });
 
+// Platform bağlantı testi
+router.post('/platforms/:platformName/test-connection', authenticateToken, async (req, res) => {
+  try {
+    const { platformName } = req.params;
+    
+    if (platformName === 'trendyol') {
+      const trendyolIntegration = require('./trendyol-yemek');
+      const result = await trendyolIntegration.testConnection();
+      
+      res.json(result);
+    } else {
+      res.json({
+        success: false,
+        message: `Test connection not implemented for ${platformName}`
+      });
+    }
+  } catch (error) {
+    console.error('Platform test connection error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to test platform connection' 
+    });
+  }
+});
+
 // Webhook doğrulama fonksiyonu
 function validateWebhook(platformName, req) {
   // Platform'a göre webhook doğrulama
