@@ -157,7 +157,13 @@ router.get('/platforms/:platformName/orders', authenticateToken, async (req, res
     const { page = 1, limit = 20 } = req.query;
     
     const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30'
+        }
+      }
+    });
     
     const orders = await prisma.order.findMany({
       where: { platform: platformName },
@@ -199,7 +205,13 @@ router.get('/platforms/:platformName/recent-orders', authenticateToken, async (r
     const { platformName } = req.params;
     
     const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30'
+        }
+      }
+    });
     
     const recentOrders = await prisma.order.findMany({
       where: { 
