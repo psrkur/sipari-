@@ -955,7 +955,6 @@ export default function AdminPage() {
             >
               🛒 E-ticaret Platformları
             </Link>
-            </button>
             <button
               onClick={() => {
                 console.log('POS button clicked, opening in new window');
