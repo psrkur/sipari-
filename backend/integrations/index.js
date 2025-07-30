@@ -21,39 +21,124 @@ class EcommerceIntegration {
       migros: migrosIntegration
     };
 
-    // Varsayılan platformları kaydet (test için)
-    this.initializeDefaultPlatforms();
+    // Veritabanından platform konfigürasyonlarını yükle
+    this.loadPlatformConfigs();
+  }
+
+  // Veritabanından platform konfigürasyonlarını yükle
+  async loadPlatformConfigs() {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      const configs = await prisma.platformConfig.findMany();
+      
+      configs.forEach(config => {
+        this.platforms[config.platformName] = {
+          isActive: config.isActive,
+          lastSync: config.lastSync,
+          config: {
+            baseUrl: config.baseUrl || '',
+            apiKey: config.apiKey || '',
+            apiSecret: config.apiSecret || '',
+            enabled: config.isActive
+          }
+        };
+      });
+      
+      // Eğer hiç konfigürasyon yoksa varsayılan platformları ekle
+      if (configs.length === 0) {
+        await this.initializeDefaultPlatforms();
+      }
+      
+      await prisma.$disconnect();
+    } catch (error) {
+      logger.error('Platform configs load error:', error);
+      // Hata durumunda varsayılan platformları yükle
+      this.initializeDefaultPlatforms();
+    }
   }
 
   // Varsayılan platformları başlat
-  initializeDefaultPlatforms() {
-    const defaultPlatforms = ['getir', 'trendyol', 'yemeksepeti', 'migros'];
-    
-    defaultPlatforms.forEach(platformName => {
-      if (!this.platforms[platformName]) {
+  async initializeDefaultPlatforms() {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      const defaultPlatforms = ['getir', 'trendyol', 'yemeksepeti', 'migros'];
+      
+      for (const platformName of defaultPlatforms) {
+        // Veritabanında yoksa ekle
+        await prisma.platformConfig.upsert({
+          where: { platformName },
+          update: {},
+          create: {
+            platformName,
+            isActive: false,
+            baseUrl: '',
+            apiKey: '',
+            apiSecret: ''
+          }
+        });
+        
+        // Memory'de de ekle
         this.platforms[platformName] = {
+          isActive: false,
+          lastSync: null,
           config: {
-            baseUrl: `https://api.${platformName}.com`,
+            baseUrl: '',
             apiKey: '',
             apiSecret: '',
             enabled: false
-          },
-          isActive: false,
-          lastSync: null
+          }
         };
-        logger.info(`Default platform initialized: ${platformName}`);
       }
-    });
+      
+      await prisma.$disconnect();
+    } catch (error) {
+      logger.error('Default platforms initialization error:', error);
+    }
   }
 
   // Platform kaydetme
-  registerPlatform(name, config) {
-    this.platforms[name] = {
-      config,
-      isActive: config.enabled || false,
-      lastSync: null
-    };
-    logger.info(`Platform registered: ${name}`);
+  async registerPlatform(name, config) {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      // Veritabanına kaydet
+      await prisma.platformConfig.upsert({
+        where: { platformName: name },
+        update: {
+          baseUrl: config.baseUrl,
+          apiKey: config.apiKey,
+          apiSecret: config.apiSecret,
+          isActive: config.enabled || false,
+          config: config
+        },
+        create: {
+          platformName: name,
+          baseUrl: config.baseUrl,
+          apiKey: config.apiKey,
+          apiSecret: config.apiSecret,
+          isActive: config.enabled || false,
+          config: config
+        }
+      });
+      
+      // Memory'de güncelle
+      this.platforms[name] = {
+        config,
+        isActive: config.enabled || false,
+        lastSync: null
+      };
+      
+      await prisma.$disconnect();
+      logger.info(`Platform registered: ${name}`);
+    } catch (error) {
+      logger.error(`Platform registration error for ${name}:`, error);
+      throw error;
+    }
   }
 
   // Platform durumu kontrol
@@ -62,10 +147,28 @@ class EcommerceIntegration {
   }
 
   // Platform açma/kapama
-  togglePlatform(platformName, isActive) {
-    if (this.platforms[platformName]) {
-      this.platforms[platformName].isActive = isActive;
+  async togglePlatform(platformName, isActive) {
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      // Veritabanında güncelle
+      await prisma.platformConfig.update({
+        where: { platformName },
+        data: { isActive }
+      });
+      
+      // Memory'de güncelle
+      if (this.platforms[platformName]) {
+        this.platforms[platformName].isActive = isActive;
+        this.platforms[platformName].config.enabled = isActive;
+      }
+      
+      await prisma.$disconnect();
       logger.info(`Platform ${platformName} ${isActive ? 'activated' : 'deactivated'}`);
+    } catch (error) {
+      logger.error(`Platform toggle error for ${platformName}:`, error);
+      throw error;
     }
   }
 

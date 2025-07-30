@@ -194,3 +194,18 @@ model TablePayment {
 
   @@map("table_payments")
 }
+
+model PlatformConfig {
+  id          Int      @id @default(autoincrement())
+  platformName String  @unique
+  baseUrl     String?
+  apiKey      String?
+  apiSecret   String?
+  isActive    Boolean  @default(false)
+  lastSync    DateTime?
+  config      Json?    // Ek konfigürasyon bilgileri
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("platform_configs")
+}

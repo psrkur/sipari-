@@ -15,7 +15,7 @@ router.post('/platforms/register', authenticateToken, async (req, res) => {
       });
     }
 
-    ecommerceIntegration.registerPlatform(platformName, config);
+    await ecommerceIntegration.registerPlatform(platformName, config);
     
     res.json({ 
       success: true, 
@@ -257,7 +257,7 @@ router.put('/platforms/:platformName/toggle', authenticateToken, async (req, res
     const { platformName } = req.params;
     const { isActive } = req.body;
     
-    ecommerceIntegration.togglePlatform(platformName, isActive);
+    await ecommerceIntegration.togglePlatform(platformName, isActive);
     
     res.json({
       success: true,
