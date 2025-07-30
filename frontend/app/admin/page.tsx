@@ -949,6 +949,13 @@ export default function AdminPage() {
             >
               QR Menüler
             </button>
+            <Link
+              href="/admin/ecommerce-platforms"
+              className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700"
+            >
+              🛒 E-ticaret Platformları
+            </Link>
+            </button>
             <button
               onClick={() => {
                 console.log('POS button clicked, opening in new window');

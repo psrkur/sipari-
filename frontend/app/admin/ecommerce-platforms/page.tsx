@@ -5,6 +5,7 @@ import { useAuthStore } from '../../../store/auth'
 import { API_ENDPOINTS } from '../../../lib/api'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
 
 interface Platform {
   name: string
@@ -136,12 +137,22 @@ export default function EcommercePlatformsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          E-ticaret Platformları
-        </h1>
-        <p className="text-gray-600">
-          Harici e-ticaret platformları ile entegrasyon yönetimi
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              E-ticaret Platformları
+            </h1>
+            <p className="text-gray-600">
+              Harici e-ticaret platformları ile entegrasyon yönetimi
+            </p>
+          </div>
+          <Link
+            href="/admin"
+            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            ← Admin Paneli
+          </Link>
+        </div>
       </div>
 
       {/* Platform Listesi */}
