@@ -40,6 +40,18 @@ export default function FranchisePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFranchise, setSelectedFranchise] = useState<Franchise | null>(null);
+  const [showAddFranchiseModal, setShowAddFranchiseModal] = useState(false);
+  const [franchiseForm, setFranchiseForm] = useState({
+    name: '',
+    code: '',
+    ownerName: '',
+    ownerEmail: '',
+    ownerPhone: '',
+    address: '',
+    city: '',
+    monthlyRoyalty: 0,
+    agreementDate: new Date().toISOString().split('T')[0]
+  });
 
   useEffect(() => {
     if (user) {
@@ -108,6 +120,48 @@ export default function FranchisePage() {
     }
   };
 
+  const createFranchise = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (!token) {
+        setError('Oturum bulunamadı');
+        return;
+      }
+
+      const response = await fetch('/api/franchise/franchises', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(franchiseForm)
+      });
+
+      if (response.ok) {
+        setShowAddFranchiseModal(false);
+        setFranchiseForm({
+          name: '',
+          code: '',
+          ownerName: '',
+          ownerEmail: '',
+          ownerPhone: '',
+          address: '',
+          city: '',
+          monthlyRoyalty: 0,
+          agreementDate: new Date().toISOString().split('T')[0]
+        });
+        loadFranchiseData(); // Yeniden yükle
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Franchise oluşturulamadı');
+      }
+    } catch (err) {
+      console.error('Franchise creation error:', err);
+      setError('Franchise oluşturulamadı');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
@@ -163,8 +217,18 @@ export default function FranchisePage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">🏢 Franchise Yönetimi</h1>
-          <p className="mt-2 text-gray-600">Franchise'larınızı yönetin ve performanslarını takip edin</p>
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">🏢 Franchise Yönetimi</h1>
+              <p className="mt-2 text-gray-600">Franchise'larınızı yönetin ve performanslarını takip edin</p>
+            </div>
+            <button
+              onClick={() => setShowAddFranchiseModal(true)}
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 font-medium"
+            >
+              ➕ Yeni Franchise Ekle
+            </button>
+          </div>
         </div>
 
         {/* İstatistikler */}
@@ -414,9 +478,174 @@ export default function FranchisePage() {
                 )}
               </div>
             </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-} 
+                     </div>
+         )}
+
+         {/* Yeni Franchise Ekleme Modal */}
+         {showAddFranchiseModal && (
+           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+             <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+               <div className="mt-3">
+                 <div className="flex justify-between items-center mb-4">
+                   <h3 className="text-lg font-medium text-gray-900">Yeni Franchise Ekle</h3>
+                   <button
+                     onClick={() => setShowAddFranchiseModal(false)}
+                     className="text-gray-400 hover:text-gray-600"
+                   >
+                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                     </svg>
+                   </button>
+                 </div>
+                 
+                 <form onSubmit={createFranchise} className="space-y-4">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Franchise Adı *
+                       </label>
+                       <input
+                         type="text"
+                         value={franchiseForm.name}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, name: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         required
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Franchise Kodu *
+                       </label>
+                       <input
+                         type="text"
+                         value={franchiseForm.code}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, code: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         placeholder="FR001"
+                         required
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Sahip Adı *
+                       </label>
+                       <input
+                         type="text"
+                         value={franchiseForm.ownerName}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, ownerName: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         required
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Sahip E-posta *
+                       </label>
+                       <input
+                         type="email"
+                         value={franchiseForm.ownerEmail}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, ownerEmail: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         required
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Sahip Telefon
+                       </label>
+                       <input
+                         type="tel"
+                         value={franchiseForm.ownerPhone}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, ownerPhone: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Aylık Royalty (₺)
+                       </label>
+                       <input
+                         type="number"
+                         value={franchiseForm.monthlyRoyalty}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, monthlyRoyalty: parseFloat(e.target.value) || 0})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         min="0"
+                         step="0.01"
+                       />
+                     </div>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Şehir *
+                       </label>
+                       <input
+                         type="text"
+                         value={franchiseForm.city}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, city: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         required
+                       />
+                     </div>
+                     
+                     <div>
+                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                         Anlaşma Tarihi *
+                       </label>
+                       <input
+                         type="date"
+                         value={franchiseForm.agreementDate}
+                         onChange={(e) => setFranchiseForm({...franchiseForm, agreementDate: e.target.value})}
+                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                         required
+                       />
+                     </div>
+                   </div>
+                   
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                       Adres *
+                     </label>
+                     <textarea
+                       value={franchiseForm.address}
+                       onChange={(e) => setFranchiseForm({...franchiseForm, address: e.target.value})}
+                       rows={3}
+                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                       required
+                     />
+                   </div>
+                   
+                   <div className="flex justify-end space-x-3 pt-4">
+                     <button
+                       type="button"
+                       onClick={() => setShowAddFranchiseModal(false)}
+                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                     >
+                       İptal
+                     </button>
+                     <button
+                       type="submit"
+                       className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700"
+                     >
+                       Franchise Oluştur
+                     </button>
+                   </div>
+                 </form>
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+     </div>
+   );
+ } 
