@@ -3921,6 +3921,10 @@ app.delete('/api/admin/images/:filename', async (req, res) => {
   }
 });
 
+// E-ticaret entegrasyonu router'ını ekle
+const ecommerceIntegrationRouter = require('./integrations/api');
+app.use('/api/integrations', ecommerceIntegrationRouter);
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
