@@ -42,7 +42,7 @@ interface MyFranchise {
 }
 
 export default function FranchiseOwnerPage() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const [myFranchise, setMyFranchise] = useState<MyFranchise | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,6 @@ export default function FranchiseOwnerPage() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
       if (!token) {
         setError('Oturum bulunamadı');
         return;
@@ -96,7 +95,6 @@ export default function FranchiseOwnerPage() {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('token');
       if (!token || !myFranchise) return;
 
       const response = await fetch(`/api/franchise/franchises/${myFranchise.id}/support-tickets`, {

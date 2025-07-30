@@ -34,7 +34,7 @@ interface FranchiseStats {
 }
 
 export default function FranchisePage() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [stats, setStats] = useState<FranchiseStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,6 @@ export default function FranchisePage() {
       setLoading(true);
       setError(null);
 
-      const token = localStorage.getItem('token');
       if (!token) {
         setError('Oturum bulunamadı');
         return;
