@@ -21,12 +21,11 @@ class EcommerceIntegration {
       migros: migrosIntegration
     };
 
-    // Varsayılan platformları başlat (sync)
-    this.initializeDefaultPlatformsSync();
-    
     // Veritabanından platform konfigürasyonlarını yükle (async)
     this.loadPlatformConfigs().catch(error => {
       logger.error('Failed to load platform configs:', error);
+      // Hata durumunda varsayılan platformları yükle
+      this.initializeDefaultPlatformsSync();
     });
   }
 
@@ -44,6 +43,9 @@ class EcommerceIntegration {
       
       const configs = await prisma.platformConfig.findMany();
       
+      // Önce mevcut platformları temizle
+      this.platforms = {};
+      
       configs.forEach(config => {
         this.platforms[config.platformName] = {
           isActive: config.isActive,
@@ -55,6 +57,7 @@ class EcommerceIntegration {
             enabled: config.isActive
           }
         };
+        logger.info(`Platform config loaded: ${config.platformName} - Active: ${config.isActive}`);
       });
       
       // Eğer hiç konfigürasyon yoksa varsayılan platformları ekle
@@ -63,7 +66,7 @@ class EcommerceIntegration {
       }
       
       await prisma.$disconnect();
-      logger.info('Platform configs loaded successfully');
+      logger.info(`Platform configs loaded successfully. Total: ${configs.length}`);
     } catch (error) {
       logger.error('Platform configs load error:', error);
       // Hata durumunda varsayılan platformları yükle
@@ -189,6 +192,12 @@ class EcommerceIntegration {
   // Platform durumu kontrol
   isPlatformActive(platformName) {
     return this.platforms[platformName]?.isActive || false;
+  }
+
+  // Platform konfigürasyonlarını yeniden yükle
+  async reloadPlatformConfigs() {
+    logger.info('Reloading platform configs...');
+    await this.loadPlatformConfigs();
   }
 
   // Platform açma/kapama

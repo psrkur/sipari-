@@ -281,6 +281,22 @@ router.put('/platforms/:platformName/toggle', authenticateToken, async (req, res
   }
 });
 
+// Platform konfigürasyonlarını yeniden yükle
+router.post('/platforms/reload-configs', authenticateToken, async (req, res) => {
+  try {
+    await ecommerceIntegration.reloadPlatformConfigs();
+    
+    res.json({
+      success: true,
+      message: 'Platform configurations reloaded successfully',
+      platforms: Object.keys(ecommerceIntegration.platforms)
+    });
+  } catch (error) {
+    console.error('Platform config reload error:', error);
+    res.status(500).json({ error: 'Failed to reload platform configs' });
+  }
+});
+
 // Webhook doğrulama fonksiyonu
 function validateWebhook(platformName, req) {
   // Platform'a göre webhook doğrulama
