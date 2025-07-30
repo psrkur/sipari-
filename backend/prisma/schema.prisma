@@ -56,6 +56,7 @@ model Branch {
   products  Product[]
   tables    Table[]
   users     User[]
+  franchise Franchise? // Franchise ilişkisi
 
   @@map("branches")
 }
@@ -208,4 +209,67 @@ model PlatformConfig {
   updatedAt   DateTime @updatedAt
 
   @@map("platform_configs")
+}
+
+// Franchise Sistemi Modelleri
+model Franchise {
+  id          Int      @id @default(autoincrement())
+  name        String
+  code        String   @unique // Franchise kodu (FR001, FR002, vb.)
+  ownerName   String
+  ownerEmail  String
+  ownerPhone  String
+  address     String
+  city        String
+  status      String   @default("active") // active, inactive, suspended
+  agreementDate DateTime
+  expiryDate  DateTime?
+  monthlyRoyalty Float @default(0)
+  performanceScore Float @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // İlişkiler
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  branchId    Int?     @unique
+  supportTickets FranchiseSupportTicket[]
+  performanceReports FranchisePerformanceReport[]
+
+  @@map("franchises")
+}
+
+model FranchiseSupportTicket {
+  id          Int      @id @default(autoincrement())
+  franchiseId Int
+  title       String
+  description String
+  category    String   // equipment, menu, training, technical, other
+  priority    String   @default("medium") // low, medium, high, urgent
+  status      String   @default("open") // open, in_progress, resolved, closed
+  assignedTo  String?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+
+  @@map("franchise_support_tickets")
+}
+
+model FranchisePerformanceReport {
+  id          Int      @id @default(autoincrement())
+  franchiseId Int
+  reportDate  DateTime
+  monthlyRevenue Float
+  orderCount  Int
+  customerCount Int
+  averageOrderValue Float
+  customerSatisfaction Float
+  complianceScore Float
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  franchise   Franchise @relation(fields: [franchiseId], references: [id])
+
+  @@map("franchise_performance_reports")
 }
