@@ -18,6 +18,8 @@ class FranchiseManagement {
   // Franchise oluşturma
   async createFranchise(franchiseData) {
     try {
+      console.log('Franchise oluşturma başladı:', franchiseData);
+      
       const franchise = await prisma.franchise.create({
         data: {
           name: franchiseData.name,
@@ -35,6 +37,7 @@ class FranchiseManagement {
       this.logger.info(`Franchise created: ${franchise.code}`);
       return franchise;
     } catch (error) {
+      console.error('Franchise creation error details:', error);
       this.logger.error('Franchise creation error:', error);
       throw error;
     }
@@ -43,6 +46,32 @@ class FranchiseManagement {
   // Franchise listesi
   async getAllFranchises() {
     try {
+      console.log('Franchise listesi alınıyor...');
+      
+      // Önce tablo var mı kontrol edelim
+      const tableExists = await prisma.$queryRaw`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'franchises'
+        );
+      `;
+      
+      console.log('Franchises tablosu mevcut mu:', tableExists);
+      
+      if (!tableExists[0].exists) {
+        throw new Error('Franchises tablosu bulunamadı');
+      }
+      
+      // Sütunları kontrol edelim
+      const columns = await prisma.$queryRaw`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'franchises'
+      `;
+      
+      console.log('Franchises tablosu sütunları:', columns);
+      
       const franchises = await prisma.franchise.findMany({
         include: {
           branch: true,
@@ -58,8 +87,10 @@ class FranchiseManagement {
         orderBy: { createdAt: 'desc' }
       });
 
+      console.log('Franchise listesi başarıyla alındı:', franchises.length, 'franchise');
       return franchises;
     } catch (error) {
+      console.error('Franchise list error details:', error);
       this.logger.error('Franchise list error:', error);
       throw error;
     }

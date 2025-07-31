@@ -48,15 +48,16 @@ model Branch {
   address   String
   phone     String
   isActive  Boolean  @default(true)
-  companyId Int
+  companyId Int      @map("companyid")
   company   Company  @relation(fields: [companyId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now()) @map("createdat")
+  updatedAt DateTime  @updatedAt @map("updatedat")
+  franchiseId Int?   @map("franchiseid")
   orders    Order[]
   products  Product[]
   tables    Table[]
   users     User[]
-  franchise Franchise? // Franchise ilişkisi
+  franchise Franchise?
 
   @@map("branches")
 }
@@ -216,22 +217,22 @@ model Franchise {
   id          Int      @id @default(autoincrement())
   name        String
   code        String   @unique // Franchise kodu (FR001, FR002, vb.)
-  ownerName   String
-  ownerEmail  String
-  ownerPhone  String
+  ownerName   String   @map("ownername")
+  ownerEmail  String   @map("owneremail")
+  ownerPhone  String   @map("ownerphone")
   address     String
   city        String
   status      String   @default("active") // active, inactive, suspended
-  agreementDate DateTime
-  expiryDate  DateTime?
-  monthlyRoyalty Float @default(0)
-  performanceScore Float @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  agreementDate DateTime @map("agreementdate")
+  expiryDate  DateTime? @map("expirydate")
+  monthlyRoyalty Float @default(0) @map("monthlyroyalty")
+  performanceScore Float @default(0) @map("performancescore")
+  createdAt   DateTime @default(now()) @map("createdat")
+  updatedAt   DateTime @updatedAt @map("updatedat")
   
   // İlişkiler
   branch      Branch?  @relation(fields: [branchId], references: [id])
-  branchId    Int?     @unique
+  branchId    Int?     @unique @map("branchid")
   supportTickets FranchiseSupportTicket[]
   performanceReports FranchisePerformanceReport[]
 
@@ -240,16 +241,16 @@ model Franchise {
 
 model FranchiseSupportTicket {
   id          Int      @id @default(autoincrement())
-  franchiseId Int
+  franchiseId Int      @map("franchiseid")
   title       String
   description String
   category    String   // equipment, menu, training, technical, other
   priority    String   @default("medium") // low, medium, high, urgent
   status      String   @default("open") // open, in_progress, resolved, closed
-  assignedTo  String?
+  assignedTo  String?  @map("assignedto")
   resolution  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("createdat")
+  updatedAt   DateTime @updatedAt @map("updatedat")
   
   franchise   Franchise @relation(fields: [franchiseId], references: [id])
 
@@ -258,16 +259,16 @@ model FranchiseSupportTicket {
 
 model FranchisePerformanceReport {
   id          Int      @id @default(autoincrement())
-  franchiseId Int
-  reportDate  DateTime
-  monthlyRevenue Float
-  orderCount  Int
-  customerCount Int
-  averageOrderValue Float
-  customerSatisfaction Float
-  complianceScore Float
+  franchiseId Int      @map("franchiseid")
+  reportDate  DateTime @map("reportdate")
+  monthlyRevenue Float @map("monthlyrevenue")
+  orderCount  Int      @map("ordercount")
+  customerCount Int     @map("customercount")
+  averageOrderValue Float @map("averageordervalue")
+  customerSatisfaction Float @map("customersatisfaction")
+  complianceScore Float @map("compliancescore")
   notes       String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("createdat")
   
   franchise   Franchise @relation(fields: [franchiseId], references: [id])
 
