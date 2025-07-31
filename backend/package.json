@@ -20,7 +20,8 @@
     "deploy-images": "node deploy-images.js",
     "map-images": "node map-images-to-products.js",
     "fix-production-images": "node deploy-image-fix.js",
-    "fix-franchise": "node deploy-franchise-fix.js"
+    "fix-franchise": "node deploy-franchise-fix.js",
+    "fix-prisma": "node fix-production-prisma.js"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
