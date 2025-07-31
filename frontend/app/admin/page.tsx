@@ -640,41 +640,7 @@ export default function AdminPage() {
     }
   };
 
-  // Kategori sıralama fonksiyonu
-  const handleCategoryReorder = async (result: any) => {
-    if (!result.destination) return;
 
-    const items = Array.from(categories);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    // Önce UI'ı güncelle
-    setCategories(items);
-
-    // LocalStorage'a kaydet
-    localStorage.setItem('categoryOrder', JSON.stringify(items.map(cat => cat.id)));
-
-    try {
-      await axios.put(API_ENDPOINTS.ADMIN_REORDER_CATEGORIES, 
-        { categories: items.map((cat, index) => ({ id: cat.id, sortOrder: index })) },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success('Kategori sıralaması güncellendi');
-    } catch (error: any) {
-      toast.error(`Sıralama güncellenemedi: ${error.response?.data?.error || error.message}`);
-      console.log('Sıralama hatası, localStorage\'dan geri yükleniyor...');
-      
-      // Hata durumunda localStorage'dan geri yükle
-      const savedOrder = localStorage.getItem('categoryOrder');
-      if (savedOrder) {
-        const orderIds = JSON.parse(savedOrder);
-        const reorderedCategories = orderIds.map((id: number) => 
-          categories.find(cat => cat.id === id)
-        ).filter(Boolean);
-        setCategories(reorderedCategories);
-      }
-    }
-  };
 
   // Şube yönetimi fonksiyonları
   const editBranch = (branch: any) => {
@@ -1090,67 +1056,45 @@ export default function AdminPage() {
                   </button>
                 </div>
                 <div className="bg-white rounded-lg shadow">
-                  <DragDropContext onDragEnd={handleCategoryReorder}>
-                    <Droppable droppableId="categories">
-                      {(provided) => (
-                        <div
-                          {...provided.droppableProps}
-                          ref={provided.innerRef}
-                          className="divide-y divide-gray-200"
-                        >
-                          {categories.map((category, index) => (
-                            <Draggable key={category.id} draggableId={category.id.toString()} index={index}>
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className={`p-4 flex items-center justify-between ${
-                                    snapshot.isDragging ? 'bg-blue-50 shadow-lg' : 'bg-white'
-                                  }`}
-                                >
-                                  <div className="flex items-center space-x-4">
-                                    <div className="text-gray-400 cursor-move">
-                                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                                      </svg>
-                                    </div>
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                                      <div className="text-sm text-gray-500">{category.description}</div>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center space-x-4">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                      category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                    }`}>
-                                      {category.isActive ? 'Aktif' : 'Pasif'}
-                                    </span>
-                                    <button
-                                      onClick={() => editCategory(category)}
-                                      className="text-blue-600 hover:text-blue-900 text-sm"
-                                    >
-                                      Düzenle
-                                    </button>
-                                    <button
-                                      onClick={() => deleteCategory(category.id)}
-                                      className="text-red-600 hover:text-red-900 text-sm"
-                                    >
-                                      Sil
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
+                  <div className="divide-y divide-gray-200">
+                    {categories.map((category) => (
+                      <div key={category.id} className="p-4 flex items-center justify-between bg-white">
+                        <div className="flex items-center space-x-4">
+                          <div className="text-gray-400">
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{category.name}</div>
+                            <div className="text-sm text-gray-500">{category.description}</div>
+                          </div>
                         </div>
-                      )}
-                    </Droppable>
-                  </DragDropContext>
+                        <div className="flex items-center space-x-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            category.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {category.isActive ? 'Aktif' : 'Pasif'}
+                          </span>
+                          <button
+                            onClick={() => editCategory(category)}
+                            className="text-blue-600 hover:text-blue-900 text-sm"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={() => deleteCategory(category.id)}
+                            className="text-red-600 hover:text-red-900 text-sm"
+                          >
+                            Sil
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="mt-4 text-sm text-gray-600">
-                  💡 Kategorileri sürükleyip bırakarak sıralayabilirsiniz. Bu sıralama ana sayfada da geçerli olacaktır.
+                  💡 Kategoriler alfabetik sıraya göre listelenmektedir.
                 </div>
               </div>
             )}
