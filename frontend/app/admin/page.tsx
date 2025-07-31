@@ -949,14 +949,7 @@ export default function AdminPage() {
             >
               QR Menüler
             </button>
-            {user && user.role === 'SUPER_ADMIN' && (
-              <Link
-                href="/franchise"
-                className="px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700"
-              >
-                Franchise Yönetimi
-              </Link>
-            )}
+
             </button>
             <Link
               href="/admin/ecommerce-platforms"
@@ -964,14 +957,7 @@ export default function AdminPage() {
             >
               🛒 E-ticaret Platformları
             </Link>
-            {user && user.role === 'SUPER_ADMIN' && (
-              <Link
-                href="/franchise"
-                className="px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700"
-              >
-                🏢 Franchise Yönetimi
-              </Link>
-            )}
+
             <button
               onClick={() => {
                 console.log('POS button clicked, opening in new window');

@@ -3906,9 +3906,7 @@ app.delete('/api/admin/images/:filename', async (req, res) => {
 const ecommerceIntegrationRouter = require('./integrations/api');
 app.use('/api/integrations', ecommerceIntegrationRouter);
 
-// Franchise yönetimi router'ını ekle
-const franchiseRouter = require('./franchise-api');
-app.use('/api', franchiseRouter);
+
 
 // 404 handler
 app.use('*', (req, res) => {

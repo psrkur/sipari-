@@ -52,12 +52,10 @@ model Branch {
   company   Company  @relation(fields: [companyId], references: [id])
   createdAt DateTime  @default(now()) @map("createdat")
   updatedAt DateTime  @updatedAt @map("updatedat")
-  franchiseId Int?   @map("franchiseid")
   orders    Order[]
   products  Product[]
   tables    Table[]
   users     User[]
-  franchise Franchise?
 
   @@map("branches")
 }
@@ -212,65 +210,4 @@ model PlatformConfig {
   @@map("platform_configs")
 }
 
-// Franchise Sistemi Modelleri
-model Franchise {
-  id          Int      @id @default(autoincrement())
-  name        String
-  code        String   @unique // Franchise kodu (FR001, FR002, vb.)
-  ownerName   String   @map("ownername")
-  ownerEmail  String   @map("owneremail")
-  ownerPhone  String   @map("ownerphone")
-  address     String
-  city        String
-  status      String   @default("active") // active, inactive, suspended
-  agreementDate DateTime @map("agreementdate")
-  expiryDate  DateTime? @map("expirydate")
-  monthlyRoyalty Float @default(0) @map("monthlyroyalty")
-  performanceScore Float @default(0) @map("performancescore")
-  createdAt   DateTime @default(now()) @map("createdat")
-  updatedAt   DateTime @updatedAt @map("updatedat")
-  
-  // İlişkiler
-  branch      Branch?  @relation(fields: [branchId], references: [id])
-  branchId    Int?     @unique @map("branchid")
-  supportTickets FranchiseSupportTicket[]
-  performanceReports FranchisePerformanceReport[]
 
-  @@map("franchises")
-}
-
-model FranchiseSupportTicket {
-  id          Int      @id @default(autoincrement())
-  franchiseId Int      @map("franchiseid")
-  title       String
-  description String
-  category    String   // equipment, menu, training, technical, other
-  priority    String   @default("medium") // low, medium, high, urgent
-  status      String   @default("open") // open, in_progress, resolved, closed
-  assignedTo  String?  @map("assignedto")
-  resolution  String?
-  createdAt   DateTime @default(now()) @map("createdat")
-  updatedAt   DateTime @updatedAt @map("updatedat")
-  
-  franchise   Franchise @relation(fields: [franchiseId], references: [id])
-
-  @@map("franchise_support_tickets")
-}
-
-model FranchisePerformanceReport {
-  id          Int      @id @default(autoincrement())
-  franchiseId Int      @map("franchiseid")
-  reportDate  DateTime @map("reportdate")
-  monthlyRevenue Float @map("monthlyrevenue")
-  orderCount  Int      @map("ordercount")
-  customerCount Int     @map("customercount")
-  averageOrderValue Float @map("averageordervalue")
-  customerSatisfaction Float @map("customersatisfaction")
-  complianceScore Float @map("compliancescore")
-  notes       String?
-  createdAt   DateTime @default(now()) @map("createdat")
-  
-  franchise   Franchise @relation(fields: [franchiseId], references: [id])
-
-  @@map("franchise_performance_reports")
-}
