@@ -110,6 +110,66 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
           responseType: 'menu_inquiry'
         };
       }
+      // Pizza spesifik
+      else if (lowerMessage.includes('pizza')) {
+        const pizzaResponses = [
+          '🍕 Pizzalarımız: Margherita (45 TL), Karışık (65 TL), Pepperoni (55 TL), BBQ Chicken (75 TL), Truffle (85 TL). Hangi pizzayı denemek istersiniz?',
+          '🔥 Özel pizzalarımız: Margherita, Karışık, Pepperoni, BBQ Chicken ve Truffle. Fiyatlar 45-85 TL arasında.',
+          '🍕 Taze malzemelerle hazırlanan pizzalarımız: Margherita (45 TL), Karışık (65 TL), Pepperoni (55 TL), BBQ Chicken (75 TL), Truffle (85 TL).'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: pizzaResponses[Math.floor(Math.random() * pizzaResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'pizza_inquiry'
+        };
+      }
+      // Burger spesifik
+      else if (lowerMessage.includes('burger')) {
+        const burgerResponses = [
+          '🍔 Burgerlerimiz: Beef Burger (35 TL), Chicken Burger (40 TL), BBQ Burger (45 TL), Spicy Burger (50 TL), Deluxe Burger (65 TL).',
+          '🔥 Lezzetli burgerlerimiz: Beef (35 TL), Chicken (40 TL), BBQ (45 TL), Spicy (50 TL), Deluxe (65 TL). Hangi burgeri tercih edersiniz?',
+          '🍔 Taze et ve sebzelerle hazırlanan burgerlerimiz: Beef (35 TL), Chicken (40 TL), BBQ (45 TL), Spicy (50 TL), Deluxe (65 TL).'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: burgerResponses[Math.floor(Math.random() * burgerResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'burger_inquiry'
+        };
+      }
+      // Döner spesifik
+      else if (lowerMessage.includes('döner')) {
+        const donerResponses = [
+          '🥙 Dönerlerimiz: Tavuk Döner (25 TL), Et Döner (30 TL), Karışık Döner (35 TL), Özel Döner (45 TL).',
+          '🔥 Taze dönerlerimiz: Tavuk (25 TL), Et (30 TL), Karışık (35 TL), Özel (45 TL). Hangi döneri tercih edersiniz?',
+          '🥙 Özel soslarımızla servis edilen dönerlerimiz: Tavuk (25 TL), Et (30 TL), Karışık (35 TL), Özel (45 TL).'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: donerResponses[Math.floor(Math.random() * donerResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'doner_inquiry'
+        };
+      }
+      // İçecek spesifik
+      else if (lowerMessage.includes('içecek') || lowerMessage.includes('cola') || lowerMessage.includes('su') || lowerMessage.includes('ayran')) {
+        const drinkResponses = [
+          '🥤 İçeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).',
+          '🥤 Soğuk içeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).',
+          '🥤 Taze içeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: drinkResponses[Math.floor(Math.random() * drinkResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'drink_inquiry'
+        };
+      }
       // Teslimat süresi
       else if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar') || lowerMessage.includes('kaç dakika') || lowerMessage.includes('zaman')) {
         const deliveryResponses = [
@@ -247,6 +307,14 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         return 'bg-blue-100 text-blue-800';
       case 'menu_inquiry':
         return 'bg-green-100 text-green-800';
+      case 'pizza_inquiry':
+        return 'bg-red-100 text-red-800';
+      case 'burger_inquiry':
+        return 'bg-orange-100 text-orange-800';
+      case 'doner_inquiry':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'drink_inquiry':
+        return 'bg-blue-100 text-blue-800';
       case 'delivery_time_inquiry':
         return 'bg-yellow-100 text-yellow-800';
       case 'address_inquiry':
