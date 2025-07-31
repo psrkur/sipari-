@@ -48,7 +48,7 @@ model Branch {
   address   String
   phone     String
   isActive  Boolean  @default(true)
-  companyId Int      @map("companyid")
+  companyId Int      @map("companyId")
   company   Company  @relation(fields: [companyId], references: [id])
   createdAt DateTime  @default(now()) @map("createdat")
   updatedAt DateTime  @updatedAt @map("updatedat")
