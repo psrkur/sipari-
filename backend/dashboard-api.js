@@ -70,18 +70,6 @@ router.get('/dashboard/stats', async (req, res) => {
 
     // Ürün istatistikleri
     const totalProducts = await prisma.product.count();
-    const lowStockProducts = await prisma.product.findMany({
-      where: {
-        stock: {
-          lt: 10
-        }
-      },
-      select: {
-        name: true,
-        stock: true
-      },
-      take: 5
-    });
 
     // Canlı siparişler
     const currentOrders = todayOrders.slice(0, 5).map(order => ({
@@ -121,7 +109,7 @@ router.get('/dashboard/stats', async (req, res) => {
       products: {
         total: totalProducts,
         popular: popularProducts,
-        lowStock: lowStockProducts
+        lowStock: [] // Stock alanı olmadığı için boş array
       },
       realTime: {
         currentOrders: currentOrders,
