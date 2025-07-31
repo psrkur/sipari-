@@ -50,8 +50,8 @@ model Branch {
   isActive  Boolean  @default(true)
   companyId Int      @map("companyId")
   company   Company  @relation(fields: [companyId], references: [id])
-  createdAt DateTime  @default(now()) @map("createdat")
-  updatedAt DateTime  @updatedAt @map("updatedat")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   orders    Order[]
   products  Product[]
   tables    Table[]
