@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
-import { API_ENDPOINTS } from '@/lib/api';
+import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 
 interface ChatMessage {
   id: number;
@@ -33,6 +33,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const API_BASE_URL = getApiBaseUrl();
 
   // Otomatik scroll
   const scrollToBottom = () => {
@@ -65,7 +66,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_ENDPOINTS.BASE_URL}/api/chatbot/chat/message`, {
+      const response = await axios.post(`${API_BASE_URL}/api/chatbot/chat/message`, {
         customerId: customerId || 1,
         message: message,
         platform: 'web',

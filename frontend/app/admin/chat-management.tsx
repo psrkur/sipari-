@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MessageCircle, Send, Clock, User, Phone } from 'lucide-react';
 import axios from 'axios';
-import { API_ENDPOINTS } from '@/lib/api';
+import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { useSocket } from '@/lib/socket';
 import toast from 'react-hot-toast';
@@ -43,6 +43,7 @@ export default function ChatManagement() {
   const [replyMessage, setReplyMessage] = useState('');
   const { token } = useAuthStore();
   const { on, off } = useSocket();
+  const API_BASE_URL = getApiBaseUrl();
 
   useEffect(() => {
     fetchStats();
@@ -65,7 +66,7 @@ export default function ChatManagement() {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API_ENDPOINTS.BASE_URL}/api/chatbot/chat/stats`, {
+      const response = await axios.get(`${API_BASE_URL}/api/chatbot/chat/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setStats(response.data);
@@ -89,7 +90,7 @@ export default function ChatManagement() {
 
   const fetchCustomerMessages = async (customerId: number) => {
     try {
-      const response = await axios.get(`${API_ENDPOINTS.BASE_URL}/api/chatbot/chat/messages/${customerId}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/chatbot/chat/messages/${customerId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setMessages(response.data);
@@ -103,7 +104,7 @@ export default function ChatManagement() {
     if (!replyMessage.trim() || !selectedCustomer) return;
 
     try {
-      await axios.post(`${API_ENDPOINTS.BASE_URL}/api/chatbot/chat/message`, {
+      await axios.post(`${API_BASE_URL}/api/chatbot/chat/message`, {
         customerId: selectedCustomer,
         message: replyMessage,
         platform: 'admin',
