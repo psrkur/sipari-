@@ -25,6 +25,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const logger = require('./utils/logger');
 const { configureSocket } = require('./socket-config');
+const chatbotRouter = require('./chatbot-api');
 
 // Cloudinary konfigürasyonu
 cloudinary.config({
@@ -3926,6 +3927,9 @@ app.delete('/api/admin/images/:filename', async (req, res) => {
 // E-ticaret entegrasyonu router'ını ekle
 const ecommerceIntegrationRouter = require('./integrations/api');
 app.use('/api/integrations', ecommerceIntegrationRouter);
+
+// Chatbot router'ını ekle
+app.use('/api/chatbot', chatbotRouter);
 
 
 

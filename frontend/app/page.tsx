@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 import BranchSelector from './components/BranchSelector';
 import ProductList from './components/ProductList';
 import CategoryFilter from './components/CategoryFilter';
+import Chatbot from '../components/Chatbot';
 
 interface Branch {
   id: number
@@ -597,6 +598,17 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Chatbot */}
+      <Chatbot 
+        customerId={user?.id}
+        customerInfo={user ? {
+          name: user.name,
+          phone: user.phone || '',
+          email: user.email,
+          address: user.address || ''
+        } : undefined}
+      />
     </div>
   )
 } 

@@ -14,6 +14,7 @@ import ProductManagement from '../components/ProductManagement';
 import BranchManagement from '../components/BranchManagement';
 import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
+import ChatManagement from './chat-management';
 
 interface OrderItem {
   id: number;
@@ -92,7 +93,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'qr-codes'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'qr-codes' | 'chat'>('orders');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -943,6 +944,14 @@ export default function AdminPage() {
             >
               QR Menüler
             </button>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'chat' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              💬 Chat Yönetimi
+            </button>
             <Link
               href="/admin/ecommerce-platforms"
               className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700"
@@ -1347,6 +1356,12 @@ export default function AdminPage() {
                     QR menü kodlarını yönetmek için yukarıdaki butona tıklayın.
                   </p>
                 </div>
+              </div>
+            )}
+            
+            {activeTab === 'chat' && (
+              <div className="p-6">
+                <ChatManagement />
               </div>
             )}
           </div>

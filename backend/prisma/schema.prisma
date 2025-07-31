@@ -130,6 +130,7 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
+  chatMessages ChatMessage[]
 
   @@unique([phone])
   @@map("customers")
@@ -208,6 +209,20 @@ model PlatformConfig {
   updatedAt   DateTime @updatedAt
 
   @@map("platform_configs")
+}
+
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  customerId  Int
+  message     String
+  platform    String   @default("web") // web, whatsapp, telegram
+  direction   String   // incoming, outgoing
+  isProcessed Boolean  @default(false)
+  responseType String? // order_status_inquiry, menu_inquiry, etc.
+  createdAt   DateTime @default(now())
+  customer    Customer @relation(fields: [customerId], references: [id])
+
+  @@map("chat_messages")
 }
 
 
