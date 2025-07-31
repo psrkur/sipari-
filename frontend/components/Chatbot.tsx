@@ -32,6 +32,12 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [conversationContext, setConversationContext] = useState({
+    lastTopic: '',
+    customerPreferences: [] as string[],
+    orderHistory: [] as string[],
+    currentInquiry: ''
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const API_BASE_URL = getApiBaseUrl();
 
@@ -51,6 +57,155 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     }
   }, [isOpen]);
 
+  // Akıllı yanıt sistemi
+  const generateIntelligentResponse = (message: string, context: any) => {
+    const lowerMessage = message.toLowerCase();
+    const customerName = customerInfo?.name || 'değerli müşterimiz';
+    
+    // Konuşma bağlamını güncelle
+    let newContext = { ...context };
+    
+    // Karşılama ve tanışma
+    if (lowerMessage.includes('merhaba') || lowerMessage.includes('selam') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
+      const timeOfDay = new Date().getHours();
+      let greeting = '';
+      
+      if (timeOfDay < 12) {
+        greeting = `Günaydın ${customerName}! ☀️`;
+      } else if (timeOfDay < 18) {
+        greeting = `İyi günler ${customerName}! 🌤️`;
+      } else {
+        greeting = `İyi akşamlar ${customerName}! 🌙`;
+      }
+      
+      return {
+        message: `${greeting} Size nasıl yardımcı olabilirim? Bugün özel menümüzde yeni eklenen Truffle Pizza ve Spicy Burger var. Hangi konuda bilgi almak istersiniz?`,
+        responseType: 'intelligent_greeting',
+        context: { ...newContext, lastTopic: 'greeting' }
+      };
+    }
+    
+    // Menü sorguları - daha akıllı
+    if (lowerMessage.includes('menü') || lowerMessage.includes('ne var') || lowerMessage.includes('yemek')) {
+      const responses = [
+        `🍽️ ${customerName}, menümüzde 5 ana kategori bulunuyor:\n\n🍕 **Pizzalar** (45-85 TL): Margherita, Karışık, Pepperoni, BBQ Chicken, Truffle\n🍔 **Burgerler** (35-65 TL): Beef, Chicken, BBQ, Spicy, Deluxe\n🥙 **Dönerler** (25-45 TL): Tavuk, Et, Karışık, Özel\n🥗 **Salatalar** (20-35 TL): Sezar, Akdeniz, Tavuklu\n🥤 **İçecekler** (5-15 TL): Kola, Su, Ayran, Smoothie, Milkshake\n\nHangi kategori hakkında detay istiyorsunuz?`,
+        `📋 ${customerName}, güncel menümüzü keşfedelim! Size özel önerilerim:\n\n🔥 **Yeni Eklenenler**: Truffle Pizza (85 TL), Spicy Burger (50 TL)\n⭐ **En Popüler**: Karışık Pizza (65 TL), BBQ Burger (45 TL)\n💡 **Önerim**: Margherita Pizza + Ayran kombinasyonu\n\nHangi ürün hakkında bilgi almak istersiniz?`
+      ];
+      
+      return {
+        message: responses[Math.floor(Math.random() * responses.length)],
+        responseType: 'intelligent_menu_inquiry',
+        context: { ...newContext, lastTopic: 'menu', currentInquiry: 'menu' }
+      };
+    }
+    
+    // Spesifik ürün sorguları - bağlam bazlı
+    if (lowerMessage.includes('pizza')) {
+      const pizzaPreferences = context.customerPreferences.filter(p => p.includes('pizza'));
+      let response = '';
+      
+      if (pizzaPreferences.length > 0) {
+        response = `🍕 ${customerName}, daha önce ${pizzaPreferences[0]} denemiştiniz! Size özel önerilerim:\n\n`;
+      } else {
+        response = `🍕 ${customerName}, pizzalarımız hakkında detaylı bilgi:\n\n`;
+      }
+      
+      response += `**Margherita** (45 TL): Taze mozzarella, domates sosu, fesleğen\n**Karışık** (65 TL): Sucuk, sosis, mantar, biber, zeytin\n**Pepperoni** (55 TL): Pepperoni, mozzarella, domates sosu\n**BBQ Chicken** (75 TL): Tavuk, BBQ sosu, soğan, mısır\n**Truffle** (85 TL): Trüf mantarı, parmesan, roka\n\nHangi pizzayı denemek istersiniz?`;
+      
+      return {
+        message: response,
+        responseType: 'intelligent_pizza_inquiry',
+        context: { ...newContext, lastTopic: 'pizza', currentInquiry: 'pizza' }
+      };
+    }
+    
+    // Fiyat sorguları - dinamik
+    if (lowerMessage.includes('fiyat') || lowerMessage.includes('ne kadar')) {
+      const responses = [
+        `💰 ${customerName}, fiyatlarımız şu şekilde:\n\n🍕 **Pizzalar**: 45-85 TL (Margherita en uygun, Truffle premium)\n🍔 **Burgerler**: 35-65 TL (Beef en uygun, Deluxe premium)\n🥙 **Dönerler**: 25-45 TL (Tavuk en uygun, Özel premium)\n🥤 **İçecekler**: 5-15 TL\n\nBütçenize uygun önerilerim var. Hangi kategori hakkında detay istiyorsunuz?`,
+        `💡 ${customerName}, bütçe dostu önerilerim:\n\n**En Uygun**: Margherita Pizza (45 TL) + Su (5 TL) = 50 TL\n**Orta Segment**: Karışık Pizza (65 TL) + Kola (8 TL) = 73 TL\n**Premium**: Truffle Pizza (85 TL) + Smoothie (12 TL) = 97 TL\n\nHangi bütçe aralığında öneri istiyorsunuz?`
+      ];
+      
+      return {
+        message: responses[Math.floor(Math.random() * responses.length)],
+        responseType: 'intelligent_price_inquiry',
+        context: { ...newContext, lastTopic: 'price', currentInquiry: 'price' }
+      };
+    }
+    
+    // Teslimat sorguları - konum bazlı
+    if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar') || lowerMessage.includes('kaç dakika')) {
+      const customerAddress = customerInfo?.address;
+      let deliveryTime = '30-45 dakika';
+      let specialNote = '';
+      
+      if (customerAddress) {
+        if (customerAddress.includes('Kadıköy')) {
+          deliveryTime = '20-30 dakika';
+          specialNote = 'Kadıköy\'de olduğunuz için hızlı teslimat!';
+        } else if (customerAddress.includes('Üsküdar')) {
+          deliveryTime = '25-35 dakika';
+          specialNote = 'Üsküdar\'da olduğunuz için orta hızda teslimat.';
+        } else {
+          deliveryTime = '35-50 dakika';
+          specialNote = 'Biraz uzak olduğunuz için teslimat süresi uzayabilir.';
+        }
+      }
+      
+      return {
+        message: `⏰ ${customerName}, teslimat süreniz: **${deliveryTime}**\n\n${specialNote}\n\n🚚 **Teslimat Detayları**:\n• Normal saatler: 30-45 dakika\n• Yoğun saatler (12:00-14:00, 19:00-21:00): 45-60 dakika\n• Hava durumu etkisi: +10-15 dakika\n\n📍 **Teslimat Alanı**: Kadıköy merkez ve çevresi (5 km)\n\nSipariş vermek ister misiniz?`,
+        responseType: 'intelligent_delivery_inquiry',
+        context: { ...newContext, lastTopic: 'delivery', currentInquiry: 'delivery' }
+      };
+    }
+    
+    // Kampanya sorguları - kişiselleştirilmiş
+    if (lowerMessage.includes('kampanya') || lowerMessage.includes('indirim') || lowerMessage.includes('promosyon')) {
+      const responses = [
+        `🎉 ${customerName}, size özel kampanyalarımız:\n\n🔥 **Yeni Müşteri**: İlk siparişinizde %20 indirim! Kupon: HOSGELDIN20\n🍕 **Pizza Kampanyası**: 2 Pizza Al, 1 Pizza Bedava (hafta sonu)\n💳 **Kredi Kartı**: Garanti Bankası kartlarıyla %10 indirim\n📱 **Mobil Uygulama**: Uygulama üzerinden siparişlerde %5 indirim\n\nHangi kampanyadan yararlanmak istersiniz?`,
+        `💥 ${customerName}, güncel fırsatlarımız:\n\n⭐ **Öğrenci İndirimi**: Öğrenci kimliği ile %15 indirim\n👥 **Grup Siparişi**: 3+ ürün siparişlerinde %10 indirim\n🎂 **Doğum Günü**: Doğum gününüzde ücretsiz tatlı\n🌙 **Gece Kampanyası**: 22:00-24:00 arası %25 indirim\n\nHangi kampanya ilginizi çekiyor?`
+      ];
+      
+      return {
+        message: responses[Math.floor(Math.random() * responses.length)],
+        responseType: 'intelligent_campaign_inquiry',
+        context: { ...newContext, lastTopic: 'campaign', currentInquiry: 'campaign' }
+      };
+    }
+    
+    // Öneriler - akıllı
+    if (lowerMessage.includes('öneri') || lowerMessage.includes('tavsiye') || lowerMessage.includes('ne önerirsin')) {
+      const timeOfDay = new Date().getHours();
+      let recommendation = '';
+      
+      if (timeOfDay < 12) {
+        recommendation = `🌅 ${customerName}, sabah için önerilerim:\n\n🍕 **Kahvaltı Sonrası**: Margherita Pizza (hafif ve lezzetli)\n🥤 **Enerji İçin**: Smoothie (taze meyve)\n💡 **Kombinasyon**: Margherita + Smoothie = 57 TL\n\nSabah için ideal seçimler!`;
+      } else if (timeOfDay < 18) {
+        recommendation = `☀️ ${customerName}, öğle için önerilerim:\n\n🍔 **Doyurucu**: BBQ Burger + Kola = 53 TL\n🍕 **Klasik**: Karışık Pizza + Ayran = 71 TL\n🥙 **Hızlı**: Tavuk Döner + Su = 30 TL\n\nÖğle yemeği için mükemmel seçenekler!`;
+      } else {
+        recommendation = `🌙 ${customerName}, akşam için önerilerim:\n\n🍕 **Premium**: Truffle Pizza + Smoothie = 97 TL\n🍔 **Lezzetli**: Deluxe Burger + Milkshake = 80 TL\n🥙 **Özel**: Özel Döner + Kola = 53 TL\n\nAkşam yemeği için özel seçenekler!`;
+      }
+      
+      return {
+        message: recommendation,
+        responseType: 'intelligent_recommendation',
+        context: { ...newContext, lastTopic: 'recommendation', currentInquiry: 'recommendation' }
+      };
+    }
+    
+    // Genel yanıt - bağlam bazlı
+    const contextResponses = [
+      `🤔 ${customerName}, anladığım kadarıyla ${context.lastTopic || 'genel'} konusuyla ilgileniyorsunuz. Size daha spesifik yardım edebilmem için:\n\n• Hangi ürün kategorisi hakkında bilgi istiyorsunuz?\n• Fiyat aralığınız nedir?\n• Teslimat süresi önemli mi?\n• Özel bir kampanya arıyor musunuz?`,
+      `💭 ${customerName}, size daha iyi yardım edebilmem için biraz daha detay verebilir misiniz?\n\nÖrneğin:\n• "Pizza fiyatları nedir?"\n• "En uygun burger hangisi?"\n• "Teslimat ne kadar sürer?"\n• "Hangi kampanyalar var?"\n\nBu şekilde size özel öneriler sunabilirim.`
+    ];
+    
+    return {
+      message: contextResponses[Math.floor(Math.random() * contextResponses.length)],
+      responseType: 'intelligent_context_response',
+      context: { ...newContext, lastTopic: 'general' }
+    };
+  };
+
   const sendMessage = async (message: string) => {
     if (!message.trim()) return;
 
@@ -65,235 +220,22 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     setInputMessage('');
     setIsLoading(true);
 
-    // Gelişmiş chatbot yanıtları (AI backend henüz hazır değil)
+    // Akıllı yanıt sistemi
     setTimeout(() => {
-      let botResponse: ChatMessage;
-      const lowerMessage = message.toLowerCase();
+      const intelligentResponse = generateIntelligentResponse(message, conversationContext);
       
-      // Karşılama ve genel sorular
-      if (lowerMessage.includes('merhaba') || lowerMessage.includes('selam') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
-        const greetings = [
-          `Merhaba ${customerInfo?.name ? customerInfo.name : 'değerli müşterimiz'}! 👋 Size nasıl yardımcı olabilirim? Sipariş vermek, menüyü görmek, teslimat süresi öğrenmek veya özel kampanyalarımız hakkında bilgi almak için sorabilirsiniz.`,
-          'Selam! 😊 Hoş geldiniz! Bugün size nasıl yardımcı olabilirim? Yeni ürünlerimizi keşfetmek ister misiniz?',
-          'Merhaba! 🍕 Lezzetli bir deneyim için buradayız! Hangi konuda yardıma ihtiyacınız var?'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: greetings[Math.floor(Math.random() * greetings.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'general_greeting'
-        };
-      }
-      // Sipariş durumu sorguları
-      else if (lowerMessage.includes('sipariş') && (lowerMessage.includes('durum') || lowerMessage.includes('nerede') || lowerMessage.includes('geldi'))) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: 'Sipariş numaranızı paylaşır mısınız? (Örnek: ORD-12345) 📦 Siparişinizi takip etmek için numaranızı girmeniz yeterli.',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'order_status_inquiry'
-        };
-      }
-      // Menü ve fiyat sorguları
-      else if (lowerMessage.includes('menü') || lowerMessage.includes('fiyat') || lowerMessage.includes('ne var') || lowerMessage.includes('kategoriler')) {
-        const menuResponses = [
-          '🍕 Menümüzde pizza, burger, döner, salata ve içecek kategorileri bulunuyor. Hangi kategoriyi merak ediyorsunuz?',
-          '📋 Güncel menümüzü görmek için web sitemizi ziyaret edebilirsiniz. "pizza", "burger", "döner" gibi kategorileri sorabilirsiniz.',
-          '💰 Fiyatlarımız uygun ve kaliteli! Pizza 45-85 TL, Burger 35-65 TL, Döner 25-45 TL arasında. Hangi ürün hakkında detay istiyorsunuz?'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: menuResponses[Math.floor(Math.random() * menuResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'menu_inquiry'
-        };
-      }
-      // Pizza spesifik
-      else if (lowerMessage.includes('pizza')) {
-        const pizzaResponses = [
-          '🍕 Pizzalarımız: Margherita (45 TL), Karışık (65 TL), Pepperoni (55 TL), BBQ Chicken (75 TL), Truffle (85 TL). Hangi pizzayı denemek istersiniz?',
-          '🔥 Özel pizzalarımız: Margherita, Karışık, Pepperoni, BBQ Chicken ve Truffle. Fiyatlar 45-85 TL arasında.',
-          '🍕 Taze malzemelerle hazırlanan pizzalarımız: Margherita (45 TL), Karışık (65 TL), Pepperoni (55 TL), BBQ Chicken (75 TL), Truffle (85 TL).'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: pizzaResponses[Math.floor(Math.random() * pizzaResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'pizza_inquiry'
-        };
-      }
-      // Burger spesifik
-      else if (lowerMessage.includes('burger')) {
-        const burgerResponses = [
-          '🍔 Burgerlerimiz: Beef Burger (35 TL), Chicken Burger (40 TL), BBQ Burger (45 TL), Spicy Burger (50 TL), Deluxe Burger (65 TL).',
-          '🔥 Lezzetli burgerlerimiz: Beef (35 TL), Chicken (40 TL), BBQ (45 TL), Spicy (50 TL), Deluxe (65 TL). Hangi burgeri tercih edersiniz?',
-          '🍔 Taze et ve sebzelerle hazırlanan burgerlerimiz: Beef (35 TL), Chicken (40 TL), BBQ (45 TL), Spicy (50 TL), Deluxe (65 TL).'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: burgerResponses[Math.floor(Math.random() * burgerResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'burger_inquiry'
-        };
-      }
-      // Döner spesifik
-      else if (lowerMessage.includes('döner')) {
-        const donerResponses = [
-          '🥙 Dönerlerimiz: Tavuk Döner (25 TL), Et Döner (30 TL), Karışık Döner (35 TL), Özel Döner (45 TL).',
-          '🔥 Taze dönerlerimiz: Tavuk (25 TL), Et (30 TL), Karışık (35 TL), Özel (45 TL). Hangi döneri tercih edersiniz?',
-          '🥙 Özel soslarımızla servis edilen dönerlerimiz: Tavuk (25 TL), Et (30 TL), Karışık (35 TL), Özel (45 TL).'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: donerResponses[Math.floor(Math.random() * donerResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'doner_inquiry'
-        };
-      }
-      // İçecek spesifik
-      else if (lowerMessage.includes('içecek') || lowerMessage.includes('cola') || lowerMessage.includes('su') || lowerMessage.includes('ayran')) {
-        const drinkResponses = [
-          '🥤 İçeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).',
-          '🥤 Soğuk içeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).',
-          '🥤 Taze içeceklerimiz: Kola (8 TL), Su (5 TL), Ayran (6 TL), Smoothie (12 TL), Milkshake (15 TL).'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: drinkResponses[Math.floor(Math.random() * drinkResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'drink_inquiry'
-        };
-      }
-      // Teslimat süresi
-      else if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar') || lowerMessage.includes('kaç dakika') || lowerMessage.includes('zaman')) {
-        const deliveryResponses = [
-          '⏰ Teslimat süremiz ortalama 30-45 dakikadır. Yoğun saatlerde (12:00-14:00, 19:00-21:00) bu süre 60 dakikaya kadar uzayabilir.',
-          '🚚 Hızlı teslimat garantisi! Normal şartlarda 30-45 dakika, yoğun saatlerde maksimum 60 dakika içinde kapınızda.',
-          '📦 Siparişiniz hazırlandıktan sonra 15-20 dakika içinde kapınızda olacak. Toplam süre 30-45 dakika.'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: deliveryResponses[Math.floor(Math.random() * deliveryResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'delivery_time_inquiry'
-        };
-      }
-      // Adres ve konum
-      else if (lowerMessage.includes('adres') || lowerMessage.includes('nerede') || lowerMessage.includes('konum') || lowerMessage.includes('şube')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: '📍 Şubemiz Kadıköy\'de bulunmaktadır. Teslimat hizmetimiz 5 km yarıçapında geçerlidir. Adres: Kadıköy Merkez, İstanbul. 📞 0212 XXX XX XX',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'address_inquiry'
-        };
-      }
-      // Çalışma saatleri
-      else if (lowerMessage.includes('saat') || lowerMessage.includes('açık') || lowerMessage.includes('kapanış') || lowerMessage.includes('çalışma')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: '🕐 Her gün 10:00-23:00 saatleri arasında hizmet vermekteyiz. Online siparişler 24 saat alınmaktadır.',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'working_hours_inquiry'
-        };
-      }
-      // Özel kampanyalar
-      else if (lowerMessage.includes('kampanya') || lowerMessage.includes('indirim') || lowerMessage.includes('promosyon') || lowerMessage.includes('fırsat')) {
-        const campaignResponses = [
-          '🎉 Şu anda "2 Pizza Al 1 Pizza Bedava" kampanyamız devam ediyor! Detaylar için web sitemizi ziyaret edin.',
-          '💥 Özel fırsat! İlk siparişinizde %20 indirim kazanın. Kupon kodu: HOSGELDIN20',
-          '🔥 Hafta sonu özel! Cumartesi-Pazar tüm pizzalarda %15 indirim!'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: campaignResponses[Math.floor(Math.random() * campaignResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'campaign_inquiry'
-        };
-      }
-      // Ödeme yöntemleri
-      else if (lowerMessage.includes('ödeme') || lowerMessage.includes('kart') || lowerMessage.includes('nakit') || lowerMessage.includes('para')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: '💳 Nakit, kredi kartı, banka kartı ve online ödeme kabul ediyoruz. Kapıda ödeme seçeneği de mevcuttur.',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'payment_inquiry'
-        };
-      }
-      // Şikayet ve öneriler
-      else if (lowerMessage.includes('şikayet') || lowerMessage.includes('problem') || lowerMessage.includes('sorun') || lowerMessage.includes('memnun değil')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: '😔 Özür dileriz, yaşadığınız sorunu detaylandırabilir misiniz? Yöneticimiz sizinle iletişime geçecektir. 📞 0212 XXX XX XX',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'complaint'
-        };
-      }
-      // Öneriler
-      else if (lowerMessage.includes('öneri') || lowerMessage.includes('tavsiye') || lowerMessage.includes('ne önerirsin')) {
-        const recommendationResponses = [
-          '🍕 En popüler ürünlerimiz: Margherita Pizza, BBQ Burger, Tavuk Döner. Bunları denemenizi öneririm!',
-          '⭐ Müşterilerimizin favorisi: Karışık Pizza, Beef Burger, Ayran. Bu kombinasyonu çok seviyorlar!',
-          '🔥 Yeni ürünlerimiz: Truffle Pizza, Spicy Burger, Smoothie. Bunları mutlaka deneyin!'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: recommendationResponses[Math.floor(Math.random() * recommendationResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'recommendation'
-        };
-      }
-      // Teşekkür
-      else if (lowerMessage.includes('teşekkür') || lowerMessage.includes('sağol') || lowerMessage.includes('thanks')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: 'Rica ederim! 😊 Başka bir konuda yardıma ihtiyacınız olursa buradayım. Afiyet olsun! 🍕',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'thanks'
-        };
-      }
-      // Yardım
-      else if (lowerMessage.includes('yardım') || lowerMessage.includes('help') || lowerMessage.includes('nasıl')) {
-        botResponse = {
-          id: Date.now() + 1,
-          message: '🤝 Size nasıl yardımcı olabilirim?\n• Sipariş durumu sorgulama\n• Menü ve fiyat bilgisi\n• Teslimat süresi\n• Adres ve çalışma saatleri\n• Kampanyalar ve öneriler\n• Ödeme yöntemleri\n• Şikayet ve öneriler',
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'help'
-        };
-      }
-      // Genel yanıt
-      else {
-        const generalResponses = [
-          'Anlıyorum! Size nasıl yardımcı olabilirim? Sipariş durumu, menü, teslimat süresi, kampanyalar gibi konularda sorabilirsiniz.',
-          'İlginiz için teşekkürler! Hangi konuda bilgi almak istiyorsunuz? Menü, fiyat, teslimat veya kampanyalar hakkında sorabilirsiniz.',
-          'Merak ettiğiniz konuyu belirtirseniz size daha detaylı bilgi verebilirim. Menü, sipariş, teslimat gibi konularda yardımcı olabilirim.'
-        ];
-        botResponse = {
-          id: Date.now() + 1,
-          message: generalResponses[Math.floor(Math.random() * generalResponses.length)],
-          direction: 'incoming',
-          createdAt: new Date().toISOString(),
-          responseType: 'general_response'
-        };
-      }
+      const botResponse: ChatMessage = {
+        id: Date.now() + 1,
+        message: intelligentResponse.message,
+        direction: 'incoming',
+        createdAt: new Date().toISOString(),
+        responseType: intelligentResponse.responseType
+      };
 
       setMessages(prev => [...prev, botResponse]);
+      setConversationContext(intelligentResponse.context);
       setIsLoading(false);
-    }, 1000);
+    }, 1500); // Biraz daha uzun süre AI hissi için
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -303,38 +245,22 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
 
   const getResponseTypeColor = (type?: string) => {
     switch (type) {
-      case 'order_status_inquiry':
+      case 'intelligent_greeting':
         return 'bg-blue-100 text-blue-800';
-      case 'menu_inquiry':
+      case 'intelligent_menu_inquiry':
         return 'bg-green-100 text-green-800';
-      case 'pizza_inquiry':
+      case 'intelligent_pizza_inquiry':
         return 'bg-red-100 text-red-800';
-      case 'burger_inquiry':
-        return 'bg-orange-100 text-orange-800';
-      case 'doner_inquiry':
+      case 'intelligent_price_inquiry':
         return 'bg-yellow-100 text-yellow-800';
-      case 'drink_inquiry':
-        return 'bg-blue-100 text-blue-800';
-      case 'delivery_time_inquiry':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'address_inquiry':
+      case 'intelligent_delivery_inquiry':
         return 'bg-purple-100 text-purple-800';
-      case 'working_hours_inquiry':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'campaign_inquiry':
+      case 'intelligent_campaign_inquiry':
         return 'bg-pink-100 text-pink-800';
-      case 'payment_inquiry':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'recommendation':
+      case 'intelligent_recommendation':
         return 'bg-orange-100 text-orange-800';
-      case 'thanks':
-        return 'bg-teal-100 text-teal-800';
-      case 'help':
+      case 'intelligent_context_response':
         return 'bg-cyan-100 text-cyan-800';
-      case 'complaint':
-        return 'bg-red-100 text-red-800';
-      case 'general_greeting':
-        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -361,7 +287,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
           <div className="bg-orange-600 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <MessageCircle className="h-5 w-5" />
-              <span className="font-semibold">Sanal Asistan</span>
+              <span className="font-semibold">AI Asistan</span>
             </div>
             <div className="flex items-center space-x-2">
               <Button
@@ -397,7 +323,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <p className="text-sm">{message.message}</p>
+                  <p className="text-sm whitespace-pre-line">{message.message}</p>
                   {message.responseType && (
                     <Badge className={`mt-1 text-xs ${getResponseTypeColor(message.responseType)}`}>
                       {message.responseType.replace(/_/g, ' ')}
@@ -428,7 +354,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="Mesajınızı yazın..."
+                placeholder="AI Asistan'a sorun..."
                 className="flex-1"
                 disabled={isLoading}
               />
