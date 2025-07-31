@@ -1366,6 +1366,19 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/api/customers', authenticateToken, async (req, res) => {
+  try {
+    const customers = await prisma.customer.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    res.json(customers);
+  } catch (e) {
+    console.error('Customers fetch error:', e);
+    res.status(500).json({ error: 'Müşteriler getirilemedi' });
+  }
+});
+
 app.post('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });

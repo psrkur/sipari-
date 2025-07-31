@@ -187,6 +187,7 @@ export const API_ENDPOINTS = {
   },
   
   COMPANIES: `${API_BASE_URL}/api/companies`,
+  CUSTOMERS: `${API_BASE_URL}/api/customers`,
   
 
 };
