@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "node deploy-tables.js",
     "build": "npx prisma generate",
-    "postinstall": "npx prisma generate",
+    "postinstall": "npx prisma generate && node deploy-chatbot-migration.js",
     "migrate": "node deploy-migration.js",
     "run-migration": "node run-migration.js",
     "sync-images": "node sync-images-manual.js",
