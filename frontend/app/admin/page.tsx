@@ -6,7 +6,7 @@ import { API_ENDPOINTS } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+// import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
 import ProductManagement from '../components/ProductManagement';
