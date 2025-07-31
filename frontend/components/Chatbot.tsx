@@ -65,37 +65,57 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     setInputMessage('');
     setIsLoading(true);
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/chatbot/chat/message`, {
-        customerId: customerId || 1,
-        message: message,
-        platform: 'web',
-        customerInfo: customerInfo
-      });
-
-      const botResponse: ChatMessage = {
-        id: Date.now() + 1,
-        message: response.data.response,
-        direction: 'incoming',
-        createdAt: new Date().toISOString(),
-        responseType: response.data.responseType
-      };
+    // Geçici olarak basit yanıtlar
+    setTimeout(() => {
+      let botResponse: ChatMessage;
+      
+      const lowerMessage = message.toLowerCase();
+      
+      if (lowerMessage.includes('merhaba') || lowerMessage.includes('selam')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Merhaba! Size nasıl yardımcı olabilirim? Sipariş vermek, menüyü görmek veya teslimat süresi öğrenmek için sorabilirsiniz.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'general_greeting'
+        };
+      } else if (lowerMessage.includes('sipariş') && lowerMessage.includes('durum')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Sipariş numaranızı paylaşır mısınız? (Örnek: ORD-12345)',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'order_status_inquiry'
+        };
+      } else if (lowerMessage.includes('menü') || lowerMessage.includes('fiyat')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Menümüzü görmek için web sitemizi ziyaret edebilir veya "pizza", "burger", "içecek" gibi kategorileri sorabilirsiniz.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'menu_inquiry'
+        };
+      } else if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Teslimat süremiz ortalama 30-45 dakikadır. Yoğun saatlerde bu süre uzayabilir.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'delivery_time_inquiry'
+        };
+      } else {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Anlıyorum! Size nasıl yardımcı olabilirim? Sipariş durumu, menü, teslimat süresi gibi konularda sorabilirsiniz.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'general_response'
+        };
+      }
 
       setMessages(prev => [...prev, botResponse]);
-    } catch (error) {
-      console.error('Chat mesajı gönderme hatası:', error);
-      
-      const errorResponse: ChatMessage = {
-        id: Date.now() + 1,
-        message: 'Üzgünüm, şu anda size yardımcı olamıyorum. Lütfen daha sonra tekrar deneyin.',
-        direction: 'incoming',
-        createdAt: new Date().toISOString()
-      };
-
-      setMessages(prev => [...prev, errorResponse]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
