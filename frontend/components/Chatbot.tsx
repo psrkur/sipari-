@@ -65,48 +65,167 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     setInputMessage('');
     setIsLoading(true);
 
-    // Geçici olarak basit yanıtlar
+    // Gelişmiş chatbot yanıtları
     setTimeout(() => {
       let botResponse: ChatMessage;
       
       const lowerMessage = message.toLowerCase();
       
-      if (lowerMessage.includes('merhaba') || lowerMessage.includes('selam')) {
+      // Karşılama ve genel sorular
+      if (lowerMessage.includes('merhaba') || lowerMessage.includes('selam') || lowerMessage.includes('hi') || lowerMessage.includes('hello')) {
+        const greetings = [
+          'Merhaba! 👋 Size nasıl yardımcı olabilirim? Sipariş vermek, menüyü görmek, teslimat süresi öğrenmek veya özel kampanyalarımız hakkında bilgi almak için sorabilirsiniz.',
+          'Selam! 😊 Hoş geldiniz! Bugün size nasıl yardımcı olabilirim? Yeni ürünlerimizi keşfetmek ister misiniz?',
+          'Merhaba! 🍕 Lezzetli bir deneyim için buradayız! Hangi konuda yardıma ihtiyacınız var?'
+        ];
         botResponse = {
           id: Date.now() + 1,
-          message: 'Merhaba! Size nasıl yardımcı olabilirim? Sipariş vermek, menüyü görmek veya teslimat süresi öğrenmek için sorabilirsiniz.',
+          message: greetings[Math.floor(Math.random() * greetings.length)],
           direction: 'incoming',
           createdAt: new Date().toISOString(),
           responseType: 'general_greeting'
         };
-      } else if (lowerMessage.includes('sipariş') && lowerMessage.includes('durum')) {
+      }
+      // Sipariş durumu sorguları
+      else if (lowerMessage.includes('sipariş') && (lowerMessage.includes('durum') || lowerMessage.includes('nerede') || lowerMessage.includes('geldi'))) {
         botResponse = {
           id: Date.now() + 1,
-          message: 'Sipariş numaranızı paylaşır mısınız? (Örnek: ORD-12345)',
+          message: 'Sipariş numaranızı paylaşır mısınız? (Örnek: ORD-12345) 📦 Siparişinizi takip etmek için numaranızı girmeniz yeterli.',
           direction: 'incoming',
           createdAt: new Date().toISOString(),
           responseType: 'order_status_inquiry'
         };
-      } else if (lowerMessage.includes('menü') || lowerMessage.includes('fiyat')) {
+      }
+      // Menü ve fiyat sorguları
+      else if (lowerMessage.includes('menü') || lowerMessage.includes('fiyat') || lowerMessage.includes('ne var') || lowerMessage.includes('kategoriler')) {
+        const menuResponses = [
+          '🍕 Menümüzde pizza, burger, döner, salata ve içecek kategorileri bulunuyor. Hangi kategoriyi merak ediyorsunuz?',
+          '📋 Güncel menümüzü görmek için web sitemizi ziyaret edebilirsiniz. "pizza", "burger", "döner" gibi kategorileri sorabilirsiniz.',
+          '💰 Fiyatlarımız uygun ve kaliteli! Pizza 45-85 TL, Burger 35-65 TL, Döner 25-45 TL arasında. Hangi ürün hakkında detay istiyorsunuz?'
+        ];
         botResponse = {
           id: Date.now() + 1,
-          message: 'Menümüzü görmek için web sitemizi ziyaret edebilir veya "pizza", "burger", "içecek" gibi kategorileri sorabilirsiniz.',
+          message: menuResponses[Math.floor(Math.random() * menuResponses.length)],
           direction: 'incoming',
           createdAt: new Date().toISOString(),
           responseType: 'menu_inquiry'
         };
-      } else if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar')) {
+      }
+      // Teslimat süresi
+      else if (lowerMessage.includes('süre') || lowerMessage.includes('ne kadar') || lowerMessage.includes('kaç dakika') || lowerMessage.includes('zaman')) {
+        const deliveryResponses = [
+          '⏰ Teslimat süremiz ortalama 30-45 dakikadır. Yoğun saatlerde (12:00-14:00, 19:00-21:00) bu süre 60 dakikaya kadar uzayabilir.',
+          '🚚 Hızlı teslimat garantisi! Normal şartlarda 30-45 dakika, yoğun saatlerde maksimum 60 dakika içinde kapınızda.',
+          '📦 Siparişiniz hazırlandıktan sonra 15-20 dakika içinde kapınızda olacak. Toplam süre 30-45 dakika.'
+        ];
         botResponse = {
           id: Date.now() + 1,
-          message: 'Teslimat süremiz ortalama 30-45 dakikadır. Yoğun saatlerde bu süre uzayabilir.',
+          message: deliveryResponses[Math.floor(Math.random() * deliveryResponses.length)],
           direction: 'incoming',
           createdAt: new Date().toISOString(),
           responseType: 'delivery_time_inquiry'
         };
-      } else {
+      }
+      // Adres ve konum
+      else if (lowerMessage.includes('adres') || lowerMessage.includes('nerede') || lowerMessage.includes('konum') || lowerMessage.includes('şube')) {
         botResponse = {
           id: Date.now() + 1,
-          message: 'Anlıyorum! Size nasıl yardımcı olabilirim? Sipariş durumu, menü, teslimat süresi gibi konularda sorabilirsiniz.',
+          message: '📍 Şubemiz Kadıköy\'de bulunmaktadır. Teslimat hizmetimiz 5 km yarıçapında geçerlidir. Adres: Kadıköy Merkez, İstanbul. 📞 0212 XXX XX XX',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'address_inquiry'
+        };
+      }
+      // Çalışma saatleri
+      else if (lowerMessage.includes('saat') || lowerMessage.includes('açık') || lowerMessage.includes('kapanış') || lowerMessage.includes('çalışma')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: '🕐 Her gün 10:00-23:00 saatleri arasında hizmet vermekteyiz. Online siparişler 24 saat alınmaktadır.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'working_hours_inquiry'
+        };
+      }
+      // Özel kampanyalar
+      else if (lowerMessage.includes('kampanya') || lowerMessage.includes('indirim') || lowerMessage.includes('promosyon') || lowerMessage.includes('fırsat')) {
+        const campaignResponses = [
+          '🎉 Şu anda "2 Pizza Al 1 Pizza Bedava" kampanyamız devam ediyor! Detaylar için web sitemizi ziyaret edin.',
+          '💥 Özel fırsat! İlk siparişinizde %20 indirim kazanın. Kupon kodu: HOSGELDIN20',
+          '🔥 Hafta sonu özel! Cumartesi-Pazar tüm pizzalarda %15 indirim!'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: campaignResponses[Math.floor(Math.random() * campaignResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'campaign_inquiry'
+        };
+      }
+      // Ödeme yöntemleri
+      else if (lowerMessage.includes('ödeme') || lowerMessage.includes('kart') || lowerMessage.includes('nakit') || lowerMessage.includes('para')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: '💳 Nakit, kredi kartı, banka kartı ve online ödeme kabul ediyoruz. Kapıda ödeme seçeneği de mevcuttur.',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'payment_inquiry'
+        };
+      }
+      // Şikayet ve öneriler
+      else if (lowerMessage.includes('şikayet') || lowerMessage.includes('problem') || lowerMessage.includes('sorun') || lowerMessage.includes('memnun değil')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: '😔 Özür dileriz, yaşadığınız sorunu detaylandırabilir misiniz? Yöneticimiz sizinle iletişime geçecektir. 📞 0212 XXX XX XX',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'complaint'
+        };
+      }
+      // Öneriler
+      else if (lowerMessage.includes('öneri') || lowerMessage.includes('tavsiye') || lowerMessage.includes('ne önerirsin')) {
+        const recommendationResponses = [
+          '🍕 En popüler ürünlerimiz: Margherita Pizza, BBQ Burger, Tavuk Döner. Bunları denemenizi öneririm!',
+          '⭐ Müşterilerimizin favorisi: Karışık Pizza, Beef Burger, Ayran. Bu kombinasyonu çok seviyorlar!',
+          '🔥 Yeni ürünlerimiz: Truffle Pizza, Spicy Burger, Smoothie. Bunları mutlaka deneyin!'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: recommendationResponses[Math.floor(Math.random() * recommendationResponses.length)],
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'recommendation'
+        };
+      }
+      // Teşekkür
+      else if (lowerMessage.includes('teşekkür') || lowerMessage.includes('sağol') || lowerMessage.includes('thanks')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: 'Rica ederim! 😊 Başka bir konuda yardıma ihtiyacınız olursa buradayım. Afiyet olsun! 🍕',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'thanks'
+        };
+      }
+      // Yardım
+      else if (lowerMessage.includes('yardım') || lowerMessage.includes('help') || lowerMessage.includes('nasıl')) {
+        botResponse = {
+          id: Date.now() + 1,
+          message: '🤝 Size nasıl yardımcı olabilirim?\n• Sipariş durumu sorgulama\n• Menü ve fiyat bilgisi\n• Teslimat süresi\n• Adres ve çalışma saatleri\n• Kampanyalar ve öneriler\n• Ödeme yöntemleri\n• Şikayet ve öneriler',
+          direction: 'incoming',
+          createdAt: new Date().toISOString(),
+          responseType: 'help'
+        };
+      }
+      // Genel yanıt
+      else {
+        const generalResponses = [
+          'Anlıyorum! Size nasıl yardımcı olabilirim? Sipariş durumu, menü, teslimat süresi, kampanyalar gibi konularda sorabilirsiniz.',
+          'İlginiz için teşekkürler! Hangi konuda bilgi almak istiyorsunuz? Menü, fiyat, teslimat veya kampanyalar hakkında sorabilirsiniz.',
+          'Merak ettiğiniz konuyu belirtirseniz size daha detaylı bilgi verebilirim. Menü, sipariş, teslimat gibi konularda yardımcı olabilirim.'
+        ];
+        botResponse = {
+          id: Date.now() + 1,
+          message: generalResponses[Math.floor(Math.random() * generalResponses.length)],
           direction: 'incoming',
           createdAt: new Date().toISOString(),
           responseType: 'general_response'
@@ -131,8 +250,24 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         return 'bg-green-100 text-green-800';
       case 'delivery_time_inquiry':
         return 'bg-yellow-100 text-yellow-800';
+      case 'address_inquiry':
+        return 'bg-purple-100 text-purple-800';
+      case 'working_hours_inquiry':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'campaign_inquiry':
+        return 'bg-pink-100 text-pink-800';
+      case 'payment_inquiry':
+        return 'bg-emerald-100 text-emerald-800';
+      case 'recommendation':
+        return 'bg-orange-100 text-orange-800';
+      case 'thanks':
+        return 'bg-teal-100 text-teal-800';
+      case 'help':
+        return 'bg-cyan-100 text-cyan-800';
       case 'complaint':
         return 'bg-red-100 text-red-800';
+      case 'general_greeting':
+        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
