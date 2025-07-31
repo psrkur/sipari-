@@ -575,28 +575,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Stok Uyarıları */}
-      {data.products.lowStock.length > 0 && (
-        <Card className="border-l-4 border-l-red-500">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-red-600">
-              <AlertCircle className="h-5 w-5" />
-              <span>Stok Uyarıları</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.products.lowStock.map((product, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                  <span className="font-medium">{product.name}</span>
-                  <Badge variant="destructive">{product.stock} adet kaldı</Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 } 
