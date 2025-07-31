@@ -3908,7 +3908,7 @@ app.use('/api/integrations', ecommerceIntegrationRouter);
 
 // Franchise yönetimi router'ını ekle
 const franchiseRouter = require('./franchise-api');
-app.use('/api/franchise', franchiseRouter);
+app.use('/api', franchiseRouter);
 
 // 404 handler
 app.use('*', (req, res) => {

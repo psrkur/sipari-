@@ -187,6 +187,21 @@ export const API_ENDPOINTS = {
   },
   
   COMPANIES: `${API_BASE_URL}/api/companies`,
+  
+  // Franchise Management
+  FRANCHISES: `${API_BASE_URL}/api/franchises`,
+  FRANCHISE_DETAIL: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}`,
+  FRANCHISE_TICKETS: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/tickets`,
+  FRANCHISE_REPORTS: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/reports`,
+  FRANCHISE_PERFORMANCE: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/performance`,
+  FRANCHISE_STATS: `${API_BASE_URL}/api/franchises/stats/overview`,
+  MY_FRANCHISE: `${API_BASE_URL}/api/my-franchise`,
+  CREATE_FRANCHISE: `${API_BASE_URL}/api/franchises`,
+  UPDATE_FRANCHISE: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}`,
+  CREATE_SUPPORT_TICKET: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/support-tickets`,
+  CREATE_PERFORMANCE_REPORT: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/performance-reports`,
+  UPDATE_SUPPORT_TICKET: (ticketId: number) => `${API_BASE_URL}/api/support-tickets/${ticketId}`,
+  ASSIGN_BRANCH_TO_FRANCHISE: (franchiseId: number) => `${API_BASE_URL}/api/franchises/${franchiseId}/assign-branch`,
 };
 
 export { apiRequest };
