@@ -27,6 +27,7 @@ const logger = require('./utils/logger');
 const { configureSocket } = require('./socket-config');
 const chatbotRouter = require('./chatbot-api');
 const aiChatbotRouter = require('./ai-chatbot-api');
+const dashboardRouter = require('./dashboard-api');
 
 // Cloudinary konfigürasyonu
 cloudinary.config({
@@ -3945,6 +3946,7 @@ app.use('/api/integrations', ecommerceIntegrationRouter);
 // Chatbot router'ını ekle
 app.use('/api/chatbot', chatbotRouter);
 app.use('/api/chatbot', aiChatbotRouter);
+app.use('/api', dashboardRouter);
 
 
 
