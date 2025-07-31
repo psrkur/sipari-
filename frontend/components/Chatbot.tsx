@@ -17,6 +17,16 @@ interface ChatMessage {
   responseType?: string;
 }
 
+interface Product {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  category: {
+    name: string;
+  };
+}
+
 interface ChatbotProps {
   customerId?: number;
   customerInfo?: {
@@ -32,6 +42,8 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [conversationContext, setConversationContext] = useState({
     lastTopic: '',
     customerPreferences: [] as string[],
@@ -50,6 +62,29 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     scrollToBottom();
   }, [messages]);
 
+  // Ürünleri yükle
+  useEffect(() => {
+    const loadProducts = async () => {
+      setProductsLoading(true);
+      try {
+        // Varsayılan olarak ilk şubeyi kullan (branchId: 1)
+        const response = await axios.get(`${API_BASE_URL}/api/products/1`);
+        setProducts(response.data);
+        console.log('✅ Ürünler yüklendi:', response.data.length);
+      } catch (error) {
+        console.error('❌ Ürünler yüklenemedi:', error);
+        // Hata durumunda boş array kullan
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    if (isOpen) {
+      loadProducts();
+    }
+  }, [isOpen, API_BASE_URL]);
+
   // İlk mesajı gönder
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -57,10 +92,37 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     }
   }, [isOpen]);
 
+  // Ürünleri kategorilere ayır
+  const getProductsByCategory = () => {
+    const categories: { [key: string]: Product[] } = {};
+    
+    products.forEach(product => {
+      const categoryName = product.category?.name || 'Diğer';
+      if (!categories[categoryName]) {
+        categories[categoryName] = [];
+      }
+      categories[categoryName].push(product);
+    });
+    
+    return categories;
+  };
+
+  // Fiyat aralığını hesapla
+  const getPriceRange = (categoryProducts: Product[]) => {
+    if (categoryProducts.length === 0) return '0-0 TL';
+    
+    const prices = categoryProducts.map(p => p.price);
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    
+    return `${min}-${max} TL`;
+  };
+
   // Akıllı yanıt sistemi
   const generateIntelligentResponse = (message: string, context: any) => {
     const lowerMessage = message.toLowerCase();
     const customerName = customerInfo?.name || 'değerli müşterimiz';
+    const categories = getProductsByCategory();
     
     // Konuşma bağlamını güncelle
     let newContext = { ...context };
@@ -78,56 +140,80 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         greeting = `İyi akşamlar ${customerName}! 🌙`;
       }
       
+      const categoryNames = Object.keys(categories);
+      const availableCategories = categoryNames.length > 0 ? categoryNames.join(', ') : 'ürünlerimiz';
+      
       return {
-        message: `${greeting} Size nasıl yardımcı olabilirim? Bugün özel menümüzde yeni eklenen Truffle Pizza ve Spicy Burger var. Hangi konuda bilgi almak istersiniz?`,
+        message: `${greeting} Size nasıl yardımcı olabilirim? Menümüzde ${availableCategories} bulunuyor. Hangi kategori hakkında bilgi almak istersiniz?`,
         responseType: 'intelligent_greeting',
         context: { ...newContext, lastTopic: 'greeting' }
       };
     }
     
-    // Menü sorguları - daha akıllı
+    // Menü sorguları - gerçek verilerle
     if (lowerMessage.includes('menü') || lowerMessage.includes('ne var') || lowerMessage.includes('yemek')) {
-      const responses = [
-        `🍽️ ${customerName}, menümüzde 5 ana kategori bulunuyor:\n\n🍕 **Pizzalar** (45-85 TL): Margherita, Karışık, Pepperoni, BBQ Chicken, Truffle\n🍔 **Burgerler** (35-65 TL): Beef, Chicken, BBQ, Spicy, Deluxe\n🥙 **Dönerler** (25-45 TL): Tavuk, Et, Karışık, Özel\n🥗 **Salatalar** (20-35 TL): Sezar, Akdeniz, Tavuklu\n🥤 **İçecekler** (5-15 TL): Kola, Su, Ayran, Smoothie, Milkshake\n\nHangi kategori hakkında detay istiyorsunuz?`,
-        `📋 ${customerName}, güncel menümüzü keşfedelim! Size özel önerilerim:\n\n🔥 **Yeni Eklenenler**: Truffle Pizza (85 TL), Spicy Burger (50 TL)\n⭐ **En Popüler**: Karışık Pizza (65 TL), BBQ Burger (45 TL)\n💡 **Önerim**: Margherita Pizza + Ayran kombinasyonu\n\nHangi ürün hakkında bilgi almak istersiniz?`
-      ];
-      
+      if (products.length === 0) {
+        return {
+          message: `📋 ${customerName}, şu anda menümüz yükleniyor. Lütfen birkaç saniye bekleyin ve tekrar sorun.`,
+          responseType: 'intelligent_menu_inquiry',
+          context: { ...newContext, lastTopic: 'menu', currentInquiry: 'menu' }
+        };
+      }
+
+      const categoryList = Object.entries(categories).map(([categoryName, categoryProducts]) => {
+        const priceRange = getPriceRange(categoryProducts);
+        const productNames = categoryProducts.slice(0, 3).map(p => p.name).join(', ');
+        return `🍽️ **${categoryName}** (${priceRange}): ${productNames}${categoryProducts.length > 3 ? '...' : ''}`;
+      }).join('\n');
+
       return {
-        message: responses[Math.floor(Math.random() * responses.length)],
+        message: `🍽️ ${customerName}, güncel menümüz:\n\n${categoryList}\n\nHangi kategori hakkında detay istiyorsunuz?`,
         responseType: 'intelligent_menu_inquiry',
         context: { ...newContext, lastTopic: 'menu', currentInquiry: 'menu' }
       };
     }
     
-    // Spesifik ürün sorguları - bağlam bazlı
-    if (lowerMessage.includes('pizza')) {
-      const pizzaPreferences = context.customerPreferences.filter(p => p.includes('pizza'));
-      let response = '';
+    // Spesifik kategori sorguları
+    const categoryMatch = Object.keys(categories).find(category => 
+      lowerMessage.includes(category.toLowerCase())
+    );
+    
+    if (categoryMatch) {
+      const categoryProducts = categories[categoryMatch];
+      const priceRange = getPriceRange(categoryProducts);
       
-      if (pizzaPreferences.length > 0) {
-        response = `🍕 ${customerName}, daha önce ${pizzaPreferences[0]} denemiştiniz! Size özel önerilerim:\n\n`;
-      } else {
-        response = `🍕 ${customerName}, pizzalarımız hakkında detaylı bilgi:\n\n`;
-      }
-      
-      response += `**Margherita** (45 TL): Taze mozzarella, domates sosu, fesleğen\n**Karışık** (65 TL): Sucuk, sosis, mantar, biber, zeytin\n**Pepperoni** (55 TL): Pepperoni, mozzarella, domates sosu\n**BBQ Chicken** (75 TL): Tavuk, BBQ sosu, soğan, mısır\n**Truffle** (85 TL): Trüf mantarı, parmesan, roka\n\nHangi pizzayı denemek istersiniz?`;
+      const productList = categoryProducts.map(product => 
+        `**${product.name}** (${product.price} TL)${product.description ? `: ${product.description}` : ''}`
+      ).join('\n');
       
       return {
-        message: response,
-        responseType: 'intelligent_pizza_inquiry',
-        context: { ...newContext, lastTopic: 'pizza', currentInquiry: 'pizza' }
+        message: `🍽️ ${customerName}, ${categoryMatch} kategorimiz:\n\n${productList}\n\nHangi ürünü denemek istersiniz?`,
+        responseType: 'intelligent_category_inquiry',
+        context: { ...newContext, lastTopic: categoryMatch.toLowerCase(), currentInquiry: 'category' }
       };
     }
     
-    // Fiyat sorguları - dinamik
+    // Fiyat sorguları - gerçek verilerle
     if (lowerMessage.includes('fiyat') || lowerMessage.includes('ne kadar')) {
-      const responses = [
-        `💰 ${customerName}, fiyatlarımız şu şekilde:\n\n🍕 **Pizzalar**: 45-85 TL (Margherita en uygun, Truffle premium)\n🍔 **Burgerler**: 35-65 TL (Beef en uygun, Deluxe premium)\n🥙 **Dönerler**: 25-45 TL (Tavuk en uygun, Özel premium)\n🥤 **İçecekler**: 5-15 TL\n\nBütçenize uygun önerilerim var. Hangi kategori hakkında detay istiyorsunuz?`,
-        `💡 ${customerName}, bütçe dostu önerilerim:\n\n**En Uygun**: Margherita Pizza (45 TL) + Su (5 TL) = 50 TL\n**Orta Segment**: Karışık Pizza (65 TL) + Kola (8 TL) = 73 TL\n**Premium**: Truffle Pizza (85 TL) + Smoothie (12 TL) = 97 TL\n\nHangi bütçe aralığında öneri istiyorsunuz?`
-      ];
-      
+      if (products.length === 0) {
+        return {
+          message: `💰 ${customerName}, şu anda fiyat bilgileri yükleniyor. Lütfen birkaç saniye bekleyin.`,
+          responseType: 'intelligent_price_inquiry',
+          context: { ...newContext, lastTopic: 'price', currentInquiry: 'price' }
+        };
+      }
+
+      const priceRanges = Object.entries(categories).map(([categoryName, categoryProducts]) => {
+        const priceRange = getPriceRange(categoryProducts);
+        return `🍽️ **${categoryName}**: ${priceRange}`;
+      }).join('\n');
+
+      const allPrices = products.map(p => p.price);
+      const minPrice = Math.min(...allPrices);
+      const maxPrice = Math.max(...allPrices);
+
       return {
-        message: responses[Math.floor(Math.random() * responses.length)],
+        message: `💰 ${customerName}, fiyatlarımız:\n\n${priceRanges}\n\n💡 **Genel Fiyat Aralığı**: ${minPrice}-${maxPrice} TL\n\nHangi kategori hakkında detay istiyorsunuz?`,
         responseType: 'intelligent_price_inquiry',
         context: { ...newContext, lastTopic: 'price', currentInquiry: 'price' }
       };
@@ -173,17 +259,33 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
       };
     }
     
-    // Öneriler - akıllı
+    // Öneriler - gerçek ürünlerle
     if (lowerMessage.includes('öneri') || lowerMessage.includes('tavsiye') || lowerMessage.includes('ne önerirsin')) {
+      if (products.length === 0) {
+        return {
+          message: `💡 ${customerName}, şu anda ürün önerileri yükleniyor. Lütfen birkaç saniye bekleyin.`,
+          responseType: 'intelligent_recommendation',
+          context: { ...newContext, lastTopic: 'recommendation', currentInquiry: 'recommendation' }
+        };
+      }
+
       const timeOfDay = new Date().getHours();
       let recommendation = '';
       
+      // En popüler ürünleri seç (fiyat ortalamasına göre)
+      const sortedProducts = [...products].sort((a, b) => a.price - b.price);
+      const affordableProducts = sortedProducts.slice(0, 3);
+      const premiumProducts = sortedProducts.slice(-3);
+      
       if (timeOfDay < 12) {
-        recommendation = `🌅 ${customerName}, sabah için önerilerim:\n\n🍕 **Kahvaltı Sonrası**: Margherita Pizza (hafif ve lezzetli)\n🥤 **Enerji İçin**: Smoothie (taze meyve)\n💡 **Kombinasyon**: Margherita + Smoothie = 57 TL\n\nSabah için ideal seçimler!`;
+        const morningProduct = affordableProducts[0];
+        recommendation = `🌅 ${customerName}, sabah için önerilerim:\n\n🍽️ **Kahvaltı Sonrası**: ${morningProduct?.name || 'Margherita Pizza'} (${morningProduct?.price || 45} TL)\n🥤 **Enerji İçin**: Smoothie (12 TL)\n💡 **Kombinasyon**: ${morningProduct?.name || 'Margherita'} + Smoothie = ${(morningProduct?.price || 45) + 12} TL\n\nSabah için ideal seçimler!`;
       } else if (timeOfDay < 18) {
-        recommendation = `☀️ ${customerName}, öğle için önerilerim:\n\n🍔 **Doyurucu**: BBQ Burger + Kola = 53 TL\n🍕 **Klasik**: Karışık Pizza + Ayran = 71 TL\n🥙 **Hızlı**: Tavuk Döner + Su = 30 TL\n\nÖğle yemeği için mükemmel seçenekler!`;
+        const lunchProduct = sortedProducts[Math.floor(sortedProducts.length / 2)];
+        recommendation = `☀️ ${customerName}, öğle için önerilerim:\n\n🍽️ **Doyurucu**: ${lunchProduct?.name || 'BBQ Burger'} (${lunchProduct?.price || 45} TL)\n🥤 **İçecek**: Kola (8 TL)\n💡 **Kombinasyon**: ${lunchProduct?.name || 'BBQ Burger'} + Kola = ${(lunchProduct?.price || 45) + 8} TL\n\nÖğle yemeği için mükemmel seçenekler!`;
       } else {
-        recommendation = `🌙 ${customerName}, akşam için önerilerim:\n\n🍕 **Premium**: Truffle Pizza + Smoothie = 97 TL\n🍔 **Lezzetli**: Deluxe Burger + Milkshake = 80 TL\n🥙 **Özel**: Özel Döner + Kola = 53 TL\n\nAkşam yemeği için özel seçenekler!`;
+        const dinnerProduct = premiumProducts[premiumProducts.length - 1];
+        recommendation = `🌙 ${customerName}, akşam için önerilerim:\n\n🍽️ **Premium**: ${dinnerProduct?.name || 'Truffle Pizza'} (${dinnerProduct?.price || 85} TL)\n🥤 **İçecek**: Milkshake (15 TL)\n💡 **Kombinasyon**: ${dinnerProduct?.name || 'Truffle Pizza'} + Milkshake = ${(dinnerProduct?.price || 85) + 15} TL\n\nAkşam yemeği için özel seçenekler!`;
       }
       
       return {
@@ -249,6 +351,8 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         return 'bg-blue-100 text-blue-800';
       case 'intelligent_menu_inquiry':
         return 'bg-green-100 text-green-800';
+      case 'intelligent_category_inquiry':
+        return 'bg-purple-100 text-purple-800';
       case 'intelligent_pizza_inquiry':
         return 'bg-red-100 text-red-800';
       case 'intelligent_price_inquiry':
@@ -288,6 +392,13 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
             <div className="flex items-center space-x-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">AI Asistan</span>
+              {productsLoading && (
+                <div className="flex space-x-1">
+                  <div className="w-1 h-1 bg-white rounded-full animate-bounce"></div>
+                  <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <Button
