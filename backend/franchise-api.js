@@ -291,4 +291,58 @@ router.get('/my-franchise', authenticateToken, async (req, res) => {
   }
 });
 
+// Franchise destek talepleri listesi
+router.get('/franchises/:id/tickets', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const franchise = await franchiseManagement.getFranchiseById(id);
+    
+    if (!franchise) {
+      return res.status(404).json({ error: 'Franchise bulunamadı' });
+    }
+
+    // Franchise sahibi kendi taleplerini görebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.email !== franchise.ownerEmail) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const tickets = await franchiseManagement.getSupportTicketsByFranchise(id);
+
+    res.json({
+      success: true,
+      tickets: tickets
+    });
+  } catch (error) {
+    console.error('Franchise tickets error:', error);
+    res.status(500).json({ error: 'Destek talepleri alınamadı' });
+  }
+});
+
+// Franchise performans raporları listesi
+router.get('/franchises/:id/reports', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const franchise = await franchiseManagement.getFranchiseById(id);
+    
+    if (!franchise) {
+      return res.status(404).json({ error: 'Franchise bulunamadı' });
+    }
+
+    // Franchise sahibi kendi raporlarını görebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.email !== franchise.ownerEmail) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const reports = await franchiseManagement.getPerformanceReportsByFranchise(id);
+
+    res.json({
+      success: true,
+      reports: reports
+    });
+  } catch (error) {
+    console.error('Franchise reports error:', error);
+    res.status(500).json({ error: 'Performans raporları alınamadı' });
+  }
+});
+
 module.exports = router; 

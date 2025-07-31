@@ -296,6 +296,36 @@ class FranchiseManagement {
       throw error;
     }
   }
+
+  // Franchise destek talepleri
+  async getSupportTicketsByFranchise(franchiseId) {
+    try {
+      const tickets = await prisma.franchiseSupportTicket.findMany({
+        where: { franchiseId: parseInt(franchiseId) },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      return tickets;
+    } catch (error) {
+      this.logger.error('Get support tickets error:', error);
+      throw error;
+    }
+  }
+
+  // Franchise performans raporları
+  async getPerformanceReportsByFranchise(franchiseId) {
+    try {
+      const reports = await prisma.franchisePerformanceReport.findMany({
+        where: { franchiseId: parseInt(franchiseId) },
+        orderBy: { reportDate: 'desc' }
+      });
+
+      return reports;
+    } catch (error) {
+      this.logger.error('Get performance reports error:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = new FranchiseManagement(); 
