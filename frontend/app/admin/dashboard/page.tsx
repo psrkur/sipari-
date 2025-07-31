@@ -32,6 +32,31 @@ import {
   Heart,
   ThumbsUp
 } from 'lucide-react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 interface DashboardData {
   sales: {
@@ -257,6 +282,60 @@ export default function Dashboard() {
     };
   }, [on, off]);
 
+  // Grafik verileri
+  const salesChartData = {
+    labels: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
+    datasets: [
+      {
+        label: 'Günlük Satış (₺)',
+        data: [12000, 15000, 18000, 14000, 22000, 25000, data?.sales.today || 0],
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const orderStatusData = {
+    labels: ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen'],
+    datasets: [
+      {
+        data: [
+          data?.orders.pending || 0,
+          data?.orders.preparing || 0,
+          data?.orders.ready || 0,
+          data?.orders.delivered || 0,
+        ],
+        backgroundColor: [
+          'rgba(255, 206, 86, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        borderColor: [
+          'rgba(255, 206, 86, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  const popularProductsData = {
+    labels: data?.products.popular.map(p => p.name) || [],
+    datasets: [
+      {
+        label: 'Satış Adedi',
+        data: data?.products.popular.map(p => p.sales) || [],
+        backgroundColor: 'rgba(255, 99, 132, 0.8)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1,
+      },
+    ],
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -377,6 +456,68 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Grafikler */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Satış Grafiği */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5" />
+              <span>Haftalık Satış Trendi</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Line 
+              data={salesChartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: 'Günlük Satış Grafiği',
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                  },
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Sipariş Durumu Grafiği */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <PieChart className="h-5 w-5" />
+              <span>Sipariş Durumu Dağılımı</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Doughnut 
+              data={orderStatusData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'bottom' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: 'Sipariş Durumu',
+                  },
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Detaylı Metrikler */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sipariş Durumu */}
@@ -421,31 +562,35 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Popüler Ürünler */}
+        {/* Popüler Ürünler Grafiği */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5" />
+              <BarChart3 className="h-5 w-5" />
               <span>En Popüler Ürünler</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {data.products.popular.map((product, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-bold text-orange-600">{index + 1}</span>
-                    </div>
-                    <span className="text-sm">{product.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{product.sales} adet</div>
-                    <div className="text-xs text-gray-500">{product.revenue} ₺</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Bar 
+              data={popularProductsData}
+              options={{
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: true,
+                    text: 'Satış Adedi',
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                  },
+                },
+              }}
+            />
           </CardContent>
         </Card>
       </div>

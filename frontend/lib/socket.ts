@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://yemek5-backend.onrender.com';
 
 export interface SocketEvents {
   newOrder: (data: {
@@ -43,6 +43,8 @@ export const useSocket = () => {
     socketRef.current = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
+      timeout: 20000,
+      forceNew: true,
     });
 
     const socket = socketRef.current;

@@ -15,6 +15,7 @@ import BranchManagement from '../components/BranchManagement';
 import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
 import ChatManagement from './chat-management';
+import Dashboard from './dashboard/page';
 
 interface OrderItem {
   id: number;
@@ -1015,11 +1016,7 @@ export default function AdminPage() {
           <div className="bg-white rounded-lg shadow">
             {activeTab === 'dashboard' && (
               <div className="p-6">
-                <iframe 
-                  src="/admin/dashboard" 
-                  className="w-full h-screen border-0"
-                  title="Dashboard"
-                />
+                <Dashboard />
               </div>
             )}
             {activeTab === 'orders' && (
