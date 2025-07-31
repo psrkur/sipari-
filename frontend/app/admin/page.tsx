@@ -93,7 +93,7 @@ export default function AdminPage() {
   const [editCategoryForm, setEditCategoryForm] = useState({ name: '', description: '', isActive: true as boolean });
   const [branchForm, setBranchForm] = useState({ name: '', address: '', phone: '' });
   const [editBranchForm, setEditBranchForm] = useState({ name: '', address: '', phone: '', isActive: true as boolean });
-  const [activeTab, setActiveTab] = useState<'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'qr-codes' | 'chat'>('orders');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'orders' | 'users' | 'products' | 'categories' | 'branches' | 'daily-stats' | 'tables' | 'table-orders' | 'qr-codes' | 'chat'>('dashboard');
   const [productImage, setProductImage] = useState<File | null>(null);
   const [editProductImage, setEditProductImage] = useState<File | null>(null);
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -867,6 +867,14 @@ export default function AdminPage() {
           {/* Tab/menü alanı */}
           <div className="flex flex-wrap gap-2 mb-4">
             <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`px-4 py-2 rounded-lg font-medium ${
+                activeTab === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              📊 Dashboard
+            </button>
+            <button
               onClick={() => setActiveTab('orders')}
               className={`px-4 py-2 rounded-lg font-medium ${
                 activeTab === 'orders' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -1005,6 +1013,15 @@ export default function AdminPage() {
 
           {/* İçerik alanı */}
           <div className="bg-white rounded-lg shadow">
+            {activeTab === 'dashboard' && (
+              <div className="p-6">
+                <iframe 
+                  src="/admin/dashboard" 
+                  className="w-full h-screen border-0"
+                  title="Dashboard"
+                />
+              </div>
+            )}
             {activeTab === 'orders' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
