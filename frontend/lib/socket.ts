@@ -22,6 +22,15 @@ export interface SocketEvents {
     updatedAt: string;
   }) => void;
   
+  newChatMessage: (data: {
+    customerId: number;
+    customerName: string;
+    message: string;
+    response: string;
+    timestamp: string;
+    platform: string;
+  }) => void;
+  
   userJoined: (data: { userId: number; name: string }) => void;
   userLeft: (data: { userId: number; name: string }) => void;
 }
