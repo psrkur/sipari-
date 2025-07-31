@@ -126,16 +126,28 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
+      // Auth header'ı hazırla
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      
       // Gerçek verileri API'den çek
       const [ordersRes, customersRes, productsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/orders`),
-        axios.get(`${API_BASE_URL}/api/customers`),
-        axios.get(`${API_BASE_URL}/api/admin/products`)
+        axios.get(`${API_BASE_URL}/api/orders`, { headers }),
+        axios.get(`${API_BASE_URL}/api/customers`, { headers }),
+        axios.get(`${API_BASE_URL}/api/admin/products`, { headers })
       ]);
 
       const orders = ordersRes.data;
       const customers = customersRes.data;
       const products = productsRes.data;
+
+      console.log('📊 Dashboard verileri yüklendi:', {
+        orders: orders.length,
+        customers: customers.length,
+        products: products.length
+      });
 
       // Dashboard verilerini hesapla
       const today = new Date();
@@ -246,9 +258,26 @@ export default function Dashboard() {
       };
 
       setData(dashboardData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Dashboard verileri yüklenemedi:', error);
-      toast.error('Dashboard verileri yüklenemedi');
+      
+      // Daha detaylı hata mesajı
+      if (error.response) {
+        console.error('API Hatası:', error.response.status, error.response.data);
+        if (error.response.status === 401) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+        } else if (error.response.status === 403) {
+          toast.error('Bu sayfaya erişim yetkiniz yok.');
+        } else {
+          toast.error(`API Hatası: ${error.response.status}`);
+        }
+      } else if (error.request) {
+        console.error('Bağlantı Hatası:', error.request);
+        toast.error('Sunucuya bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.');
+      } else {
+        console.error('Genel Hata:', error.message);
+        toast.error('Beklenmeyen bir hata oluştu.');
+      }
     } finally {
       setLoading(false);
     }
@@ -280,7 +309,7 @@ export default function Dashboard() {
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
     };
-  }, [on, off]);
+  }, [on, off, token, API_BASE_URL]);
 
   // Grafik verileri
   const salesChartData = {
