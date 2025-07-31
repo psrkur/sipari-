@@ -132,130 +132,16 @@ export default function Dashboard() {
         'Content-Type': 'application/json'
       };
       
-      // Gerçek verileri API'den çek
-      const [ordersRes, customersRes, productsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/orders`, { headers }),
-        axios.get(`${API_BASE_URL}/api/customers`, { headers }),
-        axios.get(`${API_BASE_URL}/api/admin/products`, { headers })
-      ]);
-
-      const orders = ordersRes.data;
-      const customers = customersRes.data;
-      const products = productsRes.data;
+      // Dashboard API'den verileri çek
+      const dashboardRes = await axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers });
+      const dashboardData = dashboardRes.data;
 
       console.log('📊 Dashboard verileri yüklendi:', {
-        orders: orders.length,
-        customers: customers.length,
-        products: products.length
+        sales: dashboardData.sales,
+        orders: dashboardData.orders,
+        customers: dashboardData.customers,
+        products: dashboardData.products
       });
-
-      // Dashboard verilerini hesapla
-      const today = new Date();
-      const todayOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.createdAt);
-        return orderDate.toDateString() === today.toDateString();
-      });
-
-      const totalRevenue = todayOrders.reduce((sum: number, order: any) => sum + order.totalAmount, 0);
-      const targetRevenue = 20000; // Günlük hedef
-      const percentage = Math.round((totalRevenue / targetRevenue) * 100);
-
-      const pendingOrders = orders.filter((order: any) => order.status === 'PENDING');
-      const preparingOrders = orders.filter((order: any) => order.status === 'PREPARING');
-      const readyOrders = orders.filter((order: any) => order.status === 'READY');
-      const deliveredOrders = orders.filter((order: any) => order.status === 'DELIVERED');
-
-      // Popüler ürünleri hesapla
-      const productSales: { [key: string]: { sales: number; revenue: number } } = {};
-      orders.forEach((order: any) => {
-        order.orderItems?.forEach((item: any) => {
-          const productName = item.product?.name || 'Bilinmeyen Ürün';
-          if (!productSales[productName]) {
-            productSales[productName] = { sales: 0, revenue: 0 };
-          }
-          productSales[productName].sales += item.quantity;
-          productSales[productName].revenue += item.price * item.quantity;
-        });
-      });
-
-      const popularProducts = Object.entries(productSales)
-        .map(([name, data]) => ({ name, ...data }))
-        .sort((a, b) => b.sales - a.sales)
-        .slice(0, 5);
-
-      const dashboardData: DashboardData = {
-        sales: {
-          today: totalRevenue,
-          yesterday: totalRevenue * 0.85, // Tahmini
-          thisWeek: totalRevenue * 7,
-          thisMonth: totalRevenue * 30,
-          target: targetRevenue,
-          percentage: percentage
-        },
-        orders: {
-          total: orders.length,
-          pending: pendingOrders.length,
-          preparing: preparingOrders.length,
-          ready: readyOrders.length,
-          delivered: deliveredOrders.length,
-          cancelled: 0,
-          averageTime: 25 // dakika
-        },
-        customers: {
-          total: customers.length,
-          newToday: Math.floor(customers.length * 0.1), // Tahmini
-          activeNow: Math.floor(customers.length * 0.05), // Tahmini
-          averageRating: 4.7,
-          chatbotConversations: Math.floor(customers.length * 0.3) // Tahmini
-        },
-        products: {
-          total: products.length,
-          popular: popularProducts,
-          lowStock: products
-            .filter((product: any) => product.stock < 10)
-            .map((product: any) => ({
-              name: product.name,
-              stock: product.stock || 0
-            }))
-            .slice(0, 5)
-        },
-        realTime: {
-          currentOrders: todayOrders.slice(0, 5).map((order: any) => ({
-            id: order.orderNumber,
-            customerName: order.customer?.name || 'Misafir',
-            items: order.orderItems?.map((item: any) => item.product?.name).join(', ') || 'Ürün',
-            total: order.totalAmount,
-            status: order.status,
-            time: new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
-          })),
-          recentActivity: [
-            {
-              type: 'order',
-              message: 'Yeni sipariş alındı',
-              time: '2 dakika önce',
-              icon: 'ShoppingCart'
-            },
-            {
-              type: 'customer',
-              message: 'Yeni müşteri kaydı',
-              time: '5 dakika önce',
-              icon: 'Users'
-            },
-            {
-              type: 'chatbot',
-              message: 'Chatbot sohbeti başladı',
-              time: '8 dakika önce',
-              icon: 'MessageCircle'
-            },
-            {
-              type: 'delivery',
-              message: 'Sipariş teslim edildi',
-              time: '12 dakika önce',
-              icon: 'Truck'
-            }
-          ]
-        }
-      };
 
       setData(dashboardData);
     } catch (error: any) {
