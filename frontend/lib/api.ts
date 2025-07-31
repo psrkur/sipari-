@@ -1,5 +1,5 @@
 // API Configuration - Her zaman canlı backend'i kullan
-const getApiBaseUrl = (): string => {
+export const getApiBaseUrl = (): string => {
   // Her zaman canlı backend'i kullan (aynı veritabanı)
   return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
