@@ -143,18 +143,18 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-orange-700"
+                className="text-white hover:bg-orange-700 bg-transparent border-0"
               >
                 <Minimize2 className="h-4 w-4" />
               </Button>
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="text-white hover:bg-orange-700"
+                className="text-white hover:bg-orange-700 bg-transparent border-0"
               >
                 <X className="h-4 w-4" />
               </Button>
