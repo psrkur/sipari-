@@ -24,6 +24,7 @@ const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const logger = require('./utils/logger');
+const { configureSocket } = require('./socket-config');
 
 // Cloudinary konfigürasyonu
 cloudinary.config({
@@ -858,6 +859,16 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       });
     }
 
+    // Gerçek zamanlı bildirim gönder
+    io.emit('newOrder', {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      branchId: order.branchId,
+      status: order.status,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt
+    });
+
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
     console.error('Sipariş oluşturma hatası:', error); // <-- Hata detayını logla
@@ -1308,6 +1319,16 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       };
       statusMessage = deliveryStatusMessages[status] || 'Sipariş durumunuz güncellendi.';
     }
+
+    // Gerçek zamanlı bildirim gönder
+    io.emit('orderStatusChanged', {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      status: status,
+      statusText: statusMessage,
+      branchId: order.branchId,
+      updatedAt: order.updatedAt
+    });
 
     res.json({
       order,
@@ -3913,11 +3934,15 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
 
-app.listen(SERVER_PORT, () => {
+const server = app.listen(SERVER_PORT, () => {
   console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
   console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
   console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
 });
+
+// Socket.IO konfigürasyonu
+const io = configureSocket(server);
+console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
 
 app.post('/api/admin/reset-super-admin', async (req, res) => {
   try {

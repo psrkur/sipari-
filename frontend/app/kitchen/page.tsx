@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { API_ENDPOINTS } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { useSocket } from '@/lib/socket';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,6 +62,7 @@ export default function KitchenPage() {
   const [branches, setBranches] = useState<any[]>([]);
   const { token, user } = useAuthStore();
   const router = useRouter();
+  const { on, off } = useSocket();
 
   useEffect(() => {
     // Store'dan token'ı almayı dene
@@ -92,6 +94,37 @@ export default function KitchenPage() {
 
     fetchBranches();
   }, [token, router]);
+
+  // Gerçek zamanlı güncellemeler için Socket.IO
+  useEffect(() => {
+    if (!selectedBranch) return;
+
+    // Yeni sipariş geldiğinde
+    const handleNewOrder = (data: any) => {
+      if (data.branchId === selectedBranch.id) {
+        toast.success(`Yeni sipariş: ${data.orderNumber}`);
+        fetchOrders(selectedBranch.id, false); // Sayfayı yenilemeden güncelle
+      }
+    };
+
+    // Sipariş durumu değiştiğinde
+    const handleOrderStatusChanged = (data: any) => {
+      if (data.branchId === selectedBranch.id) {
+        toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
+        fetchOrders(selectedBranch.id, false); // Sayfayı yenilemeden güncelle
+      }
+    };
+
+    // Event listener'ları ekle
+    on('newOrder', handleNewOrder);
+    on('orderStatusChanged', handleOrderStatusChanged);
+
+    // Cleanup
+    return () => {
+      off('newOrder', handleNewOrder);
+      off('orderStatusChanged', handleOrderStatusChanged);
+    };
+  }, [selectedBranch, on, off]);
 
   // Otomatik yenileme için useEffect
   useEffect(() => {

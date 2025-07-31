@@ -6,6 +6,7 @@ import { API_ENDPOINTS } from '../../lib/api';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useSocket } from '@/lib/socket';
 // import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
@@ -69,6 +70,7 @@ export default function AdminPage() {
   const [lastOrderCount, setLastOrderCount] = useState(0);
   const { user, token } = useAuthStore();
   const router = useRouter();
+  const { on, off } = useSocket();
   const [showUserModal, setShowUserModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
@@ -367,6 +369,32 @@ export default function AdminPage() {
       }
     }
   };
+
+  // Gerçek zamanlı güncellemeler için Socket.IO
+  useEffect(() => {
+    // Yeni sipariş geldiğinde
+    const handleNewOrder = (data: any) => {
+      toast.success(`Yeni sipariş: ${data.orderNumber}`);
+      playNotificationSound();
+      fetchOrders(); // Siparişleri yenile
+    };
+
+    // Sipariş durumu değiştiğinde
+    const handleOrderStatusChanged = (data: any) => {
+      toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
+      fetchOrders(); // Siparişleri yenile
+    };
+
+    // Event listener'ları ekle
+    on('newOrder', handleNewOrder);
+    on('orderStatusChanged', handleOrderStatusChanged);
+
+    // Cleanup
+    return () => {
+      off('newOrder', handleNewOrder);
+      off('orderStatusChanged', handleOrderStatusChanged);
+    };
+  }, [on, off]);
 
   useEffect(() => {
     if (orders.length > lastOrderCount && lastOrderCount > 0) {
