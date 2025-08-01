@@ -584,27 +584,51 @@ export default function AdminPage() {
   }, [setProductFormValue]);
 
   const updateProductHandler = useCallback(async () => {
-    try {
-      const response = await axios.put(
-        API_ENDPOINTS.ADMIN_UPDATE_PRODUCT(editingProduct.id),
-        productForm,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+    if (!editingProduct) {
+      console.error('Düzenlenecek ürün bulunamadı');
+      return;
+    }
 
-      if (response.data.success) {
-        updateProductItem(editingProduct.id, (product: any) => ({
-          ...product,
-          ...productForm
-        }));
+    try {
+      console.log('Ürün güncelleme başlatılıyor:', editingProduct.id);
+      console.log('Güncellenecek veriler:', productForm);
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(productForm)
+      });
+
+      if (response.ok) {
+        const updatedProduct = await response.json();
+        console.log('Ürün başarıyla güncellendi:', updatedProduct);
+        
+        // Ürün listesini güncelle
+        setProducts(prevProducts => 
+          prevProducts.map(product => 
+            product.id === editingProduct.id 
+              ? { ...product, ...productForm }
+              : product
+          )
+        );
+        
         setShowEditProductModal(false);
         resetProductForm();
-        toast.success('Ürün güncellendi');
+        setEditingProduct(null);
+        alert('Ürün başarıyla güncellendi!');
+      } else {
+        const error = await response.json();
+        console.error('Ürün güncelleme hatası:', error);
+        alert(`Hata: ${error.message || 'Ürün güncellenemedi'}`);
       }
     } catch (error: any) {
-      console.error('Ürün güncellenemedi:', error);
-      toast.error('Ürün güncellenemedi');
+      console.error('Ürün güncelleme hatası:', error);
+      alert('Ürün güncellenirken bir hata oluştu');
     }
-  }, [token, productForm, editingProduct, updateProductItem, resetProductForm]);
+  }, [token, productForm, editingProduct, setProducts, resetProductForm]);
 
   const toggleProductStatus = useCallback(async (productId: number, isActive: boolean) => {
     try {
@@ -1213,6 +1237,101 @@ export default function AdminPage() {
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
                 >
                   Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün Güncelleme Modal */}
+      {showEditProductModal && editingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">✏️ Ürün Düzenle</h3>
+            <form onSubmit={(e) => { e.preventDefault(); updateProductHandler(); }}>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ürün Adı"
+                  value={productForm.name}
+                  onChange={(e) => setProductFormValue('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={productForm.description}
+                  onChange={(e) => setProductFormValue('description', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Fiyat"
+                  value={productForm.price}
+                  onChange={(e) => setProductFormValue('price', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <select
+                  value={productForm.categoryId}
+                  onChange={(e) => setProductFormValue('categoryId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Kategori Seçin</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={productForm.branchId}
+                  onChange={(e) => setProductFormValue('branchId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Şube Seçin</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowImageSelector(true)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+                  >
+                    {productForm.image ? 'Resim Seçildi' : 'Resim Seç'}
+                  </button>
+                  {showImageSelector && (
+                    <ImageSelector 
+                      isOpen={showImageSelector}
+                      onClose={() => setShowImageSelector(false)}
+                      onSelect={handleImageSelect}
+                      selectedImage={productForm.image}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProductModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Güncelle
                 </button>
               </div>
             </form>
