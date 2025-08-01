@@ -89,8 +89,9 @@ export default function AdminPage() {
   const [editingBranch, setEditingBranch] = useState<any>(null);
   const [databaseStats, setDatabaseStats] = useState<any>(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [showImageSelector, setShowImageSelector] = useState(false);
 
-  // Optimize edilmiş list state'leri - farklı isimler kullanarak çakışmayı önle
+  // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
   const { items: orders, setItems: setOrders, updateItem: updateOrderItem } = useOptimizedList<Order>();
   const { items: categories, setItems: setCategories, updateItem: updateCategoryItem } = useOptimizedList<Category>();
@@ -131,7 +132,7 @@ export default function AdminPage() {
   const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<any[]>(
     API_ENDPOINTS.BRANCHES,
     { 
-      cacheTime: 5 * 60 * 1000, // 5 dakika cache
+      cacheTime: 5 * 60 * 1000,
       enabled: !!token 
     }
   );
@@ -218,7 +219,7 @@ export default function AdminPage() {
     }
   }, [token, router, setOrders]);
 
-  // Socket event handlers - optimize edilmiş
+  // Socket event handlers
   useEffect(() => {
     const handleNewOrder = useCallback((data: any) => {
       toast.success(`Yeni sipariş: ${data.orderNumber}`);
@@ -239,11 +240,11 @@ export default function AdminPage() {
     };
   }, [on, off, fetchOrders]);
 
-  // Optimize edilmiş interval - sadece gerekli olduğunda çalış
+  // Optimize edilmiş interval
   useOptimizedInterval(
     fetchOrders,
-    30000, // 30 saniye
-    !!token && !!user // Sadece giriş yapmış kullanıcılar için
+    30000,
+    !!token && !!user
   );
 
   // İlk yükleme
@@ -280,10 +281,7 @@ export default function AdminPage() {
       
       toast.success('Eski siparişler başarıyla temizlendi');
       
-      // İstatistikleri yenile
       await fetchDatabaseStats();
-      
-      // Siparişleri yenile
       await fetchOrders();
       
     } catch (error: any) {
@@ -316,6 +314,95 @@ export default function AdminPage() {
     }
   }, [token, updateOrderItem]);
 
+  // Form submit handlers
+  const addUser = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_USERS, userForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data) {
+        setUsers(prev => [...prev, response.data]);
+        setShowAddUserModal(false);
+        resetUserForm();
+        toast.success('Kullanıcı eklendi');
+      }
+    } catch (error: any) {
+      console.error('Kullanıcı eklenemedi:', error);
+      toast.error('Kullanıcı eklenemedi');
+    }
+  }, [token, userForm, setUsers, resetUserForm]);
+
+  const addProduct = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, productForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data) {
+        const newProduct = Array.isArray(response.data) ? response.data[0] : response.data;
+        setProducts(prev => [...prev, newProduct]);
+        setShowAddProductModal(false);
+        resetProductForm();
+        toast.success('Ürün eklendi');
+      }
+    } catch (error: any) {
+      console.error('Ürün eklenemedi:', error);
+      toast.error('Ürün eklenemedi');
+    }
+  }, [token, productForm, setProducts, resetProductForm]);
+
+  const addCategory = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data) {
+        setCategories(prev => [...prev, response.data]);
+        setShowAddCategoryModal(false);
+        resetCategoryForm();
+        toast.success('Kategori eklendi');
+      }
+    } catch (error: any) {
+      console.error('Kategori eklenemedi:', error);
+      toast.error('Kategori eklenemedi');
+    }
+  }, [token, categoryForm, setCategories, resetCategoryForm]);
+
+  const addBranch = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(API_ENDPOINTS.BRANCHES, branchForm, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data) {
+        setBranches(prev => [...prev, response.data]);
+        setShowAddBranchModal(false);
+        resetBranchForm();
+        toast.success('Şube eklendi');
+      }
+    } catch (error: any) {
+      console.error('Şube eklenemedi:', error);
+      toast.error('Şube eklenemedi');
+    }
+  }, [token, branchForm, setBranches, resetBranchForm]);
+
+  // Utility functions
+  const formatDate = useCallback((date: string) => {
+    return new Date(date).toLocaleString('tr-TR');
+  }, []);
+
+  const handleImageSelect = useCallback((imagePath: string) => {
+    setProductFormValue('image', imagePath);
+  }, [setProductFormValue]);
+
+  const handleEditImageSelect = useCallback((imagePath: string) => {
+    setProductFormValue('image', imagePath);
+  }, [setProductFormValue]);
+
+  // Eksik fonksiyonlar
   const deleteUser = useCallback(async (userId: number) => {
     try {
       await axios.delete(API_ENDPOINTS.ADMIN_DELETE_USER(userId), {
@@ -501,97 +588,7 @@ export default function AdminPage() {
     }
   }, [token, setBranches]);
 
-  // Form submit handlers - optimize edilmiş
-  const addUser = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(API_ENDPOINTS.ADMIN_USERS, userForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data) {
-        setUsers(prev => [...prev, response.data]);
-        setShowAddUserModal(false);
-        resetUserForm();
-        toast.success('Kullanıcı eklendi');
-      }
-    } catch (error: any) {
-      console.error('Kullanıcı eklenemedi:', error);
-      toast.error('Kullanıcı eklenemedi');
-    }
-  }, [token, userForm, setUsers, resetUserForm]);
-
-  const addProduct = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, productForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Backend'den dönen response'u kontrol et
-      if (response.data) {
-        // Eğer array ise (tüm şubelere eklenmişse) ilk elemanı al
-        const newProduct = Array.isArray(response.data) ? response.data[0] : response.data;
-        setProducts(prev => [...prev, newProduct]);
-        setShowAddProductModal(false);
-        resetProductForm();
-        toast.success('Ürün eklendi');
-      }
-    } catch (error: any) {
-      console.error('Ürün eklenemedi:', error);
-      toast.error('Ürün eklenemedi');
-    }
-  }, [token, productForm, setProducts, resetProductForm]);
-
-  const addCategory = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data) {
-        setCategories(prev => [...prev, response.data]);
-        setShowAddCategoryModal(false);
-        resetCategoryForm();
-        toast.success('Kategori eklendi');
-      }
-    } catch (error: any) {
-      console.error('Kategori eklenemedi:', error);
-      toast.error('Kategori eklenemedi');
-    }
-  }, [token, categoryForm, setCategories, resetCategoryForm]);
-
-  const addBranch = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(API_ENDPOINTS.BRANCHES, branchForm, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.data) {
-        setBranches(prev => [...prev, response.data]);
-        setShowAddBranchModal(false);
-        resetBranchForm();
-        toast.success('Şube eklendi');
-      }
-    } catch (error: any) {
-      console.error('Şube eklenemedi:', error);
-      toast.error('Şube eklenemedi');
-    }
-  }, [token, branchForm, setBranches, resetBranchForm]);
-
-  // Utility functions - optimize edilmiş
-  const formatDate = useCallback((date: string) => {
-    return new Date(date).toLocaleString('tr-TR');
-  }, []);
-
-  const handleImageSelect = useCallback((imagePath: string) => {
-    setProductFormValue('image', imagePath);
-  }, [setProductFormValue]);
-
-  const handleEditImageSelect = useCallback((imagePath: string) => {
-    setProductFormValue('image', imagePath);
-  }, [setProductFormValue]);
-
-  // Filtrelenmiş siparişler - memoize edilmiş
+  // Filtrelenmiş siparişler
   const filteredOrders = useMemo(() => {
     let filtered = orders;
 
@@ -610,7 +607,7 @@ export default function AdminPage() {
     return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [orders, selectedBranch, selectedStatus, selectedOrderType]);
 
-  // Status utility functions - optimize edilmiş
+  // Status utility functions
   const getStatusColor = useCallback((status: string) => {
     const colors: { [key: string]: string } = {
       PENDING: 'bg-yellow-100 text-yellow-800',
@@ -901,7 +898,278 @@ export default function AdminPage() {
         )}
       </div>
 
-      {/* Modals burada eklenecek - kısaltıldı */}
+      {/* Modals */}
+      {/* Kullanıcı Ekleme Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">👤 Kullanıcı Ekle</h3>
+            <form onSubmit={addUser}>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ad Soyad"
+                  value={userForm.name}
+                  onChange={(e) => setUserFormValue('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="email"
+                  placeholder="E-posta"
+                  value={userForm.email}
+                  onChange={(e) => setUserFormValue('email', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Telefon"
+                  value={userForm.phone}
+                  onChange={(e) => setUserFormValue('phone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <input
+                  type="password"
+                  placeholder="Şifre"
+                  value={userForm.password}
+                  onChange={(e) => setUserFormValue('password', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <select
+                  value={userForm.role}
+                  onChange={(e) => setUserFormValue('role', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="CUSTOMER">Müşteri</option>
+                  <option value="BRANCH_MANAGER">Şube Yöneticisi</option>
+                  <option value="SUPER_ADMIN">Süper Admin</option>
+                </select>
+                <select
+                  value={userForm.branchId}
+                  onChange={(e) => setUserFormValue('branchId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Şube Seçin</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ürün Ekleme Modal */}
+      {showAddProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">🍽️ Ürün Ekle</h3>
+            <form onSubmit={addProduct}>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Ürün Adı"
+                  value={productForm.name}
+                  onChange={(e) => setProductFormValue('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={productForm.description}
+                  onChange={(e) => setProductFormValue('description', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  required
+                />
+                <input
+                  type="number"
+                  placeholder="Fiyat"
+                  value={productForm.price}
+                  onChange={(e) => setProductFormValue('price', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <select
+                  value={productForm.categoryId}
+                  onChange={(e) => setProductFormValue('categoryId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Kategori Seçin</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={productForm.branchId}
+                  onChange={(e) => setProductFormValue('branchId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Şube Seçin</option>
+                  {branches.map((branch) => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setShowImageSelector(true)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-left"
+                  >
+                    {productForm.image ? 'Resim Seçildi' : 'Resim Seç'}
+                  </button>
+                  {showImageSelector && (
+                    <ImageSelector 
+                      isOpen={showImageSelector}
+                      onClose={() => setShowImageSelector(false)}
+                      onSelect={handleImageSelect}
+                      selectedImage={productForm.image}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddProductModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Kategori Ekleme Modal */}
+      {showAddCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">📂 Kategori Ekle</h3>
+            <form onSubmit={addCategory}>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Kategori Adı"
+                  value={categoryForm.name}
+                  onChange={(e) => setCategoryFormValue('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <textarea
+                  placeholder="Açıklama"
+                  value={categoryForm.description}
+                  onChange={(e) => setCategoryFormValue('description', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategoryModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Şube Ekleme Modal */}
+      {showAddBranchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">🏢 Şube Ekle</h3>
+            <form onSubmit={addBranch}>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Şube Adı"
+                  value={branchForm.name}
+                  onChange={(e) => setBranchFormValue('name', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+                <textarea
+                  placeholder="Adres"
+                  value={branchForm.address}
+                  onChange={(e) => setBranchFormValue('address', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Telefon"
+                  value={branchForm.phone}
+                  onChange={(e) => setBranchFormValue('phone', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAddBranchModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                >
+                  Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
