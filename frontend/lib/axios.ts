@@ -15,13 +15,30 @@ apiClient.interceptors.request.use(
   (config) => {
     console.log('🔍 Axios request:', config.method?.toUpperCase(), config.url)
     
-    // JWT token'ı localStorage'dan al ve Authorization header'ına ekle
-    const token = localStorage.getItem('token')
+    // JWT token'ı auth store'dan veya localStorage'dan al
+    let token = null;
+    
+    // Önce auth store'dan token'ı almaya çalış
+    try {
+      const authStorage = localStorage.getItem('auth-storage');
+      if (authStorage) {
+        const parsed = JSON.parse(authStorage);
+        token = parsed.state?.token;
+      }
+    } catch (error) {
+      console.error('Auth storage parse error:', error);
+    }
+    
+    // Eğer auth store'dan alınamadıysa localStorage'dan al
+    if (!token) {
+      token = localStorage.getItem('token');
+    }
+    
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-      console.log('🔑 Token eklendi:', token.substring(0, 20) + '...')
+      config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Token eklendi:', token.substring(0, 20) + '...');
     } else {
-      console.log('⚠️ Token bulunamadı')
+      console.log('⚠️ Token bulunamadı');
     }
     
     return config
