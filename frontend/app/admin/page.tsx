@@ -220,17 +220,17 @@ export default function AdminPage() {
   }, [token, router, setOrders]);
 
   // Socket event handlers
+  const handleNewOrder = useCallback((data: any) => {
+    toast.success(`Yeni sipariş: ${data.orderNumber}`);
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleOrderStatusChanged = useCallback((data: any) => {
+    toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
+    fetchOrders();
+  }, [fetchOrders]);
+
   useEffect(() => {
-    const handleNewOrder = useCallback((data: any) => {
-      toast.success(`Yeni sipariş: ${data.orderNumber}`);
-      fetchOrders();
-    }, [fetchOrders]);
-
-    const handleOrderStatusChanged = useCallback((data: any) => {
-      toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
-      fetchOrders();
-    }, [fetchOrders]);
-
     on('newOrder', handleNewOrder);
     on('orderStatusChanged', handleOrderStatusChanged);
 
@@ -238,7 +238,7 @@ export default function AdminPage() {
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
     };
-  }, [on, off, fetchOrders]);
+  }, [on, off, handleNewOrder, handleOrderStatusChanged]);
 
   // Optimize edilmiş interval
   useOptimizedInterval(
