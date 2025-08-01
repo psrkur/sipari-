@@ -4,7 +4,14 @@ export const getApiBaseUrl = (): string => {
   if (process.env.NODE_ENV === 'development') {
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   }
+  
   // Production'da canlı backend kullan
+  // Eğer window.location.hostname arsut.net.tr ise, production backend kullan
+  if (typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr') {
+    return 'https://yemek5-backend.onrender.com';
+  }
+  
+  // Diğer production ortamları için
   return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
 

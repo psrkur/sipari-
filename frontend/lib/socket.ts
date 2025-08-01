@@ -1,7 +1,24 @@
 import { useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'https://yemek5-backend.onrender.com';
+// Socket.IO URL'sini belirle
+const getSocketUrl = (): string => {
+  // Development ortamında local backend kullan
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
+  }
+  
+  // Production'da canlı backend kullan
+  // Eğer window.location.hostname arsut.net.tr ise, production backend kullan
+  if (typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr') {
+    return 'https://yemek5-backend.onrender.com';
+  }
+  
+  // Diğer production ortamları için
+  return process.env.NEXT_PUBLIC_SOCKET_URL || 'https://yemek5-backend.onrender.com';
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export interface SocketEvents {
   newOrder: (data: {

@@ -4,7 +4,13 @@ const socketIO = require('socket.io');
 function configureSocket(server) {
   const io = socketIO(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || "http://localhost:3000",
+      origin: [
+        process.env.FRONTEND_URL || "http://localhost:3000",
+        "https://arsut.net.tr",
+        "https://yemek5-frontend.onrender.com",
+        "https://yemek5.vercel.app",
+        "https://siparisnet.netlify.app"
+      ],
       methods: ["GET", "POST"],
       credentials: true
     }
