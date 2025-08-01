@@ -375,8 +375,14 @@ export default function Home() {
       console.log('✅ Login response:', response.data);
       
       if (response.data.token) {
+        // Auth store'u güncelle
+        const { login } = useAuthStore.getState();
+        login(response.data.user, response.data.token);
+        
+        // localStorage'a da kaydet (backup için)
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
         toast.success('Giriş başarılı!');
         setShowLoginModal(false);
         setLoginForm({ email: '', password: '' });

@@ -197,6 +197,8 @@ export default function AdminPage() {
     console.log('🔍 Yetki kontrolü - User:', user);
     console.log('🔍 Yetki kontrolü - User role:', user?.role);
     console.log('🔍 Yetki kontrolü - Token:', token ? 'Var' : 'Yok');
+    console.log('🔍 Yetki kontrolü - localStorage user:', localStorage.getItem('user'));
+    console.log('🔍 Yetki kontrolü - localStorage token:', localStorage.getItem('token'));
     
     // Auth checking tamamlandı
     setAuthChecking(false);
@@ -209,6 +211,7 @@ export default function AdminPage() {
     
     if (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER') {
       console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
+      console.log('❌ Kullanıcı rolü:', user.role);
       toast.error('Bu sayfaya erişim yetkiniz yok');
       router.push('/');
       return;
