@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/store/auth'
 import { useCartStore } from '@/store/cart'
 import { API_ENDPOINTS } from '@/lib/api'
-import axios from 'axios'
+import apiClient from '@/lib/axios'
 import { toast } from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
 import CategoryFilter from './components/CategoryFilter'
@@ -132,7 +132,7 @@ export default function Home() {
     
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id));
+        const response = await apiClient.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id));
         const productsData = Array.isArray(response.data) ? response.data : [];
         
         // Category'leri string'e çevir
@@ -349,7 +349,7 @@ export default function Home() {
         orderType: 'DELIVERY'
       };
 
-      const response = await axios.post(API_ENDPOINTS.ORDERS, orderData);
+      const response = await apiClient.post(API_ENDPOINTS.ORDERS, orderData);
       
       if (response.data) {
         toast.success('Siparişiniz başarıyla alındı!');
@@ -371,7 +371,7 @@ export default function Home() {
     console.log('🔍 Login form data:', loginForm);
     
     try {
-      const response = await axios.post(API_ENDPOINTS.LOGIN, loginForm);
+      const response = await apiClient.post(API_ENDPOINTS.LOGIN, loginForm);
       console.log('✅ Login response:', response.data);
       
       if (response.data.token) {
@@ -400,7 +400,7 @@ export default function Home() {
       return;
     }
     try {
-      const response = await axios.post(API_ENDPOINTS.REGISTER, {
+      const response = await apiClient.post(API_ENDPOINTS.REGISTER, {
         name: registerForm.name,
         email: registerForm.email,
         phone: registerForm.phone,
