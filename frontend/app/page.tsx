@@ -71,19 +71,28 @@ export default function Home() {
   // Optimize edilmiş state'ler
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
-  const [searchTerm, setSearchTerm] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [productsLoading, setProductsLoading] = useState(false)
   const [showBranchSelector, setShowBranchSelector] = useState(false)
+  const [showBranchDropdown, setShowBranchDropdown] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
   const [notes, setNotes] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showProductModal, setShowProductModal] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  const [registerForm, setRegisterForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    password: '', 
+    confirmPassword: '' 
+  })
+  const [isRegistering, setIsRegistering] = useState(false)
 
-  // Debounced search term
-  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches } = useOptimizedList<Branch>()
@@ -297,7 +306,6 @@ export default function Home() {
     localStorage.setItem('selectedBranch', JSON.stringify(branch));
     setShowBranchSelector(false);
     setSelectedCategory('Tümü');
-    setSearchTerm('');
     toast.success(`${branch.name} şubesi seçildi`);
   }, [])
 
@@ -329,6 +337,11 @@ export default function Home() {
       return;
     }
 
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     try {
       const orderData = {
         items: cart.map(item => ({
@@ -354,7 +367,64 @@ export default function Home() {
       console.error('Sipariş hatası:', error);
       toast.error('Sipariş alınamadı');
     }
-  }, [cart, notes, selectedBranch, clearCart])
+  }, [cart, notes, selectedBranch, clearCart, user])
+
+  const handleLogin = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(API_ENDPOINTS.LOGIN, loginForm);
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        toast.success('Giriş başarılı!');
+        setShowLoginModal(false);
+        setLoginForm({ email: '', password: '' });
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.error('Giriş hatası:', error);
+      toast.error('Giriş başarısız');
+    }
+  }, [loginForm])
+
+  const handleRegister = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (registerForm.password !== registerForm.confirmPassword) {
+      toast.error('Şifreler eşleşmiyor');
+      return;
+    }
+    try {
+      const response = await axios.post(API_ENDPOINTS.REGISTER, {
+        name: registerForm.name,
+        email: registerForm.email,
+        phone: registerForm.phone,
+        password: registerForm.password
+      });
+      if (response.data) {
+        toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+        setIsRegistering(false);
+        setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+      }
+    } catch (error: any) {
+      console.error('Kayıt hatası:', error);
+      toast.error('Kayıt başarısız');
+    }
+  }, [registerForm])
+
+  // Dropdown dışına tıklandığında kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.branch-dropdown')) {
+        setShowBranchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Filtrelenmiş ürünler - memoize edilmiş
   const filteredProducts = useMemo(() => {
@@ -370,16 +440,8 @@ export default function Home() {
       })
     }
 
-    // Arama filtresi
-    if (debouncedSearchTerm) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      )
-    }
-
     return filtered
-  }, [products, selectedCategory, debouncedSearchTerm])
+  }, [products, selectedCategory])
 
   // Gruplandırılmış ürünler - memoize edilmiş
   const groupedProducts = useMemo(() => {
@@ -491,24 +553,46 @@ export default function Home() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
-              {/* Arama */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Ürün ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                />
-              </div>
               
-              {/* Şube Değiştir */}
-              <button
-                onClick={() => setShowBranchSelector(true)}
-                className="text-orange-600 hover:text-orange-800 text-sm font-medium"
-              >
-                Şube Değiştir
-              </button>
+              {/* Şube Seçici Dropdown */}
+              <div className="relative branch-dropdown">
+                <button
+                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                  className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 hover:border-orange-400 transition-all duration-200"
+                >
+                  <Building className="h-4 w-4" />
+                  <span>{selectedBranch?.name || 'Şube Seç'}</span>
+                  <svg className={`w-4 h-4 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showBranchDropdown && (
+                  <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      {branches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={() => {
+                            handleBranchSelect(branch);
+                            setShowBranchDropdown(false);
+                          }}
+                          className="w-full text-left px-4 py-3 rounded-lg hover:bg-orange-50 transition-colors duration-200 flex items-center space-x-3"
+                        >
+                          <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Building className="h-4 w-4 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900">{branch.name}</div>
+                            <div className="text-xs text-gray-500">{branch.address}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               
               {/* Admin Panel */}
               <button
@@ -551,15 +635,45 @@ export default function Home() {
 
             {/* Mobil Menü Butonu */}
             <div className="flex md:hidden items-center space-x-2">
-              {/* Mobil Arama */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Ara..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-xs"
-                />
+              
+              {/* Mobil Şube Dropdown */}
+              <div className="relative branch-dropdown">
+                <button
+                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                  className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 hover:border-orange-400 transition-all duration-200"
+                >
+                  <Building className="h-3 w-3" />
+                  <span className="hidden sm:inline">{selectedBranch?.name || 'Şube'}</span>
+                  <svg className={`w-3 h-3 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Mobil Dropdown Menu */}
+                {showBranchDropdown && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-50 max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      {branches.map((branch) => (
+                        <button
+                          key={branch.id}
+                          onClick={() => {
+                            handleBranchSelect(branch);
+                            setShowBranchDropdown(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-orange-50 transition-colors duration-200 flex items-center space-x-2"
+                        >
+                          <div className="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <Building className="h-3 w-3 text-orange-600" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-xs">{branch.name}</div>
+                            <div className="text-xs text-gray-500 truncate">{branch.address}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               
               {/* Mobil Admin Butonu */}
@@ -905,11 +1019,150 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
+                 </div>
+       )}
+
+       {/* Giriş Modalı */}
+       {showLoginModal && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-2xl font-bold text-gray-900">
+                 {isRegistering ? '📝 Kayıt Ol' : '🔐 Giriş Yap'}
+               </h2>
+               <button
+                 onClick={() => {
+                   setShowLoginModal(false);
+                   setIsRegistering(false);
+                   setLoginForm({ email: '', password: '' });
+                   setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+                 }}
+                 className="text-gray-400 hover:text-gray-600 text-xl hover:scale-110 transition-transform"
+               >
+                 ✕
+               </button>
+             </div>
+
+             {isRegistering ? (
+               <form onSubmit={handleRegister} className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+                   <input
+                     type="text"
+                     required
+                     value={registerForm.name}
+                     onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="Adınız ve soyadınız"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+                   <input
+                     type="email"
+                     required
+                     value={registerForm.email}
+                     onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="ornek@email.com"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                   <input
+                     type="tel"
+                     required
+                     value={registerForm.phone}
+                     onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="0555 123 45 67"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                   <input
+                     type="password"
+                     required
+                     value={registerForm.password}
+                     onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre Tekrar</label>
+                   <input
+                     type="password"
+                     required
+                     value={registerForm.confirmPassword}
+                     onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <button
+                   type="submit"
+                   className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                 >
+                   📝 Kayıt Ol
+                 </button>
+                 <div className="text-center">
+                   <button
+                     type="button"
+                     onClick={() => setIsRegistering(false)}
+                     className="text-orange-600 hover:text-orange-800 text-sm"
+                   >
+                     Zaten hesabınız var mı? Giriş yapın
+                   </button>
+                 </div>
+               </form>
+             ) : (
+               <form onSubmit={handleLogin} className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+                   <input
+                     type="email"
+                     required
+                     value={loginForm.email}
+                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="ornek@email.com"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                   <input
+                     type="password"
+                     required
+                     value={loginForm.password}
+                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <button
+                   type="submit"
+                   className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                 >
+                   🔐 Giriş Yap
+                 </button>
+                 <div className="text-center">
+                   <button
+                     type="button"
+                     onClick={() => setIsRegistering(true)}
+                     className="text-orange-600 hover:text-orange-800 text-sm"
+                   >
+                     Hesabınız yok mu? Kayıt olun
+                   </button>
+                 </div>
+               </form>
+             )}
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ }
 
 // Ürünleri kategoriye göre grupla
 function groupProductsByCategory(products: Product[]) {
