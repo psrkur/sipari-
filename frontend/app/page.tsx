@@ -366,8 +366,14 @@ export default function Home() {
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('🔍 Giriş denemesi başlatılıyor...');
+    console.log('🔍 API URL:', API_ENDPOINTS.LOGIN);
+    console.log('🔍 Login form data:', loginForm);
+    
     try {
       const response = await axios.post(API_ENDPOINTS.LOGIN, loginForm);
+      console.log('✅ Login response:', response.data);
+      
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
@@ -375,10 +381,15 @@ export default function Home() {
         setShowLoginModal(false);
         setLoginForm({ email: '', password: '' });
         window.location.reload();
+      } else {
+        console.error('❌ Token alınamadı');
+        toast.error('Giriş başarısız - Token alınamadı');
       }
     } catch (error: any) {
-      console.error('Giriş hatası:', error);
-      toast.error('Giriş başarısız');
+      console.error('❌ Giriş hatası:', error);
+      console.error('❌ Error response:', error.response?.data);
+      console.error('❌ Error status:', error.response?.status);
+      toast.error(`Giriş başarısız: ${error.response?.data?.error || error.message}`);
     }
   }, [loginForm])
 
