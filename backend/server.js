@@ -870,14 +870,16 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
     }
 
     // Gerçek zamanlı bildirim gönder
-    io.emit('newOrder', {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      branchId: order.branchId,
-      status: order.status,
-      totalAmount: order.totalAmount,
-      createdAt: order.createdAt
-    });
+    if (io) {
+      io.emit('newOrder', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        branchId: order.branchId,
+        status: order.status,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt
+      });
+    }
 
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
@@ -1388,14 +1390,16 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
     }
 
     // Gerçek zamanlı bildirim gönder
-    io.emit('orderStatusChanged', {
-      orderId: order.id,
-      orderNumber: order.orderNumber,
-      status: status,
-      statusText: statusMessage,
-      branchId: order.branchId,
-      updatedAt: order.updatedAt
-    });
+    if (io) {
+      io.emit('orderStatusChanged', {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: status,
+        statusText: statusMessage,
+        branchId: order.branchId,
+        updatedAt: order.updatedAt
+      });
+    }
 
     res.json({
       order,
@@ -3955,9 +3959,11 @@ const tryStartServer = async () => {
 tryStartServer();
 
 // Socket.IO konfigürasyonu - server hazır olduğunda
+let io = null; // Global io objesi
+
 const setupSocketIO = () => {
   if (server) {
-    const io = configureSocket(server);
+    io = configureSocket(server);
     console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
   }
 };
