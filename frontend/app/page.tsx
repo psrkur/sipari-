@@ -462,24 +462,14 @@ export default function Home() {
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16 sm:h-20">
-            {/* Logo ve Şube Bilgisi */}
-            <div className="flex items-center space-x-4 lg:space-x-6">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-sm sm:text-xl">🥪</span>
-                </div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                  Çizar Sipariş
-                </h1>
+            {/* Logo */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-sm sm:text-xl">🥪</span>
               </div>
-              
-              {/* Şube Bilgisi */}
-              <div className="hidden lg:block">
-                <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700">
-                  <Building className="h-4 w-4" />
-                  <span>{selectedBranch?.name || 'Şube Seçilmedi'}</span>
-            </div>
-          </div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                Çizar Sipariş
+              </h1>
             </div>
             
             {/* Desktop Navigation */}
