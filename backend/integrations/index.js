@@ -33,10 +33,14 @@ class EcommerceIntegration {
   async loadPlatformConfigs() {
     try {
       const { PrismaClient } = require('@prisma/client');
+      
+      // DATABASE_URL'yi doğru şekilde ayarla
+      const DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30';
+      
       const prisma = new PrismaClient({
         datasources: {
           db: {
-            url: process.env.DATABASE_URL || 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30'
+            url: DATABASE_URL
           }
         }
       });

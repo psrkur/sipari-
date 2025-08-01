@@ -258,9 +258,9 @@ export default function Home() {
     } else {
       setCart([...cart, {
         productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
         image: product.image || ''
       }]);
     }
@@ -456,12 +456,12 @@ export default function Home() {
 
 
 
-  return (
+    return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
       {/* Responsive Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 sm:h-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16 sm:h-20">
             {/* Logo ve Şube Bilgisi */}
             <div className="flex items-center space-x-4 lg:space-x-6">
               <div className="flex items-center space-x-2 sm:space-x-3">
@@ -478,8 +478,8 @@ export default function Home() {
                 <div className="flex items-center space-x-2 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-xl px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700">
                   <Building className="h-4 w-4" />
                   <span>{selectedBranch?.name || 'Şube Seçilmedi'}</span>
-                </div>
-              </div>
+            </div>
+          </div>
             </div>
             
             {/* Desktop Navigation */}
@@ -513,17 +513,17 @@ export default function Home() {
                         >
                           <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
                             <Building className="h-4 w-4 text-orange-600" />
-                          </div>
+                  </div>
                           <div>
                             <div className="font-semibold text-gray-900">{branch.name}</div>
                             <div className="text-xs text-gray-500">{branch.address}</div>
-                          </div>
+                </div>
                         </button>
-                      ))}
+              ))}
                     </div>
-                  </div>
-                )}
-              </div>
+            </div>
+          )}
+        </div>
               
               {/* Admin Panel - Sadece admin girişi yapıldığında göster */}
               {user && user.role === 'admin' && (
@@ -545,7 +545,7 @@ export default function Home() {
                 {cart.length > 0 && (
                   <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center font-bold animate-pulse">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
-                  </span>
+                </span>
                 )}
               </button>
 
@@ -580,7 +580,7 @@ export default function Home() {
                 </button>
               )}
             </div>
-
+            
             {/* Mobil Menü Butonu */}
             <div className="flex md:hidden items-center space-x-2">
               
@@ -636,14 +636,14 @@ export default function Home() {
               {user ? (
                 // Giriş yapmış kullanıcı - Profil ve Çıkış
                 <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => router.push('/profile')}
+                <button
+                  onClick={() => router.push('/profile')}
                     className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-2 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg"
-                  >
+                >
                     👤
-                  </button>
-                  <button
-                    onClick={logout}
+                </button>
+                <button
+                  onClick={logout}
                     className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-2 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg"
                   >
                     🚪
@@ -735,17 +735,17 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-              </div>
-              
+            </div>
+
               {/* Ürün Listesi */}
-              {productsLoading ? (
-                <div className="text-center py-8">
+            {productsLoading ? (
+              <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-                  <p className="mt-2 text-gray-600">Ürünler yükleniyor...</p>
-                </div>
-              ) : (
+                <p className="mt-2 text-gray-600">Ürünler yükleniyor...</p>
+              </div>
+            ) : (
                 <div className="space-y-8 sm:space-y-12">
-                  {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+                {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
                     <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
                       <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
                         <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">
@@ -762,7 +762,7 @@ export default function Home() {
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                         {categoryProducts.map((product) => (
                           <div 
-                            key={product.id} 
+                          key={product.id}
                             className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
                             onClick={() => handleProductClick(product)}
                           >
@@ -815,12 +815,12 @@ export default function Home() {
                               </button>
                             </div>
                           </div>
-                        ))}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
+            )}
             </>
           )}
         </div>
@@ -892,8 +892,8 @@ export default function Home() {
                     <span className="text-2xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                       ₺{getTotalPrice().toFixed(2)}
                     </span>
-                  </div>
-                  
+          </div>
+
                   <input
                     type="text"
                     placeholder="Sipariş notu (opsiyonel)"
@@ -1154,12 +1154,12 @@ export default function Home() {
                  </div>
                </form>
              )}
-           </div>
+      </div>
          </div>
        )}
-     </div>
-   )
- }
+    </div>
+  )
+}
 
 // Ürünleri kategoriye göre grupla
 function groupProductsByCategory(products: Product[]) {
