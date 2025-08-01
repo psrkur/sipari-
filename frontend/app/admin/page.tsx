@@ -167,6 +167,49 @@ export default function AdminPage() {
     }
   );
 
+  // Ürün düzenleme fonksiyonu
+  const handleEditProduct = (product: any) => {
+    setEditingProduct(product);
+    setProductFormValue('name', product.name);
+    setProductFormValue('description', product.description);
+    setProductFormValue('price', product.price.toString());
+    setProductFormValue('categoryId', product.categoryId?.toString() || '');
+    setProductFormValue('branchId', product.branchId?.toString() || '');
+    setProductFormValue('image', product.image || '');
+    setShowEditProductModal(true);
+  };
+
+  // Ürün silme fonksiyonu
+  const handleDeleteProduct = async (productId: number) => {
+    if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        setProducts(prevProducts => prevProducts.filter(product => product.id !== productId));
+        alert('Ürün başarıyla silindi!');
+      } else {
+        const error = await response.json();
+        alert(`Hata: ${error.message || 'Ürün silinemedi'}`);
+      }
+    } catch (error) {
+      console.error('Ürün silme hatası:', error);
+      alert('Ürün silinirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Kullanıcı onaylama fonksiyonu
   const handleActivateUser = async (userId: number) => {
     try {
@@ -876,7 +919,7 @@ export default function AdminPage() {
             )}
 
                 {activePage === 'products' && (
-      <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={() => {}} onDeleteProduct={() => {}} user={user} /></div>
+      <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} user={user} /></div>
     )}
 
             {activePage === 'categories' && (
