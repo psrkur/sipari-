@@ -391,10 +391,14 @@ export default function Home() {
         const user = response.data.user;
         console.log('🔍 Kullanıcı rolü:', user.role);
         
-        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+        // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
+        const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+        const branchManagerRoles = ['BRANCH_MANAGER'];
+        
+        if (adminRoles.includes(user.role)) {
           // Admin kullanıcıları admin paneline yönlendir
           window.location.href = '/admin';
-        } else if (user.role === 'BRANCH_MANAGER') {
+        } else if (branchManagerRoles.includes(user.role)) {
           // Şube yöneticilerini şube paneline yönlendir
           window.location.href = '/branch';
         } else {
@@ -547,7 +551,7 @@ export default function Home() {
         </div>
               
               {/* Admin Panel - Sadece admin girişi yapıldığında göster */}
-              {user && user.role === 'admin' && (
+              {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'admin') && (
                 <button
                   onClick={() => router.push('/admin')}
                   className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -646,12 +650,14 @@ export default function Home() {
               </div>
               
               {/* Mobil Admin Butonu */}
-              <button
-                onClick={() => router.push('/admin')}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg"
-              >
-                ⚙️
-              </button>
+              {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'admin') && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-2 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg"
+                >
+                  ⚙️
+                </button>
+              )}
               
               {/* Mobil Giriş/Kullanıcı Butonu */}
               {user ? (

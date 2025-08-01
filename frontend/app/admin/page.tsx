@@ -209,9 +209,12 @@ export default function AdminPage() {
       return;
     }
     
-    if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN' && user.role !== 'admin' && user.role !== 'BRANCH_MANAGER') {
+    // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
+    if (!allowedRoles.includes(user.role)) {
       console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
       console.log('❌ Kullanıcı rolü:', user.role);
+      console.log('❌ İzin verilen roller:', allowedRoles);
       toast.error('Bu sayfaya erişim yetkiniz yok');
       router.push('/');
       return;
@@ -652,11 +655,14 @@ export default function AdminPage() {
     return texts[status] || status;
   }, []);
 
-  if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
+  // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
+  const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
+  if (!user || !allowedRoles.includes(user.role)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Yetkisiz erişim</p>
+          <p className="text-sm text-gray-500 mt-2">Kullanıcı rolü: {user?.role}</p>
         </div>
       </div>
     );
