@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-// Prisma client'ı server.js'den al
+// Prisma client'ı server.js'den al - global instance kullan
 let prisma;
 try {
-  prisma = require('@prisma/client').PrismaClient;
-  prisma = new prisma();
+  // Global prisma instance'ını kullan
+  prisma = global.prisma || require('@prisma/client').PrismaClient;
+  if (!global.prisma) {
+    global.prisma = new prisma();
+  }
+  prisma = global.prisma;
 } catch (error) {
   console.error('❌ Prisma client oluşturulamadı:', error);
   // Fallback için basit bir mock
@@ -20,6 +24,19 @@ try {
 router.get('/dashboard/stats', async (req, res) => {
   try {
     console.log('📊 Dashboard stats endpoint çağrıldı');
+    
+    // Timeout ayarı - 10 saniye
+    const timeout = setTimeout(() => {
+      console.log('⏰ Dashboard stats timeout - fallback data döndürülüyor');
+      return res.json({
+        sales: { today: 0, yesterday: 0, thisWeek: 0, thisMonth: 0, target: 20000, percentage: 0 },
+        orders: { total: 0, pending: 0, preparing: 0, ready: 0, delivered: 0, cancelled: 0, averageTime: 25 },
+        customers: { total: 0, newToday: 0 },
+        products: { total: 0 },
+        popularProducts: [],
+        currentOrders: []
+      });
+    }, 10000);
     
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -173,10 +190,18 @@ router.get('/dashboard/stats', async (req, res) => {
     };
 
     console.log('✅ Dashboard verileri başarıyla hazırlandı');
+    
+    // Timeout'u temizle
+    clearTimeout(timeout);
+    
     res.json(dashboardData);
 
   } catch (error) {
     console.error('❌ Dashboard stats hatası:', error);
+    
+    // Timeout'u temizle
+    clearTimeout(timeout);
+    
     res.status(500).json({ error: 'Dashboard verileri getirilemedi' });
   }
 });

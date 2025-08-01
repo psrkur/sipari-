@@ -47,7 +47,20 @@ const prisma = new PrismaClient({
     }
   },
   log: ['query', 'info', 'warn', 'error'],
+  // Connection pooling ve timeout ayarları
+  __internal: {
+    engine: {
+      connectTimeout: 30000, // 30 saniye
+      pool: {
+        min: 2,
+        max: 10
+      }
+    }
+  }
 });
+
+// Global prisma instance'ını export et
+global.prisma = prisma;
 
 // Firma yönetimi modülünü import et
 // const companyManagement = require('./company-management');
@@ -3955,15 +3968,62 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
 
-const server = app.listen(SERVER_PORT, () => {
-  console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
-  console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
-  console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
-});
+// Port çakışması kontrolü ve alternatif port deneme
+const startServer = (port) => {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => {
+      console.log(`🚀 Server ${port} portunda çalışıyor`);
+      console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
+      console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
+      resolve(server);
+    }).on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`⚠️ Port ${port} kullanımda, alternatif port deneniyor...`);
+        reject(err);
+      } else {
+        console.error('❌ Server başlatma hatası:', err);
+        reject(err);
+      }
+    });
+  });
+};
 
-// Socket.IO konfigürasyonu
-const io = configureSocket(server);
-console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
+// Port deneme sırası
+const ports = [SERVER_PORT, 3002, 3003, 3004, 3005];
+let server = null;
+
+const tryStartServer = async () => {
+  for (const port of ports) {
+    try {
+      server = await startServer(port);
+      break;
+    } catch (err) {
+      if (err.code === 'EADDRINUSE') {
+        continue;
+      } else {
+        throw err;
+      }
+    }
+  }
+  
+  if (!server) {
+    console.error('❌ Hiçbir port kullanılabilir değil');
+    process.exit(1);
+  }
+};
+
+tryStartServer();
+
+// Socket.IO konfigürasyonu - server hazır olduğunda
+const setupSocketIO = () => {
+  if (server) {
+    const io = configureSocket(server);
+    console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
+  }
+};
+
+// Server başlatıldıktan sonra Socket.IO'yu kur
+setTimeout(setupSocketIO, 1000);
 
 app.post('/api/admin/reset-super-admin', async (req, res) => {
   try {
