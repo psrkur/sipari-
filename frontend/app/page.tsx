@@ -380,7 +380,21 @@ export default function Home() {
         toast.success('Giriş başarılı!');
         setShowLoginModal(false);
         setLoginForm({ email: '', password: '' });
-        // window.location.reload(); // Geçici olarak kaldırıldı - hata mesajlarını görmek için
+        
+        // Kullanıcı rolüne göre yönlendirme
+        const user = response.data.user;
+        console.log('🔍 Kullanıcı rolü:', user.role);
+        
+        if (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN') {
+          // Admin kullanıcıları admin paneline yönlendir
+          window.location.href = '/admin';
+        } else if (user.role === 'BRANCH_MANAGER') {
+          // Şube yöneticilerini şube paneline yönlendir
+          window.location.href = '/branch';
+        } else {
+          // Normal kullanıcıları ana sayfada bırak
+          window.location.reload();
+        }
       } else {
         console.error('❌ Token alınamadı');
         toast.error('Giriş başarısız - Token alınamadı');
