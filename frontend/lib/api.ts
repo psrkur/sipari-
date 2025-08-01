@@ -104,106 +104,108 @@ export const API_ENDPOINTS = {
   get BRANCHES() { return `${getCurrentApiBaseUrl()}/api/branches` },
   
   // Products
-  PRODUCTS: (branchId: number) => `${API_BASE_URL}/api/products/${branchId}`,
+  get PRODUCTS() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/products/${branchId}` },
   
   // Categories
-  CATEGORIES: `${API_BASE_URL}/api/categories`,
+  get CATEGORIES() { return `${getCurrentApiBaseUrl()}/api/categories` },
   
   // Orders
-  ORDERS: `${API_BASE_URL}/api/orders`,
-  ORDER_DETAIL: (orderId: number) => `${API_BASE_URL}/api/orders/${orderId}`,
+  get ORDERS() { return `${getCurrentApiBaseUrl()}/api/orders` },
+  get ORDER_DETAIL() { return (orderId: number) => `${getCurrentApiBaseUrl()}/api/orders/${orderId}` },
   
   // Customer
-  CUSTOMER_PROFILE: `${API_BASE_URL}/api/customer/profile`,
+  get CUSTOMER_PROFILE() { return `${getCurrentApiBaseUrl()}/api/customer/profile` },
   
   // Image Management
-  UPLOAD_IMAGE: `${API_BASE_URL}/api/admin/upload-image`,
-  GET_IMAGES: `${API_BASE_URL}/api/admin/images-public`, // Public endpoint kullan
-  DELETE_IMAGE: (filename: string) => `${API_BASE_URL}/api/admin/images/${filename}`,
-  CUSTOMER_ORDERS: `${API_BASE_URL}/api/customer/orders`,
-  CUSTOMER_ORDER_DETAIL: (orderId: number) => `${API_BASE_URL}/api/customer/orders/${orderId}`,
-  CUSTOMER_ADDRESSES: `${API_BASE_URL}/api/customer/addresses`,
-  CUSTOMER_ADD_ADDRESS: `${API_BASE_URL}/api/customer/addresses`,
-  CUSTOMER_UPDATE_ADDRESS: (addressId: number) => `${API_BASE_URL}/api/customer/addresses/${addressId}`,
-  CUSTOMER_DELETE_ADDRESS: (addressId: number) => `${API_BASE_URL}/api/customer/addresses/${addressId}`,
+  get UPLOAD_IMAGE() { return `${getCurrentApiBaseUrl()}/api/admin/upload-image` },
+  get GET_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/images-public` }, // Public endpoint kullan
+  get DELETE_IMAGE() { return (filename: string) => `${getCurrentApiBaseUrl()}/api/admin/images/${filename}` },
+  get CUSTOMER_ORDERS() { return `${getCurrentApiBaseUrl()}/api/customer/orders` },
+  get CUSTOMER_ORDER_DETAIL() { return (orderId: number) => `${getCurrentApiBaseUrl()}/api/customer/orders/${orderId}` },
+  get CUSTOMER_ADDRESSES() { return `${getCurrentApiBaseUrl()}/api/customer/addresses` },
+  get CUSTOMER_ADD_ADDRESS() { return `${getCurrentApiBaseUrl()}/api/customer/addresses` },
+  get CUSTOMER_UPDATE_ADDRESS() { return (addressId: number) => `${getCurrentApiBaseUrl()}/api/customer/addresses/${addressId}` },
+  get CUSTOMER_DELETE_ADDRESS() { return (addressId: number) => `${getCurrentApiBaseUrl()}/api/customer/addresses/${addressId}` },
   
   // Admin
-  ADMIN_ORDERS: `${API_BASE_URL}/api/admin/orders`,
-  ADMIN_USERS: `${API_BASE_URL}/api/admin/users`,
-  ADMIN_PRODUCTS: `${API_BASE_URL}/api/admin/products`,
-  ADMIN_CATEGORIES: `${API_BASE_URL}/api/admin/categories`,
-  ADMIN_STATS: `${API_BASE_URL}/api/admin/stats`,
-  ADMIN_UPDATE_ORDER_STATUS: (orderId: number) => `${API_BASE_URL}/api/admin/orders/${orderId}/status`,
-  ADMIN_DELETE_USER: (userId: number) => `${API_BASE_URL}/api/admin/users/${userId}`,
-  ADMIN_ACTIVATE_USER: (userId: number) => `${API_BASE_URL}/api/admin/users/${userId}/activate`,
-  ADMIN_DELETE_PRODUCT: (productId: number) => `${API_BASE_URL}/api/admin/products/${productId}`,
-  ADMIN_UPDATE_PRODUCT: (productId: number) => `${API_BASE_URL}/api/admin/products/${productId}`,
-  ADMIN_DELETE_CATEGORY: (categoryId: number) => `${API_BASE_URL}/api/admin/categories/${categoryId}`,
-  ADMIN_UPDATE_CATEGORY: (categoryId: number) => `${API_BASE_URL}/api/admin/categories/${categoryId}`,
-  ADMIN_REORDER_CATEGORIES: `${API_BASE_URL}/api/admin/categories/reorder`,
-  ADMIN_BRANCHES: `${API_BASE_URL}/api/branches`,
-  ADMIN_UPDATE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
-  ADMIN_DELETE_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/branches/${branchId}`,
-  ADMIN_CLEANUP_IMAGES: `${API_BASE_URL}/api/admin/cleanup-images`,
-  ADMIN_IMAGE_STATUS: `${API_BASE_URL}/api/admin/image-status`,
+  get ADMIN_ORDERS() { return `${getCurrentApiBaseUrl()}/api/admin/orders` },
+  get ADMIN_USERS() { return `${getCurrentApiBaseUrl()}/api/admin/users` },
+  get ADMIN_PRODUCTS() { return `${getCurrentApiBaseUrl()}/api/admin/products` },
+  get ADMIN_CATEGORIES() { return `${getCurrentApiBaseUrl()}/api/admin/categories` },
+  get ADMIN_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/stats` },
+  get ADMIN_UPDATE_ORDER_STATUS() { return (orderId: number) => `${getCurrentApiBaseUrl()}/api/admin/orders/${orderId}/status` },
+  get ADMIN_DELETE_USER() { return (userId: number) => `${getCurrentApiBaseUrl()}/api/admin/users/${userId}` },
+  get ADMIN_ACTIVATE_USER() { return (userId: number) => `${getCurrentApiBaseUrl()}/api/admin/users/${userId}/activate` },
+  get ADMIN_DELETE_PRODUCT() { return (productId: number) => `${getCurrentApiBaseUrl()}/api/admin/products/${productId}` },
+  get ADMIN_UPDATE_PRODUCT() { return (productId: number) => `${getCurrentApiBaseUrl()}/api/admin/products/${productId}` },
+  get ADMIN_DELETE_CATEGORY() { return (categoryId: number) => `${getCurrentApiBaseUrl()}/api/admin/categories/${categoryId}` },
+  get ADMIN_UPDATE_CATEGORY() { return (categoryId: number) => `${getCurrentApiBaseUrl()}/api/admin/categories/${categoryId}` },
+  get ADMIN_REORDER_CATEGORIES() { return `${getCurrentApiBaseUrl()}/api/admin/categories/reorder` },
+  get ADMIN_BRANCHES() { return `${getCurrentApiBaseUrl()}/api/branches` },
+  get ADMIN_UPDATE_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/branches/${branchId}` },
+  get ADMIN_DELETE_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/branches/${branchId}` },
+  get ADMIN_CLEANUP_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/cleanup-images` },
+  get ADMIN_IMAGE_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/image-status` },
   
   // Database Cleanup
-  ADMIN_CLEANUP_ORDERS: `${API_BASE_URL}/api/admin/cleanup-orders`,
-  ADMIN_DATABASE_STATS: `${API_BASE_URL}/api/admin/database-stats`,
+  get ADMIN_CLEANUP_ORDERS() { return `${getCurrentApiBaseUrl()}/api/admin/cleanup-orders` },
+  get ADMIN_DATABASE_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/database-stats` },
   
   // Table Management
-  ADMIN_TABLES: `${API_BASE_URL}/api/admin/tables`,
-  ADMIN_TABLES_BY_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/tables/branch/${branchId}`,
-  ADMIN_TABLE_QR: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/qr`,
-  ADMIN_UPDATE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
-  ADMIN_DELETE_TABLE: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}`,
+  get ADMIN_TABLES() { return `${getCurrentApiBaseUrl()}/api/admin/tables` },
+  get ADMIN_TABLES_BY_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/branch/${branchId}` },
+  get ADMIN_TABLE_QR() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}/qr` },
+  get ADMIN_UPDATE_TABLE() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}` },
+  get ADMIN_DELETE_TABLE() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}` },
   
   // Table Orders & Collection
-  ADMIN_TABLE_ORDERS: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/orders`,
-  TABLE_ORDERS: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/orders`,
-  ADMIN_TABLE_COLLECT: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/collect`,
-  ADMIN_TABLE_RESET: (tableId: number) => `${API_BASE_URL}/api/admin/tables/${tableId}/reset`,
-  ADMIN_ACTIVE_TABLES: `${API_BASE_URL}/api/admin/tables/active`,
+  get ADMIN_TABLE_ORDERS() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}/orders` },
+  get TABLE_ORDERS() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/table/${tableId}/orders` },
+  get ADMIN_TABLE_COLLECT() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}/collect` },
+  get ADMIN_TABLE_RESET() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/admin/tables/${tableId}/reset` },
+  get ADMIN_ACTIVE_TABLES() { return `${getCurrentApiBaseUrl()}/api/admin/tables/active` },
   
   // Table Order
-  TABLE_INFO: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}`,
-  TABLE_PRODUCTS: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/products`,
-  TABLE_ORDER: (tableId: number) => `${API_BASE_URL}/api/table/${tableId}/order`,
+  get TABLE_INFO() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/table/${tableId}` },
+  get TABLE_PRODUCTS() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/table/${tableId}/products` },
+  get TABLE_ORDER() { return (tableId: number) => `${getCurrentApiBaseUrl()}/api/table/${tableId}/order` },
   
   // Images
-  IMAGE_URL: (imagePath: string) => {
-    // Eğer imagePath yoksa veya boşsa, placeholder resim döndür
-    if (!imagePath || imagePath.trim() === '') {
-      return PLACEHOLDER_IMAGE;
-    }
-    
-    // Eğer imagePath zaten tam URL ise (Cloudinary URL), olduğu gibi döndür
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-      return imagePath;
-    }
-    
-    // Base64 data URL kontrolü - doğrudan döndür
-    if (imagePath.startsWith('data:image/')) {
-      return imagePath;
-    }
-    
-    // /uploads/products/ formatındaki resimler için
-    if (imagePath.startsWith('/uploads/products/')) {
-      const filename = imagePath.replace('/uploads/products/', '');
-      return `${API_BASE_URL}/api/images/${filename}`;
-    }
-    
-    // Eğer imagePath sadece dosya adı ise (örn: "resim.png"), proxy endpoint kullan
-    if (imagePath && !imagePath.startsWith('/') && !imagePath.startsWith('http')) {
-      return `${API_BASE_URL}/api/images/${imagePath}`;
-    }
-    
-    // Normal resim URL'si oluştur
-    return `${API_BASE_URL}${imagePath}`;
+  get IMAGE_URL() { 
+    return (imagePath: string) => {
+      // Eğer imagePath yoksa veya boşsa, placeholder resim döndür
+      if (!imagePath || imagePath.trim() === '') {
+        return PLACEHOLDER_IMAGE;
+      }
+      
+      // Eğer imagePath zaten tam URL ise (Cloudinary URL), olduğu gibi döndür
+      if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+      }
+      
+      // Base64 data URL kontrolü - doğrudan döndür
+      if (imagePath.startsWith('data:image/')) {
+        return imagePath;
+      }
+      
+      // /uploads/products/ formatındaki resimler için
+      if (imagePath.startsWith('/uploads/products/')) {
+        const filename = imagePath.replace('/uploads/products/', '');
+        return `${getCurrentApiBaseUrl()}/api/images/${filename}`;
+      }
+      
+      // Eğer imagePath sadece dosya adı ise (örn: "resim.png"), proxy endpoint kullan
+      if (imagePath && !imagePath.startsWith('/') && !imagePath.startsWith('http')) {
+        return `${getCurrentApiBaseUrl()}/api/images/${imagePath}`;
+      }
+      
+      // Normal resim URL'si oluştur
+      return `${getCurrentApiBaseUrl()}${imagePath}`;
+    };
   },
   
-  COMPANIES: `${API_BASE_URL}/api/companies`,
-  CUSTOMERS: `${API_BASE_URL}/api/customers`,
+  get COMPANIES() { return `${getCurrentApiBaseUrl()}/api/companies` },
+  get CUSTOMERS() { return `${getCurrentApiBaseUrl()}/api/customers` },
   
 
 };
