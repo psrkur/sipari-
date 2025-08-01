@@ -24,6 +24,7 @@ apiClient.interceptors.request.use(
       if (authStorage) {
         const parsed = JSON.parse(authStorage);
         token = parsed.state?.token;
+        console.log('🔍 Auth storage token:', token ? 'Bulundu' : 'Bulunamadı');
       }
     } catch (error) {
       console.error('Auth storage parse error:', error);
@@ -32,13 +33,28 @@ apiClient.interceptors.request.use(
     // Eğer auth store'dan alınamadıysa localStorage'dan al
     if (!token) {
       token = localStorage.getItem('token');
+      console.log('🔍 LocalStorage token:', token ? 'Bulundu' : 'Bulunamadı');
+    }
+    
+    // Zustand store'dan da kontrol et
+    if (!token) {
+      try {
+        // Zustand store'u doğrudan kontrol et
+        const authStore = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+        if (authStore.state && authStore.state.token) {
+          token = authStore.state.token;
+          console.log('🔍 Zustand store token bulundu');
+        }
+      } catch (error) {
+        console.error('Zustand store parse error:', error);
+      }
     }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('🔑 Token eklendi:', token.substring(0, 20) + '...');
     } else {
-      console.log('⚠️ Token bulunamadı');
+      console.log('⚠️ Token bulunamadı - Tüm kaynaklar kontrol edildi');
     }
     
     return config

@@ -70,19 +70,10 @@ function configureSocket(server) {
       performanceMonitor.recordDisconnection(socket.id, reason);
       console.log(`❌ Kullanıcı bağlantısı kesildi: ${socket.id}, Sebep: ${reason}`);
       
-      // Yeniden bağlanma denemesi
+      // Server-side'da socket.connect() kullanılamaz, client-side'da yapılır
+      // Bu sadece log kaydı için
       if (reason === 'transport close' || reason === 'ping timeout') {
-        reconnectAttempts++;
-        if (reconnectAttempts <= maxReconnectAttempts) {
-          console.log(`🔄 Yeniden bağlanma denemesi ${reconnectAttempts}/${maxReconnectAttempts}`);
-          setTimeout(() => {
-            if (!isConnected) {
-              socket.connect();
-            }
-          }, 1000 * reconnectAttempts); // Exponential backoff
-        } else {
-          console.log(`❌ Maksimum yeniden bağlanma denemesi aşıldı: ${socket.id}`);
-        }
+        console.log(`📝 Bağlantı kesilme kaydedildi: ${socket.id}`);
       }
     });
 
