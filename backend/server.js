@@ -529,12 +529,17 @@ app.get('/uploads/:filename', (req, res) => {
 });
 
 const authenticateToken = (req, res, next) => {
+  // WebSocket bağlantıları için token kontrolü yapma
+  if (req.url?.includes('/socket.io/')) {
+    return next();
+  }
+  
   // Log seviyesini azalt - sadece hata durumlarında log
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   
   if (!token) {
-    console.log('❌ Token yok');
+    console.log('❌ Token yok - API isteği:', req.url);
     return res.status(401).json({ error: 'Token gerekli' });
   }
   
