@@ -25,6 +25,7 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const logger = require('./utils/logger');
 const { configureSocket } = require('./socket-config');
+const performanceMonitor = require('./performance-monitor');
 const chatbotRouter = require('./chatbot-api');
 const aiChatbotRouter = require('./ai-chatbot-api');
 const dashboardRouter = require('./dashboard-api');
@@ -528,11 +529,9 @@ app.get('/uploads/:filename', (req, res) => {
 });
 
 const authenticateToken = (req, res, next) => {
-  console.log('🔍 authenticateToken çağrıldı');
+  // Log seviyesini azalt - sadece hata durumlarında log
   const authHeader = req.headers['authorization'];
-  console.log('🔍 Authorization header:', authHeader);
   const token = authHeader && authHeader.split(' ')[1];
-  console.log('🔍 Token:', token);
   
   if (!token) {
     console.log('❌ Token yok');
@@ -544,7 +543,10 @@ const authenticateToken = (req, res, next) => {
       console.log('❌ Token hatası:', err.message);
       return res.status(403).json({ error: 'Geçersiz token' });
     }
-    console.log('✅ Token geçerli, user:', user);
+    // Sadece debug modunda user bilgisini logla
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Token geçerli, user:', user);
+    }
     req.user = user;
     next();
   });
@@ -3963,8 +3965,27 @@ let io = null; // Global io objesi
 
 const setupSocketIO = () => {
   if (server) {
-    io = configureSocket(server);
-    console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
+    try {
+      io = configureSocket(server);
+      console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
+      
+      // Socket.IO bağlantı durumu izleme
+      io.engine.on('connection_error', (err) => {
+        console.error('🔌 Socket.IO bağlantı hatası:', err);
+      });
+      
+      // Server kapatma işlemi
+      process.on('SIGTERM', () => {
+        console.log('🔄 Server kapatılıyor...');
+        if (io) {
+          io.close();
+        }
+        process.exit(0);
+      });
+      
+    } catch (error) {
+      console.error('❌ Socket.IO kurulum hatası:', error);
+    }
   }
 };
 
@@ -4697,6 +4718,30 @@ app.get('/api/admin/images-public', async (req, res) => {
   } catch (error) {
     console.error('❌ Public resim listesi hatası:', error);
     res.status(500).json({ error: 'Resim listesi alınamadı' });
+  }
+});
+
+// Performans izleme endpoint'i
+app.get('/api/admin/performance-stats', authenticateToken, async (req, res) => {
+  try {
+    // Sadece SUPER_ADMIN ve BRANCH_MANAGER erişebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    console.log('📊 Performans istatistikleri isteği alındı');
+    
+    const stats = performanceMonitor.getStats();
+    const health = performanceMonitor.getHealthStatus();
+    
+    res.json({
+      performance: stats,
+      health: health,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Performans istatistik hatası:', error);
+    res.status(500).json({ error: 'Performans istatistikleri alınamadı' });
   }
 });
 

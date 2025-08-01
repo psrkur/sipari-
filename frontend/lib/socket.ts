@@ -54,14 +54,30 @@ export interface SocketEvents {
 
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
 
   useEffect(() => {
     // Socket bağlantısını oluştur
     socketRef.current = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
-      timeout: 20000,
-      forceNew: true,
+      timeout: 30000, // 30 saniye timeout
+      forceNew: false, // Mevcut bağlantıyı yeniden kullan
+      // Reconnection ayarları
+      reconnection: true,
+      reconnectionAttempts: maxReconnectAttempts,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      maxReconnectionAttempts: maxReconnectAttempts,
+      // Ping/Pong ayarları
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      // Upgrade ayarları
+      upgrade: true,
+      rememberUpgrade: true,
+      // Buffer ayarları
+      maxHttpBufferSize: 1e6, // 1MB
     });
 
     const socket = socketRef.current;
@@ -69,14 +85,47 @@ export const useSocket = () => {
     // Bağlantı olayları
     socket.on('connect', () => {
       console.log('🔌 Socket.IO bağlantısı kuruldu');
+      reconnectAttemptsRef.current = 0; // Bağlantı başarılı olduğunda sıfırla
     });
 
-    socket.on('disconnect', () => {
-      console.log('❌ Socket.IO bağlantısı kesildi');
+    socket.on('disconnect', (reason) => {
+      console.log(`❌ Socket.IO bağlantısı kesildi, Sebep: ${reason}`);
+      
+      // Yeniden bağlanma denemesi
+      if (reason === 'io server disconnect' || reason === 'transport close') {
+        reconnectAttemptsRef.current++;
+        if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
+          console.log(`🔄 Yeniden bağlanma denemesi ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
+        } else {
+          console.log(`❌ Maksimum yeniden bağlanma denemesi aşıldı`);
+        }
+      }
     });
 
     socket.on('connect_error', (error) => {
-      console.error('🔌 Socket.IO bağlantı hatası:', error);
+      console.error('🔌 Socket.IO bağlantı hatası:', error.message);
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      console.log(`✅ Socket.IO bağlantısı yeniden kuruldu, Deneme: ${attemptNumber}`);
+      reconnectAttemptsRef.current = 0;
+    });
+
+    socket.on('reconnect_error', (error) => {
+      console.error('❌ Socket.IO yeniden bağlanma hatası:', error.message);
+    });
+
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Socket.IO yeniden bağlanma denemesi: ${attemptNumber}`);
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.log('❌ Socket.IO yeniden bağlanma başarısız');
+    });
+
+    // Ping/Pong kontrolü
+    socket.on('ping', () => {
+      socket.emit('pong');
     });
 
     // Cleanup
@@ -88,14 +137,16 @@ export const useSocket = () => {
   }, []);
 
   const joinRoom = (room: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit('joinRoom', room);
       console.log(`👥 Odaya katılındı: ${room}`);
+    } else {
+      console.warn('⚠️ Socket bağlantısı yok, odaya katılınamıyor');
     }
   };
 
   const leaveRoom = (room: string) => {
-    if (socketRef.current) {
+    if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit('leaveRoom', room);
       console.log(`👋 Odadan ayrılındı: ${room}`);
     }
@@ -125,5 +176,6 @@ export const useSocket = () => {
     leaveRoom,
     on,
     off,
+    isConnected: socketRef.current?.connected || false,
   };
 }; 

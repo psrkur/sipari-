@@ -14,6 +14,16 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     console.log('🔍 Axios request:', config.method?.toUpperCase(), config.url)
+    
+    // JWT token'ı localStorage'dan al ve Authorization header'ına ekle
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+      console.log('🔑 Token eklendi:', token.substring(0, 20) + '...')
+    } else {
+      console.log('⚠️ Token bulunamadı')
+    }
+    
     return config
   },
   (error) => {

@@ -676,54 +676,19 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">👑 Admin Paneli</h1>
-            
-            <div className="flex items-center space-x-4">
-              {/* Filtreler */}
-              <select
-                value={selectedBranch?.id || ''}
-                onChange={(e) => {
-                  const branch = branches.find(b => b.id === parseInt(e.target.value));
-                  setSelectedBranch(branch);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Tüm Şubeler</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Tüm Durumlar</option>
-                <option value="PENDING">Bekliyor</option>
-                <option value="PREPARING">Hazırlanıyor</option>
-                <option value="READY">Hazır</option>
-                <option value="DELIVERED">Teslim Edildi</option>
-                <option value="CANCELLED">İptal Edildi</option>
-              </select>
-
-              <select
-                value={selectedOrderType}
-                onChange={(e) => setSelectedOrderType(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">Tüm Tipler</option>
-                <option value="DELIVERY">Teslimat</option>
-                <option value="TABLE">Masa</option>
-              </select>
-            </div>
-          </div>
+      {/* Admin Navigasyon Menüsü */}
+      <div className="bg-white shadow-sm border-b mb-6">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap gap-2">
+          <Link href="/admin/dashboard" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">📊 Dashboard</Link>
+          <Link href="/pos" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🧾 POS</Link>
+          <Link href="/kitchen" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">👨‍🍳 Mutfak</Link>
+          <Link href="/admin?page=products" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🍽️ Ürünler</Link>
+          <Link href="/admin?page=categories" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">📂 Kategoriler</Link>
+          <Link href="/admin?page=users" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">👤 Kullanıcılar</Link>
+          <Link href="/admin?page=branches" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🏢 Şubeler</Link>
+          <Link href="/admin/qr-codes" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🔗 QR Kodlar</Link>
+          <Link href="/admin/table-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🍽️ Masa Yönetimi</Link>
+          <Link href="/admin/chat-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">💬 Sohbet</Link>
         </div>
       </div>
 
