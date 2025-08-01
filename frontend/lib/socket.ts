@@ -69,8 +69,6 @@ export const useSocket = () => {
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      // Buffer ayarları
-      maxHttpBufferSize: 1e6, // 1MB
     });
 
     const socket = socketRef.current;
