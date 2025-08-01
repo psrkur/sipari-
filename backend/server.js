@@ -317,22 +317,22 @@ app.get('/api/images/:filename', (req, res) => {
   
   console.log('🖼️ /api/images/ çağrıldı:', filename);
   
+  // CORS ayarları - Tüm origin'lere izin ver
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
   // Base64 data URL kontrolü
   if (filename.startsWith('data:image/')) {
     console.log('📊 Base64 data URL tespit edildi');
-    
-    // CORS ayarları
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
-    res.set('Access-Control-Max-Age', '86400');
-    res.set('Access-Control-Allow-Credentials', 'false');
-    
-    // OPTIONS request için
-    if (req.method === 'OPTIONS') {
-      return res.status(200).end();
-    }
     
     // Base64 data URL'den content type'ı çıkar
     const match = filename.match(/^data:([^;]+);base64,(.+)$/);
@@ -675,10 +675,30 @@ app.get('/api/branches', async (req, res) => {
   }
 });
 
+// Admin şubeler endpoint'i
+app.get('/api/admin/branches', authenticateToken, async (req, res) => {
+  try {
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+    
+    const branches = await prisma.branch.findMany({
+      orderBy: { name: 'asc' }
+    });
+    res.json(branches);
+  } catch (error) {
+    res.status(500).json({ error: 'Şubeler getirilemedi' });
+  }
+});
+
 // Şube yönetimi endpoint'leri
 app.post('/api/branches', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') {
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
@@ -707,7 +727,9 @@ app.post('/api/branches', authenticateToken, async (req, res) => {
 
 app.put('/api/admin/branches/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') {
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
@@ -732,7 +754,9 @@ app.put('/api/admin/branches/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/admin/branches/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') {
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
@@ -1726,7 +1750,7 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
       if (existingProduct.branchId !== req.user.branchId) {
         return res.status(403).json({ error: 'Bu ürünü güncelleyemezsiniz' });
       }
-    } else if (req.user.role !== 'SUPER_ADMIN') {
+    } else if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN' && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Yetkisiz' });
     }
 
@@ -4056,8 +4080,8 @@ app.post('/api/admin/cleanup-orders', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/database-stats', authenticateToken, async (req, res) => {
   try {
-    // Sadece SUPER_ADMIN ve BRANCH_MANAGER erişebilir
-    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+    // SUPER_ADMIN, ADMIN ve BRANCH_MANAGER erişebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN' && req.user.role !== 'admin' && req.user.role !== 'BRANCH_MANAGER') {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
