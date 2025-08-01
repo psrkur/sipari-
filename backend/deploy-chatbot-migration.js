@@ -23,18 +23,7 @@ async function createChatMessageTable() {
     
     console.log('✅ ChatMessage tablosu başarıyla oluşturuldu!');
     
-    // Test verisi ekle
-    await prisma.chatMessage.create({
-      data: {
-        customerId: 1,
-        message: 'Test mesajı',
-        platform: 'web',
-        direction: 'incoming',
-        isProcessed: false
-      }
-    });
-    
-    console.log('✅ Test verisi eklendi!');
+
     
   } catch (error) {
     console.error('❌ Hata:', error);

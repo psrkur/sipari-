@@ -3102,50 +3102,7 @@ app.post('/api/admin/fix-kadikoy-completed-dates', async (req, res) => {
   }
 });
 
-app.post('/api/admin/create-test-data', async (req, res) => {
-  try {
-    const now = new Date();
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      date.setHours(10 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60));
-      
-      await prisma.order.create({
-        data: {
-          orderNumber: `TEST-WEEK-${Date.now()}-${i}`,
-          totalAmount: 50 + Math.floor(Math.random() * 200),
-          status: 'COMPLETED',
-          branchId: 1,
-          customerId: 1,
-          createdAt: date
-        }
-      });
-    }
-    
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      date.setHours(10 + Math.floor(Math.random() * 12), Math.floor(Math.random() * 60));
-      
-      await prisma.order.create({
-        data: {
-          orderNumber: `TEST-MONTH-${Date.now()}-${i}`,
-          totalAmount: 30 + Math.floor(Math.random() * 150),
-          status: 'COMPLETED',
-          branchId: 2,
-          customerId: 1,
-          createdAt: date
-        }
-      });
-    }
-    
-    res.json({ message: 'Test verileri oluşturuldu' });
-  } catch (error) {
-    console.error('Test veri oluşturma hatası:', error);
-    res.status(500).json({ error: 'Test verileri oluşturulamadı' });
-  }
-});
+
 
 app.get('/api/admin/stats', authenticateToken, async (req, res) => {
   try {
@@ -3397,15 +3354,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Test endpoint
-app.get('/api/test', (req, res) => {
-  res.json({ 
-    message: 'Backend çalışıyor!',
-    database: isPostgreSQL ? 'PostgreSQL' : 'SQLite',
-    databaseUrl: DATABASE_URL.substring(0, 50) + '...',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+
 
 // Veritabanı verilerini kontrol etme endpoint'i
 app.get('/api/database-status', async (req, res) => {
@@ -3466,50 +3415,7 @@ app.get('/api/real-data', async (req, res) => {
   }
 });
 
-// Admin test endpoint'i (authentication olmadan)
-app.get('/api/admin/test', async (req, res) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: { id: true, email: true, name: true, role: true }
-    });
-    
-    const branches = await prisma.branch.findMany({
-      select: { id: true, name: true, address: true }
-    });
-    
-    const products = await prisma.product.findMany({
-      select: { id: true, name: true, price: true, categoryId: true },
-      take: 10
-    });
-    
-    const categories = await prisma.category.findMany({
-      select: { id: true, name: true, description: true }
-    });
-    
-    const orders = await prisma.order.findMany({
-      select: { id: true, orderNumber: true, status: true, totalAmount: true },
-      take: 5
-    });
-    
-    res.json({
-      message: 'Admin paneli test verileri',
-      counts: {
-        users: users.length,
-        branches: branches.length,
-        products: products.length,
-        categories: categories.length,
-        orders: orders.length
-      },
-      users: users,
-      branches: branches,
-      products: products,
-      categories: categories,
-      orders: orders
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Admin test verileri getirilemedi', details: error.message });
-  }
-});
+
 
 // Admin kullanıcısı oluşturma endpoint'i
 app.post('/api/admin/create-admin', async (req, res) => {
@@ -3557,62 +3463,7 @@ app.post('/api/admin/create-admin', async (req, res) => {
   }
 });
 
-// Admin paneli test endpoint'leri (authentication olmadan)
-app.get('/api/admin/users-test', async (req, res) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: { id: true, email: true, name: true, role: true, isActive: true }
-    });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Kullanıcılar getirilemedi', details: error.message });
-  }
-});
 
-app.get('/api/admin/orders-test', async (req, res) => {
-  try {
-    const orders = await prisma.order.findMany({
-      include: {
-        branch: true,
-        customer: true,
-        table: true,
-        orderItems: {
-          include: {
-            product: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 20
-    });
-    res.json(orders);
-  } catch (error) {
-    res.status(500).json({ error: 'Siparişler getirilemedi', details: error.message });
-  }
-});
-
-app.get('/api/admin/products-test', async (req, res) => {
-  try {
-    const products = await prisma.product.findMany({
-      include: {
-        category: true,
-        branch: true
-      }
-    });
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: 'Ürünler getirilemedi', details: error.message });
-  }
-});
-
-app.get('/api/admin/categories-test', async (req, res) => {
-  try {
-    const categories = await prisma.category.findMany();
-    res.json(categories);
-  } catch (error) {
-    res.status(500).json({ error: 'Kategoriler getirilemedi', details: error.message });
-  }
-});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -3771,17 +3622,7 @@ app.get('/api/products/:id/image', async (req, res) => {
   }
 });
 
-// Test endpoint - basit kontrol için
-app.get('/api/test', (req, res) => {
-  console.log('🔍 GET /api/test çağrıldı - v6 - DEPLOYMENT TRIGGER');
-  res.json({ 
-    message: 'Backend çalışıyor!', 
-    database: 'PostgreSQL',
-    databaseUrl: DATABASE_URL.substring(0, 50) + '...',
-    environment: process.env.NODE_ENV || 'development',
-    timestamp: new Date().toISOString()
-  });
-});
+
 
 // 🚨 URGENT: Resim düzeltme endpoint'i
 app.post('/api/admin/fix-images', async (req, res) => {
@@ -4589,72 +4430,7 @@ app.delete('/api/admin/images/:filename', async (req, res) => {
 // Statik dosya servisi
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Geçici test endpoint'i - authentication olmadan
-app.get('/api/admin/images-test', async (req, res) => {
-  try {
-    console.log('🔍 GET /api/admin/images-test çağrıldı (test endpoint)');
-    
-    const uploadDir = path.join(__dirname, 'uploads', 'products');
-    console.log('🔍 Upload directory:', uploadDir);
-    
-    if (!fs.existsSync(uploadDir)) {
-      console.log('📁 Upload directory yok, boş array döndürülüyor');
-      return res.json([]);
-    }
 
-    const files = fs.readdirSync(uploadDir);
-    console.log('📁 Bulunan dosyalar:', files);
-    
-    const images = files
-      .filter(file => {
-        try {
-          const ext = path.extname(file).toLowerCase();
-          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
-          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
-          return isValid;
-        } catch (error) {
-          console.error('Dosya filtresi hatası:', error);
-          return false;
-        }
-      })
-      .map(file => {
-        try {
-          const filePath = path.join(uploadDir, file);
-          const stats = fs.statSync(filePath);
-          const imageInfo = {
-            filename: file,
-            path: `/uploads/products/${file}`,
-            size: stats.size,
-            uploadedAt: stats.mtime
-          };
-          console.log('📄 Resim bilgisi:', imageInfo);
-          return imageInfo;
-        } catch (error) {
-          console.error('Dosya bilgisi alma hatası:', error);
-          return null;
-        }
-      })
-      .filter(image => image !== null)
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
-
-    console.log('✅ Toplam resim sayısı:', images.length);
-    console.log('✅ Response gönderiliyor:', images);
-    res.json({
-      message: 'Test endpoint başarılı',
-      count: images.length,
-      images: images
-    });
-  } catch (error) {
-    console.error('❌ Test resim listesi hatası:', error);
-    res.status(500).json({ error: 'Test resim listesi alınamadı' });
-  }
-});
-
-// Test endpoint - basit kontrol için
-app.get('/api/test', (req, res) => {
-  console.log('🔍 GET /api/test çağrıldı - v5 - DEPLOYMENT TRIGGER');
-  res.json({ message: 'Backend çalışıyor!', timestamp: new Date().toISOString() });
-});
 
 // Public endpoint - authentication olmadan (frontend için)
 app.get('/api/admin/images-public', async (req, res) => {
