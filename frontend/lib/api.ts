@@ -146,6 +146,10 @@ export const API_ENDPOINTS = {
   ADMIN_CLEANUP_IMAGES: `${API_BASE_URL}/api/admin/cleanup-images`,
   ADMIN_IMAGE_STATUS: `${API_BASE_URL}/api/admin/image-status`,
   
+  // Database Cleanup
+  ADMIN_CLEANUP_ORDERS: `${API_BASE_URL}/api/admin/cleanup-orders`,
+  ADMIN_DATABASE_STATS: `${API_BASE_URL}/api/admin/database-stats`,
+  
   // Table Management
   ADMIN_TABLES: `${API_BASE_URL}/api/admin/tables`,
   ADMIN_TABLES_BY_BRANCH: (branchId: number) => `${API_BASE_URL}/api/admin/tables/branch/${branchId}`,

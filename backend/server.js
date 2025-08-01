@@ -29,6 +29,9 @@ const chatbotRouter = require('./chatbot-api');
 const aiChatbotRouter = require('./ai-chatbot-api');
 const dashboardRouter = require('./dashboard-api');
 
+// Otomatik temizlik modülünü import et
+const { startAutoCleanup, cleanupOldOrders, showDatabaseStats } = require('./cleanup-old-orders');
+
 // Cloudinary konfigürasyonu
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'your-cloud-name',
@@ -3961,6 +3964,96 @@ const setupSocketIO = () => {
 
 // Server başlatıldıktan sonra Socket.IO'yu kur
 setTimeout(setupSocketIO, 1000);
+
+// Otomatik temizlik başlat
+setTimeout(() => {
+  console.log('🧹 Otomatik temizlik sistemi başlatılıyor...');
+  startAutoCleanup();
+}, 2000);
+
+// Admin temizlik endpoint'leri
+app.post('/api/admin/cleanup-orders', authenticateToken, async (req, res) => {
+  try {
+    // Sadece SUPER_ADMIN ve BRANCH_MANAGER erişebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    console.log('🧹 Manuel temizlik isteği alındı');
+    
+    // Temizlik işlemini çalıştır
+    await cleanupOldOrders();
+    
+    // İstatistikleri al
+    await showDatabaseStats();
+    
+    res.json({ 
+      message: 'Eski siparişler başarıyla temizlendi',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Temizlik hatası:', error);
+    res.status(500).json({ error: 'Temizlik işlemi başarısız' });
+  }
+});
+
+app.get('/api/admin/database-stats', authenticateToken, async (req, res) => {
+  try {
+    // Sadece SUPER_ADMIN ve BRANCH_MANAGER erişebilir
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    console.log('📊 Veritabanı istatistikleri isteği alındı');
+    
+    // İstatistikleri al
+    const totalOrders = await prisma.order.count();
+    const oldOrders = await prisma.order.count({
+      where: {
+        createdAt: {
+          lt: new Date(Date.now() - 12 * 60 * 60 * 1000)
+        }
+      }
+    });
+    
+    const activeOrders = await prisma.order.count({
+      where: {
+        status: {
+          in: ['PENDING', 'PREPARING', 'READY']
+        }
+      }
+    });
+
+    const completedOrders = await prisma.order.count({
+      where: {
+        status: {
+          in: ['DELIVERED', 'CANCELLED']
+        }
+      }
+    });
+
+    // Bellek kullanımı
+    const memUsage = process.memoryUsage();
+    
+    res.json({
+      stats: {
+        totalOrders,
+        oldOrders,
+        activeOrders,
+        completedOrders
+      },
+      memory: {
+        rss: Math.round(memUsage.rss / 1024 / 1024),
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ İstatistik hatası:', error);
+    res.status(500).json({ error: 'İstatistikler alınamadı' });
+  }
+});
 
 app.post('/api/admin/reset-super-admin', async (req, res) => {
   try {

@@ -87,6 +87,8 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingBranch, setEditingBranch] = useState<any>(null);
+  const [databaseStats, setDatabaseStats] = useState<any>(null);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
 
   // Optimize edilmiş list state'leri - farklı isimler kullanarak çakışmayı önle
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
@@ -248,8 +250,49 @@ export default function AdminPage() {
   useEffect(() => {
     if (token && user) {
       fetchOrders();
+      fetchDatabaseStats();
     }
   }, [token, user, fetchOrders]);
+
+  // Veritabanı istatistiklerini yükle
+  const fetchDatabaseStats = useCallback(async () => {
+    try {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_DATABASE_STATS, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDatabaseStats(response.data);
+    } catch (error: any) {
+      console.error('İstatistikler yüklenemedi:', error);
+    }
+  }, [token]);
+
+  // Manuel temizlik işlemi
+  const handleCleanupOrders = useCallback(async () => {
+    if (!confirm('Eski siparişleri temizlemek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+      return;
+    }
+
+    setCleanupLoading(true);
+    try {
+      const response = await axios.post(API_ENDPOINTS.ADMIN_CLEANUP_ORDERS, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Eski siparişler başarıyla temizlendi');
+      
+      // İstatistikleri yenile
+      await fetchDatabaseStats();
+      
+      // Siparişleri yenile
+      await fetchOrders();
+      
+    } catch (error: any) {
+      console.error('Temizlik hatası:', error);
+      toast.error('Temizlik işlemi başarısız');
+    } finally {
+      setCleanupLoading(false);
+    }
+  }, [token, fetchDatabaseStats, fetchOrders]);
 
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
@@ -755,8 +798,52 @@ export default function AdminPage() {
               )}
             </div>
 
+            {/* Veritabanı İstatistikleri */}
+            {databaseStats && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 Veritabanı İstatistikleri</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{databaseStats.stats.totalOrders}</div>
+                    <div className="text-sm text-blue-600">Toplam Sipariş</div>
+                  </div>
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-600">{databaseStats.stats.oldOrders}</div>
+                    <div className="text-sm text-yellow-600">12 Saatten Eski</div>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{databaseStats.stats.activeOrders}</div>
+                    <div className="text-sm text-green-600">Aktif Sipariş</div>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">{databaseStats.stats.completedOrders}</div>
+                    <div className="text-sm text-purple-600">Tamamlanmış</div>
+                  </div>
+                </div>
+                
+                {/* Bellek Kullanımı */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">💾 Bellek Kullanımı</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600">RSS</div>
+                      <div className="text-lg font-semibold">{databaseStats.memory.rss} MB</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Heap Used</div>
+                      <div className="text-lg font-semibold">{databaseStats.memory.heapUsed} MB</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Heap Total</div>
+                      <div className="text-lg font-semibold">{databaseStats.memory.heapTotal} MB</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Yönetim Butonları */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <button
                 onClick={() => setShowAddUserModal(true)}
                 className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
@@ -781,6 +868,30 @@ export default function AdminPage() {
               >
                 🏢 Şube Ekle
               </button>
+            </div>
+
+            {/* Temizlik Butonları */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold text-red-800 mb-4">🧹 Veritabanı Temizliği</h3>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={handleCleanupOrders}
+                  disabled={cleanupLoading}
+                  className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  {cleanupLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Temizleniyor...
+                    </>
+                  ) : (
+                    '🗑️ Eski Siparişleri Temizle'
+                  )}
+                </button>
+                <div className="text-sm text-red-600">
+                  ⚠️ Bu işlem 12 saatten eski tamamlanmış siparişleri kalıcı olarak siler
+                </div>
+              </div>
             </div>
           </div>
         )}
