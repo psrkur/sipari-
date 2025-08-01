@@ -430,7 +430,7 @@ export default function AdminPage() {
     } finally {
       setCleanupLoading(false);
     }
-  }, [token]);
+  }, [token, fetchDatabaseStats, fetchOrders]);
 
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
@@ -452,7 +452,7 @@ export default function AdminPage() {
       console.error('Sipariş durumu güncellenemedi:', error);
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token]);
+  }, [token, updateOrderItem]);
 
   // Form submit handlers
   const addUser = useCallback(async (e: React.FormEvent) => {
