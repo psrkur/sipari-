@@ -242,7 +242,7 @@ export default function AdminPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, router, setOrders]);
+  }, [token, router]);
 
   // Socket event handlers
   const handleNewOrder = useCallback((data: any) => {
@@ -282,6 +282,8 @@ export default function AdminPage() {
 
   // Veritabanı istatistiklerini yükle
   const fetchDatabaseStats = useCallback(async () => {
+    if (!token) return;
+    
     try {
       const response = await axios.get(API_ENDPOINTS.ADMIN_DATABASE_STATS, {
         headers: { Authorization: `Bearer ${token}` }
@@ -306,6 +308,7 @@ export default function AdminPage() {
       
       toast.success('Eski siparişler başarıyla temizlendi');
       
+      // Fonksiyonları doğrudan çağır, dependency olarak ekleme
       await fetchDatabaseStats();
       await fetchOrders();
       
@@ -315,7 +318,7 @@ export default function AdminPage() {
     } finally {
       setCleanupLoading(false);
     }
-  }, [token, fetchDatabaseStats, fetchOrders]);
+  }, [token]);
 
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
@@ -337,7 +340,7 @@ export default function AdminPage() {
       console.error('Sipariş durumu güncellenemedi:', error);
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token, updateOrderItem]);
+  }, [token]);
 
   // Form submit handlers
   const addUser = useCallback(async (e: React.FormEvent) => {
