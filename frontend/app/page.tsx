@@ -43,6 +43,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [productsLoading, setProductsLoading] = useState(false)
   const [showBranchSelector, setShowBranchSelector] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   // Debounced search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
@@ -250,7 +251,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Yükleniyor...</p>
         </div>
       </div>
@@ -323,6 +324,204 @@ export default function Home() {
     )
   }
 
+  // Ana sayfa görünümü (Terra Pizza benzeri)
+  if (!showMenu) {
+    return (
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-xl">🥪</span>
+                </div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                  Çizar Sipariş
+                </h1>
+              </div>
+              
+              <div className="flex items-center space-x-6">
+                {selectedBranch && (
+                  <span className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                    📍 {selectedBranch.name}
+                  </span>
+                )}
+                
+                <button
+                  onClick={() => setShowBranchSelector(true)}
+                  className="text-orange-600 hover:text-orange-800 text-sm font-medium"
+                >
+                  Şube Değiştir
+                </button>
+                
+                <div className="flex items-center space-x-4">
+                  <button
+                    onClick={() => router.push('/profile')}
+                    className="text-gray-600 hover:text-gray-900 text-sm"
+                  >
+                    👤 Profil
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="text-gray-600 hover:text-gray-900 text-sm"
+                  >
+                    🚪 Çıkış
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
+                Lezzetli Yemekler
+                <span className="block text-orange-600">Kapınızda!</span>
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                En taze malzemelerle hazırlanan özel tariflerimizi keşfedin. 
+                Hızlı teslimat ve kaliteli hizmet garantisi.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setShowMenu(true)}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  🍽️ Menüyü Görüntüle
+                </button>
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="bg-white text-orange-600 border-2 border-orange-500 px-8 py-4 rounded-full text-lg font-semibold hover:bg-orange-50 transition-all duration-200 shadow-lg"
+                >
+                  ⚙️ Admin Panel
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Neden Bizi Seçmelisiniz?
+              </h2>
+              <p className="text-lg text-gray-600">
+                Kaliteli hizmet ve lezzetli yemekler için doğru adrestesiniz
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🚀</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Hızlı Teslimat</h3>
+                <p className="text-gray-600">Siparişiniz en kısa sürede kapınızda</p>
+              </div>
+              
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">🌟</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Kaliteli Malzemeler</h3>
+                <p className="text-gray-600">En taze ve kaliteli malzemelerle hazırlanır</p>
+              </div>
+              
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">💳</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Güvenli Ödeme</h3>
+                <p className="text-gray-600">Güvenli ve kolay ödeme seçenekleri</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Menu Preview Section */}
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Popüler Menülerimiz
+              </h2>
+              <p className="text-lg text-gray-600">
+                En çok tercih edilen lezzetlerimizi keşfedin
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {['Pizza', 'Burger', 'Sushi', 'Pasta'].map((category) => (
+                <div key={category} className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-all duration-200">
+                  <div className="text-4xl mb-4">{getCategoryIcon(category)}</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{category}</h3>
+                  <p className="text-gray-600 text-sm">Özel tariflerimizle hazırlanır</p>
+                </div>
+              ))}
+            </div>
+            
+            <div className="text-center">
+              <button
+                onClick={() => setShowMenu(true)}
+                className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+              >
+                🍽️ Tüm Menüyü Görüntüle
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-gray-900 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Çizar Sipariş</h3>
+                <p className="text-gray-400">
+                  Lezzetli yemekler ve kaliteli hizmet için doğru adres.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">İletişim</h3>
+                <p className="text-gray-400">
+                  📞 +90 555 123 45 67<br />
+                  📧 info@cizarsiparis.com
+                </p>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Hızlı Erişim</h3>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowMenu(true)}
+                    className="block text-gray-400 hover:text-white transition-colors"
+                  >
+                    🍽️ Menü
+                  </button>
+                  <button
+                    onClick={() => router.push('/admin')}
+                    className="block text-gray-400 hover:text-white transition-colors"
+                  >
+                    ⚙️ Admin Panel
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+              <p>&copy; 2024 Çizar Sipariş. Tüm hakları saklıdır.</p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    )
+  }
+
+  // Menü görünümü
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -330,7 +529,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold text-gray-900">🍽️ Yemek5</h1>
+              <button
+                onClick={() => setShowMenu(false)}
+                className="text-orange-600 hover:text-orange-800 text-sm font-medium"
+              >
+                ← Ana Sayfaya Dön
+              </button>
+              <h1 className="text-xl font-bold text-gray-900">🍽️ Menü</h1>
               {selectedBranch && (
                 <span className="text-sm text-gray-600">
                   Şube: {selectedBranch.name}
@@ -345,13 +550,13 @@ export default function Home() {
                   placeholder="Ürün ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 />
               </div>
               
               <button
                 onClick={() => setShowBranchSelector(true)}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="text-orange-600 hover:text-orange-800 text-sm font-medium"
               >
                 Şube Değiştir
               </button>
@@ -392,7 +597,7 @@ export default function Home() {
             {/* Ürünler */}
             {productsLoading ? (
               <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
                 <p className="mt-2 text-gray-600">Ürünler yükleniyor...</p>
               </div>
             ) : (
