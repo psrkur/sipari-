@@ -167,6 +167,72 @@ export default function AdminPage() {
     }
   );
 
+  // Kullanıcı onaylama fonksiyonu
+  const handleActivateUser = async (userId: number) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/activate`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Kullanıcı listesini güncelle
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId 
+              ? { ...user, isActive: true }
+              : user
+          )
+        );
+        alert('Kullanıcı başarıyla onaylandı!');
+      } else {
+        const error = await response.json();
+        alert(`Hata: ${error.message || 'Kullanıcı onaylanamadı'}`);
+      }
+    } catch (error) {
+      console.error('Kullanıcı onaylama hatası:', error);
+      alert('Kullanıcı onaylanırken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Kullanıcı silme fonksiyonu
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        // Kullanıcı listesinden kaldır
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        alert('Kullanıcı başarıyla silindi!');
+      } else {
+        const error = await response.json();
+        alert(`Hata: ${error.message || 'Kullanıcı silinemedi'}`);
+      }
+    } catch (error) {
+      console.error('Kullanıcı silme hatası:', error);
+      alert('Kullanıcı silinirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Data'ları set et
   useEffect(() => {
     if (branchesData) {
@@ -828,7 +894,7 @@ export default function AdminPage() {
             )}
 
             {activePage === 'users' && (
-              <div><UserList users={users} onDeleteUser={() => {}} onActivateUser={() => {}} /></div>
+              <div><UserList users={users} onDeleteUser={handleDeleteUser} onActivateUser={handleActivateUser} /></div>
             )}
 
             {activePage === 'branches' && (
