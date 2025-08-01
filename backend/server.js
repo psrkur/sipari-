@@ -260,7 +260,7 @@ app.use(compression());
 
 // CORS konfigürasyonu - Kapsamlı
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'],
   credentials: false, // CORS credentials false
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -270,7 +270,7 @@ app.use(cors({
 // Global CORS headers for all responses
 app.use((req, res, next) => {
   // Origin kontrolü
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'];
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'];
   const origin = req.headers.origin;
   
   if (allowedOrigins.includes(origin)) {
