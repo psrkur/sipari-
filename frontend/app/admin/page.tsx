@@ -809,9 +809,9 @@ export default function AdminPage() {
             </div>
             )}
 
-            {activePage === 'products' && (
-              <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={() => {}} onDeleteProduct={() => {}} /></div>
-            )}
+                {activePage === 'products' && (
+      <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={() => {}} onDeleteProduct={() => {}} user={user} /></div>
+    )}
 
             {activePage === 'categories' && (
               <div className="bg-white rounded-lg shadow-md p-6">

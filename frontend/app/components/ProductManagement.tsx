@@ -95,7 +95,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div className="flex space-x-2">
-                    {user && user.role === 'SUPER_ADMIN' ? (
+                    {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'admin') ? (
                       <>
                         <button
                           type="button"
