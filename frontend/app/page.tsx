@@ -616,21 +616,36 @@ export default function Home() {
                 )}
               </button>
 
-              {/* Profil ve Çıkış */}
-              <div className="flex items-center space-x-2">
+              {/* Kullanıcı Giriş Durumu */}
+              {user ? (
+                // Giriş yapmış kullanıcı - Profil ve Çıkış
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => router.push('/profile')}
+                    className="flex items-center space-x-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="hidden sm:inline">Profil</span>
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="flex items-center space-x-2 bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="hidden sm:inline">Çıkış</span>
+                  </button>
+                </div>
+              ) : (
+                // Giriş yapmamış kullanıcı - Giriş Butonu
                 <button
-                  onClick={() => router.push('/profile')}
-                  className="text-gray-600 hover:text-gray-900"
+                  onClick={() => setShowLoginModal(true)}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
-                  <User className="h-5 w-5" />
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">Giriş Yap</span>
+                  <span className="sm:hidden">Giriş</span>
                 </button>
-                <button
-                  onClick={logout}
-                  className="text-gray-600 hover:text-gray-900"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
-              </div>
+              )}
             </div>
 
             {/* Mobil Menü Butonu */}
@@ -683,6 +698,33 @@ export default function Home() {
               >
                 ⚙️
               </button>
+              
+              {/* Mobil Giriş/Kullanıcı Butonu */}
+              {user ? (
+                // Giriş yapmış kullanıcı - Profil ve Çıkış
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => router.push('/profile')}
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-2 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-200 shadow-lg"
+                  >
+                    👤
+                  </button>
+                  <button
+                    onClick={logout}
+                    className="bg-gradient-to-r from-red-500 to-pink-500 text-white p-2 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-200 shadow-lg"
+                  >
+                    🚪
+                  </button>
+                </div>
+              ) : (
+                // Giriş yapmamış kullanıcı - Giriş Butonu
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-2 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                >
+                  👤
+                </button>
+              )}
               
               {/* Mobil Sepet Butonu */}
               <button 
