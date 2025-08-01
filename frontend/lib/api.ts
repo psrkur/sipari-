@@ -15,8 +15,9 @@ export const getApiBaseUrl = (): string => {
   return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
 
-const API_BASE_URL = getApiBaseUrl();
-console.log('🔧 API Base URL:', API_BASE_URL);
+// API_BASE_URL'yi dinamik olarak al
+const getCurrentApiBaseUrl = () => getApiBaseUrl();
+console.log('🔧 API Base URL:', getCurrentApiBaseUrl());
 console.log('🔧 Window location:', typeof window !== 'undefined' ? window.location.hostname : 'SSR');
 
 // API isteği wrapper'ı - Geliştirilmiş hata yönetimi
@@ -96,11 +97,11 @@ export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, E
 
 export const API_ENDPOINTS = {
   // Auth
-  REGISTER: `${API_BASE_URL}/api/auth/register`,
-  LOGIN: `${API_BASE_URL}/api/auth/login`,
+  get REGISTER() { return `${getCurrentApiBaseUrl()}/api/auth/register` },
+  get LOGIN() { return `${getCurrentApiBaseUrl()}/api/auth/login` },
   
   // Branches
-  BRANCHES: `${API_BASE_URL}/api/branches`,
+  get BRANCHES() { return `${getCurrentApiBaseUrl()}/api/branches` },
   
   // Products
   PRODUCTS: (branchId: number) => `${API_BASE_URL}/api/products/${branchId}`,
