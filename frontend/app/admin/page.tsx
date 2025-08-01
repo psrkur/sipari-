@@ -829,6 +829,9 @@ export default function AdminPage() {
           <button onClick={() => setActivePage('categories')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>📂 Kategoriler</button>
           <button onClick={() => setActivePage('users')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'users' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>👤 Kullanıcılar</button>
           <button onClick={() => setActivePage('branches')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'branches' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>🏢 Şubeler</button>
+          <Link href="/admin/dashboard" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">📊 Dashboard</Link>
+          <Link href="/kitchen" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">👨‍🍳 Mutfak</Link>
+          <Link href="/pos" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">💳 POS</Link>
           <Link href="/admin/qr-codes" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🔗 QR Kodlar</Link>
           <Link href="/admin/table-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🍽️ Masa Yönetimi</Link>
           <Link href="/admin/chat-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">💬 Sohbet</Link>
