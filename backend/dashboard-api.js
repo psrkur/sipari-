@@ -41,7 +41,7 @@ router.get('/dashboard/stats', async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Bugünkü siparişleri getir - güvenli hata yönetimi ile
+    // Bugünkü siparişleri getir - sadece gerekli alanları seç
     let todayOrders = [];
     try {
       todayOrders = await prisma.order.findMany({
@@ -50,14 +50,36 @@ router.get('/dashboard/stats', async (req, res) => {
             gte: today
           }
         },
-        include: {
+        select: {
+          id: true,
+          totalAmount: true,
+          status: true,
+          createdAt: true,
           orderItems: {
-            include: {
-              product: true
+            select: {
+              id: true,
+              quantity: true,
+              price: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
             }
           },
-          customer: true,
-          branch: true
+          customer: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
+          branch: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
         }
       });
     } catch (dbError) {
@@ -94,23 +116,26 @@ router.get('/dashboard/stats', async (req, res) => {
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5);
 
-    // Müşteri istatistikleri - güvenli hata yönetimi ile
+    // Müşteri istatistikleri - optimize edilmiş paralel sorgular
     let totalCustomers = 0;
     let newTodayCustomers = 0;
     try {
-      totalCustomers = await prisma.customer.count();
-      newTodayCustomers = await prisma.customer.count({
-        where: {
-          createdAt: {
-            gte: today
+      // Paralel sorgular ile performansı artır
+      [totalCustomers, newTodayCustomers] = await Promise.all([
+        prisma.customer.count(),
+        prisma.customer.count({
+          where: {
+            createdAt: {
+              gte: today
+            }
           }
-        }
-      });
+        })
+      ]);
     } catch (dbError) {
       console.error('❌ Müşteri sayısı hatası:', dbError);
     }
 
-    // Ürün istatistikleri - güvenli hata yönetimi ile
+    // Ürün istatistikleri - optimize edilmiş sorgu
     let totalProducts = 0;
     try {
       totalProducts = await prisma.product.count();

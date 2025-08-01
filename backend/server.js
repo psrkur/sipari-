@@ -46,14 +46,15 @@ const prisma = new PrismaClient({
       url: DATABASE_URL
     }
   },
-  log: ['query', 'info', 'warn', 'error'],
-  // Connection pooling ve timeout ayarları
+  // Sadece hata loglarını tut, gereksiz query loglarını kaldır
+  log: ['error', 'warn'],
+  // Connection pooling ve timeout ayarları optimize edildi
   __internal: {
     engine: {
-      connectTimeout: 30000, // 30 saniye
+      connectTimeout: 15000, // 15 saniye (30'dan düşürüldü)
       pool: {
-        min: 2,
-        max: 10
+        min: 1, // Minimum bağlantı sayısını düşür
+        max: 5  // Maximum bağlantı sayısını düşür (10'dan)
       }
     }
   }
@@ -65,18 +66,9 @@ global.prisma = prisma;
 // Firma yönetimi modülünü import et
 // const companyManagement = require('./company-management');
 
-// Prisma query logging
-prisma.$on('query', (e) => {
-  logger.info('Query: ' + e.query);
-  logger.info('Params: ' + e.params);
-  logger.info('Duration: ' + e.duration + 'ms');
-});
-
-// Prisma query logging
-prisma.$on('query', (e) => {
-  logger.info('Query: ' + e.query);
-  logger.info('Params: ' + e.params);
-  logger.info('Duration: ' + e.duration + 'ms');
+// Sadece hata durumlarında log - gereksiz query logging kaldırıldı
+prisma.$on('error', (e) => {
+  logger.error('Prisma Error: ' + e.message);
 });
 
 if (!process.env.DATABASE_URL) {
@@ -776,16 +768,27 @@ app.delete('/api/admin/branches/:id', authenticateToken, async (req, res) => {
 app.get('/api/products/:branchId', async (req, res) => {
   try {
     const { branchId } = req.params;
-    console.log('🔍 Products endpoint çağrıldı, branchId:', branchId);
     
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const products = await prisma.product.findMany({
       where: {
         branchId: parseInt(branchId),
         isActive: true
       },
-      include: {
-        branch: true,
-        category: true
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        image: true,
+        imagePath: true,
+        isActive: true,
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: [
         {
@@ -799,21 +802,9 @@ app.get('/api/products/:branchId', async (req, res) => {
       ]
     });
     
-    // İlk ürünün resim durumunu logla
-    if (products.length > 0) {
-      const firstProduct = products[0];
-      console.log('🔍 İlk ürün resim durumu:');
-      console.log(`📊 Ürün: ${firstProduct.name}`);
-      console.log(`🖼️  Image: ${firstProduct.image ? firstProduct.image.substring(0, 50) + '...' : 'YOK'}`);
-      console.log(`📏 Uzunluk: ${firstProduct.image ? firstProduct.image.length : 0}`);
-    }
-    
-    console.log('✅ Ürünler başarıyla getirildi, sayı:', products.length);
     res.json(products);
   } catch (error) {
     console.error('❌ Ürünler getirilemedi:', error);
-    console.error('❌ Hata detayı:', error.message);
-    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({ error: 'Ürünler getirilemedi' });
   }
 });
@@ -1069,12 +1060,6 @@ app.get('/api/admin/qr-codes/all', authenticateToken, async (req, res) => {
 // Müşteri siparişlerini getir (sadece giriş yapmış kullanıcılar için)
 app.get('/api/customer/orders', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 Müşteri siparişleri isteği:', {
-      userId: req.user.userId,
-      role: req.user.role,
-      email: req.user.email
-    });
-
     let whereClause = {
       orderType: { not: 'TABLE' } // Masa siparişlerini hariç tut
     };
@@ -1084,31 +1069,53 @@ app.get('/api/customer/orders', authenticateToken, async (req, res) => {
       whereClause.userId = req.user.userId;
     } else if (req.user.role === 'SUPER_ADMIN' || req.user.role === 'BRANCH_MANAGER') {
       // Admin kullanıcılar tüm müşteri siparişlerini görebilir
-      console.log('✅ Admin kullanıcı tüm müşteri siparişlerini görüntülüyor');
     } else {
-      console.log('❌ Yetkisiz erişim:', req.user.role);
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const orders = await prisma.order.findMany({
       where: whereClause,
-      include: {
-        branch: true,
-        user: req.user.role !== 'CUSTOMER', // Admin kullanıcılar için müşteri bilgilerini de getir
+      select: {
+        id: true,
+        orderNumber: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        notes: true,
+        orderType: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        user: req.user.role !== 'CUSTOMER' ? {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        } : false,
         orderItems: {
-          include: {
-            product: true
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
+            note: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true
+              }
+            }
           }
         }
       },
       orderBy: { createdAt: 'desc' }
-    });
-
-    console.log('✅ Müşteri siparişleri getirildi:', {
-      userId: req.user.userId,
-      role: req.user.role,
-      orderCount: orders.length,
-      orders: orders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status }))
     });
 
     res.json(orders);
@@ -1196,7 +1203,11 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user.userId },
-      include: { branch: true }
+      select: { 
+        id: true,
+        role: true,
+        branchId: true
+      }
     });
 
     if (!user) {
@@ -1218,19 +1229,56 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
       // Süper admin tüm siparişleri getir (tahsilat hariç)
     }
 
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const orders = await prisma.order.findMany({
       where: whereClause,
-      include: {
-        branch: true,
-        customer: true,
+      select: {
+        id: true,
+        orderNumber: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+        notes: true,
+        orderType: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
+        },
         table: {
-          include: {
-            branch: true
+          select: {
+            id: true,
+            number: true,
+            branch: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
           }
         },
         orderItems: {
-          include: {
-            product: true
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
+            note: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                price: true
+              }
+            }
           }
         }
       },
@@ -1367,9 +1415,24 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
     if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
     
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const users = await prisma.user.findMany({
-      include: {
-        branch: true
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        isApproved: true,
+        createdAt: true,
+        updatedAt: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -1458,11 +1521,31 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
       whereClause.branchId = req.user.branchId;
     }
     
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const products = await prisma.product.findMany({
       where: whereClause,
-      include: {
-        branch: true,
-        category: true
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        image: true,
+        imagePath: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       },
       orderBy: { name: 'asc' }
     });
@@ -2373,19 +2456,32 @@ app.get('/api/admin/tables/active', authenticateToken, async (req, res) => {
       whereClause.branchId = req.user.branchId;
     }
 
+    // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const tables = await prisma.table.findMany({
       where: whereClause,
-      include: {
-        branch: true,
+      select: {
+        id: true,
+        number: true,
+        isActive: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         orders: {
           where: {
             status: { not: 'DELIVERED' },
             orderType: 'TABLE'
           },
-          include: {
+          select: {
+            id: true,
+            totalAmount: true,
             orderItems: {
-              include: {
-                product: true
+              select: {
+                id: true,
+                quantity: true,
+                price: true
               }
             }
           }
