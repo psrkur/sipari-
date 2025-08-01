@@ -69,7 +69,6 @@ export const useSocket = () => {
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      maxReconnectionAttempts: maxReconnectAttempts,
       // Ping/Pong ayarları
       pingTimeout: 60000,
       pingInterval: 25000,
