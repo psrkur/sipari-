@@ -435,7 +435,7 @@ export default function AdminPage() {
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
     try {
-      const response = await axios.patch(
+      const response = await axios.put(
         API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId),
         { status },
         { headers: { Authorization: `Bearer ${token}` } }

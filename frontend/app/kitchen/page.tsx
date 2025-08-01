@@ -150,7 +150,7 @@ export default function KitchenPage() {
   // Sipariş durumu güncelleme - optimize edilmiş
   const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
     try {
-      const response = await axios.patch(
+      const response = await axios.put(
         API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId),
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
