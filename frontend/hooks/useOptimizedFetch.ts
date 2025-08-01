@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import axios, { AxiosRequestConfig } from 'axios';
+import { getApiBaseUrl } from '@/lib/api';
 
 interface UseOptimizedFetchOptions {
   cacheTime?: number; // Cache süresi (ms)
@@ -83,7 +84,11 @@ export function useOptimizedFetch<T = any>(
         return;
       }
 
-      const response = await axios.get(url, {
+      // API base URL'yi kullan
+      const fullUrl = url.startsWith('http') ? url : `${getApiBaseUrl()}${url}`;
+      console.log('🔍 OptimizedFetch URL:', fullUrl);
+      
+      const response = await axios.get(fullUrl, {
         ...config,
         signal: abortControllerRef.current.signal,
         timeout: 10000
