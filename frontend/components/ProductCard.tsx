@@ -8,8 +8,9 @@ interface Product {
   name: string
   description: string
   price: number
-  category: string
+  category: string | { id: number; name: string; description: string; isActive: boolean }
   image?: string
+  imagePath?: string
 }
 
 interface ProductCardProps {
@@ -21,12 +22,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [imageError, setImageError] = useState(false)
 
   const handleAddToCart = () => {
+    const categoryName = typeof product.category === 'object' ? product.category.name : product.category;
     addItem({
       id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
-      category: product.category,
+      category: categoryName,
       quantity: 1
     })
   }
@@ -78,7 +80,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="mt-auto">
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {product.category}
+              {typeof product.category === 'object' ? product.category.name : product.category}
             </span>
             
             {/* Fiyat - alt kısma taşındı */}
