@@ -469,12 +469,20 @@ export default function POSPage() {
       });
 
       toast.success(`Sipariş başarıyla oluşturuldu! (${paymentMethod === 'cash' ? 'Nakit' : 'Kart'})`);
+      
+      // Sepeti temizle
       clearCart();
       
       // Otomatik yazdırma ayarına göre fiş yazdır
       if (autoPrint) {
         printReceipt(autoConfirm);
       }
+      
+      // Sayfayı yenile veya ana sayfaya yönlendir
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+      
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı');
     }

@@ -202,8 +202,21 @@ export default function Cart({ selectedBranch }: CartProps) {
       })
 
       toast.success('Siparişiniz oluşturuldu, afiyet olsun! 🍕')
+      
+      // Sepeti temizle - hem local state hem de store'u temizle
       clearCart()
+      
+      // Form'u da temizle
+      setCustomerData(null)
+      setUserAddresses([])
+      setSelectedAddress(null)
       setShowCheckout(false)
+      
+      // Sayfayı yenile veya ana sayfaya yönlendir
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+      
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı')
     } finally {

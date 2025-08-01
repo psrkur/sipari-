@@ -24,6 +24,7 @@ import {
   Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCartStore } from '@/store/cart';
 
 interface Table {
   id: number;
@@ -91,6 +92,9 @@ export default function TableOrder() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showOrderTracking, setShowOrderTracking] = useState(false);
+
+  // Cart store'dan clearCart fonksiyonunu al
+  const { clearCart } = useCartStore();
 
   useEffect(() => {
     console.log('🔍 URL Parametreleri:', { tableId, branchId, qrData });
@@ -339,7 +343,9 @@ export default function TableOrder() {
         toast.success('Siparişiniz başarıyla alındı!');
       }
 
+      // Sepeti temizle - hem local state hem de store'u temizle
       setCart([]);
+      clearCart(); // Store'daki sepeti de temizle
       setNotes('');
       setShowCart(false);
       
