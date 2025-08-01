@@ -380,7 +380,7 @@ export default function Home() {
         toast.success('Giriş başarılı!');
         setShowLoginModal(false);
         setLoginForm({ email: '', password: '' });
-        window.location.reload();
+        // window.location.reload(); // Geçici olarak kaldırıldı - hata mesajlarını görmek için
       } else {
         console.error('❌ Token alınamadı');
         toast.error('Giriş başarısız - Token alınamadı');
