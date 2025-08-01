@@ -1427,7 +1427,11 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/users', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     
     // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const users = await prisma.user.findMany({
@@ -1473,7 +1477,11 @@ app.get('/api/customers', authenticateToken, async (req, res) => {
 
 app.post('/api/admin/users', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     const { name, email, password, role, branchId } = req.body;
     if (!name || !email || !password || !role) return res.status(400).json({ error: 'Eksik bilgi' });
     
@@ -1507,7 +1515,11 @@ app.post('/api/admin/users', authenticateToken, async (req, res) => {
 
 app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     
     const { id } = req.params;
     const userId = parseInt(id);
@@ -1592,9 +1604,10 @@ app.post('/api/admin/products', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Geçersiz kategori' });
     }
 
-    // Sadece süper admin ürün ekleyebilir
-    if (req.user.role !== 'SUPER_ADMIN') {
-      return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
 
     let targetBranchId;
@@ -1898,7 +1911,11 @@ app.get('/api/admin/categories', authenticateToken, async (req, res) => {
 
 app.post('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     
     const { name, description, companyId } = req.body;
     
@@ -1930,7 +1947,11 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
 
 app.put('/api/admin/categories/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     
     const { id } = req.params;
     const { name, description, isActive } = req.body;
@@ -1967,7 +1988,11 @@ app.put('/api/admin/categories/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/admin/categories/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'SUPER_ADMIN') return res.status(403).json({ error: 'Yetkisiz' });
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
     
     const { id } = req.params;
 
