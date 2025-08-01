@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
-import axios from 'axios';
-import { API_ENDPOINTS } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import { API_ENDPOINTS } from '@/lib/api';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useSocket } from '@/lib/socket';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, User, Phone, MapPin, CheckCircle, PlayCircle, AlertCircle, Timer } from 'lucide-react';
+import { useOptimizedInterval, useOptimizedFetch } from '@/hooks/useOptimizedFetch';
+import { useOptimizedList } from '@/hooks/useMemoizedState';
 
 interface OrderItem {
   id: number;
@@ -54,21 +52,43 @@ interface Order {
 }
 
 export default function KitchenPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedOrderType, setSelectedOrderType] = useState<string>('all');
-  const [selectedBranch, setSelectedBranch] = useState<any>(null);
-  const [branches, setBranches] = useState<any[]>([]);
-  const { token, user } = useAuthStore();
   const router = useRouter();
+  const { token, user } = useAuthStore();
   const { on, off } = useSocket();
 
+  // Optimize edilmiş state'ler
+  const [selectedOrderType, setSelectedOrderType] = useState<string>('all');
+  const [selectedBranch, setSelectedBranch] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Optimize edilmiş list state'leri
+  const { items: branches, setItems: setBranches } = useOptimizedList<any>();
+  const { items: orders, setItems: setOrders, updateItem: updateOrder } = useOptimizedList<Order>();
+
+  // Optimize edilmiş fetch hook'ları
+  const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<any[]>(
+    API_ENDPOINTS.BRANCHES,
+    { 
+      cacheTime: 5 * 60 * 1000, // 5 dakika cache
+      enabled: !!token 
+    }
+  );
+
+  // Branches data'sını set et
   useEffect(() => {
-    // Store'dan token'ı almayı dene
+    if (branchesData) {
+      setBranches(branchesData);
+      // İlk şubeyi otomatik seç
+      if (branchesData.length > 0 && !selectedBranch) {
+        setSelectedBranch(branchesData[0]);
+      }
+    }
+  }, [branchesData, setBranches, selectedBranch]);
+
+  // Token kontrolü
+  useEffect(() => {
     let authToken = token;
     
-    // Eğer store'dan token yoksa, localStorage'dan direkt al
     if (!authToken) {
       try {
         const authStorage = localStorage.getItem('auth-storage');
@@ -89,31 +109,85 @@ export default function KitchenPage() {
       } else {
         router.push('/login');
       }
-      return;
+    }
+  }, [token, router]);
+
+  // Optimize edilmiş sipariş yükleme fonksiyonu
+  const fetchOrders = useCallback(async (branchId: number, showLoading = true) => {
+    if (!branchId) return;
+
+    if (showLoading) {
+      setLoading(true);
     }
 
-    fetchBranches();
-  }, [token]); // Sadece token'ı dependency olarak kullan
+    try {
+      const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { branchId }
+      });
 
-  // Gerçek zamanlı güncellemeler için Socket.IO
+      const ordersData = Array.isArray(response.data) ? response.data : [];
+      
+      // Sadece aktif siparişleri filtrele
+      const activeOrders = ordersData.filter((order: Order) => 
+        ['PENDING', 'PREPARING', 'READY'].includes(order.status)
+      );
+
+      setOrders(activeOrders);
+    } catch (error: any) {
+      console.error('Siparişler yüklenemedi:', error);
+      if (error.response?.status === 401) {
+        toast.error('Oturum süresi dolmuş');
+        router.push('/login');
+      }
+    } finally {
+      if (showLoading) {
+        setLoading(false);
+      }
+    }
+  }, [token, router, setOrders]);
+
+  // Sipariş durumu güncelleme - optimize edilmiş
+  const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
+    try {
+      const response = await axios.patch(
+        API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId),
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        // Local state'i güncelle
+        updateOrder(orderId, (order) => ({
+          ...order,
+          status: newStatus
+        }));
+
+        toast.success(`Sipariş durumu güncellendi: ${getStatusText(newStatus)}`);
+      }
+    } catch (error: any) {
+      console.error('Sipariş durumu güncellenemedi:', error);
+      toast.error('Sipariş durumu güncellenemedi');
+    }
+  }, [token, updateOrder]);
+
+  // Socket event handlers - optimize edilmiş
   useEffect(() => {
     if (!selectedBranch) return;
 
-    // Yeni sipariş geldiğinde
-    const handleNewOrder = (data: any) => {
+    const handleNewOrder = useCallback((data: any) => {
       if (data.branchId === selectedBranch.id) {
         toast.success(`Yeni sipariş: ${data.orderNumber}`);
-        fetchOrders(selectedBranch.id, false); // Sayfayı yenilemeden güncelle
+        fetchOrders(selectedBranch.id, false);
       }
-    };
+    }, [selectedBranch, fetchOrders]);
 
-    // Sipariş durumu değiştiğinde
-    const handleOrderStatusChanged = (data: any) => {
+    const handleOrderStatusChanged = useCallback((data: any) => {
       if (data.branchId === selectedBranch.id) {
         toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
-        fetchOrders(selectedBranch.id, false); // Sayfayı yenilemeden güncelle
+        fetchOrders(selectedBranch.id, false);
       }
-    };
+    }, [selectedBranch, fetchOrders]);
 
     // Event listener'ları ekle
     on('newOrder', handleNewOrder);
@@ -124,207 +198,103 @@ export default function KitchenPage() {
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
     };
-  }, [selectedBranch]); // Sadece selectedBranch'ı dependency olarak kullan
+  }, [selectedBranch, on, off, fetchOrders]);
 
-  // Otomatik yenileme için useEffect
+  // Optimize edilmiş interval - sadece aktif şube varsa çalış
+  useOptimizedInterval(
+    () => {
+      if (selectedBranch) {
+        fetchOrders(selectedBranch.id, false);
+      }
+    },
+    10000, // 10 saniye
+    !!selectedBranch // Sadece şube seçiliyse aktif
+  );
+
+  // Şube değiştiğinde siparişleri yükle
   useEffect(() => {
-    if (!selectedBranch) return;
+    if (selectedBranch) {
+      fetchOrders(selectedBranch.id);
+    }
+  }, [selectedBranch, fetchOrders]);
 
-    // İlk yükleme
-    fetchOrders(selectedBranch.id);
-
-    // 5 saniyede bir otomatik yenileme
-    const interval = setInterval(() => {
-      fetchOrders(selectedBranch.id, false); // showLoading = false
-    }, 5000);
-
-    // Cleanup function
-    return () => {
-      clearInterval(interval);
+  // Optimize edilmiş callback'ler
+  const getStatusColor = useCallback((status: string) => {
+    const colors: { [key: string]: string } = {
+      PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      PREPARING: 'bg-blue-100 text-blue-800 border-blue-200',
+      READY: 'bg-green-100 text-green-800 border-green-200',
+      DELIVERED: 'bg-gray-100 text-gray-800 border-gray-200',
+      CANCELLED: 'bg-red-100 text-red-800 border-red-200'
     };
-  }, [selectedBranch]);
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  }, []);
 
-  const fetchBranches = async () => {
-    try {
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error) {
-          console.error('Auth storage parse error:', error);
-        }
-      }
-      
-      const response = await axios.get(API_ENDPOINTS.ADMIN_BRANCHES, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      
-      setBranches(response.data);
-      if (response.data.length > 0) {
-        setSelectedBranch(response.data[0]);
-        fetchOrders(response.data[0].id);
-      }
-    } catch (error) {
-      console.error('Şubeler yüklenemedi:', error);
-      toast.error('Şubeler yüklenemedi');
-    }
-  };
+  const getStatusText = useCallback((status: string) => {
+    const texts: { [key: string]: string } = {
+      PENDING: 'Bekliyor',
+      PREPARING: 'Hazırlanıyor',
+      READY: 'Hazır',
+      DELIVERED: 'Teslim Edildi',
+      CANCELLED: 'İptal Edildi'
+    };
+    return texts[status] || status;
+  }, []);
 
-  const fetchOrders = async (branchId: number, showLoading = true) => {
-    try {
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error) {
-          console.error('Auth storage parse error:', error);
-        }
-      }
+  const getStatusIcon = useCallback((status: string) => {
+    const icons: { [key: string]: string } = {
+      PENDING: '⏳',
+      PREPARING: '👨‍🍳',
+      READY: '✅',
+      DELIVERED: '🚚',
+      CANCELLED: '❌'
+    };
+    return icons[status] || '📋';
+  }, []);
 
-      const response = await axios.get(`${API_ENDPOINTS.ADMIN_ORDERS}?branchId=${branchId}`, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-      
-      setOrders(response.data);
-      if (showLoading) {
-        setLoading(false);
-      }
-    } catch (error) {
-      console.error('Siparişler yüklenemedi:', error);
-      if (showLoading) {
-        toast.error('Siparişler yüklenemedi');
-        setLoading(false);
-      }
-    }
-  };
-
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
-    try {
-      let authToken = token;
-      if (!authToken) {
-        try {
-          const authStorage = localStorage.getItem('auth-storage');
-          if (authStorage) {
-            const parsed = JSON.parse(authStorage);
-            authToken = parsed.state?.token;
-          }
-        } catch (error) {
-          console.error('Auth storage parse error:', error);
-        }
-      }
-
-      await axios.put(`${API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId)}`, {
-        status: newStatus
-      }, {
-        headers: { Authorization: `Bearer ${authToken}` }
-      });
-
-      // Sipariş listesini güncelle
-      setOrders(prevOrders => 
-        prevOrders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: newStatus }
-            : order
-        )
-      );
-
-      toast.success(`Sipariş durumu güncellendi: ${getStatusText(newStatus)}`);
-    } catch (error) {
-      console.error('Sipariş durumu güncellenemedi:', error);
-      toast.error('Sipariş durumu güncellenemedi');
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'PREPARING': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'READY': return 'bg-green-100 text-green-800 border-green-200';
-      case 'DELIVERED': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'CANCELLED': return 'bg-red-100 text-red-800 border-red-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING': return 'Bekliyor';
-      case 'PREPARING': return 'Hazırlanıyor';
-      case 'READY': return 'Hazır';
-      case 'DELIVERED': return 'Teslim Edildi';
-      case 'CANCELLED': return 'İptal Edildi';
-      default: return status;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'PENDING': return <AlertCircle className="h-4 w-4" />;
-      case 'PREPARING': return <PlayCircle className="h-4 w-4" />;
-      case 'READY': return <CheckCircle className="h-4 w-4" />;
-      case 'DELIVERED': return <CheckCircle className="h-4 w-4" />;
-      case 'CANCELLED': return <AlertCircle className="h-4 w-4" />;
-      default: return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  const getTimeElapsed = (createdAt: string) => {
+  const getTimeElapsed = useCallback((createdAt: string) => {
     const now = new Date();
     const orderTime = new Date(createdAt);
-    const diffInMinutes = Math.floor((now.getTime() - orderTime.getTime()) / (1000 * 60));
+    const diffMs = now.getTime() - orderTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
     
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} dakika`;
-    } else {
-      const hours = Math.floor(diffInMinutes / 60);
-      const minutes = diffInMinutes % 60;
-      return `${hours} saat ${minutes} dakika`;
+    if (diffHours > 0) {
+      return `${diffHours}s ${diffMins % 60}dk`;
     }
-  };
+    return `${diffMins}dk`;
+  }, []);
 
-  const getPriorityColor = (createdAt: string) => {
+  const getPriorityColor = useCallback((createdAt: string) => {
     const now = new Date();
     const orderTime = new Date(createdAt);
-    const diffInMinutes = Math.floor((now.getTime() - orderTime.getTime()) / (1000 * 60));
+    const diffMs = now.getTime() - orderTime.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
     
-    if (diffInMinutes > 30) return 'border-red-500 bg-red-50';
-    if (diffInMinutes > 15) return 'border-orange-500 bg-orange-50';
-    return 'border-gray-200 bg-white';
-  };
+    if (diffMins > 30) return 'border-red-500 bg-red-50';
+    if (diffMins > 15) return 'border-orange-500 bg-orange-50';
+    return 'border-green-500 bg-green-50';
+  }, []);
 
-  const filteredOrders = orders.filter(order => {
-    if (selectedStatus !== 'all' && order.status !== selectedStatus) {
-      return false;
-    }
-    if (selectedOrderType !== 'all' && order.orderType !== selectedOrderType) {
-      return false;
-    }
-    return true;
-  }).sort((a, b) => {
-    // Önce duruma göre sırala (Bekliyor > Hazırlanıyor > Hazır)
-    const statusOrder = { 'PENDING': 1, 'PREPARING': 2, 'READY': 3, 'DELIVERED': 4, 'CANCELLED': 5 };
-    const statusDiff = (statusOrder[a.status as keyof typeof statusOrder] || 6) - (statusOrder[b.status as keyof typeof statusOrder] || 6);
-    
-    if (statusDiff !== 0) return statusDiff;
-    
-    // Aynı durumda olanları zamana göre sırala (en eski önce)
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-  });
+  // Filtrelenmiş siparişler - memoize edilmiş
+  const filteredOrders = useMemo(() => {
+    let filtered = orders;
 
-  if (loading) {
+    // Sipariş tipi filtresi
+    if (selectedOrderType !== 'all') {
+      filtered = filtered.filter(order => order.orderType === selectedOrderType);
+    }
+
+    // Öncelik sırasına göre sırala (en eski önce)
+    return filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }, [orders, selectedOrderType]);
+
+  if (branchesLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Mutfak ekranı yükleniyor...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yükleniyor...</p>
         </div>
       </div>
     );
@@ -334,268 +304,162 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center space-x-2 md:space-x-4">
-            <Button
-              onClick={() => {
-                if (window.opener) {
-                  window.close();
-                } else {
-                  router.push('/admin');
-                }
-              }}
-              variant="outline"
-              size="sm"
-              className="flex items-center space-x-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">{window.opener ? 'Kapat' : 'Admin'}</span>
-            </Button>
-            <h1 className="text-lg md:text-2xl font-bold text-gray-800">🍳 Mutfak</h1>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-xs md:text-sm">
-              {selectedBranch?.name || 'Şube'}
-            </Badge>
-            <Badge variant="outline" className="text-xs md:text-sm">
-              {filteredOrders.length} Sipariş
-            </Badge>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <h1 className="text-2xl font-bold text-gray-900">🍳 Mutfak Paneli</h1>
+            
+            <div className="flex items-center space-x-4">
+              {/* Şube Seçimi */}
+              <select
+                value={selectedBranch?.id || ''}
+                onChange={(e) => {
+                  const branch = branches.find(b => b.id === parseInt(e.target.value));
+                  setSelectedBranch(branch);
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </option>
+                ))}
+              </select>
+
+              {/* Sipariş Tipi Filtresi */}
+              <select
+                value={selectedOrderType}
+                onChange={(e) => setSelectedOrderType(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="all">Tüm Siparişler</option>
+                <option value="DELIVERY">Teslimat</option>
+                <option value="TABLE">Masa</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4">
-        {/* Kontroller */}
-        <div className="mb-6 space-y-4">
-          {/* Şube Seçimi */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Şube</label>
-            <select
-              value={selectedBranch?.id || ''}
-                             onChange={(e) => {
-                 const branch = branches.find(b => b.id === parseInt(e.target.value));
-                 setSelectedBranch(branch);
-                 if (branch) {
-                   fetchOrders(branch.id, true); // showLoading = true
-                 }
-               }}
-              className="w-full p-3 border border-gray-300 rounded-lg text-lg"
-            >
-              {branches.map(branch => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
+      {/* Siparişler */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Siparişler yükleniyor...</p>
           </div>
-
-          {/* Durum Filtreleri */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Durum Filtresi</label>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => setSelectedStatus('all')}
-                variant={selectedStatus === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                Tümü ({orders.length})
-              </Button>
-              <Button
-                onClick={() => setSelectedStatus('PENDING')}
-                variant={selectedStatus === 'PENDING' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                Bekliyor ({orders.filter(o => o.status === 'PENDING').length})
-              </Button>
-              <Button
-                onClick={() => setSelectedStatus('PREPARING')}
-                variant={selectedStatus === 'PREPARING' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                Hazırlanıyor ({orders.filter(o => o.status === 'PREPARING').length})
-              </Button>
-              <Button
-                onClick={() => setSelectedStatus('READY')}
-                variant={selectedStatus === 'READY' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                Hazır ({orders.filter(o => o.status === 'READY').length})
-              </Button>
-            </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500">Aktif sipariş bulunmuyor</p>
           </div>
-
-          {/* Sipariş Türü Filtreleri */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sipariş Türü</label>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                onClick={() => setSelectedOrderType('all')}
-                variant={selectedOrderType === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredOrders.map((order) => (
+              <div
+                key={order.id}
+                className={`bg-white rounded-lg shadow-md border-2 p-6 ${getPriorityColor(order.createdAt)}`}
               >
-                Tümü ({orders.length})
-              </Button>
-              <Button
-                onClick={() => setSelectedOrderType('TABLE')}
-                variant={selectedOrderType === 'TABLE' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                🍽️ Masa ({orders.filter(o => o.orderType === 'TABLE').length})
-              </Button>
-              <Button
-                onClick={() => setSelectedOrderType('DELIVERY')}
-                variant={selectedOrderType === 'DELIVERY' ? 'default' : 'outline'}
-                size="sm"
-                className="text-sm"
-              >
-                🚚 Teslimat ({orders.filter(o => o.orderType === 'DELIVERY').length})
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Sipariş Listesi */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredOrders.map(order => (
-            <Card 
-              key={order.id} 
-              className={`border-2 transition-all duration-200 hover:shadow-lg ${getPriorityColor(order.createdAt)}`}
-            >
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                {/* Sipariş Başlığı */}
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      #{order.orderNumber}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.createdAt).toLocaleTimeString('tr-TR')}
+                    </p>
+                  </div>
                   <div className="flex items-center space-x-2">
-                    <Badge className={getStatusColor(order.status)}>
-                      {getStatusIcon(order.status)}
-                      <span className="ml-1">{getStatusText(order.status)}</span>
-                    </Badge>
-                    {order.orderType === 'TABLE' && (
-                      <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                        🍽️ Masa
-                      </Badge>
-                    )}
-                    {order.orderType === 'DELIVERY' && (
-                      <Badge className="bg-green-100 text-green-800 border-green-200">
-                        🚚 Teslimat
-                      </Badge>
-                    )}
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                      {getStatusIcon(order.status)} {getStatusText(order.status)}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {getTimeElapsed(order.createdAt)}
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-600">#{order.orderNumber}</p>
-                    <div className="flex items-center space-x-1 text-xs text-gray-500">
-                      <Timer className="h-3 w-3" />
-                      <span>{getTimeElapsed(order.createdAt)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-3">
-                {/* Müşteri Bilgileri */}
-                <div className="space-y-2">
-                  {order.customer && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">{order.customer.name}</span>
-                    </div>
-                  )}
-                  {order.customer && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span>{order.customer.phone}</span>
-                    </div>
-                  )}
-                  {order.customer && (
-                    <div className="flex items-center space-x-2 text-sm">
-                      <MapPin className="h-4 w-4 text-gray-500" />
-                      <span className="truncate">{order.customer.address}</span>
-                    </div>
-                  )}
-                  {order.table && (
-                    <div className="flex items-center space-x-2 text-sm bg-blue-50 p-2 rounded border border-blue-200">
-                      <span className="font-medium text-blue-800">🍽️ Masa {order.table.number}</span>
-                      <span className="text-blue-600 text-xs">({order.table.branch.name})</span>
-                    </div>
-                  )}
                 </div>
 
-                                 {/* Ürün Listesi */}
-                 <div className="space-y-1">
-                   <p className="text-sm font-medium text-gray-700">Ürünler:</p>
-                   {order.orderItems && order.orderItems.map((item, index) => (
-                     <div key={index} className="flex justify-between text-sm">
-                       <span>{item.quantity}x {item.product.name}</span>
-                       <span className="text-gray-600">₺{item.price.toFixed(2)}</span>
-                     </div>
-                   ))}
-                 </div>
+                {/* Müşteri Bilgisi */}
+                {order.customer && (
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p className="font-medium text-gray-900">{order.customer.name}</p>
+                    <p className="text-sm text-gray-600">{order.customer.phone}</p>
+                    {order.orderType === 'DELIVERY' && (
+                      <p className="text-sm text-gray-600">{order.customer.address}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Masa Bilgisi */}
+                {order.table && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="font-medium text-blue-900">Masa {order.table.number}</p>
+                    <p className="text-sm text-blue-600">{order.table.branch.name}</p>
+                  </div>
+                )}
+
+                {/* Sipariş Detayları */}
+                <div className="mb-4">
+                  {order.orderItems.map((item) => (
+                    <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-medium text-gray-900">
+                          {item.quantity}x
+                        </span>
+                        <span className="text-sm text-gray-700">{item.product.name}</span>
+                      </div>
+                      <span className="text-sm font-medium text-gray-900">
+                        ₺{item.price}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Toplam */}
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-lg font-bold text-gray-900">Toplam:</span>
+                  <span className="text-lg font-bold text-gray-900">₺{order.totalAmount}</span>
+                </div>
 
                 {/* Notlar */}
                 {order.notes && (
-                  <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
+                  <div className="mb-4 p-3 bg-yellow-50 rounded-lg">
                     <p className="text-sm text-yellow-800">
                       <strong>Not:</strong> {order.notes}
                     </p>
                   </div>
                 )}
 
-                {/* Toplam */}
-                <div className="flex justify-between items-center pt-2 border-t">
-                  <span className="font-medium">Toplam:</span>
-                  <span className="text-lg font-bold text-green-600">₺{order.totalAmount.toFixed(2)}</span>
-                </div>
-
-                {/* Durum Butonları */}
-                <div className="flex space-x-2 pt-2">
+                {/* Durum Güncelleme Butonları */}
+                <div className="flex space-x-2">
                   {order.status === 'PENDING' && (
-                    <Button
+                    <button
                       onClick={() => updateOrderStatus(order.id, 'PREPARING')}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm"
+                      className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
                     >
-                      Hazırlanmaya Başla
-                    </Button>
+                      Hazırlamaya Başla
+                    </button>
                   )}
+                  
                   {order.status === 'PREPARING' && (
-                    <Button
+                    <button
                       onClick={() => updateOrderStatus(order.id, 'READY')}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm"
+                      className="flex-1 bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
                     >
                       Hazır
-                    </Button>
+                    </button>
                   )}
+                  
                   {order.status === 'READY' && (
-                    <Button
+                    <button
                       onClick={() => updateOrderStatus(order.id, 'DELIVERED')}
-                      className="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-sm"
+                      className="flex-1 bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
                     >
                       Teslim Edildi
-                    </Button>
-                  )}
-                  {(order.status === 'PENDING' || order.status === 'PREPARING') && (
-                    <Button
-                      onClick={() => updateOrderStatus(order.id, 'CANCELLED')}
-                      variant="outline"
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      İptal
-                    </Button>
+                    </button>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredOrders.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-400 text-6xl mb-4">🍳</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Sipariş Yok</h3>
-            <p className="text-gray-500">Seçili durumda sipariş bulunmuyor.</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
