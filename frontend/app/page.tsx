@@ -73,7 +73,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
   const [loading, setLoading] = useState(true)
   const [productsLoading, setProductsLoading] = useState(false)
-  const [showBranchSelector, setShowBranchSelector] = useState(false)
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
@@ -116,10 +115,7 @@ export default function Home() {
       } catch (error) {
         console.error('Kayıtlı şube bilgisi okunamadı:', error);
         localStorage.removeItem('selectedBranch');
-        setShowBranchSelector(true);
       }
-    } else {
-      setShowBranchSelector(true);
     }
 
     // Branches data'sını set et
@@ -304,7 +300,6 @@ export default function Home() {
   const handleBranchSelect = useCallback((branch: Branch) => {
     setSelectedBranch(branch);
     localStorage.setItem('selectedBranch', JSON.stringify(branch));
-    setShowBranchSelector(false);
     setSelectedCategory('Tümü');
     toast.success(`${branch.name} şubesi seçildi`);
   }, [])
@@ -459,71 +454,7 @@ export default function Home() {
     )
   }
 
-  // Şube seçici gösteriliyorsa
-  if (showBranchSelector) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-        {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16 sm:h-20">
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white text-sm sm:text-xl">🥪</span>
-                </div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                  Çizar Sipariş
-                </h1>
-              </div>
-            </div>
-          </div>
-        </header>
 
-        {/* Main Content */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-              Şube Seçin
-            </h2>
-            <p className="text-lg sm:text-xl text-gray-600">
-              Sipariş vermek için şubenizi seçin
-            </p>
-          </div>
-
-          {branches.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🏪</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Şube Bulunamadı</h3>
-              <p className="text-gray-600">Şu anda aktif şube bulunmamaktadır.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {branches.map((branch) => (
-                <div
-                  key={branch.id}
-                  onClick={() => handleBranchSelect(branch)}
-                  className="bg-white/80 backdrop-blur-sm border-2 border-orange-200 rounded-xl p-6 cursor-pointer hover:border-orange-400 hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-                >
-                  <div className="text-center">
-                    <div className="text-4xl mb-4">🏪</div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {branch.name}
-                    </h3>
-                    <p className="text-gray-600 mb-3">
-                      {branch.address}
-                    </p>
-                    <p className="text-orange-600 font-medium">
-                      📞 {branch.phone}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
@@ -746,127 +677,149 @@ export default function Home() {
       {/* Responsive Content Section */}
       <main className="relative">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
-              <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-0">
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-                  <ChefHat className="text-white text-lg sm:text-xl" />
-                </div>
-                <div>
-                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                    {selectedBranch?.name || 'Şube'} - Menü
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    Lezzetli yemekler ve içecekler
-                  </p>
-                </div>
-              </div>
-              <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold">
-                🎯 {products.length} ürün
+          {/* Şube seçilmemişse mesaj göster */}
+          {!selectedBranch && (
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-8 sm:p-12 mb-6 sm:mb-8 text-center">
+              <div className="text-6xl mb-6">🏪</div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+                Şube Seçin
+              </h3>
+              <p className="text-lg sm:text-xl text-gray-600 mb-6">
+                Sipariş vermek için yukarıdaki şube dropdown'ından şubenizi seçin
+              </p>
+              <div className="bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-200 rounded-xl p-4">
+                <p className="text-sm text-gray-700">
+                  💡 <strong>İpucu:</strong> Header'daki şube seçici dropdown'ını kullanarak şubenizi seçebilirsiniz
+                </p>
               </div>
             </div>
-            
-            {/* Responsive Kategori Filtreleme */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
-              {getAvailableCategories().map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
-                    selectedCategory === category
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                      : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
-                  }`}
-                >
-                  {category === 'Tümü' ? '🍽️ Tümü' : `${getCategoryIcon(category)} ${category}`}
-                </button>
-              ))}
-            </div>
-          </div>
+          )}
           
-          {/* Ürün Listesi */}
-          {productsLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600">Ürünler yükleniyor...</p>
-            </div>
-          ) : (
-            <div className="space-y-8 sm:space-y-12">
-              {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-                <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
-                  <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">
-                      <span className="text-2xl sm:text-3xl">{getCategoryIcon(category)}</span>
+          {selectedBranch && (
+            <>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 mb-6 sm:mb-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                  <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                      <ChefHat className="text-white text-lg sm:text-xl" />
                     </div>
-                    <div className="flex-1">
-                      <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{category}</h4>
-                      <p className="text-sm sm:text-base text-gray-600">{categoryProducts.length} lezzetli seçenek</p>
-                    </div>
-                    <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold mt-3 sm:mt-0">
-                      {categoryProducts.length} ürün
+                    <div>
+                      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                        {selectedBranch.name} - Menü
+                      </h3>
+                      <p className="text-sm sm:text-base text-gray-600">
+                        Lezzetli yemekler ve içecekler
+                      </p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {categoryProducts.map((product) => (
-                      <div 
-                        key={product.id} 
-                        className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
-                        onClick={() => handleProductClick(product)}
-                      >
-                        {(product.image || product.imagePath) && (
-                          <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
-                            <img
-                              src={API_ENDPOINTS.IMAGE_URL(product.image || product.imagePath || '')}
-                              alt={product.name}
-                              className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
-                              crossOrigin="anonymous"
-                              onError={(e) => {
-                                e.currentTarget.src = '/placeholder-image.svg';
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                          </div>
-                        )}
-                        
-                        {/* Ürün adı */}
-                        <h5 className="text-sm sm:text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-2 sm:mb-3 leading-tight">
-                          {product.name}
-                        </h5>
-                        
-                        {/* Açıklama */}
-                        <p className="text-xs sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow line-clamp-2">
-                          {truncateDescription(product.description)}
-                        </p>
-                        
-                        {/* Alt kısım - kategori, fiyat ve buton */}
-                        <div className="mt-auto">
-                          <div className="flex justify-between items-center mb-2 sm:mb-3">
-                            <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold">
-                              {typeof product.category === 'object' ? product.category.name : product.category}
-                            </span>
-                            
-                            {/* Fiyat */}
-                            <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                              ₺{product.price.toFixed(2)}
-                            </span>
-                          </div>
-                          
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(product);
-                            }}
-                            className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                          >
-                            🛒 Sepete Ekle
-                          </button>
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold">
+                    🎯 {products.length} ürün
+                  </div>
+                </div>
+                
+                {/* Responsive Kategori Filtreleme */}
+                <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
+                  {getAvailableCategories().map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
+                        selectedCategory === category
+                          ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
+                      }`}
+                    >
+                      {category === 'Tümü' ? '🍽️ Tümü' : `${getCategoryIcon(category)} ${category}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Ürün Listesi */}
+              {productsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Ürünler yükleniyor...</p>
+                </div>
+              ) : (
+                <div className="space-y-8 sm:space-y-12">
+                  {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+                    <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
+                      <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
+                        <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">
+                          <span className="text-2xl sm:text-3xl">{getCategoryIcon(category)}</span>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xl sm:text-2xl font-bold text-gray-900">{category}</h4>
+                          <p className="text-sm sm:text-base text-gray-600">{categoryProducts.length} lezzetli seçenek</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold mt-3 sm:mt-0">
+                          {categoryProducts.length} ürün
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                        {categoryProducts.map((product) => (
+                          <div 
+                            key={product.id} 
+                            className="bg-gradient-to-br from-gray-50 to-white rounded-lg sm:rounded-xl p-3 sm:p-6 border-2 border-orange-100 hover:border-orange-300 hover:shadow-xl transition-all duration-200 transform hover:scale-105 group cursor-pointer flex flex-col h-full"
+                            onClick={() => handleProductClick(product)}
+                          >
+                            {(product.image || product.imagePath) && (
+                              <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
+                                <img
+                                  src={API_ENDPOINTS.IMAGE_URL(product.image || product.imagePath || '')}
+                                  alt={product.name}
+                                  className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
+                                  crossOrigin="anonymous"
+                                  onError={(e) => {
+                                    e.currentTarget.src = '/placeholder-image.svg';
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                              </div>
+                            )}
+                            
+                            {/* Ürün adı */}
+                            <h5 className="text-sm sm:text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors mb-2 sm:mb-3 leading-tight">
+                              {product.name}
+                            </h5>
+                            
+                            {/* Açıklama */}
+                            <p className="text-xs sm:text-base text-gray-600 mb-3 sm:mb-4 flex-grow line-clamp-2">
+                              {truncateDescription(product.description)}
+                            </p>
+                            
+                            {/* Alt kısım - kategori, fiyat ve buton */}
+                            <div className="mt-auto">
+                              <div className="flex justify-between items-center mb-2 sm:mb-3">
+                                <span className="text-xs text-gray-500 bg-orange-100 px-2 sm:px-3 py-1 rounded-full font-semibold">
+                                  {typeof product.category === 'object' ? product.category.name : product.category}
+                                </span>
+                                
+                                {/* Fiyat */}
+                                <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                                  ₺{product.price.toFixed(2)}
+                                </span>
+                              </div>
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(product);
+                                }}
+                                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                              >
+                                🛒 Sepete Ekle
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </main>
