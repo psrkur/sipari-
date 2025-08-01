@@ -508,8 +508,8 @@ export default function AdminPage() {
       const response = await axios.post(API_ENDPOINTS.ADMIN_USERS, userForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.data.success) {
-        setUsers(prev => [...prev, response.data.user]);
+      if (response.data) {
+        setUsers(prev => [...prev, response.data]);
         setShowAddUserModal(false);
         resetUserForm();
         toast.success('Kullanıcı eklendi');
@@ -526,8 +526,12 @@ export default function AdminPage() {
       const response = await axios.post(API_ENDPOINTS.ADMIN_PRODUCTS, productForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.data.success) {
-        setProducts(prev => [...prev, response.data.product]);
+      
+      // Backend'den dönen response'u kontrol et
+      if (response.data) {
+        // Eğer array ise (tüm şubelere eklenmişse) ilk elemanı al
+        const newProduct = Array.isArray(response.data) ? response.data[0] : response.data;
+        setProducts(prev => [...prev, newProduct]);
         setShowAddProductModal(false);
         resetProductForm();
         toast.success('Ürün eklendi');
@@ -544,8 +548,8 @@ export default function AdminPage() {
       const response = await axios.post(API_ENDPOINTS.ADMIN_CATEGORIES, categoryForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.data.success) {
-        setCategories(prev => [...prev, response.data.category]);
+      if (response.data) {
+        setCategories(prev => [...prev, response.data]);
         setShowAddCategoryModal(false);
         resetCategoryForm();
         toast.success('Kategori eklendi');
@@ -562,8 +566,8 @@ export default function AdminPage() {
       const response = await axios.post(API_ENDPOINTS.BRANCHES, branchForm, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (response.data.success) {
-        setBranches(prev => [...prev, response.data.branch]);
+      if (response.data) {
+        setBranches(prev => [...prev, response.data]);
         setShowAddBranchModal(false);
         resetBranchForm();
         toast.success('Şube eklendi');
