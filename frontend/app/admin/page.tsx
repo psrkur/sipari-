@@ -98,6 +98,9 @@ export default function AdminPage() {
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
   const { items: orders, setItems: setOrders, updateItem: updateOrderItem } = useOptimizedList<Order>();
   const { items: categories, setItems: setCategories, updateItem: updateCategoryItem } = useOptimizedList<Category>();
+  
+  // Aktif sayfa state'i
+  const [activePage, setActivePage] = useState<string>('orders');
   const { items: products, setItems: setProducts, updateItem: updateProductItem } = useOptimizedList<any>();
   const { items: users, setItems: setUsers, updateItem: updateUserItem } = useOptimizedList<any>();
 
@@ -688,13 +691,11 @@ export default function AdminPage() {
       {/* Admin Navigasyon Menüsü */}
       <div className="bg-white shadow-sm border-b mb-6">
         <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap gap-2">
-          <Link href="/admin/dashboard" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">📊 Dashboard</Link>
-          <Link href="/pos" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🧾 POS</Link>
-          <Link href="/kitchen" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">👨‍🍳 Mutfak</Link>
-          <Link href="/admin?page=products" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🍽️ Ürünler</Link>
-          <Link href="/admin?page=categories" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">📂 Kategoriler</Link>
-          <Link href="/admin?page=users" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">👤 Kullanıcılar</Link>
-          <Link href="/admin?page=branches" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🏢 Şubeler</Link>
+          <button onClick={() => setActivePage('orders')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'orders' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>📋 Siparişler</button>
+          <button onClick={() => setActivePage('products')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'products' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>🍽️ Ürünler</button>
+          <button onClick={() => setActivePage('categories')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'categories' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>📂 Kategoriler</button>
+          <button onClick={() => setActivePage('users')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'users' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>👤 Kullanıcılar</button>
+          <button onClick={() => setActivePage('branches')} className={`px-4 py-2 rounded-lg font-medium transition ${activePage === 'branches' ? 'bg-blue-500 text-white' : 'bg-gray-100 hover:bg-blue-100 text-gray-800'}`}>🏢 Şubeler</button>
           <Link href="/admin/qr-codes" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🔗 QR Kodlar</Link>
           <Link href="/admin/table-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">🍽️ Masa Yönetimi</Link>
           <Link href="/admin/chat-management" className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-blue-100 text-gray-800 font-medium transition">💬 Sohbet</Link>
@@ -710,8 +711,8 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Siparişler */}
-            <div className="bg-white rounded-lg shadow-md p-6">
+            {activePage === 'orders' && (
+              <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">📋 Siparişler ({filteredOrders.length})</h2>
               
               {filteredOrders.length === 0 ? (
@@ -806,6 +807,33 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+            )}
+
+            {activePage === 'products' && (
+              <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={() => {}} onDeleteProduct={() => {}} /></div>
+            )}
+
+            {activePage === 'categories' && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">📂 Kategoriler</h2>
+                <div className="space-y-4">
+                  {categories.map((category) => (
+                    <div key={category.id} className="border border-gray-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                      <p className="text-sm text-gray-600">{category.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activePage === 'users' && (
+              <div><UserList users={users} onDeleteUser={() => {}} onActivateUser={() => {}} /></div>
+            )}
+
+            {activePage === 'branches' && (
+              <div><BranchManagement branches={branches} onEditBranch={() => {}} onDeleteBranch={() => {}} /></div>
+            )}
 
             {/* Veritabanı İstatistikleri */}
             {databaseStats && (
