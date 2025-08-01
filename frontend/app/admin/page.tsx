@@ -71,6 +71,9 @@ export default function AdminPage() {
   const router = useRouter();
   const { user, token } = useAuthStore();
   const { on, off } = useSocket();
+  
+  // Loading state for auth check
+  const [authChecking, setAuthChecking] = useState(true);
 
   // Optimize edilmiş state'ler
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
@@ -191,12 +194,28 @@ export default function AdminPage() {
 
   // Yetki kontrolü
   useEffect(() => {
-    if (!user || (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER')) {
-      console.log('User not authorized, redirecting to login');
-      router.push('/login');
+    console.log('🔍 Yetki kontrolü - User:', user);
+    console.log('🔍 Yetki kontrolü - User role:', user?.role);
+    console.log('🔍 Yetki kontrolü - Token:', token ? 'Var' : 'Yok');
+    
+    // Auth checking tamamlandı
+    setAuthChecking(false);
+    
+    if (!user) {
+      console.log('❌ Kullanıcı bulunamadı, ana sayfaya yönlendiriliyor');
+      router.push('/');
       return;
     }
-  }, [user, router]);
+    
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER') {
+      console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
+      toast.error('Bu sayfaya erişim yetkiniz yok');
+      router.push('/');
+      return;
+    }
+    
+    console.log('✅ Kullanıcı yetkili, admin paneline erişim verildi');
+  }, [user, token, router]);
 
   // Optimize edilmiş sipariş yükleme
   const fetchOrders = useCallback(async () => {
@@ -635,6 +654,18 @@ export default function AdminPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Yetkisiz erişim</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading kontrolü
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yetki kontrolü yapılıyor...</p>
         </div>
       </div>
     );
