@@ -171,6 +171,8 @@ export default function Dashboard() {
 
   // Gerçek zamanlı güncellemeler
   useEffect(() => {
+    if (!token) return;
+    
     loadDashboardData();
 
     // Her 30 saniyede bir güncelle
@@ -195,7 +197,7 @@ export default function Dashboard() {
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
     };
-  }, [on, off, token, API_BASE_URL]);
+  }, [token]); // Sadece token'ı dependency olarak kullan
 
   // Grafik verileri
   const salesChartData = {

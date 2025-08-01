@@ -1,7 +1,20 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
 const router = express.Router();
-const prisma = new PrismaClient();
+
+// Prisma client'ı server.js'den al
+let prisma;
+try {
+  prisma = require('@prisma/client').PrismaClient;
+  prisma = new prisma();
+} catch (error) {
+  console.error('❌ Prisma client oluşturulamadı:', error);
+  // Fallback için basit bir mock
+  prisma = {
+    order: { findMany: () => [] },
+    customer: { count: () => 0 },
+    product: { count: () => 0 }
+  };
+}
 
 // Dashboard ana verilerini getir
 router.get('/dashboard/stats', async (req, res) => {
@@ -11,23 +24,29 @@ router.get('/dashboard/stats', async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Bugünkü siparişleri getir
-    const todayOrders = await prisma.order.findMany({
-      where: {
-        createdAt: {
-          gte: today
-        }
-      },
-      include: {
-        orderItems: {
-          include: {
-            product: true
+    // Bugünkü siparişleri getir - güvenli hata yönetimi ile
+    let todayOrders = [];
+    try {
+      todayOrders = await prisma.order.findMany({
+        where: {
+          createdAt: {
+            gte: today
           }
         },
-        customer: true,
-        branch: true
-      }
-    });
+        include: {
+          orderItems: {
+            include: {
+              product: true
+            }
+          },
+          customer: true,
+          branch: true
+        }
+      });
+    } catch (dbError) {
+      console.error('❌ Veritabanı sorgusu hatası:', dbError);
+      todayOrders = []; // Boş array ile devam et
+    }
 
     // Toplam gelir hesapla
     const totalRevenue = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -58,18 +77,29 @@ router.get('/dashboard/stats', async (req, res) => {
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5);
 
-    // Müşteri istatistikleri
-    const totalCustomers = await prisma.customer.count();
-    const newTodayCustomers = await prisma.customer.count({
-      where: {
-        createdAt: {
-          gte: today
+    // Müşteri istatistikleri - güvenli hata yönetimi ile
+    let totalCustomers = 0;
+    let newTodayCustomers = 0;
+    try {
+      totalCustomers = await prisma.customer.count();
+      newTodayCustomers = await prisma.customer.count({
+        where: {
+          createdAt: {
+            gte: today
+          }
         }
-      }
-    });
+      });
+    } catch (dbError) {
+      console.error('❌ Müşteri sayısı hatası:', dbError);
+    }
 
-    // Ürün istatistikleri
-    const totalProducts = await prisma.product.count();
+    // Ürün istatistikleri - güvenli hata yönetimi ile
+    let totalProducts = 0;
+    try {
+      totalProducts = await prisma.product.count();
+    } catch (dbError) {
+      console.error('❌ Ürün sayısı hatası:', dbError);
+    }
 
     // Canlı siparişler
     const currentOrders = todayOrders.slice(0, 5).map(order => ({

@@ -80,7 +80,7 @@ export default function POSPage() {
     }
 
     fetchBranches();
-  }, [token, router]);
+  }, [token]); // Sadece token'ı dependency olarak kullan
 
   const fetchBranches = async () => {
     try {

@@ -68,7 +68,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
       setProductsLoading(true);
       try {
         // Varsayılan olarak ilk şubeyi kullan (branchId: 1)
-        const response = await axios.get(`${API_BASE_URL}/api/products/1`);
+        const response = await axios.get(`${getApiBaseUrl()}/api/products/1`);
         setProducts(response.data);
         console.log('✅ Ürünler yüklendi:', response.data.length);
       } catch (error) {
@@ -83,7 +83,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     if (isOpen) {
       loadProducts();
     }
-  }, [isOpen, API_BASE_URL]);
+  }, [isOpen]); // Sadece isOpen'ı dependency olarak kullan
 
   // İlk mesajı gönder
   useEffect(() => {

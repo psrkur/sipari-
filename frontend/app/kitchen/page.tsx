@@ -93,7 +93,7 @@ export default function KitchenPage() {
     }
 
     fetchBranches();
-  }, [token, router]);
+  }, [token]); // Sadece token'ı dependency olarak kullan
 
   // Gerçek zamanlı güncellemeler için Socket.IO
   useEffect(() => {
@@ -124,7 +124,7 @@ export default function KitchenPage() {
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
     };
-  }, [selectedBranch, on, off]);
+  }, [selectedBranch]); // Sadece selectedBranch'ı dependency olarak kullan
 
   // Otomatik yenileme için useEffect
   useEffect(() => {

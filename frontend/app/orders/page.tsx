@@ -130,7 +130,7 @@ export default function OrdersPage() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [token, router]);
+  }, [token]); // Sadece token'ı dependency olarak kullan
 
   const fetchOrders = async () => {
     try {

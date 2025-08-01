@@ -1,6 +1,10 @@
-// API Configuration - Her zaman canlı backend'i kullan
+// API Configuration - Local development için local backend kullan
 export const getApiBaseUrl = (): string => {
-  // Her zaman canlı backend'i kullan (aynı veritabanı)
+  // Development ortamında local backend kullan
+  if (process.env.NODE_ENV === 'development') {
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  }
+  // Production'da canlı backend kullan
   return process.env.NEXT_PUBLIC_API_URL || 'https://yemek5-backend.onrender.com';
 };
 
