@@ -209,7 +209,7 @@ export default function AdminPage() {
       return;
     }
     
-    if (user.role !== 'SUPER_ADMIN' && user.role !== 'BRANCH_MANAGER') {
+    if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN' && user.role !== 'admin' && user.role !== 'BRANCH_MANAGER') {
       console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
       console.log('❌ Kullanıcı rolü:', user.role);
       toast.error('Bu sayfaya erişim yetkiniz yok');
