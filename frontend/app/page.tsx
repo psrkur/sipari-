@@ -525,13 +525,15 @@ export default function Home() {
                 )}
               </div>
               
-              {/* Admin Panel */}
-              <button
-                onClick={() => router.push('/admin')}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                ⚙️ Admin
-              </button>
+              {/* Admin Panel - Sadece admin girişi yapıldığında göster */}
+              {user && user.role === 'admin' && (
+                <button
+                  onClick={() => router.push('/admin')}
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-3 sm:px-6 py-2 sm:py-3 rounded-xl text-xs sm:text-sm font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  ⚙️ Admin
+                </button>
+              )}
               
               {/* Desktop Sepet Butonu */}
               <button 
