@@ -55,20 +55,25 @@ export interface SocketEvents {
 export const useSocket = () => {
   const socketRef = useRef<Socket | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 5;
+  const maxReconnectAttempts = 10; // Artırıldı
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Socket bağlantısını oluştur
     socketRef.current = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
-      timeout: 30000, // 30 saniye timeout
+      timeout: 60000, // 60 saniye timeout (artırıldı)
       forceNew: false, // Mevcut bağlantıyı yeniden kullan
-      // Reconnection ayarları
+      // Reconnection ayarları iyileştirildi
       reconnection: true,
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnectionDelayMax: 10000, // Artırıldı
+      maxReconnectionAttempts: maxReconnectAttempts,
+      // Heartbeat ayarları
+      pingTimeout: 60000,
+      pingInterval: 25000,
     });
 
     const socket = socketRef.current;
@@ -77,16 +82,31 @@ export const useSocket = () => {
     socket.on('connect', () => {
       console.log('🔌 Socket.IO bağlantısı kuruldu');
       reconnectAttemptsRef.current = 0; // Bağlantı başarılı olduğunda sıfırla
+      
+      // Reconnect timeout'u temizle
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     });
 
     socket.on('disconnect', (reason) => {
       console.log(`❌ Socket.IO bağlantısı kesildi, Sebep: ${reason}`);
       
       // Yeniden bağlanma denemesi
-      if (reason === 'io server disconnect' || reason === 'transport close') {
+      if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'ping timeout') {
         reconnectAttemptsRef.current++;
         if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
           console.log(`🔄 Yeniden bağlanma denemesi ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
+          
+          // Manuel yeniden bağlanma denemesi
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 10000);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (socket && !socket.connected) {
+              console.log(`🔄 Manuel yeniden bağlanma denemesi...`);
+              socket.connect();
+            }
+          }, delay);
         } else {
           console.log(`❌ Maksimum yeniden bağlanma denemesi aşıldı`);
         }
@@ -95,11 +115,29 @@ export const useSocket = () => {
 
     socket.on('connect_error', (error) => {
       console.error('🔌 Socket.IO bağlantı hatası:', error.message);
+      
+      // Bağlantı hatası durumunda yeniden deneme
+      reconnectAttemptsRef.current++;
+      if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 10000);
+        reconnectTimeoutRef.current = setTimeout(() => {
+          if (socket && !socket.connected) {
+            console.log(`🔄 Bağlantı hatası sonrası yeniden deneme...`);
+            socket.connect();
+          }
+        }, delay);
+      }
     });
 
     socket.on('reconnect', (attemptNumber) => {
       console.log(`✅ Socket.IO bağlantısı yeniden kuruldu, Deneme: ${attemptNumber}`);
       reconnectAttemptsRef.current = 0;
+      
+      // Reconnect timeout'u temizle
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
     });
 
     socket.on('reconnect_error', (error) => {
@@ -121,6 +159,9 @@ export const useSocket = () => {
 
     // Cleanup
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       if (socket) {
         socket.disconnect();
       }
