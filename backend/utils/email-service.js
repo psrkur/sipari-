@@ -2,13 +2,20 @@ const nodemailer = require('nodemailer');
 
 // Email transporter oluştur
 const createTransporter = () => {
+  console.log('🔧 Email transporter oluşturuluyor...');
+  console.log('📧 Nodemailer version:', nodemailer.version);
+  
   // Email ayarları kontrol et
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
     throw new Error('Email ayarları yapılandırılmamış. EMAIL_USER ve EMAIL_PASS environment variables gerekli.');
   }
 
+  console.log('✅ Email ayarları mevcut');
+  console.log('👤 EMAIL_USER:', process.env.EMAIL_USER ? 'Ayarlanmış' : 'Eksik');
+  console.log('🔑 EMAIL_PASS:', process.env.EMAIL_PASS ? 'Ayarlanmış' : 'Eksik');
+
   // Gmail SMTP ayarları
-  return nodemailer.createTransporter({
+  const transporter = nodemailer.createTransporter({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -19,6 +26,9 @@ const createTransporter = () => {
     greetingTimeout: 30000,
     socketTimeout: 60000
   });
+
+  console.log('✅ Transporter oluşturuldu');
+  return transporter;
 };
 
 // Sipariş email template'i
