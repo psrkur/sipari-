@@ -144,6 +144,7 @@ export const API_ENDPOINTS = {
   get ADMIN_BRANCHES() { return `${getCurrentApiBaseUrl()}/api/branches` },
   get ADMIN_UPDATE_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/branches/${branchId}` },
   get ADMIN_DELETE_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/branches/${branchId}` },
+  get ADMIN_DEACTIVATE_BRANCH() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/admin/branches/${branchId}/deactivate` },
   get ADMIN_CLEANUP_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/cleanup-images` },
   get ADMIN_IMAGE_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/image-status` },
   

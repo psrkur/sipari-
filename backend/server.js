@@ -752,6 +752,30 @@ app.put('/api/admin/branches/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Şubeyi pasif hale getirme endpoint'i
+app.patch('/api/admin/branches/:id/deactivate', authenticateToken, async (req, res) => {
+  try {
+    // Admin rollerini kontrol et - hem büyük hem küçük harf
+    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { id } = req.params;
+
+    // Şubeyi pasif hale getir
+    await prisma.branch.update({
+      where: { id: parseInt(id) },
+      data: { isActive: false }
+    });
+
+    res.json({ message: 'Şube başarıyla pasif hale getirildi' });
+  } catch (error) {
+    console.error('❌ Şube pasif hale getirilemedi:', error);
+    res.status(500).json({ error: 'Şube pasif hale getirilemedi' });
+  }
+});
+
 app.delete('/api/admin/branches/:id', authenticateToken, async (req, res) => {
   try {
     // Admin rollerini kontrol et - hem büyük hem küçük harf

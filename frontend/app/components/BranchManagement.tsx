@@ -12,9 +12,10 @@ interface BranchManagementProps {
   branches: Branch[];
   onEditBranch: (branch: Branch) => void;
   onDeleteBranch: (branchId: number) => void;
+  onDeactivateBranch?: (branchId: number) => void;
 }
 
-const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBranch, onDeleteBranch }) => {
+const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBranch, onDeleteBranch, onDeactivateBranch }) => {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
@@ -58,6 +59,14 @@ const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBra
                     >
                       ✏️ Düzenle
                     </button>
+                    {branch.isActive && onDeactivateBranch && (
+                      <button
+                        onClick={() => onDeactivateBranch(branch.id)}
+                        className="text-orange-600 hover:text-orange-900 font-medium hover:bg-orange-50 px-2 py-1 rounded transition-colors"
+                      >
+                        ⏸️ Pasif Yap
+                      </button>
+                    )}
                     <button
                       onClick={() => onDeleteBranch(branch.id)}
                       className="text-red-600 hover:text-red-900 font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"

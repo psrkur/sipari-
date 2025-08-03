@@ -757,6 +757,28 @@ export default function AdminPage() {
     }
   }, [token, setBranches]);
 
+  const deactivateBranch = useCallback(async (branchId: number) => {
+    if (!confirm('Bu şubeyi pasif hale getirmek istediğinizden emin misiniz? Şube artık aktif olmayacak.')) {
+      return;
+    }
+
+    try {
+      await axios.patch(API_ENDPOINTS.ADMIN_DEACTIVATE_BRANCH(branchId), {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Şubeyi listede pasif hale getir
+      setBranches(prev => prev.map((branch: any) => 
+        branch.id === branchId ? { ...branch, isActive: false } : branch
+      ));
+      
+      toast.success('Şube başarıyla pasif hale getirildi');
+    } catch (error: any) {
+      console.error('Şube pasif hale getirilemedi:', error);
+      toast.error('Şube pasif hale getirilemedi');
+    }
+  }, [token, setBranches]);
+
   // Filtrelenmiş siparişler
   const filteredOrders = useMemo(() => {
     let filtered = orders;
@@ -1180,7 +1202,7 @@ export default function AdminPage() {
               )}
 
               {activePage === 'branches' && (
-                <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} /></div>
+                <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} onDeactivateBranch={deactivateBranch} /></div>
               )}
 
               {/* Veritabanı İstatistikleri */}
