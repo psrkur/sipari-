@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
-import { API_ENDPOINTS, handleImageError } from '@/lib/api';
+import { API_ENDPOINTS, handleImageError, getApiBaseUrl } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -51,7 +51,9 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
       // API'den resimleri yüklemeyi dene
       try {
         console.log('🔍 API\'den resimler yükleniyor...');
-        const response = await axios.get(API_ENDPOINTS.GET_IMAGES, {
+        
+        // Resim yönetimindeki resimleri al
+        const response = await axios.get(`${getApiBaseUrl()}/api/admin/images`, {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -60,8 +62,16 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
         });
         
         if (Array.isArray(response.data)) {
+          // Backend'den gelen resimleri dönüştür
+          const apiImages: Image[] = response.data.map((img: any) => ({
+            filename: img.filename,
+            path: img.url, // Backend'den gelen base64 data URL
+            size: img.size,
+            uploadedAt: img.uploadedAt
+          }));
+          
           // API resimleri ile localStorage resimlerini birleştir
-          const allImages = [...localImages, ...response.data];
+          const allImages = [...localImages, ...apiImages];
           setImages(allImages);
           console.log('✅ Tüm resimler yüklendi, sayı:', allImages.length);
           
