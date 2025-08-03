@@ -311,95 +311,7 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
-// Resim proxy endpoint'i - Base64 ve dosya desteği
-app.get('/api/images/:filename', (req, res) => {
-  const { filename } = req.params;
-  
-  console.log('🖼️ /api/images/ çağrıldı:', filename);
-  
-  // CORS ayarları - Tüm origin'lere izin ver
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
-  res.set('Access-Control-Max-Age', '86400');
-  res.set('Access-Control-Allow-Credentials', 'false');
-  
-  // OPTIONS request için
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  // Base64 data URL kontrolü
-  if (filename.startsWith('data:image/')) {
-    console.log('📊 Base64 data URL tespit edildi');
-    
-    // Base64 data URL'den content type'ı çıkar
-    const match = filename.match(/^data:([^;]+);base64,(.+)$/);
-    if (match) {
-      const contentType = match[1];
-      const base64Data = match[2];
-      
-      console.log('✅ Base64 data başarıyla parse edildi, content type:', contentType);
-      
-      res.set('Content-Type', contentType);
-      res.send(Buffer.from(base64Data, 'base64'));
-      return;
-    } else {
-      console.log('❌ Geçersiz base64 format');
-      res.set('Content-Type', 'image/svg+xml');
-      return res.status(400).send(getPlaceholderSvg());
-    }
-  }
-  
-  // Normal dosya işleme
-  // Güvenlik kontrolü
-  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-    console.error('Geçersiz dosya adı:', filename);
-    res.set('Content-Type', 'image/svg+xml');
-    return res.status(400).send(getPlaceholderSvg());
-  }
-  
-  const filePath = path.join(__dirname, 'uploads', 'products', filename);
-  
-  // Development için en permissive CORS ayarları
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
-  res.set('Access-Control-Max-Age', '86400');
-  res.set('Access-Control-Allow-Credentials', 'false');
-  
-  // OPTIONS request için
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  // Dosya var mı kontrol et
-  if (!fs.existsSync(filePath)) {
-    console.error('Resim dosyası bulunamadı:', filePath);
-    res.set('Content-Type', 'image/svg+xml');
-    return res.status(200).send(getPlaceholderSvg());
-  }
-  
-  // Content-Type'ı dosya uzantısına göre ayarla
-  const ext = path.extname(filename).toLowerCase();
-  let contentType = 'image/jpeg'; // varsayılan
-  if (ext === '.png') contentType = 'image/png';
-  else if (ext === '.gif') contentType = 'image/gif';
-  else if (ext === '.webp') contentType = 'image/webp';
-  
-  res.set('Content-Type', contentType);
-  
-  // Dosyayı serve et
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Resim gönderilemedi:', filename, err);
-      // Response zaten gönderilmiş, hiçbir şey yapma
-      return;
-    }
-  });
-});
+// Eski resim endpoint'i kaldırıldı - Base64 endpoint kullanılıyor
 
 // Products klasörü için özel CORS ayarları
 app.use('/uploads/products', (req, res, next) => {
@@ -473,48 +385,7 @@ app.get('/api/images/:filename', async (req, res) => {
   }
 });
 
-// Eski resim endpoint'i - geriye uyumluluk için
-app.get('/uploads/:filename', (req, res) => {
-  const filename = req.params.filename;
-  // Önce products klasöründe ara
-  let filePath = path.join(__dirname, 'uploads', 'products', filename);
-  
-  // Eğer products klasöründe yoksa, direkt uploads klasöründe ara
-  if (!fs.existsSync(filePath)) {
-    filePath = path.join(__dirname, 'uploads', filename);
-  }
-  
-  // Development için en permissive CORS ayarları
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
-  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
-  res.set('Access-Control-Allow-Credentials', 'false');
-  
-  // OPTIONS request için
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  // Dosya var mı kontrol et
-  if (!require('fs').existsSync(filePath)) {
-    console.error('Resim dosyası bulunamadı:', filePath);
-    
-    // Render'da ephemeral storage nedeniyle dosya kaybolmuş olabilir
-    // Varsayılan bir SVG placeholder resim döndür
-    res.set('Content-Type', 'image/svg+xml');
-    return res.status(200).send(getPlaceholderSvg());
-  }
-  
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Resim gönderilemedi:', filename, err);
-      // Response zaten gönderilmiş, hiçbir şey yapma
-      return;
-    }
-  });
-});
+// Eski resim endpoint'i kaldırıldı - Base64 endpoint kullanılıyor
 
 const authenticateToken = (req, res, next) => {
   // WebSocket bağlantıları için token kontrolü yapma

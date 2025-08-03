@@ -114,64 +114,13 @@ export default function ImageManagement() {
       setLoading(false)
     }
   }, [token])
-            const imageUrl = `http://localhost:3001/api/images/${filename}`
-            
-            return {
-              id: filename,
-              name: filename,
-              path: `/uploads/products/${filename}`,
-              size: 466, // Varsayılan boyut
-              type: filename.split('.').pop()?.toUpperCase() || 'PNG',
-              uploadedAt: new Date().toISOString(),
-              url: imageUrl
-            }
-          })
-          
-          setImages(imagesData)
-          toast.success(`${imagesData.length} varsayılan resim yüklendi`)
-        }
-      } else {
-        // Development ortamında backend'den al
-        console.log('🔍 Development ortamında resimler yükleniyor...')
-        console.log('🔗 API Endpoint:', API_ENDPOINTS.ADMIN_IMAGES)
-        console.log('🔗 API Base URL:', getApiBaseUrl())
-        
-        const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
-          headers
-        })
-        
-        console.log('📊 Backend response:', response.data)
-        
-        // Backend'den gelen veriyi frontend formatına çevir
-        console.log('🔄 Resim dönüşümü başlatılıyor...')
-        const imagesData = response.data.map((img: any, index: number) => {
-          const imageUrl = `${getApiBaseUrl()}/api/images/${img.filename}`
-          console.log(`📸 Resim ${index + 1}/${response.data.length}:`, img.filename)
-          console.log('🔗 Resim URL:', imageUrl)
-          
-          return {
-            id: img.filename,
-            name: img.filename,
-            path: img.path,
-            size: img.size,
-            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-            uploadedAt: img.uploadedAt,
-            url: imageUrl
-          }
-        })
-        
-        console.log('📋 Frontend images data:', imagesData)
-        
-        setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi`)
-      }
-    } catch (error: any) {
-      console.error('Resimler yüklenemedi:', error)
-      toast.error('Resimler yüklenemedi')
-    } finally {
-      setLoading(false)
-    }
-  }, [token])
+                 } catch (error) {
+       console.error('Resimler yüklenemedi:', error)
+       toast.error('Resimler yüklenemedi')
+     } finally {
+       setLoading(false)
+     }
+   }, [token])
 
   // İlk yükleme
   useEffect(() => {
