@@ -724,7 +724,11 @@ export default function Home() {
                                   className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                                   crossOrigin="anonymous"
                                   onError={(e) => {
+                                    console.log('❌ Resim yüklenemedi:', product.name, 'Image:', product.image ? 'Base64 var' : 'Base64 yok', 'ImagePath:', product.imagePath);
                                     e.currentTarget.src = '/placeholder-image.svg';
+                                  }}
+                                  onLoad={() => {
+                                    console.log('✅ Resim yüklendi:', product.name, 'Image:', product.image ? 'Base64 var' : 'Base64 yok');
                                   }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
@@ -823,7 +827,11 @@ export default function Home() {
                     className="w-full h-64 sm:h-80 object-cover"
                     crossOrigin="anonymous"
                     onError={(e) => {
+                      console.log('❌ Modal resim yüklenemedi:', selectedProduct.name, 'Image:', selectedProduct.image ? 'Base64 var' : 'Base64 yok');
                       e.currentTarget.src = '/placeholder-image.svg';
+                    }}
+                    onLoad={() => {
+                      console.log('✅ Modal resim yüklendi:', selectedProduct.name, 'Image:', selectedProduct.image ? 'Base64 var' : 'Base64 yok');
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>

@@ -95,7 +95,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                            alt={product.name}
                            className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                            crossOrigin="anonymous"
-                           onError={handleImageError}
+                           onError={(e) => {
+                             console.log('❌ ProductList resim yüklenemedi:', product.name, 'Image:', product.image ? 'Base64 var' : 'Base64 yok');
+                             handleImageError(e);
+                           }}
+                           onLoad={() => {
+                             console.log('✅ ProductList resim yüklendi:', product.name, 'Image:', product.image ? 'Base64 var' : 'Base64 yok');
+                           }}
                          />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                       </div>
@@ -168,7 +174,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                      alt={selectedProduct.name}
                      className="w-full h-64 sm:h-80 object-cover"
                      crossOrigin="anonymous"
-                     onError={handleImageError}
+                     onError={(e) => {
+                       console.log('❌ ProductList modal resim yüklenemedi:', selectedProduct.name, 'Image:', selectedProduct.image ? 'Base64 var' : 'Base64 yok');
+                       handleImageError(e);
+                     }}
+                     onLoad={() => {
+                       console.log('✅ ProductList modal resim yüklendi:', selectedProduct.name, 'Image:', selectedProduct.image ? 'Base64 var' : 'Base64 yok');
+                     }}
                    />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
