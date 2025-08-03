@@ -91,7 +91,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                     {(product.image || product.imagePath) && (
                       <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
                         <img
-                          src={API_ENDPOINTS.IMAGE_URL(product.image || product.imagePath || '')}
+                          src={product.image || API_ENDPOINTS.IMAGE_URL(product.imagePath || '')}
                           alt={product.name}
                           className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
                           crossOrigin="anonymous"
@@ -164,7 +164,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
               {(selectedProduct.image || selectedProduct.imagePath) && (
                 <div className="relative overflow-hidden rounded-xl">
                   <img
-                    src={API_ENDPOINTS.IMAGE_URL(selectedProduct.image || selectedProduct.imagePath || '')}
+                    src={selectedProduct.image || API_ENDPOINTS.IMAGE_URL(selectedProduct.imagePath || '')}
                     alt={selectedProduct.name}
                     className="w-full h-64 sm:h-80 object-cover"
                     crossOrigin="anonymous"
