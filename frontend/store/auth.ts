@@ -25,36 +25,47 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       login: async (email: string, password: string) => {
-        // Geçici olarak test kullanıcısı oluştur
-        const testUser: User = {
-          id: 1,
-          email: email,
-          name: 'Test Kullanıcı',
-          phone: '0555 123 45 67',
-          address: 'Test Adres',
-          role: 'customer',
-          branchId: null
+        try {
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Giriş yapılamadı');
+          }
+
+          const data = await response.json();
+          set({ user: data.user, token: data.token });
+        } catch (error: any) {
+          throw new Error(error.message || 'Giriş yapılamadı');
         }
-        const testToken = 'test-token-' + Date.now()
-        
-        // Kullanıcıyı store'a kaydet
-        set({ user: testUser, token: testToken })
       },
       register: async (name: string, email: string, phone: string, password: string) => {
-        // Geçici olarak test kullanıcısı oluştur
-        const testUser: User = {
-          id: 1,
-          email: email,
-          name: name,
-          phone: phone,
-          address: '',
-          role: 'customer',
-          branchId: null
+        try {
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, email, phone, password }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Kayıt oluşturulamadı');
+          }
+
+          const data = await response.json();
+          // Kayıt başarılı ama otomatik giriş yapmıyor, kullanıcı manuel giriş yapmalı
+          throw new Error('Kayıt başarılı! Lütfen giriş yapın.');
+        } catch (error: any) {
+          throw new Error(error.message || 'Kayıt oluşturulamadı');
         }
-        const testToken = 'test-token-' + Date.now()
-        
-        // Kullanıcıyı store'a kaydet
-        set({ user: testUser, token: testToken })
       },
       logout: () => set({ user: null, token: null }),
     }),
