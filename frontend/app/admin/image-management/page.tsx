@@ -72,7 +72,7 @@ export default function ImageManagement() {
           
                             // Backend'den gelen veriyi frontend formatına çevir
           const imagesData = response.data.map((img: any) => {
-            const imageUrl = `http://localhost:3001${img.path}`
+            const imageUrl = `http://localhost:3001/api/images/${img.filename}`
             
             return {
               id: img.filename,
@@ -98,7 +98,7 @@ export default function ImageManagement() {
           ]
           
           const imagesData = defaultImages.map((filename, index) => {
-            const imageUrl = `http://localhost:3001/uploads/products/${filename}`
+            const imageUrl = `http://localhost:3001/api/images/${filename}`
             
             return {
               id: filename,
@@ -129,7 +129,7 @@ export default function ImageManagement() {
         // Backend'den gelen veriyi frontend formatına çevir
         console.log('🔄 Resim dönüşümü başlatılıyor...')
         const imagesData = response.data.map((img: any, index: number) => {
-          const imageUrl = `${getApiBaseUrl()}${img.path}`
+          const imageUrl = `${getApiBaseUrl()}/api/images/${img.filename}`
           console.log(`📸 Resim ${index + 1}/${response.data.length}:`, img.filename)
           console.log('🔗 Resim URL:', imageUrl)
           
@@ -506,11 +506,11 @@ export default function ImageManagement() {
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
                       console.error('❌ Resim yüklenemedi:', image.url)
-                      // Placeholder yerine orijinal URL'yi dene
+                      // Placeholder yerine proxy URL'yi dene
                       if (!image.url.startsWith('data:')) {
-                        const originalUrl = `${getApiBaseUrl()}${image.path}`
-                        console.log('🔄 Orijinal URL deneniyor:', originalUrl)
-                        target.src = originalUrl
+                        const proxyUrl = `${getApiBaseUrl()}/api/images/${image.name}`
+                        console.log('🔄 Proxy URL deneniyor:', proxyUrl)
+                        target.src = proxyUrl
                       }
                     }}
                   />
