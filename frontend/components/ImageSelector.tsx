@@ -121,10 +121,10 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
   }, []);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && images.length === 0) {
       fetchImages();
     }
-  }, [isOpen, fetchImages]);
+  }, [isOpen, fetchImages, images.length]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('🔍 handleFileUpload çağrıldı');
@@ -173,17 +173,21 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           
           console.log('✅ Resim bilgisi oluşturuldu:', imageInfo);
           
-          // Resim listesine ekle
-          const newImages = [imageInfo, ...images];
-          setImages(newImages);
-          
-          // localStorage'a kaydet
-          try {
-            localStorage.setItem('uploaded-images', JSON.stringify(newImages));
-            console.log('✅ Resim localStorage\'a kaydedildi');
-          } catch (error) {
-            console.error('❌ localStorage kaydetme hatası:', error);
-          }
+          // Resim listesine ekle - state'i güvenli şekilde güncelle
+          setImages(prevImages => {
+            const newImages = [imageInfo, ...prevImages];
+            
+            // localStorage'a kaydet
+            try {
+              localStorage.setItem('uploaded-images', JSON.stringify(newImages));
+              console.log('✅ Resim localStorage\'a kaydedildi');
+            } catch (error) {
+              console.error('❌ localStorage kaydetme hatası:', error);
+            }
+            
+            console.log('✅ Yeni resim eklendi, toplam resim sayısı:', newImages.length);
+            return newImages;
+          });
           
           toast.success('Resim başarıyla yüklendi ve kaydedildi');
           
@@ -228,17 +232,20 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     try {
       console.log('🔍 Resim siliniyor:', filename);
       
-      // Önce localStorage'dan sil
-      const currentImages = images.filter(img => img.filename !== filename);
-      setImages(currentImages);
-      
-      // localStorage'ı güncelle
-      try {
-        localStorage.setItem('uploaded-images', JSON.stringify(currentImages));
-        console.log('✅ Resim localStorage\'dan silindi');
-      } catch (error) {
-        console.error('❌ localStorage güncelleme hatası:', error);
-      }
+      // Önce localStorage'dan sil - state'i güvenli şekilde güncelle
+      setImages(prevImages => {
+        const currentImages = prevImages.filter(img => img.filename !== filename);
+        
+        // localStorage'ı güncelle
+        try {
+          localStorage.setItem('uploaded-images', JSON.stringify(currentImages));
+          console.log('✅ Resim localStorage\'dan silindi');
+        } catch (error) {
+          console.error('❌ localStorage güncelleme hatası:', error);
+        }
+        
+        return currentImages;
+      });
       
       // API'den silmeyi dene (opsiyonel)
       try {
