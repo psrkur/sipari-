@@ -139,16 +139,23 @@ export default function KitchenPage() {
         ['PENDING', 'PREPARING', 'READY'].includes(order.status)
       );
 
-      setOrders(activeOrders);
-      setLastUpdate(new Date());
-      console.log(`🔄 Siparişler güncellendi: ${activeOrders.length} sipariş`);
+      // Sadece veri değişikliği varsa güncelle
+      const hasChanges = JSON.stringify(activeOrders) !== JSON.stringify(orders);
+      
+      if (hasChanges) {
+        setOrders(activeOrders);
+        setLastUpdate(new Date());
+        console.log(`🔄 Siparişler güncellendi: ${activeOrders.length} sipariş`);
+      } else {
+        console.log('📊 Veri değişikliği yok, güncelleme atlandı');
+      }
     } catch (error: any) {
       console.error('Siparişler yüklenemedi:', error);
       toast.error('Siparişler yüklenemedi');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, orders]);
 
   // Şube değiştiğinde siparişleri yükle
   useEffect(() => {
@@ -157,7 +164,7 @@ export default function KitchenPage() {
     }
   }, [selectedBranch, fetchOrders]);
 
-  // Otomatik yenileme interval'ı
+  // Otomatik yenileme interval'ı - sadece arka planda veri kontrolü
   useEffect(() => {
     if (!autoRefresh || !selectedBranch) return;
 
@@ -166,14 +173,14 @@ export default function KitchenPage() {
       clearInterval(intervalRef.current);
     }
 
-    // Yeni interval başlat - sadece veri güncellemesi yap
+    // Yeni interval başlat - sadece arka planda veri kontrolü
     intervalRef.current = setInterval(() => {
       if (selectedBranch && token) {
-        console.log('⏰ Arka plan sipariş güncelleme...');
-        // Sadece veri güncellemesi yap, sayfa yenileme yapma
+        console.log('⏰ Arka plan veri kontrolü...');
+        // Sessizce veri kontrolü yap, sadece değişiklik varsa güncelle
         fetchOrders(selectedBranch.id);
       }
-    }, 2000); // 2 saniye
+    }, 3000); // 3 saniyeye çıkarıldı - daha az sıklıkta
 
     // Cleanup
     return () => {
@@ -184,7 +191,7 @@ export default function KitchenPage() {
     };
   }, [autoRefresh, selectedBranch, token, fetchOrders]);
 
-  // Socket.IO gerçek zamanlı güncellemeler
+  // Socket.IO gerçek zamanlı güncellemeler - sadece değişiklik varsa
   useEffect(() => {
     if (!token || !selectedBranch) return;
 
@@ -193,7 +200,7 @@ export default function KitchenPage() {
       console.log('📦 Yeni sipariş geldi:', data);
       if (data.branchId === selectedBranch.id) {
         toast.success('Yeni sipariş geldi!');
-        // Sadece veri güncellemesi yap
+        // Sadece yeni sipariş geldiğinde güncelle
         fetchOrders(selectedBranch.id);
       }
     };
@@ -202,7 +209,7 @@ export default function KitchenPage() {
     const handleOrderStatusChanged = (data: any) => {
       console.log('🔄 Sipariş durumu güncellendi:', data);
       if (data.branchId === selectedBranch.id) {
-        // Sadece veri güncellemesi yap
+        // Sadece durum değişikliği varsa güncelle
         fetchOrders(selectedBranch.id);
       }
     };
@@ -218,7 +225,7 @@ export default function KitchenPage() {
     };
   }, [token, selectedBranch, on, off, fetchOrders]);
 
-  // Sipariş durumu güncelleme
+  // Sipariş durumu güncelleme - sadece gerekli durumlarda
   const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
     if (!token) return;
     
@@ -230,7 +237,7 @@ export default function KitchenPage() {
       );
 
       if (response.data.success) {
-        // Hemen siparişleri yeniden yükle - sadece veri güncellemesi
+        // Sadece durum güncellendiğinde yeniden yükle
         if (selectedBranch) {
           fetchOrders(selectedBranch.id);
         }
@@ -337,7 +344,7 @@ export default function KitchenPage() {
           <p>Auth Checking: {authChecking ? 'Evet' : 'Hayır'}</p>
           <p>Orders Count: {orders.length}</p>
           <p>Selected Branch: {selectedBranch ? selectedBranch.name : 'Yok'}</p>
-                     <p>Arka Plan Güncelleme: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
+                     <p>Sessiz Veri Kontrolü: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
           <p>Last Update: {lastUpdate.toLocaleTimeString('tr-TR')}</p>
         </div>
       )}
@@ -358,11 +365,11 @@ export default function KitchenPage() {
                     onChange={(e) => setAutoRefresh(e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                                     <span>Arka Plan Güncelleme</span>
+                                     <span>Sessiz Veri Kontrolü</span>
                 </label>
                                  {autoRefresh && (
                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                     Arka Plan 2s
+                     Sessiz 3s
                    </span>
                  )}
               </div>
