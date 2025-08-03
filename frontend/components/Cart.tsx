@@ -80,17 +80,10 @@ export default function Cart({ selectedBranch }: CartProps) {
   const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore()
   const { token, user, login } = useAuthStore()
   
-  // Giriş fonksiyonu
+  // Giriş fonksiyonu - Backend'de login API'si olmadığı için şimdilik devre dışı
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    try {
-      await login(loginForm.email, loginForm.password)
-      setShowLoginModal(false)
-      setLoginForm({ email: '', password: '' })
-      toast.success('Başarıyla giriş yaptınız!')
-    } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Giriş yapılamadı')
-    }
+    toast.error('Giriş özelliği şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.')
   }
 
   // Kayıt fonksiyonu - Backend'de register API'si olmadığı için şimdilik devre dışı

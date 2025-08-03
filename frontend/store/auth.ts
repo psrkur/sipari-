@@ -14,7 +14,7 @@ interface User {
 interface AuthState {
   user: User | null
   token: string | null
-  login: (user: User, token: string) => void
+  login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, phone: string, password: string) => Promise<void>
   logout: () => void
 }
@@ -24,7 +24,11 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
-      login: (user: User, token: string) => set({ user, token }),
+      login: async (email: string, password: string) => {
+        // Backend'de login API'si çağrıldıktan sonra kullanılacak
+        // Şimdilik sadece interface'i tamamlamak için boş bırakıyoruz
+        throw new Error('Login function not implemented')
+      },
       register: async (name: string, email: string, phone: string, password: string) => {
         // Bu fonksiyon backend'de register API'si çağrıldıktan sonra kullanılacak
         // Şimdilik sadece interface'i tamamlamak için boş bırakıyoruz
