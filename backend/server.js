@@ -395,8 +395,8 @@ app.get('/api/images/:filename', (req, res) => {
   res.sendFile(filePath, (err) => {
     if (err) {
       console.error('Resim gönderilemedi:', filename, err);
-      res.set('Content-Type', 'image/svg+xml');
-      res.status(200).send(getPlaceholderSvg());
+      // Response zaten gönderilmiş, hiçbir şey yapma
+      return;
     }
   });
 });
@@ -457,9 +457,8 @@ app.get('/uploads/:filename', (req, res) => {
   res.sendFile(filePath, (err) => {
     if (err) {
       console.error('Resim gönderilemedi:', filename, err);
-      // Hata durumunda da placeholder SVG döndür
-      res.set('Content-Type', 'image/svg+xml');
-      res.status(200).send(getPlaceholderSvg());
+      // Response zaten gönderilmiş, hiçbir şey yapma
+      return;
     }
   });
 });
