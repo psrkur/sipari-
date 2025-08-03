@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resim Yükleme Testi</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; margin: 20px 0; }
+        .upload-area.dragover { border-color: #007bff; background-color: #f8f9fa; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Resim Yükleme Testi</h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <p>Resim dosyasını buraya sürükleyin veya seçin</p>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <button onclick="document.getElementById('fileInput').click()">Resim Seç</button>
+    </div>
+    
+    <div id="result"></div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const result = document.getElementById('result');
+        
+        // Drag & Drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+        
+        async function handleFileUpload(file) {
+            result.innerHTML = '<p>Yükleniyor...</p>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/admin/upload-image', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer test-token'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `
+                        <h3>✅ Başarılı!</h3>
+                        <p><strong>Dosya Adı:</strong> ${data.filename}</p>
+                        <p><strong>Yol:</strong> ${data.imagePath}</p>
+                        <p><strong>Boyut:</strong> ${data.size} bytes</p>
+                        <p><strong>Orijinal Ad:</strong> ${data.originalName}</p>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <h3>❌ Hata!</h3>
+                        <p><strong>Durum:</strong> ${response.status}</p>
+                        <p><strong>Mesaj:</strong> ${data.error || 'Bilinmeyen hata'}</p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <h3>❌ Bağlantı Hatası!</h3>
+                    <p><strong>Hata:</strong> ${error.message}</p>
+                    <p>Backend çalışıyor mu kontrol edin.</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html> 
