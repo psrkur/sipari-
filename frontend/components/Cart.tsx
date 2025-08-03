@@ -229,6 +229,37 @@ export default function Cart({ selectedBranch }: CartProps) {
   const deliveryFee = deliveryType === 'delivery' ? 5.0 : 0.0
   const finalTotal = total + deliveryFee
 
+  // Teslimat seçeneği değiştiğinde müşteri bilgilerini otomatik güncelle
+  useEffect(() => {
+    if (deliveryType === 'delivery' && customerData) {
+      // Adrese teslim seçildiğinde müşteri bilgilerini otomatik doldur
+      setValue('name', customerData.name)
+      setValue('email', customerData.email)
+      setValue('phone', customerData.phone)
+      setValue('address', customerData.address)
+      
+      // Varsayılan adresi seç
+      if (userAddresses.length > 0) {
+        const defaultAddress = userAddresses.find(addr => addr.isDefault)
+        if (defaultAddress) {
+          setSelectedAddress(defaultAddress)
+          setValue('address', defaultAddress.address)
+        }
+      }
+      
+      toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
+    } else if (deliveryType === 'pickup') {
+      // Şubeden al seçildiğinde sadece temel bilgileri doldur
+      if (customerData) {
+        setValue('name', customerData.name)
+        setValue('phone', customerData.phone)
+        setValue('email', customerData.email)
+        setValue('address', '') // Adres alanını temizle
+        setSelectedAddress(null)
+      }
+    }
+  }, [deliveryType, customerData, userAddresses, setValue])
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">Sepet</h3>
@@ -305,20 +336,37 @@ export default function Cart({ selectedBranch }: CartProps) {
                         Kayıt olduğunuzda girdiğiniz bilgiler kullanılıyor. İsterseniz güncelleyebilirsiniz.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCustomerData(null)
-                        setValue('name', '')
-                        setValue('email', '')
-                        setValue('phone', '')
-                        setValue('address', '')
-                        toast.success('Form alanları temizlendi, yeni bilgiler girebilirsiniz')
-                      }}
-                      className="text-xs text-blue-600 hover:text-blue-800 underline"
-                    >
-                      Temizle
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomerData(null)
+                          setValue('name', '')
+                          setValue('email', '')
+                          setValue('phone', '')
+                          setValue('address', '')
+                          setSelectedAddress(null)
+                          toast.success('Form alanları temizlendi, yeni bilgiler girebilirsiniz')
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Temizle
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Müşteri bilgilerini tekrar yükle
+                          setValue('name', customerData.name)
+                          setValue('email', customerData.email)
+                          setValue('phone', customerData.phone)
+                          setValue('address', customerData.address)
+                          toast.success('Müşteri bilgileriniz tekrar yüklendi')
+                        }}
+                        className="text-xs text-green-600 hover:text-green-800 underline"
+                      >
+                        Yenile
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -327,24 +375,43 @@ export default function Cart({ selectedBranch }: CartProps) {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Teslimat Seçeneği *
                 </label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    watch('deliveryType') === 'delivery' 
+                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
+                  }`}>
                     <input
                       type="radio"
                       value="delivery"
                       {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
-                      className="text-red-600 focus:ring-red-500"
+                      className="sr-only"
                     />
-                    <span className="text-sm text-gray-700">🚚 Adrese Teslim</span>
+                    <div className="text-2xl mb-2">🚚</div>
+                    <span className="text-sm font-medium text-gray-900">Adrese Teslim</span>
+                    <span className="text-xs text-gray-500 mt-1">Kapınıza kadar</span>
+                    {watch('deliveryType') === 'delivery' && (
+                      <span className="text-xs text-blue-600 mt-1">+₺5.00</span>
+                    )}
                   </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
+                  
+                  <label className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                    watch('deliveryType') === 'pickup' 
+                      ? 'border-green-500 bg-green-50 shadow-md' 
+                      : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
+                  }`}>
                     <input
                       type="radio"
                       value="pickup"
                       {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
-                      className="text-red-600 focus:ring-red-500"
+                      className="sr-only"
                     />
-                    <span className="text-sm text-gray-700">🏪 Şubeden Al</span>
+                    <div className="text-2xl mb-2">🏪</div>
+                    <span className="text-sm font-medium text-gray-900">Şubeden Al</span>
+                    <span className="text-xs text-gray-500 mt-1">Ücretsiz</span>
+                    {watch('deliveryType') === 'pickup' && (
+                      <span className="text-xs text-green-600 mt-1">Ücretsiz</span>
+                    )}
                   </label>
                 </div>
                 {errors.deliveryType && (
@@ -410,7 +477,7 @@ export default function Cart({ selectedBranch }: CartProps) {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-700">
-                              Kayıtlı Adresleriniz ({userAddresses.length})
+                              📍 Kayıtlı Adresleriniz ({userAddresses.length})
                             </span>
                             <button
                               type="button"
@@ -466,21 +533,21 @@ export default function Cart({ selectedBranch }: CartProps) {
                           <div className="flex space-x-2">
                             <button
                               type="button"
-                                                             onClick={() => {
-                                 setSelectedAddress(null)
-                                 setValue('address', '')
-                                 toast.success('Manuel adres girişi için hazır')
-                               }}
+                              onClick={() => {
+                                setSelectedAddress(null)
+                                setValue('address', '')
+                                toast.success('Manuel adres girişi için hazır')
+                              }}
                               className="text-gray-600 hover:text-gray-800 text-sm underline"
                             >
-                              Manuel Adres Gir
+                              ✏️ Manuel Adres Gir
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowAddressManager(true)}
                               className="text-blue-600 hover:text-blue-800 text-sm underline"
                             >
-                              Adreslerimi Yönet
+                              ⚙️ Adreslerimi Yönet
                             </button>
                           </div>
                         </div>
@@ -576,10 +643,21 @@ export default function Cart({ selectedBranch }: CartProps) {
               )}
 
               {watch('deliveryType') === 'pickup' && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                  <p className="text-sm text-yellow-800">
-                    📍 Siparişiniz hazır olduğunda {selectedBranch?.name} şubesinden alabilirsiniz.
-                  </p>
+                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-green-600 text-lg">🏪</div>
+                    <div>
+                      <p className="text-sm font-medium text-green-800">
+                        Şubeden Alım Seçildi
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        Siparişiniz hazır olduğunda <strong>{selectedBranch?.name}</strong> şubesinden alabilirsiniz.
+                      </p>
+                      <p className="text-xs text-green-600 mt-1">
+                        💡 Adres bilgileri gerekli değil, sadece iletişim bilgilerinizi girin.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
