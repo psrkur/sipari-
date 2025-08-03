@@ -2,7 +2,7 @@
 export const getApiBaseUrl = (): string => {
   // Development ortamında local backend kullan
   if (process.env.NODE_ENV === 'development') {
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003';
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
   }
   
   // Production'da canlı backend kullan
