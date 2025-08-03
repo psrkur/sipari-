@@ -96,11 +96,11 @@ export default function Home() {
   const { items: products, setItems: setProducts } = useOptimizedList<Product>()
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
-  // Optimize edilmiş fetch hook'ları - daha uzun cache süresi
+  // Optimize edilmiş fetch hook'ları - cache geçici olarak devre dışı
   const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<Branch[]>(
     API_ENDPOINTS.BRANCHES,
-    { cacheTime: 30 * 60 * 1000 } // 30 dakika cache
-  )
+    { cacheTime: 0 } // Cache devre dışı
+  );
 
   // Şubeleri yükle
   useEffect(() => {
@@ -132,16 +132,18 @@ export default function Home() {
       try {
         // Cache key oluştur
         const cacheKey = `products_${selectedBranch.id}`;
-        const cachedData = sessionStorage.getItem(cacheKey);
         
-        if (cachedData) {
-          const parsedData = JSON.parse(cachedData);
-          setProducts(parsedData.products);
-          setCategories(parsedData.categories);
-          setLoading(false);
-          setProductsLoading(false);
-          return;
-        }
+        // Cache'i geçici olarak devre dışı bırak (quota hatası nedeniyle)
+        // const cachedData = sessionStorage.getItem(cacheKey);
+        
+        // if (cachedData) {
+        //   const parsedData = JSON.parse(cachedData);
+        //   setProducts(parsedData.products);
+        //   setCategories(parsedData.categories);
+        //   setLoading(false);
+        //   setProductsLoading(false);
+        //   return;
+        // }
 
         // Products endpoint'ini kullan
         const apiUrl = `/api/products/${selectedBranch.id}`;
@@ -168,12 +170,16 @@ export default function Home() {
         // Kategorileri optimize et
         const productCategories = Array.from(new Set(processedProducts.map((p: any) => p.category)));
         
-        // Cache'e kaydet
-        sessionStorage.setItem(cacheKey, JSON.stringify({
-          products: processedProducts,
-          categories: productCategories,
-          timestamp: Date.now()
-        }));
+        // Cache'i geçici olarak devre dışı bırak (quota hatası nedeniyle)
+        // try {
+        //   sessionStorage.setItem(cacheKey, JSON.stringify({
+        //     products: processedProducts,
+        //     categories: productCategories,
+        //     timestamp: Date.now()
+        //   }));
+        // } catch (cacheError) {
+        //   console.warn('⚠️ Cache kaydetme hatası (quota aşıldı):', cacheError);
+        // }
         
         setProducts(processedProducts);
         setCategories(productCategories);

@@ -113,22 +113,22 @@ export default function QRMenuPage() {
         setLoading(true);
         console.log('🔍 Menü yükleniyor...', selectedBranch);
         
-        // Cache kontrolü
-        const cacheKey = `menu_data_${selectedBranch}`;
-        const cachedData = sessionStorage.getItem(cacheKey);
-        const cacheTime = 10 * 60 * 1000; // 10 dakika
+        // Cache kontrolü - geçici olarak devre dışı (quota hatası nedeniyle)
+        // const cacheKey = `menu_data_${selectedBranch}`;
+        // const cachedData = sessionStorage.getItem(cacheKey);
+        // const cacheTime = 10 * 60 * 1000; // 10 dakika
         
-        if (cachedData) {
-          const parsedData = JSON.parse(cachedData);
-          const now = Date.now();
+        // if (cachedData) {
+        //   const parsedData = JSON.parse(cachedData);
+        //   const now = Date.now();
           
-          if (now - parsedData.timestamp < cacheTime) {
-            console.log('✅ Menü cache\'den yüklendi');
-            setMenuData(parsedData.menuData);
-            setLoading(false);
-            return;
-          }
-        }
+        //   if (now - parsedData.timestamp < cacheTime) {
+        //     console.log('✅ Menü cache\'den yüklendi');
+        //     setMenuData(parsedData.menuData);
+        //     setLoading(false);
+        //     return;
+        //   }
+        // }
         
         // QR menü endpoint'ini kullan
         const apiUrl = `/api/qr-menu/${selectedBranch}`;
@@ -156,11 +156,15 @@ export default function QRMenuPage() {
           console.log('✅ Menü yüklendi:', data);
           setMenuData(data);
           
-          // Cache'e kaydet
-          sessionStorage.setItem(cacheKey, JSON.stringify({
-            menuData: data,
-            timestamp: Date.now()
-          }));
+          // Cache'i geçici olarak devre dışı bırak (quota hatası nedeniyle)
+          // try {
+          //   sessionStorage.setItem(cacheKey, JSON.stringify({
+          //     menuData: data,
+          //     timestamp: Date.now()
+          //   }));
+          // } catch (cacheError) {
+          //   console.warn('⚠️ Cache kaydetme hatası (quota aşıldı):', cacheError);
+          // }
         } catch (parseError) {
           console.error('❌ Menu JSON parse hatası:', parseError);
           console.error('❌ Menu response text:', responseText);
