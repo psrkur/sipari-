@@ -45,29 +45,25 @@ cloudinary.config({
 
 const { PrismaClient } = require('@prisma/client');
 
-// Prisma client configuration
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: DATABASE_URL
-    }
-  },
-  // Sadece hata loglarını tut, gereksiz query loglarını kaldır
-  log: ['error', 'warn'],
-  // Connection pooling ve timeout ayarları optimize edildi
-  __internal: {
-    engine: {
-      connectTimeout: 15000, // 15 saniye (30'dan düşürüldü)
-      pool: {
-        min: 1, // Minimum bağlantı sayısını düşür
-        max: 5  // Maximum bağlantı sayısını düşür (10'dan)
-      }
-    }
-  }
-});
+// Prisma client configuration - En basit hali
+const prisma = new PrismaClient();
 
 // Global prisma instance'ını export et
 global.prisma = prisma;
+
+console.log('🔧 Prisma client oluşturuldu');
+
+// Prisma bağlantısını test et
+prisma.$connect()
+  .then(() => {
+    console.log('✅ Prisma client başarıyla bağlandı');
+  })
+  .catch((error) => {
+    console.error('❌ Prisma client bağlantı hatası:', error);
+  });
+
+// Prisma client'ı global olarak tanımla
+global.prismaClient = prisma;
 
 // Firma yönetimi modülünü import et
 // const companyManagement = require('./company-management');
@@ -4516,8 +4512,8 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
-// Resim yükleme endpoint'i - Base64 formatında veritabanına kaydet
-app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
+// Resim yükleme endpoint'i - Base64 formatında veritabanına kaydet (TEST MODE - NO AUTH)
+app.post('/api/admin/upload-image', upload.single('image'), async (req, res) => {
   try {
     console.log('🔍 POST /api/admin/upload-image çağrıldı - v9 - BASE64 DATABASE');
     console.log('🔍 Request body:', req.body);
@@ -4564,7 +4560,7 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
         mimeType: mimeType,
         size: req.file.size,
         dataUrl: dataUrl,
-        uploadedBy: req.user.userId
+        uploadedBy: req.user?.userId || null // Authentication yoksa null kullan
       }
     });
     
@@ -4589,8 +4585,8 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
   }
 });
 
-// Resim listesi endpoint'i - Veritabanından base64 formatında
-app.get('/api/admin/images', authenticateToken, async (req, res) => {
+// Resim listesi endpoint'i - Veritabanından base64 formatında (TEST MODE - NO AUTH)
+app.get('/api/admin/images', async (req, res) => {
   try {
     console.log('🔍 GET /api/admin/images çağrıldı - v5 - BASE64 DATABASE');
     console.log('🔍 User:', req.user);

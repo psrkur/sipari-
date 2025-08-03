@@ -162,58 +162,140 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     try {
       setUploading(true);
       
-      // Base64'e çevir
-      console.log('🔍 Resim base64\'e çevriliyor');
+      // Önce backend API'sine yükle
+      console.log('🔍 Backend API\'sine yükleniyor...');
       
-      const reader = new FileReader();
-      reader.onload = async (e) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      // Auth token al
+      let authToken = token;
+      if (!authToken) {
         try {
-          const base64Data = e.target?.result as string;
-          console.log('✅ Base64 dönüşümü tamamlandı');
-          
-          // Base64 resmi doğrudan kullan
-          const imageInfo = {
-            filename: file.name,
-            path: base64Data,
-            size: file.size,
-            uploadedAt: new Date().toISOString()
-          };
-          
-          console.log('✅ Resim bilgisi oluşturuldu:', imageInfo);
-          
-          // Resim listesine ekle - state'i güvenli şekilde güncelle
-          setImages(prevImages => {
-            const newImages = [imageInfo, ...prevImages];
-            
-            // localStorage'a kaydet
-            try {
-              localStorage.setItem('uploaded-images', JSON.stringify(newImages));
-              console.log('✅ Resim localStorage\'a kaydedildi');
-            } catch (error) {
-              console.error('❌ localStorage kaydetme hatası:', error);
-            }
-            
-            console.log('✅ Yeni resim eklendi, toplam resim sayısı:', newImages.length);
-            return newImages;
-          });
-          
-          toast.success('Resim başarıyla yüklendi ve kaydedildi');
-          
+          const authStorage = localStorage.getItem('auth-storage');
+          if (authStorage) {
+            const parsed = JSON.parse(authStorage);
+            authToken = parsed.state?.token;
+          }
         } catch (error: any) {
-          console.error('Base64 işleme hatası:', error);
-          toast.error('Resim işlenemedi: ' + error.message);
-        } finally {
-          setUploading(false);
+          console.error('Auth storage parse error:', error);
         }
-      };
+      }
       
-      reader.onerror = () => {
-        console.error('❌ Dosya okuma hatası');
-        toast.error('Dosya okunamadı');
-        setUploading(false);
-      };
-      
-      reader.readAsDataURL(file);
+      // Backend API'sine yükle
+      try {
+        const response = await axios.post(API_ENDPOINTS.UPLOAD_IMAGE, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            ...(authToken && { Authorization: `Bearer ${authToken}` })
+          },
+          timeout: 30000
+        });
+        
+        console.log('✅ Backend API yanıtı:', response.data);
+        
+        // Base64'e çevir
+        console.log('🔍 Resim base64\'e çevriliyor');
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const base64Data = e.target?.result as string;
+            console.log('✅ Base64 dönüşümü tamamlandı');
+            
+            // Base64 resmi doğrudan kullan
+            const imageInfo = {
+              filename: file.name,
+              path: base64Data,
+              size: file.size,
+              uploadedAt: new Date().toISOString()
+            };
+            
+            console.log('✅ Resim bilgisi oluşturuldu:', imageInfo);
+            
+            // Resim listesine ekle - state'i güvenli şekilde güncelle
+            setImages(prevImages => {
+              const newImages = [imageInfo, ...prevImages];
+              
+              // localStorage'a kaydet
+              try {
+                localStorage.setItem('uploaded-images', JSON.stringify(newImages));
+                console.log('✅ Resim localStorage\'a kaydedildi');
+              } catch (error) {
+                console.error('❌ localStorage kaydetme hatası:', error);
+              }
+              
+              console.log('✅ Yeni resim eklendi, toplam resim sayısı:', newImages.length);
+              return newImages;
+            });
+            
+            toast.success('Resim başarıyla yüklendi ve kaydedildi');
+            
+          } catch (error: any) {
+            console.error('Base64 işleme hatası:', error);
+            toast.error('Resim işlenemedi: ' + error.message);
+          } finally {
+            setUploading(false);
+          }
+        };
+        
+        reader.onerror = () => {
+          console.error('❌ Dosya okuma hatası');
+          toast.error('Dosya okunamadı');
+          setUploading(false);
+        };
+        
+        reader.readAsDataURL(file);
+        
+      } catch (apiError: any) {
+        console.error('❌ Backend API hatası:', apiError);
+        
+        // API başarısız olursa sadece localStorage'a kaydet
+        console.log('⚠️ API başarısız, sadece localStorage\'a kaydediliyor');
+        
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const base64Data = e.target?.result as string;
+            
+            const imageInfo = {
+              filename: file.name,
+              path: base64Data,
+              size: file.size,
+              uploadedAt: new Date().toISOString()
+            };
+            
+            setImages(prevImages => {
+              const newImages = [imageInfo, ...prevImages];
+              
+              try {
+                localStorage.setItem('uploaded-images', JSON.stringify(newImages));
+                console.log('✅ Resim sadece localStorage\'a kaydedildi');
+              } catch (error) {
+                console.error('❌ localStorage kaydetme hatası:', error);
+              }
+              
+              return newImages;
+            });
+            
+            toast.success('Resim yüklendi (sadece yerel)');
+            
+          } catch (error: any) {
+            console.error('Base64 işleme hatası:', error);
+            toast.error('Resim işlenemedi: ' + error.message);
+          } finally {
+            setUploading(false);
+          }
+        };
+        
+        reader.onerror = () => {
+          console.error('❌ Dosya okuma hatası');
+          toast.error('Dosya okunamadı');
+          setUploading(false);
+        };
+        
+        reader.readAsDataURL(file);
+      }
       
     } catch (error: any) {
       console.error('Resim yükleme hatası:', error);
