@@ -56,26 +56,48 @@ export default function ImageManagement() {
       const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
       
       if (isProduction) {
-        // Canlı ortamda local resimleri kullan
-        const localImages = [
-          'sanayi-tostu.png', 'fanta.png', 'cocacola.png', 'pepsi.png', 'sprite.png',
-          'ayran.png', 'su.png', 'kumru-sandvic.png', 'hamburger.png', 'pizza.png',
-          'doner.png', 'kebap.png', 'lahmacun.png', 'pide.png', 'borek.png',
-          'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
-        ]
-        
-        const imagesData = localImages.map((filename, index) => ({
-          id: filename,
-          name: filename,
-          path: `/uploads/products/${filename}`,
-          size: 466, // Varsayılan boyut
-          type: filename.split('.').pop()?.toUpperCase() || 'PNG',
-          uploadedAt: new Date().toISOString(),
-          url: `http://localhost:3001/uploads/products/${filename}`
-        }))
-        
-        setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi (Local)`)
+        // Canlı ortamda canlı backend'den resimleri al
+        try {
+          const response = await axios.get('https://yemek5-backend.onrender.com/api/admin/images', {
+            headers
+          })
+          
+          // Backend'den gelen veriyi frontend formatına çevir
+          const imagesData = response.data.map((img: any) => ({
+            id: img.filename,
+            name: img.filename,
+            path: img.path,
+            size: img.size,
+            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+            uploadedAt: img.uploadedAt,
+            url: `https://yemek5-backend.onrender.com${img.path}`
+          }))
+          
+          setImages(imagesData)
+          toast.success(`${imagesData.length} resim yüklendi (Canlı)`)
+        } catch (error) {
+          console.error('Canlı backend\'den resimler yüklenemedi:', error)
+          // Canlı backend'de resim yoksa, varsayılan resimler göster
+          const defaultImages = [
+            'sanayi-tostu.png', 'fanta.png', 'cocacola.png', 'pepsi.png', 'sprite.png',
+            'ayran.png', 'su.png', 'kumru-sandvic.png', 'hamburger.png', 'pizza.png',
+            'doner.png', 'kebap.png', 'lahmacun.png', 'pide.png', 'borek.png',
+            'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
+          ]
+          
+          const imagesData = defaultImages.map((filename, index) => ({
+            id: filename,
+            name: filename,
+            path: `/uploads/products/${filename}`,
+            size: 466, // Varsayılan boyut
+            type: filename.split('.').pop()?.toUpperCase() || 'PNG',
+            uploadedAt: new Date().toISOString(),
+            url: `https://yemek5-backend.onrender.com/uploads/products/${filename}`
+          }))
+          
+          setImages(imagesData)
+          toast.success(`${imagesData.length} varsayılan resim yüklendi`)
+        }
       } else {
         // Development ortamında backend'den al
         const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
@@ -121,8 +143,28 @@ export default function ImageManagement() {
       const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
       
       if (isProduction) {
-        // Canlı ortamda resim yükleme devre dışı
-        toast.error('Canlı ortamda resim yükleme devre dışı. Local ortamda test edin.')
+        // Canlı ortamda canlı backend'e yükle
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          const formData = new FormData()
+          formData.append('image', file)
+
+          const response = await axios.post('https://yemek5-backend.onrender.com/api/admin/upload-image', formData, {
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+              const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
+              setUploadProgress(progress)
+            }
+          })
+
+          console.log(`${file.name} yüklendi:`, response.data)
+        }
+
+        toast.success(`${files.length} resim yüklendi (Canlı)`)
+        fetchImages() // Resimleri yeniden yükle
         setUploading(false)
         return
       }
@@ -170,8 +212,19 @@ export default function ImageManagement() {
     const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
     
     if (isProduction) {
-      // Canlı ortamda resim silme devre dışı
-      toast.error('Canlı ortamda resim silme devre dışı. Local ortamda test edin.')
+      // Canlı ortamda canlı backend'den sil
+      try {
+        const response = await axios.delete(`https://yemek5-backend.onrender.com/api/admin/images/${imageId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        console.log('Resim silindi:', response.data)
+        toast.success('Resim silindi (Canlı)')
+        fetchImages() // Resimleri yeniden yükle
+      } catch (error: any) {
+        console.error('Resim silinemedi:', error)
+        toast.error('Resim silinemedi')
+      }
       return
     }
 
