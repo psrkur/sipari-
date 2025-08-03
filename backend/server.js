@@ -259,10 +259,10 @@ app.use(compression());
 
 // app.use('/api/', limiter);
 
-// CORS konfigürasyonu - Kapsamlı
+// CORS konfigürasyonu - Test için tüm origin'lere izin ver
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:8080', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'],
-  credentials: false, // CORS credentials false
+  origin: true, // Tüm origin'lere izin ver (test için)
+  credentials: false,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type']
@@ -3890,10 +3890,7 @@ app.use('/api', dashboardRouter);
 
 
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Endpoint bulunamadı' });
-});
+// 404 handler - En sona taşındı
 
 // Port çakışması kontrolü ve alternatif port deneme
 const startServer = (port) => {
@@ -4753,5 +4750,11 @@ app.get('/api/admin/performance-stats', authenticateToken, async (req, res) => {
     console.error('❌ Performans istatistik hatası:', error);
     res.status(500).json({ error: 'Performans istatistikleri alınamadı' });
   }
+});
+
+// 404 handler - En sona eklendi
+app.use('*', (req, res) => {
+  console.log('❌ 404 - Endpoint bulunamadı:', req.method, req.url);
+  res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
 

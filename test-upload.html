@@ -61,15 +61,18 @@
                 const formData = new FormData();
                 formData.append('image', file);
                 
+                console.log('📤 Dosya yükleniyor:', file.name, file.size, 'bytes');
+                
                 const response = await fetch('http://localhost:3001/api/admin/upload-image', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer test-token'
-                    },
                     body: formData
                 });
                 
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
+                
                 const data = await response.json();
+                console.log('📡 Response data:', data);
                 
                 if (response.ok) {
                     result.innerHTML = `
@@ -78,18 +81,22 @@
                         <p><strong>Yol:</strong> ${data.imagePath}</p>
                         <p><strong>Boyut:</strong> ${data.size} bytes</p>
                         <p><strong>Orijinal Ad:</strong> ${data.originalName}</p>
+                        <p><strong>Mesaj:</strong> ${data.message}</p>
                     `;
                 } else {
                     result.innerHTML = `
                         <h3>❌ Hata!</h3>
                         <p><strong>Durum:</strong> ${response.status}</p>
                         <p><strong>Mesaj:</strong> ${data.error || 'Bilinmeyen hata'}</p>
+                        <p><strong>Detay:</strong> ${JSON.stringify(data)}</p>
                     `;
                 }
             } catch (error) {
+                console.error('❌ Hata detayı:', error);
                 result.innerHTML = `
                     <h3>❌ Bağlantı Hatası!</h3>
                     <p><strong>Hata:</strong> ${error.message}</p>
+                    <p><strong>Tip:</strong> ${error.name}</p>
                     <p>Backend çalışıyor mu kontrol edin.</p>
                 `;
             }
