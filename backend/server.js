@@ -416,73 +416,9 @@ app.use('/uploads/products', (req, res, next) => {
   }
   
   next();
-}, (req, res, next) => {
-  // Static dosya serve etmeden önce CORS header'larını set et
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
-  res.set('Access-Control-Max-Age', '86400');
-  
-  // Dosya yolunu oluştur
-  const filePath = path.join(__dirname, 'uploads', 'products', req.path);
-  
-  // Dosya var mı kontrol et
-  if (!fs.existsSync(filePath)) {
-    console.error('Resim dosyası bulunamadı:', filePath);
-    res.set('Content-Type', 'image/svg+xml');
-    return res.status(200).send(getPlaceholderSvg());
-  }
-  
-  // Dosyayı serve et
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Resim gönderilemedi:', req.path, err);
-      res.set('Content-Type', 'image/svg+xml');
-      res.status(200).send(getPlaceholderSvg());
-    }
-  });
-});
+}, express.static(path.join(__dirname, 'uploads', 'products')));
 
-// Resim endpoint'i - /uploads/products/ formatı için
-app.get('/api/images/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', 'products', filename);
-  
-  console.log('🖼️ /api/images/ çağrıldı:', filename);
-  
-  // Development için en permissive CORS ayarları
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
-  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
-  res.set('Access-Control-Allow-Credentials', 'false');
-  
-  // OPTIONS request için
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  // Dosya var mı kontrol et
-  if (!fs.existsSync(filePath)) {
-    console.error('Resim dosyası bulunamadı:', filePath);
-    
-    // Render'da ephemeral storage nedeniyle dosya kaybolmuş olabilir
-    // Varsayılan bir SVG placeholder resim döndür
-    res.set('Content-Type', 'image/svg+xml');
-    return res.status(200).send(getPlaceholderSvg());
-  }
-  
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Resim gönderilemedi:', filename, err);
-      // Hata durumunda da placeholder SVG döndür
-      res.set('Content-Type', 'image/svg+xml');
-      res.status(200).send(getPlaceholderSvg());
-    }
-  });
-});
+// Resim endpoint'i - /uploads/products/ formatı için (DUPLICATE REMOVED)
 
 // Eski resim endpoint'i - geriye uyumluluk için
 app.get('/uploads/:filename', (req, res) => {
