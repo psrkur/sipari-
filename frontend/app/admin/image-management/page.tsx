@@ -62,16 +62,20 @@ export default function ImageManagement() {
       
       console.log('📊 Backend response:', response.data)
       
-             // Her resmi base64 formatında al (timeout ile)
-       const imagesData = await Promise.all(response.data.map(async (img: any) => {
+             // Her resmi sırayla yükle (Promise.all yerine for loop)
+       const imagesData = []
+       for (const img of response.data) {
          try {
-           // Base64 formatında resmi al (30 saniye timeout)
+           console.log('🔄 Resim yükleniyor:', img.filename)
+           
+           // Base64 formatında resmi al (10 saniye timeout)
            const imageResponse = await axios.get(`${getApiBaseUrl()}/api/images/${img.filename}`, {
-             timeout: 30000 // 30 saniye timeout
+             timeout: 10000 // 10 saniye timeout
            })
            
            if (imageResponse.data.success) {
-             return {
+             console.log('✅ Resim başarıyla yüklendi:', img.filename)
+             imagesData.push({
                id: img.filename,
                name: img.filename,
                path: img.path,
@@ -79,10 +83,10 @@ export default function ImageManagement() {
                type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
                uploadedAt: img.uploadedAt,
                url: imageResponse.data.dataUrl // Base64 data URL
-             }
+             })
            } else {
-             console.error('Resim base64\'e çevrilemedi:', img.filename)
-             return {
+             console.error('❌ Resim base64\'e çevrilemedi:', img.filename)
+             imagesData.push({
                id: img.filename,
                name: img.filename,
                path: img.path,
@@ -90,11 +94,11 @@ export default function ImageManagement() {
                type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
                uploadedAt: img.uploadedAt,
                url: '/placeholder-image.svg' // Placeholder
-             }
+             })
            }
          } catch (error) {
-           console.error('Resim yüklenemedi:', img.filename, error)
-           return {
+           console.error('❌ Resim yüklenemedi:', img.filename, error)
+           imagesData.push({
              id: img.filename,
              name: img.filename,
              path: img.path,
@@ -102,9 +106,9 @@ export default function ImageManagement() {
              type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
              uploadedAt: img.uploadedAt,
              url: '/placeholder-image.svg' // Placeholder
-           }
+           })
          }
-       }))
+       }
       
       setImages(imagesData)
       toast.success(`${imagesData.length} resim yüklendi`)
