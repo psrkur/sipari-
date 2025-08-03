@@ -4765,7 +4765,22 @@ app.delete('/api/admin/images/:filename', async (req, res) => {
 });
 
 // Statik dosya servisi
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Uploads klasörü için CORS ayarları
+app.use('/uploads', (req, res, next) => {
+  // CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length');
+  res.set('Access-Control-Max-Age', '86400');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+}, express.static(path.join(__dirname, 'uploads')));
 
 
 
