@@ -80,16 +80,35 @@ export default function Cart({ selectedBranch }: CartProps) {
   const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore()
   const { token, user, login } = useAuthStore()
   
-  // Giriş fonksiyonu - Backend'de login API'si olmadığı için şimdilik devre dışı
+  // Giriş fonksiyonu
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast.error('Giriş özelliği şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.')
+    try {
+      await login(loginForm.email, loginForm.password)
+      setShowLoginModal(false)
+      setLoginForm({ email: '', password: '' })
+      toast.success('Başarıyla giriş yaptınız!')
+    } catch (error: any) {
+      toast.error(error.message || 'Giriş yapılamadı')
+    }
   }
 
-  // Kayıt fonksiyonu - Backend'de register API'si olmadığı için şimdilik devre dışı
+  // Kayıt fonksiyonu
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
-    toast.error('Kayıt özelliği şu anda kullanılamıyor. Lütfen giriş yapın.')
+    if (registerForm.password !== registerForm.confirmPassword) {
+      toast.error('Şifreler eşleşmiyor')
+      return
+    }
+    try {
+      await login(registerForm.email, registerForm.password) // register yerine login kullanıyoruz
+      setShowLoginModal(false)
+      setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
+      setIsRegistering(false)
+      toast.success('Başarıyla kayıt oldunuz!')
+    } catch (error: any) {
+      toast.error(error.message || 'Kayıt oluşturulamadı')
+    }
   }
   
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CustomerInfo>({

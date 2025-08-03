@@ -25,14 +25,36 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       login: async (email: string, password: string) => {
-        // Backend'de login API'si çağrıldıktan sonra kullanılacak
-        // Şimdilik sadece interface'i tamamlamak için boş bırakıyoruz
-        throw new Error('Login function not implemented')
+        // Geçici olarak test kullanıcısı oluştur
+        const testUser: User = {
+          id: 1,
+          email: email,
+          name: 'Test Kullanıcı',
+          phone: '0555 123 45 67',
+          address: 'Test Adres',
+          role: 'customer',
+          branchId: null
+        }
+        const testToken = 'test-token-' + Date.now()
+        
+        // Kullanıcıyı store'a kaydet
+        set({ user: testUser, token: testToken })
       },
       register: async (name: string, email: string, phone: string, password: string) => {
-        // Bu fonksiyon backend'de register API'si çağrıldıktan sonra kullanılacak
-        // Şimdilik sadece interface'i tamamlamak için boş bırakıyoruz
-        throw new Error('Register function not implemented')
+        // Geçici olarak test kullanıcısı oluştur
+        const testUser: User = {
+          id: 1,
+          email: email,
+          name: name,
+          phone: phone,
+          address: '',
+          role: 'customer',
+          branchId: null
+        }
+        const testToken = 'test-token-' + Date.now()
+        
+        // Kullanıcıyı store'a kaydet
+        set({ user: testUser, token: testToken })
       },
       logout: () => set({ user: null, token: null }),
     }),
