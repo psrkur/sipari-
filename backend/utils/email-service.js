@@ -15,7 +15,7 @@ const createTransporter = () => {
   console.log('🔑 EMAIL_PASS:', process.env.EMAIL_PASS ? 'Ayarlanmış' : 'Eksik');
 
   // Gmail SMTP ayarları
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
