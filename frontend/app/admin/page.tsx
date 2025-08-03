@@ -336,6 +336,20 @@ export default function AdminPage() {
     console.log('✅ Kullanıcı yetkili, admin paneline erişim verildi');
   }, [user, token, router]);
 
+  // Pencere mesajlarını dinle
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'POS_OPENED') {
+        toast.success('POS ekranı açıldı');
+      } else if (event.data.type === 'KITCHEN_OPENED') {
+        toast.success('Mutfak ekranı açıldı');
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Optimize edilmiş sipariş yükleme
   const fetchOrders = useCallback(async () => {
     if (!token) return;
@@ -951,21 +965,21 @@ export default function AdminPage() {
               🚀 Hızlı Erişim
             </h3>
             <div className="space-y-2">
-              <Link 
-                href="/kitchen" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => window.open('/kitchen', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md"
               >
                 <span className="text-lg">👨‍🍳</span>
                 {sidebarOpen && <span>Mutfak</span>}
-              </Link>
+              </button>
               
-              <Link 
-                href="/pos" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => window.open('/pos', '_blank', 'width=1400,height=900,scrollbars=yes,resizable=yes')}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md"
               >
                 <span className="text-lg">💳</span>
                 {sidebarOpen && <span>POS</span>}
-              </Link>
+              </button>
               
               <Link 
                 href="/admin/qr-codes" 

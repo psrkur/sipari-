@@ -64,6 +64,19 @@ export default function KitchenPage() {
   const [branches, setBranches] = useState<any[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
+  // Sayfa başlığını güncelle
+  useEffect(() => {
+    document.title = 'Mutfak - Yemek5';
+  }, []);
+
+  // Ayrı pencere kontrolü
+  useEffect(() => {
+    if (window.opener) {
+      // Ayrı pencerede açıldıysa parent window'a mesaj gönder
+      window.opener.postMessage({ type: 'KITCHEN_OPENED' }, '*');
+    }
+  }, []);
+
   // Şubeleri yükle
   const fetchBranches = useCallback(async () => {
     if (!token) return;

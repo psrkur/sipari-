@@ -50,6 +50,19 @@ export default function POSPage() {
   const { token, user } = useAuthStore();
   const router = useRouter();
 
+  // Sayfa başlığını güncelle
+  useEffect(() => {
+    document.title = 'POS - Yemek5';
+  }, []);
+
+  // Ayrı pencere kontrolü
+  useEffect(() => {
+    if (window.opener) {
+      // Ayrı pencerede açıldıysa parent window'a mesaj gönder
+      window.opener.postMessage({ type: 'POS_OPENED' }, '*');
+    }
+  }, []);
+
   useEffect(() => {
     // Store'dan token'ı almayı dene
     let authToken = token;
@@ -478,10 +491,16 @@ export default function POSPage() {
         printReceipt(autoConfirm);
       }
       
-      // Sayfayı yenile veya ana sayfaya yönlendir
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Sayfa yenileme yerine arka planda güncelleme yap
+      // setTimeout(() => {
+      //   window.location.reload();
+      // }, 1000);
+      
+      // Arka planda ürünleri yeniden yükle
+      if (selectedBranch) {
+        fetchProducts(selectedBranch.id);
+        fetchCategories(selectedBranch.id);
+      }
       
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Sipariş oluşturulamadı');
