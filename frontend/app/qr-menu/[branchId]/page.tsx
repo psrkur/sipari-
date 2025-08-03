@@ -215,29 +215,6 @@ export default function QRMenuPage() {
         </div>
       </div>
 
-      {/* Şube Seçimi */}
-      {branches.length > 0 && (
-        <div className="bg-white border-b">
-          <div className="max-w-4xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-4">
-              <Building className="h-5 w-5 text-gray-400" />
-              <label className="text-sm font-medium text-gray-700">Şube Seçin:</label>
-              <select
-                value={selectedBranch}
-                onChange={(e) => handleBranchChange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Branch Info */}
       <div className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-4 py-6">
