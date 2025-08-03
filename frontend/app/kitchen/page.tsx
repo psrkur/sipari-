@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { API_ENDPOINTS } from '@/lib/api';
@@ -63,6 +63,11 @@ export default function KitchenPage() {
   const [authChecking, setAuthChecking] = useState(true);
   const [branches, setBranches] = useState<any[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  
+  // Interval için ref kullan
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sayfa başlığını güncelle
   useEffect(() => {
@@ -135,6 +140,8 @@ export default function KitchenPage() {
       );
 
       setOrders(activeOrders);
+      setLastUpdate(new Date());
+      console.log(`🔄 Siparişler güncellendi: ${activeOrders.length} sipariş`);
     } catch (error: any) {
       console.error('Siparişler yüklenemedi:', error);
       toast.error('Siparişler yüklenemedi');
@@ -150,6 +157,64 @@ export default function KitchenPage() {
     }
   }, [selectedBranch, fetchOrders]);
 
+  // Otomatik yenileme interval'ı
+  useEffect(() => {
+    if (!autoRefresh || !selectedBranch) return;
+
+    // Mevcut interval'ı temizle
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Yeni interval başlat
+    intervalRef.current = setInterval(() => {
+      if (selectedBranch && token) {
+        console.log('⏰ Otomatik sipariş yenileme...');
+        fetchOrders(selectedBranch.id);
+      }
+    }, 2000); // 2 saniye
+
+    // Cleanup
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [autoRefresh, selectedBranch, token, fetchOrders]);
+
+  // Socket.IO gerçek zamanlı güncellemeler
+  useEffect(() => {
+    if (!token || !selectedBranch) return;
+
+    // Yeni sipariş geldiğinde
+    const handleNewOrder = (data: any) => {
+      console.log('📦 Yeni sipariş geldi:', data);
+      if (data.branchId === selectedBranch.id) {
+        toast.success('Yeni sipariş geldi!');
+        fetchOrders(selectedBranch.id);
+      }
+    };
+
+    // Sipariş durumu güncellendiğinde
+    const handleOrderStatusChanged = (data: any) => {
+      console.log('🔄 Sipariş durumu güncellendi:', data);
+      if (data.branchId === selectedBranch.id) {
+        fetchOrders(selectedBranch.id);
+      }
+    };
+
+    // Socket event'lerini dinle
+    on('newOrder', handleNewOrder);
+    on('orderStatusChanged', handleOrderStatusChanged);
+
+    // Cleanup
+    return () => {
+      off('newOrder', handleNewOrder);
+      off('orderStatusChanged', handleOrderStatusChanged);
+    };
+  }, [token, selectedBranch, on, off, fetchOrders]);
+
   // Sipariş durumu güncelleme
   const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
     if (!token) return;
@@ -162,16 +227,17 @@ export default function KitchenPage() {
       );
 
       if (response.data.success) {
-        setOrders(prev => prev.map(order => 
-          order.id === orderId ? { ...order, status: newStatus } : order
-        ));
+        // Hemen siparişleri yeniden yükle
+        if (selectedBranch) {
+          fetchOrders(selectedBranch.id);
+        }
         toast.success(`Sipariş durumu güncellendi`);
       }
     } catch (error: any) {
       console.error('Sipariş durumu güncellenemedi:', error);
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token]);
+  }, [token, selectedBranch, fetchOrders]);
 
   // Status utility functions
   const getStatusColor = useCallback((status: string) => {
@@ -268,6 +334,8 @@ export default function KitchenPage() {
           <p>Auth Checking: {authChecking ? 'Evet' : 'Hayır'}</p>
           <p>Orders Count: {orders.length}</p>
           <p>Selected Branch: {selectedBranch ? selectedBranch.name : 'Yok'}</p>
+          <p>Auto Refresh: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
+          <p>Last Update: {lastUpdate.toLocaleTimeString('tr-TR')}</p>
         </div>
       )}
 
@@ -278,6 +346,38 @@ export default function KitchenPage() {
             <h1 className="text-2xl font-bold text-gray-900">🍳 Mutfak Paneli</h1>
             
             <div className="flex items-center space-x-4">
+              {/* Otomatik Yenileme Kontrolü */}
+              <div className="flex items-center space-x-2">
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={autoRefresh}
+                    onChange={(e) => setAutoRefresh(e.target.checked)}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Otomatik Yenileme</span>
+                </label>
+                {autoRefresh && (
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                    Her 2s
+                  </span>
+                )}
+              </div>
+
+              {/* Son Güncelleme Zamanı */}
+              <div className="text-xs text-gray-500">
+                Son güncelleme: {lastUpdate.toLocaleTimeString('tr-TR')}
+              </div>
+
+              {/* Manuel Yenileme Butonu */}
+              <button
+                onClick={() => selectedBranch && fetchOrders(selectedBranch.id)}
+                disabled={loading}
+                className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? '🔄' : '🔄 Yenile'}
+              </button>
+
               {/* Şube Seçimi */}
               {branches.length > 0 && (
                 <select
