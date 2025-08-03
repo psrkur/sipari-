@@ -67,8 +67,49 @@ export default function Cart({ selectedBranch }: CartProps) {
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
   const [userAddresses, setUserAddresses] = useState<Address[]>([])
   const [cartPersisted, setCartPersisted] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  const [registerForm, setRegisterForm] = useState({ 
+    name: '', 
+    email: '', 
+    phone: '', 
+    password: '', 
+    confirmPassword: '' 
+  })
+  const [isRegistering, setIsRegistering] = useState(false)
   const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore()
-  const { token, user } = useAuthStore()
+  const { token, user, login, register } = useAuthStore()
+  
+  // Giriş fonksiyonu
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      await login(loginForm.email, loginForm.password)
+      setShowLoginModal(false)
+      setLoginForm({ email: '', password: '' })
+      toast.success('Başarıyla giriş yaptınız!')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Giriş yapılamadı')
+    }
+  }
+
+  // Kayıt fonksiyonu
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (registerForm.password !== registerForm.confirmPassword) {
+      toast.error('Şifreler eşleşmiyor')
+      return
+    }
+    try {
+      await register(registerForm.name, registerForm.email, registerForm.phone, registerForm.password)
+      setShowLoginModal(false)
+      setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
+      setIsRegistering(false)
+      toast.success('Başarıyla kayıt oldunuz!')
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Kayıt oluşturulamadı')
+    }
+  }
   
   const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CustomerInfo>({
     defaultValues: {
@@ -378,7 +419,7 @@ export default function Cart({ selectedBranch }: CartProps) {
             <button
               onClick={() => {
                 if (!token) {
-                  toast.error('Sipariş vermek için giriş yapmanız gerekiyor')
+                  setShowLoginModal(true)
                   return
                 }
                 setShowCheckout(true)
@@ -781,22 +822,161 @@ export default function Cart({ selectedBranch }: CartProps) {
         </div>
       )}
       
-      {/* Adres Yöneticisi Modal */}
-      {showAddressManager && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <AddressManager
-              onAddressSelect={(address) => {
-                setSelectedAddress(address)
-                setValue('address', address.address)
-                setShowAddressManager(false)
-                toast.success(`${address.title} adresi seçildi`)
-              }}
-              onClose={() => setShowAddressManager(false)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
+             {/* Adres Yöneticisi Modal */}
+       {showAddressManager && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+           <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+             <AddressManager
+               onAddressSelect={(address) => {
+                 setSelectedAddress(address)
+                 setValue('address', address.address)
+                 setShowAddressManager(false)
+                 toast.success(`${address.title} adresi seçildi`)
+               }}
+               onClose={() => setShowAddressManager(false)}
+             />
+           </div>
+         </div>
+       )}
+
+       {/* Giriş Modalı */}
+       {showLoginModal && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+             <div className="flex justify-between items-center mb-6">
+               <h2 className="text-2xl font-bold text-gray-900">
+                 {isRegistering ? '📝 Kayıt Ol' : '🔐 Giriş Yap'}
+               </h2>
+               <button
+                 onClick={() => {
+                   setShowLoginModal(false);
+                   setIsRegistering(false);
+                   setLoginForm({ email: '', password: '' });
+                   setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+                 }}
+                 className="text-gray-400 hover:text-gray-600 text-xl hover:scale-110 transition-transform"
+               >
+                 ✕
+               </button>
+             </div>
+
+             {isRegistering ? (
+               <form onSubmit={handleRegister} className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+                   <input
+                     type="text"
+                     required
+                     value={registerForm.name}
+                     onChange={(e) => setRegisterForm({...registerForm, name: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="Adınız ve soyadınız"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+                   <input
+                     type="email"
+                     required
+                     value={registerForm.email}
+                     onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="ornek@email.com"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+                   <input
+                     type="tel"
+                     required
+                     value={registerForm.phone}
+                     onChange={(e) => setRegisterForm({...registerForm, phone: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="0555 123 45 67"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                   <input
+                     type="password"
+                     required
+                     value={registerForm.password}
+                     onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre Tekrar</label>
+                   <input
+                     type="password"
+                     required
+                     value={registerForm.confirmPassword}
+                     onChange={(e) => setRegisterForm({...registerForm, confirmPassword: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <button
+                   type="submit"
+                   className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                 >
+                   📝 Kayıt Ol
+                 </button>
+                 <div className="text-center">
+                   <button
+                     type="button"
+                     onClick={() => setIsRegistering(false)}
+                     className="text-orange-600 hover:text-orange-800 text-sm"
+                   >
+                     Zaten hesabınız var mı? Giriş yapın
+                   </button>
+                 </div>
+               </form>
+             ) : (
+               <form onSubmit={handleLogin} className="space-y-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
+                   <input
+                     type="email"
+                     required
+                     value={loginForm.email}
+                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="ornek@email.com"
+                   />
+                 </div>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
+                   <input
+                     type="password"
+                     required
+                     value={loginForm.password}
+                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                     placeholder="••••••••"
+                   />
+                 </div>
+                 <button
+                   type="submit"
+                   className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
+                 >
+                   🔐 Giriş Yap
+                 </button>
+                 <div className="text-center">
+                   <button
+                     type="button"
+                     onClick={() => setIsRegistering(true)}
+                     className="text-orange-600 hover:text-orange-800 text-sm"
+                   >
+                     Hesabınız yok mu? Kayıt olun
+                   </button>
+                 </div>
+               </form>
+             )}
+           </div>
+         </div>
+       )}
+     </div>
+   )
 } 
