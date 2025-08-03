@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, MapPin, Clock, AlertCircle, Building } from 'lucide-react';
 
@@ -41,11 +41,27 @@ export default function QRMenuPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string>(branchId);
 
-    // Şubeleri yükle
+  // Şubeleri yükle - cache ile optimize edildi
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         console.log('🔍 Şubeler yükleniyor...');
+        
+        // Cache kontrolü
+        const cacheKey = 'branches_data';
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cacheTime = 30 * 60 * 1000; // 30 dakika
+        
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          const now = Date.now();
+          
+          if (now - parsedData.timestamp < cacheTime) {
+            console.log('✅ Şubeler cache\'den yüklendi');
+            setBranches(parsedData.branches);
+            return;
+          }
+        }
         
         // Response text'ini önce kontrol edelim
         const response = await fetch('/api/branches');
@@ -64,6 +80,12 @@ export default function QRMenuPage() {
             const data = JSON.parse(responseText);
             console.log('✅ Şubeler yüklendi:', data);
             setBranches(data);
+            
+            // Cache'e kaydet
+            sessionStorage.setItem(cacheKey, JSON.stringify({
+              branches: data,
+              timestamp: Date.now()
+            }));
           } catch (parseError) {
             console.error('❌ JSON parse hatası:', parseError);
             console.error('❌ Response text:', responseText);
@@ -84,12 +106,29 @@ export default function QRMenuPage() {
     fetchBranches();
   }, []);
 
-  // Menü verilerini yükle
+  // Menü verilerini yükle - cache ve debounce ile optimize edildi
   useEffect(() => {
     const fetchMenu = async () => {
       try {
         setLoading(true);
         console.log('🔍 Menü yükleniyor...', selectedBranch);
+        
+        // Cache kontrolü
+        const cacheKey = `menu_data_${selectedBranch}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cacheTime = 10 * 60 * 1000; // 10 dakika
+        
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          const now = Date.now();
+          
+          if (now - parsedData.timestamp < cacheTime) {
+            console.log('✅ Menü cache\'den yüklendi');
+            setMenuData(parsedData.menuData);
+            setLoading(false);
+            return;
+          }
+        }
         
         // Response text'ini önce kontrol edelim
         const response = await fetch(`/api/qr-menu/${selectedBranch}`);
@@ -112,6 +151,12 @@ export default function QRMenuPage() {
           const data = JSON.parse(responseText);
           console.log('✅ Menü yüklendi:', data);
           setMenuData(data);
+          
+          // Cache'e kaydet
+          sessionStorage.setItem(cacheKey, JSON.stringify({
+            menuData: data,
+            timestamp: Date.now()
+          }));
         } catch (parseError) {
           console.error('❌ Menu JSON parse hatası:', parseError);
           console.error('❌ Menu response text:', responseText);
@@ -130,14 +175,60 @@ export default function QRMenuPage() {
     };
 
     if (selectedBranch) {
-      fetchMenu();
+      // Debounce ile API çağrısını geciktir
+      const timeoutId = setTimeout(fetchMenu, 300);
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedBranch]);
+
+  // Resimleri preload et
+  const preloadImages = useCallback((menuData: MenuData) => {
+    const imageUrls = Object.values(menuData.menu)
+      .flat()
+      .filter(product => product.image)
+      .map(product => product.image)
+      .slice(0, 10); // İlk 10 resmi preload et
+
+    imageUrls.forEach(url => {
+      if (url) {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (menuData) {
+      preloadImages(menuData);
+    }
+  }, [menuData, preloadImages]);
 
   const handleBranchChange = (newBranchId: string) => {
     setSelectedBranch(newBranchId);
     router.push(`/qr-menu/${newBranchId}`);
   };
+
+  // Memoized formatPrice fonksiyonu
+  const formatPrice = useCallback((price: number) => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY'
+    }).format(price);
+  }, []);
+
+  // Memoized getImageUrl fonksiyonu
+  const getImageUrl = useCallback((image: string | null) => {
+    if (!image) return '/placeholder-image.svg';
+    if (image.startsWith('data:')) return image;
+    if (image.startsWith('http')) return image;
+    return image;
+  }, []);
+
+  // Memoized lastUpdated formatı
+  const formattedLastUpdated = useMemo(() => {
+    if (!menuData) return '';
+    return new Date(menuData.lastUpdated).toLocaleDateString('tr-TR');
+  }, [menuData]);
 
   if (loading) {
     return (
@@ -145,6 +236,7 @@ export default function QRMenuPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
+          <div className="mt-2 text-sm text-gray-500">Lütfen bekleyin</div>
         </div>
       </div>
     );
@@ -178,20 +270,6 @@ export default function QRMenuPage() {
       </div>
     );
   }
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY'
-    }).format(price);
-  };
-
-  const getImageUrl = (image: string | null) => {
-    if (!image) return '/placeholder-image.svg';
-    if (image.startsWith('data:')) return image;
-    if (image.startsWith('http')) return image;
-    return image;
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -236,7 +314,7 @@ export default function QRMenuPage() {
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">
-                Son güncelleme: {new Date(menuData.lastUpdated).toLocaleDateString('tr-TR')}
+                Son güncelleme: {formattedLastUpdated}
               </div>
             </div>
           </div>
@@ -272,6 +350,8 @@ export default function QRMenuPage() {
                               const target = e.target as HTMLImageElement;
                               target.src = '/placeholder-image.svg';
                             }}
+                            loading="lazy"
+                            crossOrigin="anonymous"
                           />
                         </div>
                         
