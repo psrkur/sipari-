@@ -59,11 +59,16 @@ export default function ImageManagement() {
       const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
       
       if (isProduction) {
-        // Canlı ortamda canlı backend'den resimleri al
+        // Canlı ortamda local resimleri kullan (canlı backend'de resim yok)
+        console.log('🌐 Canlı ortamda resimler yükleniyor...')
+        
+        // Local backend'den resimleri al
         try {
-          const response = await axios.get('https://yemek5-backend.onrender.com/api/admin/images', {
+          const response = await axios.get('http://localhost:3001/api/admin/images', {
             headers
           })
+          
+          console.log('📊 Local backend response:', response.data)
           
           // Backend'den gelen veriyi frontend formatına çevir
           const imagesData = response.data.map((img: any) => ({
@@ -73,14 +78,14 @@ export default function ImageManagement() {
             size: img.size,
             type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             uploadedAt: img.uploadedAt,
-            url: `https://yemek5-backend.onrender.com${img.path}`
+            url: `http://localhost:3001${img.path}`
           }))
           
           setImages(imagesData)
-          toast.success(`${imagesData.length} resim yüklendi (Canlı)`)
+          toast.success(`${imagesData.length} resim yüklendi (Local)`)
         } catch (error) {
-          console.error('Canlı backend\'den resimler yüklenemedi:', error)
-          // Canlı backend'de resim yoksa, varsayılan resimler göster
+          console.error('Local backend\'den resimler yüklenemedi:', error)
+          // Local backend'de resim yoksa, varsayılan resimler göster
           const defaultImages = [
             'sanayi-tostu.png', 'fanta.png', 'cocacola.png', 'pepsi.png', 'sprite.png',
             'ayran.png', 'su.png', 'kumru-sandvic.png', 'hamburger.png', 'pizza.png',
@@ -95,7 +100,7 @@ export default function ImageManagement() {
             size: 466, // Varsayılan boyut
             type: filename.split('.').pop()?.toUpperCase() || 'PNG',
             uploadedAt: new Date().toISOString(),
-            url: `https://yemek5-backend.onrender.com/uploads/products/${filename}`
+            url: `http://localhost:3001/uploads/products/${filename}`
           }))
           
           setImages(imagesData)
