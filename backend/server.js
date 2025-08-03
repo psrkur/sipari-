@@ -328,7 +328,7 @@ app.use('/uploads/products', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads', 'products')));
 
-// Resim endpoint'i - Base64 formatında resim döndür
+// Resim endpoint'i - Doğrudan resim dosyası döndür
 app.get('/api/images/:filename', async (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'uploads', 'products', filename);
@@ -362,10 +362,6 @@ app.get('/api/images/:filename', async (req, res) => {
       return res.status(413).json({ error: 'Dosya çok büyük (max 5MB)' });
     }
     
-    // Dosyayı base64'e çevir
-    const fileBuffer = fs.readFileSync(filePath);
-    const base64String = fileBuffer.toString('base64');
-    
     // Dosya uzantısına göre MIME type belirle
     const ext = path.extname(filename).toLowerCase();
     let mimeType = 'image/png'; // Varsayılan
@@ -373,23 +369,15 @@ app.get('/api/images/:filename', async (req, res) => {
     else if (ext === '.gif') mimeType = 'image/gif';
     else if (ext === '.webp') mimeType = 'image/webp';
     
-    // Base64 data URL oluştur
-    const dataUrl = `data:${mimeType};base64,${base64String}`;
-    
     // Response header'larını set et
-    res.set('Content-Type', 'application/json');
+    res.set('Content-Type', mimeType);
     res.set('Cache-Control', 'public, max-age=3600'); // 1 saat cache
     
-    res.json({ 
-      success: true, 
-      dataUrl: dataUrl,
-      filename: filename,
-      size: fileBuffer.length,
-      mimeType: mimeType
-    });
+    // Dosyayı doğrudan stream et
+    res.sendFile(filePath);
     
   } catch (error) {
-    console.error('Resim base64\'e çevrilemedi:', filename, error);
+    console.error('Resim dosyası gönderilemedi:', filename, error);
     
     // Header'lar zaten set edilmişse hata döndürme
     if (!res.headersSent) {
