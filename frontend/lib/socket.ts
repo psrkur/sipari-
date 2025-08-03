@@ -70,10 +70,6 @@ export const useSocket = () => {
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000, // Artırıldı
-      maxReconnectionAttempts: maxReconnectAttempts,
-      // Heartbeat ayarları
-      pingTimeout: 60000,
-      pingInterval: 25000,
     });
 
     const socket = socketRef.current;

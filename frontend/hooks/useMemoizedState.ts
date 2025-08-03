@@ -49,23 +49,17 @@ export function useOptimizedList<T>(
   setItems: (items: T[] | ((prev: T[]) => T[])) => void;
 } {
   const [items, setItems] = useState<T[]>(initialItems);
-  const itemsMap = useMemo(() => {
-    const map = new Map<string | number, T>();
-    items.forEach(item => {
-      map.set(keyExtractor(item), item);
-    });
-    return map;
-  }, [items, keyExtractor]);
 
   const addItem = useCallback((item: T) => {
     setItems(prev => {
       const key = keyExtractor(item);
-      if (itemsMap.has(key)) {
+      const exists = prev.some(existingItem => keyExtractor(existingItem) === key);
+      if (exists) {
         return prev; // Zaten mevcut
       }
       return [...prev, item];
     });
-  }, [keyExtractor, itemsMap]);
+  }, [keyExtractor]);
 
   const removeItem = useCallback((key: string | number) => {
     setItems(prev => prev.filter(item => keyExtractor(item) !== key));
