@@ -4109,6 +4109,64 @@ app.post('/api/admin/cleanup-orders', authenticateToken, async (req, res) => {
   }
 });
 
+// Tüm siparişleri silme endpoint'i
+app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
+  try {
+    // Sadece SUPER_ADMIN erişebilir
+    if (req.user.role !== 'SUPER_ADMIN') {
+      return res.status(403).json({ error: 'Yetkisiz erişim. Sadece süper admin tüm siparişleri silebilir.' });
+    }
+
+    console.log('🗑️ Tüm siparişleri silme isteği alındı');
+    
+    // Önce toplam sipariş sayısını al
+    const totalOrders = await prisma.order.count();
+    const totalOrderItems = await prisma.orderItem.count();
+    
+    if (totalOrders === 0) {
+      return res.json({ 
+        message: 'Silinecek sipariş bulunmuyor',
+        deletedOrders: 0,
+        deletedOrderItems: 0,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    console.log(`📊 Silinecek sipariş sayısı: ${totalOrders}`);
+    console.log(`📊 Silinecek orderItems sayısı: ${totalOrderItems}`);
+
+    // Transaction ile güvenli silme işlemi
+    const result = await prisma.$transaction(async (tx) => {
+      // Önce orderItems'ları sil
+      const deletedOrderItems = await tx.orderItem.deleteMany({});
+      console.log(`🗑️ Silinen orderItems sayısı: ${deletedOrderItems.count}`);
+
+      // Sonra siparişleri sil
+      const deletedOrders = await tx.order.deleteMany({});
+      console.log(`🗑️ Silinen sipariş sayısı: ${deletedOrders.count}`);
+
+      return {
+        deletedOrders: deletedOrders.count,
+        deletedOrderItems: deletedOrderItems.count
+      };
+    });
+
+    console.log('✅ Tüm siparişler başarıyla silindi!');
+    console.log(`📊 Toplam silinen sipariş: ${result.deletedOrders}`);
+    console.log(`📊 Toplam silinen orderItems: ${result.deletedOrderItems}`);
+
+    res.json({ 
+      message: 'Tüm siparişler başarıyla silindi',
+      deletedOrders: result.deletedOrders,
+      deletedOrderItems: result.deletedOrderItems,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Tüm siparişleri silme hatası:', error);
+    res.status(500).json({ error: 'Siparişler silinirken bir hata oluştu' });
+  }
+});
+
 app.get('/api/admin/database-stats', authenticateToken, async (req, res) => {
   try {
     // SUPER_ADMIN, ADMIN ve BRANCH_MANAGER erişebilir

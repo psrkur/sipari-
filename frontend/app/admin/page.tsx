@@ -453,6 +453,41 @@ export default function AdminPage() {
     }
   }, [token, fetchDatabaseStats, fetchOrders]);
 
+  // Tüm siparişleri silme işlemi
+  const handleDeleteAllOrders = useCallback(async () => {
+    if (!confirm('⚠️ DİKKAT: Tüm siparişleri silmek istediğinizden emin misiniz?\n\nBu işlem:\n• Tüm siparişleri silecek\n• Tüm sipariş detaylarını silecek\n• Bu işlem geri alınamaz!\n\nDevam etmek istiyor musunuz?')) {
+      return;
+    }
+
+    // İkinci onay
+    if (!confirm('Son kez onaylıyor musunuz? Bu işlem geri alınamaz!')) {
+      return;
+    }
+
+    setCleanupLoading(true);
+    try {
+      const response = await axios.delete(API_ENDPOINTS.ADMIN_DELETE_ALL_ORDERS, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(`Tüm siparişler başarıyla silindi! (${response.data.deletedOrders} sipariş, ${response.data.deletedOrderItems} sipariş detayı)`);
+      
+      // Fonksiyonları doğrudan çağır, dependency olarak ekleme
+      await fetchDatabaseStats();
+      await fetchOrders();
+      
+    } catch (error: any) {
+      console.error('Tüm siparişleri silme hatası:', error);
+      if (error.response?.status === 403) {
+        toast.error('Yetkisiz erişim. Sadece süper admin tüm siparişleri silebilir.');
+      } else {
+        toast.error('Siparişler silinirken bir hata oluştu');
+      }
+    } finally {
+      setCleanupLoading(false);
+    }
+  }, [token, fetchDatabaseStats, fetchOrders]);
+
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
     try {
@@ -1125,7 +1160,7 @@ export default function AdminPage() {
             <button
               onClick={handleCleanupOrders}
               disabled={cleanupLoading}
-              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed mb-2"
             >
               <span className="text-lg">🗑️</span>
               {sidebarOpen && (
@@ -1134,6 +1169,22 @@ export default function AdminPage() {
                 </span>
               )}
             </button>
+            
+            {/* Tüm Siparişleri Sil Butonu - Sadece SUPER_ADMIN için */}
+            {user?.role === 'SUPER_ADMIN' && (
+              <button
+                onClick={handleDeleteAllOrders}
+                disabled={cleanupLoading}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-red-700 text-white font-medium hover:bg-red-800 transition-all duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="text-lg">⚠️</span>
+                {sidebarOpen && (
+                  <span>
+                    {cleanupLoading ? 'Siliniyor...' : 'Tüm Siparişleri Sil'}
+                  </span>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>
