@@ -746,7 +746,7 @@ export default function Cart({ selectedBranch }: CartProps) {
                         <input
                           type="radio"
                           value="online"
-                          {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
+                          {...formRegister('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
                           className="text-orange-600 focus:ring-orange-500"
                         />
                         <Globe className="h-5 w-5 text-purple-600" />
@@ -786,7 +786,7 @@ export default function Cart({ selectedBranch }: CartProps) {
                   Sipariş Notları
                 </label>
                 <textarea
-                  {...register('notes')}
+                  {...formRegister('notes')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   rows={2}
                   placeholder="Özel istekleriniz, alerjileriniz veya ek notlarınız..."
