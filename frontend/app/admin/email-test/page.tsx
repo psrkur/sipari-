@@ -104,7 +104,7 @@ export default function EmailTestPage() {
                   <li>"Güvenlik" sekmesine tıklayın</li>
                   <li>"2 Adımlı Doğrulama"yı etkinleştirin</li>
                   <li>"Uygulama Şifreleri" bölümüne gidin</li>
-                  <li>"Uygulama Seç" > "Diğer (Özel ad)" > "Yemek5" yazın</li>
+                  <li>"Uygulama Seç" &gt; "Diğer (Özel ad)" &gt; "Yemek5" yazın</li>
                   <li>Oluşturulan 16 haneli şifreyi kopyalayın</li>
                 </ol>
               </div>
