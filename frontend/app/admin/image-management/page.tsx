@@ -52,23 +52,50 @@ export default function ImageManagement() {
         headers.Authorization = `Bearer ${token}`
       }
       
-      const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
-        headers
-      })
+      // Canlı ortamda local resimleri kullan
+      const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
       
-      // Backend'den gelen veriyi frontend formatına çevir
-      const imagesData = response.data.map((img: any) => ({
-        id: img.filename,
-        name: img.filename,
-        path: img.path,
-        size: img.size,
-        type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-        uploadedAt: img.uploadedAt,
-        url: `${getApiBaseUrl()}${img.path}`
-      }))
-      
-      setImages(imagesData)
-      toast.success(`${imagesData.length} resim yüklendi`)
+      if (isProduction) {
+        // Canlı ortamda local resimleri kullan
+        const localImages = [
+          'sanayi-tostu.png', 'fanta.png', 'cocacola.png', 'pepsi.png', 'sprite.png',
+          'ayran.png', 'su.png', 'kumru-sandvic.png', 'hamburger.png', 'pizza.png',
+          'doner.png', 'kebap.png', 'lahmacun.png', 'pide.png', 'borek.png',
+          'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
+        ]
+        
+        const imagesData = localImages.map((filename, index) => ({
+          id: filename,
+          name: filename,
+          path: `/uploads/products/${filename}`,
+          size: 466, // Varsayılan boyut
+          type: filename.split('.').pop()?.toUpperCase() || 'PNG',
+          uploadedAt: new Date().toISOString(),
+          url: `http://localhost:3001/uploads/products/${filename}`
+        }))
+        
+        setImages(imagesData)
+        toast.success(`${imagesData.length} resim yüklendi (Local)`)
+      } else {
+        // Development ortamında backend'den al
+        const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
+          headers
+        })
+        
+        // Backend'den gelen veriyi frontend formatına çevir
+        const imagesData = response.data.map((img: any) => ({
+          id: img.filename,
+          name: img.filename,
+          path: img.path,
+          size: img.size,
+          type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+          uploadedAt: img.uploadedAt,
+          url: `${getApiBaseUrl()}${img.path}`
+        }))
+        
+        setImages(imagesData)
+        toast.success(`${imagesData.length} resim yüklendi`)
+      }
     } catch (error: any) {
       console.error('Resimler yüklenemedi:', error)
       toast.error('Resimler yüklenemedi')
@@ -90,6 +117,16 @@ export default function ImageManagement() {
     setUploadProgress(0)
 
     try {
+      // Canlı ortamda local resimleri kullan
+      const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
+      
+      if (isProduction) {
+        // Canlı ortamda resim yükleme devre dışı
+        toast.error('Canlı ortamda resim yükleme devre dışı. Local ortamda test edin.')
+        setUploading(false)
+        return
+      }
+
       // Her dosya için ayrı ayrı yükle
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
@@ -128,6 +165,15 @@ export default function ImageManagement() {
   // Resim silme
   const handleDeleteImage = useCallback(async (imageId: string) => {
     if (!token) return
+
+    // Canlı ortamda local resimleri kullan
+    const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
+    
+    if (isProduction) {
+      // Canlı ortamda resim silme devre dışı
+      toast.error('Canlı ortamda resim silme devre dışı. Local ortamda test edin.')
+      return
+    }
 
     if (!confirm('Bu resmi silmek istediğinizden emin misiniz?')) {
       return

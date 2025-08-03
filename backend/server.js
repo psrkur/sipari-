@@ -2,8 +2,8 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const isProduction = false; // Development modunda çalıştır
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
-// PORT değişkenini kullan, eğer yoksa 3006'yı varsayılan olarak kullan
-const SERVER_PORT = process.env.PORT || 3001;
+// SABİT PORT - Development için 3001, Production için process.env.PORT
+const SERVER_PORT = isProduction ? (process.env.PORT || 3001) : 3001;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
 const DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30';
@@ -4041,8 +4041,8 @@ const startServer = (port) => {
   });
 };
 
-// Port deneme sırası
-const ports = [SERVER_PORT, 3002, 3003, 3004, 3005];
+// SABİT PORT - Sadece SERVER_PORT kullan
+const ports = [SERVER_PORT];
 let server = null;
 
 const tryStartServer = async () => {
@@ -4064,22 +4064,18 @@ const tryStartServer = async () => {
     console.error('❌ Upload dizinleri oluşturulamadı:', error);
   }
 
-  for (const port of ports) {
-    try {
-      server = await startServer(port);
-      break;
-    } catch (err) {
-      if (err.code === 'EADDRINUSE') {
-        continue;
-      } else {
-        throw err;
-      }
+  // Sadece sabit portu dene
+  try {
+    server = await startServer(SERVER_PORT);
+    console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
+  } catch (err) {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${SERVER_PORT} kullanımda. Lütfen portu serbest bırakın.`);
+      console.error('💡 Çözüm: taskkill /F /IM node.exe komutunu çalıştırın');
+      process.exit(1);
+    } else {
+      throw err;
     }
-  }
-  
-  if (!server) {
-    console.error('❌ Hiçbir port kullanılabilir değil');
-    process.exit(1);
   }
 };
 
