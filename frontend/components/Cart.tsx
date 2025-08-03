@@ -78,7 +78,7 @@ export default function Cart({ selectedBranch }: CartProps) {
   })
   const [isRegistering, setIsRegistering] = useState(false)
   const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore()
-  const { token, user, login, register } = useAuthStore()
+  const { token, user, login, register: authRegister } = useAuthStore()
   
   // Giriş fonksiyonu
   const handleLogin = async (e: React.FormEvent) => {
@@ -101,7 +101,7 @@ export default function Cart({ selectedBranch }: CartProps) {
       return
     }
     try {
-      await register(registerForm.name, registerForm.email, registerForm.phone, registerForm.password)
+      await authRegister(registerForm.name, registerForm.email, registerForm.phone, registerForm.password)
       setShowLoginModal(false)
       setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' })
       setIsRegistering(false)
