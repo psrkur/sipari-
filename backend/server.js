@@ -1946,7 +1946,20 @@ app.get('/api/categories', async (req, res) => {
 
 app.get('/api/admin/categories', authenticateToken, async (req, res) => {
   try {
+    // Kullanıcının branchId'si varsa, o branch'in companyId'sini al
+    let companyId = 1; // Varsayılan companyId
+    
+    if (req.user.branchId) {
+      const branch = await prisma.branch.findUnique({
+        where: { id: req.user.branchId }
+      });
+      if (branch && branch.companyId) {
+        companyId = branch.companyId;
+      }
+    }
+
     const categories = await prisma.category.findMany({
+      where: { companyId: companyId },
       orderBy: { name: 'asc' }
     });
     
@@ -1965,14 +1978,29 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
     
-    const { name, description, companyId } = req.body;
+    const { name, description } = req.body;
     
-    if (!name || !companyId) {
-      return res.status(400).json({ error: 'Kategori adı ve şirket ID zorunludur.' });
+    if (!name) {
+      return res.status(400).json({ error: 'Kategori adı zorunludur.' });
     }
 
-    const existingCategory = await prisma.category.findUnique({
-      where: { name }
+    // Kullanıcının branchId'si varsa, o branch'in companyId'sini al
+    let companyId = 1; // Varsayılan companyId
+    
+    if (req.user.branchId) {
+      const branch = await prisma.branch.findUnique({
+        where: { id: req.user.branchId }
+      });
+      if (branch && branch.companyId) {
+        companyId = branch.companyId;
+      }
+    }
+
+    const existingCategory = await prisma.category.findFirst({
+      where: { 
+        name,
+        companyId: companyId
+      }
     });
 
     if (existingCategory) {
@@ -1983,12 +2011,13 @@ app.post('/api/admin/categories', authenticateToken, async (req, res) => {
       data: {
         name,
         description: description || '',
-        companyId: Number(companyId)
+        companyId: companyId
       }
     });
 
     res.status(201).json(category);
   } catch (error) {
+    console.error('Kategori ekleme hatası:', error);
     res.status(500).json({ error: 'Kategori eklenemedi' });
   }
 });
@@ -4017,6 +4046,24 @@ const ports = [SERVER_PORT, 3002, 3003, 3004, 3005];
 let server = null;
 
 const tryStartServer = async () => {
+  // Upload dizinlerini oluştur
+  try {
+    const uploadsDir = path.join(__dirname, 'uploads');
+    const productsDir = path.join(uploadsDir, 'products');
+    
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      console.log('📁 Uploads dizini oluşturuldu:', uploadsDir);
+    }
+    
+    if (!fs.existsSync(productsDir)) {
+      fs.mkdirSync(productsDir, { recursive: true });
+      console.log('📁 Products dizini oluşturuldu:', productsDir);
+    }
+  } catch (error) {
+    console.error('❌ Upload dizinleri oluşturulamadı:', error);
+  }
+
   for (const port of ports) {
     try {
       server = await startServer(port);
