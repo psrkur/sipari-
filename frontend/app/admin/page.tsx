@@ -1040,6 +1040,22 @@ export default function AdminPage() {
                 <span className="text-lg">💬</span>
                 {sidebarOpen && <span>Sohbet</span>}
               </Link>
+              
+              <Link 
+                href="/admin/backup-management" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">💾</span>
+                {sidebarOpen && <span>Yedekleme</span>}
+              </Link>
+              
+              <Link 
+                href="/admin/email-test" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">📧</span>
+                {sidebarOpen && <span>Email Test</span>}
+              </Link>
             </div>
           </div>
 

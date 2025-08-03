@@ -111,7 +111,7 @@ export default function Cart({ selectedBranch }: CartProps) {
     }
   }
   
-  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CustomerInfo>({
+  const { register: formRegister, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CustomerInfo>({
     defaultValues: {
       deliveryType: 'pickup',
       name: '',
@@ -485,12 +485,12 @@ export default function Cart({ selectedBranch }: CartProps) {
                       ? 'border-blue-500 bg-blue-50 shadow-lg' 
                       : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
                   }`}>
-                    <input
-                      type="radio"
-                      value="delivery"
-                      {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
-                      className="sr-only"
-                    />
+                                         <input
+                       type="radio"
+                       value="delivery"
+                       {...formRegister('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
+                       className="sr-only"
+                     />
                     <Truck className="h-8 w-8 text-blue-600 mb-3" />
                     <span className="text-sm font-semibold text-gray-900">Adrese Teslim</span>
                     <span className="text-xs text-gray-500 mt-1 text-center">Kapınıza kadar</span>
@@ -504,12 +504,12 @@ export default function Cart({ selectedBranch }: CartProps) {
                       ? 'border-green-500 bg-green-50 shadow-lg' 
                       : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
                   }`}>
-                    <input
-                      type="radio"
-                      value="pickup"
-                      {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
-                      className="sr-only"
-                    />
+                                         <input
+                       type="radio"
+                       value="pickup"
+                       {...formRegister('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
+                       className="sr-only"
+                     />
                     <Store className="h-8 w-8 text-green-600 mb-3" />
                     <span className="text-sm font-semibold text-gray-900">Şubeden Al</span>
                     <span className="text-xs text-gray-500 mt-1 text-center">Ücretsiz</span>
@@ -530,12 +530,12 @@ export default function Cart({ selectedBranch }: CartProps) {
                     <User className="h-4 w-4 inline mr-2" />
                     Ad Soyad *
                   </label>
-                  <input
-                    type="text"
-                    {...register('name', { required: 'Ad soyad gerekli' })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="Ad Soyad"
-                  />
+                                     <input
+                     type="text"
+                     {...formRegister('name', { required: 'Ad soyad gerekli' })}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                     placeholder="Ad Soyad"
+                   />
                   {errors.name && (
                     <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
                   )}
@@ -546,12 +546,12 @@ export default function Cart({ selectedBranch }: CartProps) {
                     <Phone className="h-4 w-4 inline mr-2" />
                     Telefon *
                   </label>
-                  <input
-                    type="tel"
-                    {...register('phone', { required: 'Telefon gerekli' })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                    placeholder="0555 123 45 67"
-                  />
+                                     <input
+                     type="tel"
+                     {...formRegister('phone', { required: 'Telefon gerekli' })}
+                     className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                     placeholder="0555 123 45 67"
+                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Teslimat için gerekli
                   </p>
@@ -566,12 +566,12 @@ export default function Cart({ selectedBranch }: CartProps) {
                   <Mail className="h-4 w-4 inline mr-2" />
                   Email
                 </label>
-                <input
-                  type="email"
-                  {...register('email')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                  placeholder="ornek@email.com"
-                />
+                                 <input
+                   type="email"
+                   {...formRegister('email')}
+                   className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                   placeholder="ornek@email.com"
+                 />
               </div>
 
               {/* Adrese Teslim Seçenekleri */}
@@ -693,20 +693,20 @@ export default function Cart({ selectedBranch }: CartProps) {
                       </div>
                     )}
                     
-                    <textarea
-                      {...register('address', { 
-                        required: watch('deliveryType') === 'delivery' ? 'Teslimat adresi gerekli' : false,
-                        validate: (value) => {
-                          if (watch('deliveryType') === 'delivery' && !value) {
-                            return 'Teslimat adresi gerekli'
-                          }
-                          return true
-                        }
-                      })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                      rows={3}
-                      placeholder={selectedAddress ? "Adres detaylarını düzenleyebilirsiniz..." : "Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"}
-                    />
+                                         <textarea
+                       {...formRegister('address', { 
+                         required: watch('deliveryType') === 'delivery' ? 'Teslimat adresi gerekli' : false,
+                         validate: (value) => {
+                           if (watch('deliveryType') === 'delivery' && !value) {
+                             return 'Teslimat adresi gerekli'
+                           }
+                           return true
+                         }
+                       })}
+                       className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                       rows={3}
+                       placeholder={selectedAddress ? "Adres detaylarını düzenleyebilirsiniz..." : "Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"}
+                     />
                     <p className="text-xs text-gray-500 mt-1">
                       {selectedAddress ? "Seçili adresinizi düzenleyebilir veya yeni adres ekleyebilirsiniz" : "Adrese teslim seçeneği için zorunlu"}
                     </p>
@@ -723,22 +723,22 @@ export default function Cart({ selectedBranch }: CartProps) {
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          value="cash"
-                          {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
-                          className="text-orange-600 focus:ring-orange-500"
-                        />
+                                                 <input
+                           type="radio"
+                           value="cash"
+                           {...formRegister('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
+                           className="text-orange-600 focus:ring-orange-500"
+                         />
                                                  <Banknote className="h-5 w-5 text-green-600" />
                         <span className="text-sm text-gray-700">💵 Nakit</span>
                       </label>
                       <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                        <input
-                          type="radio"
-                          value="card"
-                          {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
-                          className="text-orange-600 focus:ring-orange-500"
-                        />
+                                                 <input
+                           type="radio"
+                           value="card"
+                           {...formRegister('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
+                           className="text-orange-600 focus:ring-orange-500"
+                         />
                         <CreditCard className="h-5 w-5 text-blue-600" />
                         <span className="text-sm text-gray-700">💳 Kart (Kapıda)</span>
                       </label>

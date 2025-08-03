@@ -21,7 +21,9 @@
     "map-images": "node map-images-to-products.js",
     "fix-production-images": "node deploy-image-fix.js",
     "fix-franchise": "node deploy-franchise-fix.js",
-    "fix-prisma": "node fix-production-prisma.js"
+    "fix-prisma": "node fix-production-prisma.js",
+    "backup": "node backup-system.js",
+    "test-backup": "node test-backup.js"
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
@@ -38,6 +40,7 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
+    "nodemailer": "^7.0.5",
     "qrcode": "^1.5.4",
     "redis": "^4.6.10",
     "socket.io": "^4.8.1",

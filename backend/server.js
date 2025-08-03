@@ -31,6 +31,10 @@ const performanceMonitor = require('./performance-monitor');
 const chatbotRouter = require('./chatbot-api');
 const aiChatbotRouter = require('./ai-chatbot-api');
 const dashboardRouter = require('./dashboard-api');
+const backupRouter = require('./backup-api');
+
+// Email servisini import et
+const { sendOrderNotification, sendAdminNotification } = require('./utils/email-service');
 
 // Otomatik temizlik modülünü import et
 const { startAutoCleanup, cleanupOldOrders, showDatabaseStats } = require('./cleanup-old-orders');
@@ -796,10 +800,82 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       });
     }
 
+    // Email bildirimleri gönder (asenkron olarak)
+    try {
+      // Şube bilgilerini al
+      const branch = await prisma.branch.findUnique({
+        where: { id: parseInt(branchId) }
+      });
+
+      // Müşteriye email gönder
+      if (customer?.email) {
+        const orderWithItems = await prisma.order.findUnique({
+          where: { id: order.id },
+          include: {
+            orderItems: {
+              include: {
+                product: true
+              }
+            }
+          }
+        });
+        
+        sendOrderNotification(orderWithItems, customer, branch);
+      }
+
+      // Admin'e email bildirimi gönder
+      sendAdminNotification(order, customer, branch);
+      
+    } catch (emailError) {
+      console.error('❌ Email gönderme hatası:', emailError);
+      // Email hatası sipariş oluşturmayı etkilemesin
+    }
+
     res.json({ order, message: 'Sipariş başarıyla oluşturuldu' });
   } catch (error) {
     console.error('Sipariş oluşturma hatası:', error); // <-- Hata detayını logla
     res.status(500).json({ error: 'Sipariş oluşturulamadı' });
+  }
+});
+
+// Email test endpoint'i
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email adresi gerekli' });
+    }
+
+    const testOrder = {
+      orderNumber: 'TEST-123',
+      totalAmount: 50.0,
+      createdAt: new Date(),
+      orderType: 'DELIVERY',
+      notes: 'Test siparişi'
+    };
+
+    const testCustomer = {
+      name: 'Test Müşteri',
+      phone: '0555 123 45 67',
+      email: email
+    };
+
+    const testBranch = {
+      name: 'Test Şube'
+    };
+
+    const result = await sendOrderNotification(testOrder, testCustomer, testBranch);
+    
+    if (result.success) {
+      res.json({ message: 'Test email başarıyla gönderildi', messageId: result.messageId });
+    } else {
+      res.status(500).json({ error: 'Email gönderilemedi', details: result.error });
+    }
+    
+  } catch (error) {
+    console.error('Test email hatası:', error);
+    res.status(500).json({ error: 'Test email hatası' });
   }
 });
 
@@ -2885,6 +2961,16 @@ app.post('/api/table/:tableId/order', async (req, res) => {
       }
     }
 
+    // Email bildirimleri gönder (asenkron olarak)
+    try {
+      // Müşteri bilgileri masa siparişlerinde genellikle yok, sadece admin bildirimi
+      sendAdminNotification(order, null, table.branch);
+      
+    } catch (emailError) {
+      console.error('❌ Masa siparişi email gönderme hatası:', emailError);
+      // Email hatası sipariş oluşturmayı etkilemesin
+    }
+
     res.status(201).json({
       order,
       table: table,
@@ -3885,6 +3971,9 @@ app.use('/api/chatbot', chatbotRouter);
 app.use('/api/chatbot', aiChatbotRouter);
 app.use('/api', dashboardRouter);
 
+// Yedekleme router'ını ekle
+app.use('/api/backup', backupRouter);
+
 
 
 // 404 handler - En sona taşındı
@@ -3986,6 +4075,13 @@ setTimeout(() => {
   console.log('🧹 Otomatik temizlik sistemi başlatılıyor...');
   startAutoCleanup();
 }, 2000);
+
+// Yedekleme sistemi başlat
+setTimeout(() => {
+  console.log('💾 Otomatik yedekleme sistemi başlatılıyor...');
+  const backupSystem = require('./backup-system');
+  backupSystem.scheduleBackups();
+}, 3000);
 
 // Admin temizlik endpoint'leri
 app.post('/api/admin/cleanup-orders', authenticateToken, async (req, res) => {

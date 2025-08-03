@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resim Yükleme ve Senkronizasyon Testi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .file-input {
+            margin: 10px 0;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #007bff;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ Resim Yükleme ve Senkronizasyon Testi</h1>
+    
+    <div class="container">
+        <h2>📤 Resim Yükleme</h2>
+        <input type="file" id="imageFile" accept="image/*" class="file-input">
+        <button onclick="uploadImage()" class="button">Resim Yükle</button>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔄 Senkronizasyon</h2>
+        <button onclick="syncImages()" class="button success">Senkronize Et</button>
+        <button onclick="getImages()" class="button">Resimleri Listele</button>
+    </div>
+
+    <div class="container">
+        <h2>📋 Log</h2>
+        <div class="log" id="log"></div>
+        <button onclick="clearLog()" class="button danger">Logu Temizle</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjksImVtYWlsIjoiYWRtaW5AeWVtZWs1LmNvbSIsInJvbGUiOiJhZG1pbiIsImJyYW5jaElkIjpudWxsLCJpYXQiOjE3NTQyMDMyMDksImV4cCI6MTc1NDI4OTYwOX0.8PLKB19fma5y876oFMFQxRD9uz4h-GENibG4sk1IMBM';
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                log('❌ Lütfen bir resim dosyası seçin');
+                return;
+            }
+
+            log(`📤 Resim yükleniyor: ${file.name} (${file.size} bytes)`);
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/upload-image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Resim başarıyla yüklendi: ${data.filename}`);
+                    log(`📊 Boyut: ${data.size} bytes`);
+                    log(`🆔 ID: ${data.id}`);
+                } else {
+                    log(`❌ Yükleme hatası: ${data.error || 'Bilinmeyen hata'}`);
+                }
+            } catch (error) {
+                log(`❌ Bağlantı hatası: ${error.message}`);
+            }
+        }
+
+        async function syncImages() {
+            log('🔄 Senkronizasyon başlatılıyor...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/sync-images`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ Senkronizasyon tamamlandı!`);
+                    log(`📁 Local dosyalar: ${data.report.localFiles}`);
+                    log(`🗄️ Veritabanı resimleri: ${data.report.dbImages}`);
+                    log(`➕ Senkronize edilen: ${data.report.synced}`);
+                    
+                    if (data.report.errors.length > 0) {
+                        log(`⚠️ Hatalar: ${data.report.errors.join(', ')}`);
+                    }
+                } else {
+                    log(`❌ Senkronizasyon hatası: ${data.error || 'Bilinmeyen hata'}`);
+                }
+            } catch (error) {
+                log(`❌ Bağlantı hatası: ${error.message}`);
+            }
+        }
+
+        async function getImages() {
+            log('📋 Resimler listeleniyor...');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/admin/images`, {
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ ${data.length} resim bulundu`);
+                    data.forEach((image, index) => {
+                        log(`${index + 1}. ${image.filename} (${image.size} bytes)`);
+                    });
+                } else {
+                    log(`❌ Listeleme hatası: ${data.error || 'Bilinmeyen hata'}`);
+                }
+            } catch (error) {
+                log(`❌ Bağlantı hatası: ${error.message}`);
+            }
+        }
+
+        // Sayfa yüklendiğinde log başlat
+        log('🚀 Test sayfası yüklendi');
+        log(`🔗 API Base: ${API_BASE}`);
+        log(`🔑 Token: ${TOKEN ? 'Mevcut' : 'Yok'}`);
+    </script>
+</body>
+</html> 
