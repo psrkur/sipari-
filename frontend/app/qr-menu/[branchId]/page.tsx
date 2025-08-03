@@ -130,8 +130,12 @@ export default function QRMenuPage() {
           }
         }
         
+        // QR menü endpoint'ini kullan
+        const apiUrl = `/api/qr-menu/${selectedBranch}`;
+        console.log('🔍 QR Menü API çağrısı:', apiUrl);
+        
         // Response text'ini önce kontrol edelim
-        const response = await fetch(`/api/qr-menu/${selectedBranch}`);
+        const response = await fetch(apiUrl);
         
         console.log('🔍 Menu response status:', response.status);
         console.log('🔍 Menu response ok:', response.ok);

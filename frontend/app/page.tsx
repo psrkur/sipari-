@@ -143,16 +143,27 @@ export default function Home() {
           return;
         }
 
-        const response = await apiClient.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id));
-        const productsData = Array.isArray(response.data) ? response.data : [];
+        // Products endpoint'ini kullan
+        const apiUrl = `/api/products/${selectedBranch.id}`;
+        console.log('🔍 Products API çağrısı:', apiUrl);
         
-        // Category'leri string'e çevir
-        const processedProducts = productsData.map((product: any) => ({
+        const response = await fetch(apiUrl);
+        console.log('🔍 Products response status:', response.status);
+        console.log('🔍 Products response ok:', response.ok);
+        
+        if (!response.ok) {
+          throw new Error(`Products API error: ${response.status}`);
+        }
+        
+        const productsData = await response.json();
+        console.log('🔍 Products data received:', productsData);
+        
+        const processedProducts = Array.isArray(productsData) ? productsData.map((product: any) => ({
           ...product,
           category: typeof product.category === 'object' && product.category !== null 
             ? product.category.name 
             : product.category || 'Diğer'
-        }));
+        })) : [];
         
         // Kategorileri optimize et
         const productCategories = Array.from(new Set(processedProducts.map((p: any) => p.category)));

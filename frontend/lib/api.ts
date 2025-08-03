@@ -101,10 +101,29 @@ export const API_ENDPOINTS = {
   get LOGIN() { return `${getCurrentApiBaseUrl()}/api/auth/login` },
   
   // Branches
-  get BRANCHES() { return `${getCurrentApiBaseUrl()}/api/branches` },
+  get BRANCHES() { 
+    const url = `${getCurrentApiBaseUrl()}/api/branches`;
+    console.log('🔍 BRANCHES endpoint:', url);
+    return url;
+  },
   
-  // Products
-  get PRODUCTS() { return (branchId: number) => `${getCurrentApiBaseUrl()}/api/products/${branchId}` },
+  // Products - Debug log'ları eklendi
+  get PRODUCTS() { 
+    return (branchId: number) => {
+      const url = `${getCurrentApiBaseUrl()}/api/products/${branchId}`;
+      console.log('🔍 PRODUCTS endpoint:', url, 'for branchId:', branchId);
+      return url;
+    };
+  },
+  
+  // QR Menu - Debug log'ları eklendi
+  get QR_MENU() {
+    return (branchId: number) => {
+      const url = `${getCurrentApiBaseUrl()}/api/qr-menu/${branchId}`;
+      console.log('🔍 QR_MENU endpoint:', url, 'for branchId:', branchId);
+      return url;
+    };
+  },
   
   // Categories
   get CATEGORIES() { return `${getCurrentApiBaseUrl()}/api/categories` },
