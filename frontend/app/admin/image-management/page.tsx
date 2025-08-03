@@ -70,24 +70,23 @@ export default function ImageManagement() {
           
           console.log('📊 Local backend response:', response.data)
           
-                  // Backend'den gelen veriyi frontend formatına çevir ve base64'e çevir
-        const imagesData = await Promise.all(response.data.map(async (img: any) => {
-          const originalUrl = `http://localhost:3001${img.path}`
-          const base64Url = await convertImageToBase64(originalUrl)
-          
-          return {
-            id: img.filename,
-            name: img.filename,
-            path: img.path,
-            size: img.size,
-            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-            uploadedAt: img.uploadedAt,
-            url: base64Url
-          }
-        }))
+                            // Backend'den gelen veriyi frontend formatına çevir
+          const imagesData = response.data.map((img: any) => {
+            const imageUrl = `http://localhost:3001${img.path}`
+            
+            return {
+              id: img.filename,
+              name: img.filename,
+              path: img.path,
+              size: img.size,
+              type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+              uploadedAt: img.uploadedAt,
+              url: imageUrl
+            }
+          })
         
         setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi (Local - Base64)`)
+        toast.success(`${imagesData.length} resim yüklendi (Local)`)
         } catch (error) {
           console.error('Local backend\'den resimler yüklenemedi:', error)
           // Local backend'de resim yoksa, varsayılan resimler göster
@@ -98,9 +97,8 @@ export default function ImageManagement() {
             'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
           ]
           
-          const imagesData = await Promise.all(defaultImages.map(async (filename, index) => {
-            const originalUrl = `http://localhost:3001/uploads/products/${filename}`
-            const base64Url = await convertImageToBase64(originalUrl)
+          const imagesData = defaultImages.map((filename, index) => {
+            const imageUrl = `http://localhost:3001/uploads/products/${filename}`
             
             return {
               id: filename,
@@ -109,12 +107,12 @@ export default function ImageManagement() {
               size: 466, // Varsayılan boyut
               type: filename.split('.').pop()?.toUpperCase() || 'PNG',
               uploadedAt: new Date().toISOString(),
-              url: base64Url
+              url: imageUrl
             }
-          }))
+          })
           
           setImages(imagesData)
-          toast.success(`${imagesData.length} varsayılan resim yüklendi (Base64)`)
+          toast.success(`${imagesData.length} varsayılan resim yüklendi`)
         }
       } else {
         // Development ortamında backend'den al
@@ -128,15 +126,12 @@ export default function ImageManagement() {
         
         console.log('📊 Backend response:', response.data)
         
-        // Backend'den gelen veriyi frontend formatına çevir ve base64'e çevir
+        // Backend'den gelen veriyi frontend formatına çevir
         console.log('🔄 Resim dönüşümü başlatılıyor...')
-        const imagesData = await Promise.all(response.data.map(async (img: any, index: number) => {
-          const originalUrl = `${getApiBaseUrl()}${img.path}`
+        const imagesData = response.data.map((img: any, index: number) => {
+          const imageUrl = `${getApiBaseUrl()}${img.path}`
           console.log(`📸 Resim ${index + 1}/${response.data.length}:`, img.filename)
-          console.log('🔗 Orijinal URL:', originalUrl)
-          
-          const base64Url = await convertImageToBase64(originalUrl)
-          console.log('✅ Dönüşüm tamamlandı:', img.filename)
+          console.log('🔗 Resim URL:', imageUrl)
           
           return {
             id: img.filename,
@@ -145,14 +140,14 @@ export default function ImageManagement() {
             size: img.size,
             type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             uploadedAt: img.uploadedAt,
-            url: base64Url
+            url: imageUrl
           }
-        }))
+        })
         
-        console.log('📋 Frontend images data (Base64):', imagesData)
+        console.log('📋 Frontend images data:', imagesData)
         
         setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi (Base64)`)
+        toast.success(`${imagesData.length} resim yüklendi`)
       }
     } catch (error: any) {
       console.error('Resimler yüklenemedi:', error)
@@ -340,11 +335,17 @@ export default function ImageManagement() {
       
       const response = await fetch(imageUrl)
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        console.error('❌ HTTP hatası:', response.status, response.statusText)
+        return imageUrl // Hata durumunda orijinal URL'yi döndür
       }
       
       const blob = await response.blob()
       console.log('📦 Blob oluşturuldu:', blob.size, 'bytes')
+      
+      if (blob.size === 0) {
+        console.error('❌ Boş blob')
+        return imageUrl
+      }
       
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
@@ -354,7 +355,7 @@ export default function ImageManagement() {
         }
         reader.onerror = (error) => {
           console.error('❌ FileReader hatası:', error)
-          reject(error)
+          resolve(imageUrl) // Hata durumunda orijinal URL'yi döndür
         }
         reader.readAsDataURL(blob)
       })
@@ -504,7 +505,13 @@ export default function ImageManagement() {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
-                      target.src = '/placeholder-image.svg'
+                      console.error('❌ Resim yüklenemedi:', image.url)
+                      // Placeholder yerine orijinal URL'yi dene
+                      if (!image.url.startsWith('data:')) {
+                        const originalUrl = `${getApiBaseUrl()}${image.path}`
+                        console.log('🔄 Orijinal URL deneniyor:', originalUrl)
+                        target.src = originalUrl
+                      }
                     }}
                   />
                   
