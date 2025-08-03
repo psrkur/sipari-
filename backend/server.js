@@ -357,6 +357,13 @@ app.get('/api/images/:filename', async (req, res) => {
       return res.status(404).json({ error: 'Resim bulunamadı' });
     }
     
+    // Dosya boyutunu kontrol et (5MB limit)
+    const stats = fs.statSync(filePath);
+    if (stats.size > 5 * 1024 * 1024) {
+      console.error('Dosya çok büyük:', filename, stats.size);
+      return res.status(413).json({ error: 'Dosya çok büyük (max 5MB)' });
+    }
+    
     // Dosyayı base64'e çevir
     const fileBuffer = fs.readFileSync(filePath);
     const base64String = fileBuffer.toString('base64');
@@ -371,6 +378,10 @@ app.get('/api/images/:filename', async (req, res) => {
     // Base64 data URL oluştur
     const dataUrl = `data:${mimeType};base64,${base64String}`;
     
+    // Response header'larını set et
+    res.set('Content-Type', 'application/json');
+    res.set('Cache-Control', 'public, max-age=3600'); // 1 saat cache
+    
     res.json({ 
       success: true, 
       dataUrl: dataUrl,
@@ -381,7 +392,11 @@ app.get('/api/images/:filename', async (req, res) => {
     
   } catch (error) {
     console.error('Resim base64\'e çevrilemedi:', filename, error);
-    res.status(500).json({ error: 'Resim işlenemedi' });
+    
+    // Header'lar zaten set edilmişse hata döndürme
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Resim işlenemedi' });
+    }
   }
 });
 

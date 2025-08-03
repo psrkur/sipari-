@@ -62,47 +62,49 @@ export default function ImageManagement() {
       
       console.log('📊 Backend response:', response.data)
       
-      // Her resmi base64 formatında al
-      const imagesData = await Promise.all(response.data.map(async (img: any) => {
-        try {
-          // Base64 formatında resmi al
-          const imageResponse = await axios.get(`${getApiBaseUrl()}/api/images/${img.filename}`)
-          
-          if (imageResponse.data.success) {
-            return {
-              id: img.filename,
-              name: img.filename,
-              path: img.path,
-              size: img.size,
-              type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-              uploadedAt: img.uploadedAt,
-              url: imageResponse.data.dataUrl // Base64 data URL
-            }
-          } else {
-            console.error('Resim base64\'e çevrilemedi:', img.filename)
-            return {
-              id: img.filename,
-              name: img.filename,
-              path: img.path,
-              size: img.size,
-              type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-              uploadedAt: img.uploadedAt,
-              url: '/placeholder-image.svg' // Placeholder
-            }
-          }
-        } catch (error) {
-          console.error('Resim yüklenemedi:', img.filename, error)
-          return {
-            id: img.filename,
-            name: img.filename,
-            path: img.path,
-            size: img.size,
-            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-            uploadedAt: img.uploadedAt,
-            url: '/placeholder-image.svg' // Placeholder
-          }
-        }
-      }))
+             // Her resmi base64 formatında al (timeout ile)
+       const imagesData = await Promise.all(response.data.map(async (img: any) => {
+         try {
+           // Base64 formatında resmi al (30 saniye timeout)
+           const imageResponse = await axios.get(`${getApiBaseUrl()}/api/images/${img.filename}`, {
+             timeout: 30000 // 30 saniye timeout
+           })
+           
+           if (imageResponse.data.success) {
+             return {
+               id: img.filename,
+               name: img.filename,
+               path: img.path,
+               size: img.size,
+               type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+               uploadedAt: img.uploadedAt,
+               url: imageResponse.data.dataUrl // Base64 data URL
+             }
+           } else {
+             console.error('Resim base64\'e çevrilemedi:', img.filename)
+             return {
+               id: img.filename,
+               name: img.filename,
+               path: img.path,
+               size: img.size,
+               type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+               uploadedAt: img.uploadedAt,
+               url: '/placeholder-image.svg' // Placeholder
+             }
+           }
+         } catch (error) {
+           console.error('Resim yüklenemedi:', img.filename, error)
+           return {
+             id: img.filename,
+             name: img.filename,
+             path: img.path,
+             size: img.size,
+             type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+             uploadedAt: img.uploadedAt,
+             url: '/placeholder-image.svg' // Placeholder
+           }
+         }
+       }))
       
       setImages(imagesData)
       toast.success(`${imagesData.length} resim yüklendi`)
