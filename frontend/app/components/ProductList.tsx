@@ -90,13 +90,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
                   >
                     {(product.image || product.imagePath) && (
                       <div className="mb-2 sm:mb-4 relative overflow-hidden rounded-lg sm:rounded-xl">
-                        <img
-                          src={product.image || API_ENDPOINTS.IMAGE_URL(product.imagePath || '')}
-                          alt={product.name}
-                          className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
-                          crossOrigin="anonymous"
-                          onError={handleImageError}
-                        />
+                                                 <img
+                           src={product.image || API_ENDPOINTS.IMAGE_URL(product.imagePath || '') || '/placeholder-image.svg'}
+                           alt={product.name}
+                           className="w-full h-24 sm:h-40 object-cover group-hover:scale-110 transition-transform duration-300"
+                           crossOrigin="anonymous"
+                           onError={handleImageError}
+                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                       </div>
                     )}
@@ -163,13 +163,13 @@ const ProductList: React.FC<ProductListProps> = ({ products, selectedCategory, o
               {/* Resim */}
               {(selectedProduct.image || selectedProduct.imagePath) && (
                 <div className="relative overflow-hidden rounded-xl">
-                  <img
-                    src={selectedProduct.image || API_ENDPOINTS.IMAGE_URL(selectedProduct.imagePath || '')}
-                    alt={selectedProduct.name}
-                    className="w-full h-64 sm:h-80 object-cover"
-                    crossOrigin="anonymous"
-                    onError={handleImageError}
-                  />
+                                     <img
+                     src={selectedProduct.image || API_ENDPOINTS.IMAGE_URL(selectedProduct.imagePath || '') || '/placeholder-image.svg'}
+                     alt={selectedProduct.name}
+                     className="w-full h-64 sm:h-80 object-cover"
+                     crossOrigin="anonymous"
+                     onError={handleImageError}
+                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
               )}
