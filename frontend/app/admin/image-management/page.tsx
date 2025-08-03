@@ -70,19 +70,24 @@ export default function ImageManagement() {
           
           console.log('📊 Local backend response:', response.data)
           
-          // Backend'den gelen veriyi frontend formatına çevir
-          const imagesData = response.data.map((img: any) => ({
+                  // Backend'den gelen veriyi frontend formatına çevir ve base64'e çevir
+        const imagesData = await Promise.all(response.data.map(async (img: any) => {
+          const originalUrl = `http://localhost:3001${img.path}`
+          const base64Url = await convertImageToBase64(originalUrl)
+          
+          return {
             id: img.filename,
             name: img.filename,
             path: img.path,
             size: img.size,
             type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
             uploadedAt: img.uploadedAt,
-            url: `http://localhost:3001${img.path}`
-          }))
-          
-          setImages(imagesData)
-          toast.success(`${imagesData.length} resim yüklendi (Local)`)
+            url: base64Url
+          }
+        }))
+        
+        setImages(imagesData)
+        toast.success(`${imagesData.length} resim yüklendi (Local - Base64)`)
         } catch (error) {
           console.error('Local backend\'den resimler yüklenemedi:', error)
           // Local backend'de resim yoksa, varsayılan resimler göster
@@ -93,18 +98,23 @@ export default function ImageManagement() {
             'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
           ]
           
-          const imagesData = defaultImages.map((filename, index) => ({
-            id: filename,
-            name: filename,
-            path: `/uploads/products/${filename}`,
-            size: 466, // Varsayılan boyut
-            type: filename.split('.').pop()?.toUpperCase() || 'PNG',
-            uploadedAt: new Date().toISOString(),
-            url: `http://localhost:3001/uploads/products/${filename}`
+          const imagesData = await Promise.all(defaultImages.map(async (filename, index) => {
+            const originalUrl = `http://localhost:3001/uploads/products/${filename}`
+            const base64Url = await convertImageToBase64(originalUrl)
+            
+            return {
+              id: filename,
+              name: filename,
+              path: `/uploads/products/${filename}`,
+              size: 466, // Varsayılan boyut
+              type: filename.split('.').pop()?.toUpperCase() || 'PNG',
+              uploadedAt: new Date().toISOString(),
+              url: base64Url
+            }
           }))
           
           setImages(imagesData)
-          toast.success(`${imagesData.length} varsayılan resim yüklendi`)
+          toast.success(`${imagesData.length} varsayılan resim yüklendi (Base64)`)
         }
       } else {
         // Development ortamında backend'den al
@@ -118,21 +128,26 @@ export default function ImageManagement() {
         
         console.log('📊 Backend response:', response.data)
         
-        // Backend'den gelen veriyi frontend formatına çevir
-        const imagesData = response.data.map((img: any) => ({
-          id: img.filename,
-          name: img.filename,
-          path: img.path,
-          size: img.size,
-          type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-          uploadedAt: img.uploadedAt,
-          url: `${getApiBaseUrl()}${img.path}`
+        // Backend'den gelen veriyi frontend formatına çevir ve base64'e çevir
+        const imagesData = await Promise.all(response.data.map(async (img: any) => {
+          const originalUrl = `${getApiBaseUrl()}${img.path}`
+          const base64Url = await convertImageToBase64(originalUrl)
+          
+          return {
+            id: img.filename,
+            name: img.filename,
+            path: img.path,
+            size: img.size,
+            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+            uploadedAt: img.uploadedAt,
+            url: base64Url
+          }
         }))
         
-        console.log('📋 Frontend images data:', imagesData)
+        console.log('📋 Frontend images data (Base64):', imagesData)
         
         setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi`)
+        toast.success(`${imagesData.length} resim yüklendi (Base64)`)
       }
     } catch (error: any) {
       console.error('Resimler yüklenemedi:', error)
@@ -312,6 +327,23 @@ export default function ImageManagement() {
   const filteredImages = images.filter(image =>
     image.name.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  // Resim URL'sini base64'e çevir
+  const convertImageToBase64 = useCallback(async (imageUrl: string): Promise<string> => {
+    try {
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    } catch (error) {
+      console.error('Resim base64\'e çevrilemedi:', error)
+      return imageUrl // Hata durumunda orijinal URL'yi döndür
+    }
+  }, [])
 
   // Dosya boyutu formatı
   const formatFileSize = (bytes: number) => {
