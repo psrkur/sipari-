@@ -45,6 +45,9 @@ export default function ImageManagement() {
 
   // Resimleri yükle
   const fetchImages = useCallback(async () => {
+    console.log('🔄 fetchImages fonksiyonu çağrıldı')
+    console.log('🔑 Token:', token ? 'Mevcut' : 'Yok')
+    
     setLoading(true)
     try {
       const headers: any = {}
