@@ -64,6 +64,14 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
           const allImages = [...localImages, ...response.data];
           setImages(allImages);
           console.log('✅ Tüm resimler yüklendi, sayı:', allImages.length);
+          
+          // API resimlerini localStorage'a da kaydet
+          try {
+            localStorage.setItem('uploaded-images', JSON.stringify(allImages));
+            console.log('✅ API resimleri localStorage\'a kaydedildi');
+          } catch (error) {
+            console.error('❌ localStorage kaydetme hatası:', error);
+          }
         } else {
           setImages(localImages);
           console.log('✅ Sadece localStorage resimleri yüklendi:', localImages.length);
