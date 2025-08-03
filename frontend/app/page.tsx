@@ -74,9 +74,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [productsLoading, setProductsLoading] = useState(false)
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
-  const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
-  const [notes, setNotes] = useState('')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showProductModal, setShowProductModal] = useState(false)
   const [quantity, setQuantity] = useState(1)
@@ -247,55 +245,9 @@ export default function Home() {
   }, [products, groupProductsByCategory])
 
   const addToCart = useCallback((product: Product) => {
-    const existingItem = cart.find(item => item.productId === product.id);
-    
-    if (existingItem) {
-      setCart(cart.map(item => 
-        item.productId === product.id 
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      ));
-    } else {
-      setCart([...cart, {
-        productId: product.id,
-      name: product.name,
-      price: product.price,
-      quantity: 1,
-        image: product.image || ''
-      }]);
-    }
-    
+    // Yeni Cart bileşeni kullanıyor, sadece toast göster
     toast.success(`${product.name} sepete eklendi!`)
-  }, [cart])
-
-  const removeFromCart = useCallback((productId: number) => {
-    setCart(cart.filter(item => item.productId !== productId));
-  }, [cart])
-
-  const updateQuantity = useCallback((productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    
-    setCart(cart.map(item => 
-      item.productId === productId 
-        ? { ...item, quantity: newQuantity }
-        : item
-    ));
-  }, [cart, removeFromCart])
-
-  const getTotalPrice = useCallback(() => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [cart])
-
-  const updateCartItemNote = useCallback((productId: number, note: string) => {
-    setCart(cart.map(item => 
-      item.productId === productId 
-        ? { ...item, note }
-        : item
-    ));
-  }, [cart])
+  }, [])
 
   const handleBranchSelect = useCallback((branch: Branch) => {
     setSelectedBranch(branch);
@@ -322,47 +274,9 @@ export default function Home() {
   }, [selectedProduct, quantity, addToCart])
 
   const handlePlaceOrder = useCallback(async () => {
-    if (cart.length === 0) {
-      toast.error('Sepetiniz boş');
-      return;
-    }
-
-    if (!selectedBranch) {
-      toast.error('Lütfen önce şube seçin');
-      return;
-    }
-
-    if (!user) {
-      setShowLoginModal(true);
-      return;
-    }
-
-    try {
-      const orderData = {
-        items: cart.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          note: item.note || ''
-        })),
-        notes: notes,
-        branchId: selectedBranch.id,
-        orderType: 'DELIVERY'
-      };
-
-      const response = await apiClient.post(API_ENDPOINTS.ORDERS, orderData);
-      
-      if (response.data) {
-        toast.success('Siparişiniz başarıyla alındı!');
-        setCart([]);
-        clearCart();
-        setNotes('');
-        setShowCart(false);
-      }
-    } catch (error: any) {
-      console.error('Sipariş hatası:', error);
-      toast.error('Sipariş alınamadı');
-    }
-  }, [cart, notes, selectedBranch, clearCart, user])
+    // Yeni Cart bileşeni kendi sipariş işlemini yapıyor
+    toast.success('Sepet bileşeni kendi sipariş işlemini yapıyor');
+  }, [])
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -567,9 +481,9 @@ export default function Home() {
               >
                 <span className="hidden sm:inline">🛒 Sepet</span>
                 <span className="sm:hidden">🛒</span>
-                {cart.length > 0 && (
+                {getItemCount() > 0 && (
                   <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center font-bold animate-pulse">
-                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                    {getItemCount()}
                 </span>
                 )}
               </button>
@@ -692,9 +606,9 @@ export default function Home() {
                 className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white p-2 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
               >
                 🛒
-                {cart.length > 0 && (
+                {getItemCount() > 0 && (
                   <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-                    {cart.reduce((total, item) => total + item.quantity, 0)}
+                    {getItemCount()}
                   </span>
                 )}
               </button>
@@ -867,78 +781,7 @@ export default function Home() {
               </button>
             </div>
             
-            {cart.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Sepetiniz boş</p>
-                <p className="text-sm text-gray-400">Menüden ürün seçin</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {cart.map(item => (
-                    <div key={item.productId} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <ChefHat className="h-6 w-6 text-orange-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-800 truncate">{item.name}</h4>
-                        <div className="flex items-center justify-between mt-1">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="h-6 w-6 p-0 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center"
-                            >
-                              <Minus className="h-3 w-3" />
-                            </button>
-                            <span className="font-semibold text-gray-700">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="h-6 w-6 p-0 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center"
-                            >
-                              <Plus className="h-3 w-3" />
-                            </button>
-                          </div>
-                          <span className="font-bold text-orange-600">₺{(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Not ekle..."
-                          value={item.note || ''}
-                          onChange={e => updateCartItemNote(item.productId, e.target.value)}
-                          className="mt-2 text-sm w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="border-t pt-4 space-y-4">
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span>Toplam:</span>
-                    <span className="text-2xl bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                      ₺{getTotalPrice().toFixed(2)}
-                    </span>
-          </div>
-
-                  <input
-                    type="text"
-                    placeholder="Sipariş notu (opsiyonel)"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  />
-                  
-                  <button
-                    onClick={handlePlaceOrder}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl shadow-lg flex items-center justify-center"
-                  >
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Siparişi Tamamla
-                  </button>
-                </div>
-              </>
-            )}
+            <Cart selectedBranch={selectedBranch} />
           </div>
         </div>
       )}
