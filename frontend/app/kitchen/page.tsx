@@ -122,10 +122,14 @@ export default function KitchenPage() {
   }, [token, user, fetchBranches]);
 
   // Basit sipariş yükleme fonksiyonu
-  const fetchOrders = useCallback(async (branchId: number) => {
+  const fetchOrders = useCallback(async (branchId: number, silent = false) => {
     if (!branchId || !token) return;
 
-    setLoading(true);
+    // Sessiz güncelleme için loading state'i gösterme
+    if (!silent) {
+      setLoading(true);
+    }
+
     try {
       const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: { Authorization: `Bearer ${token}` },
@@ -151,20 +155,24 @@ export default function KitchenPage() {
       }
     } catch (error: any) {
       console.error('Siparişler yüklenemedi:', error);
-      toast.error('Siparişler yüklenemedi');
+      if (!silent) {
+        toast.error('Siparişler yüklenemedi');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [token, orders]);
 
   // Şube değiştiğinde siparişleri yükle
   useEffect(() => {
     if (selectedBranch) {
-      fetchOrders(selectedBranch.id);
+      fetchOrders(selectedBranch.id, false); // İlk yükleme için loading göster
     }
   }, [selectedBranch, fetchOrders]);
 
-  // Otomatik yenileme interval'ı - sadece arka planda veri kontrolü
+  // Otomatik yenileme interval'ı - tamamen sessiz arka plan kontrolü
   useEffect(() => {
     if (!autoRefresh || !selectedBranch) return;
 
@@ -173,14 +181,14 @@ export default function KitchenPage() {
       clearInterval(intervalRef.current);
     }
 
-    // Yeni interval başlat - sadece arka planda veri kontrolü
+    // Yeni interval başlat - tamamen sessiz arka plan kontrolü
     intervalRef.current = setInterval(() => {
       if (selectedBranch && token) {
-        console.log('⏰ Arka plan veri kontrolü...');
-        // Sessizce veri kontrolü yap, sadece değişiklik varsa güncelle
-        fetchOrders(selectedBranch.id);
+        console.log('⏰ Sessiz arka plan veri kontrolü...');
+        // Tamamen sessizce veri kontrolü yap
+        fetchOrders(selectedBranch.id, true); // silent = true
       }
-    }, 3000); // 3 saniyeye çıkarıldı - daha az sıklıkta
+    }, 5000); // 5 saniyeye çıkarıldı - daha az sıklıkta
 
     // Cleanup
     return () => {
@@ -191,7 +199,7 @@ export default function KitchenPage() {
     };
   }, [autoRefresh, selectedBranch, token, fetchOrders]);
 
-  // Socket.IO gerçek zamanlı güncellemeler - sadece değişiklik varsa
+  // Socket.IO gerçek zamanlı güncellemeler - sadece gerçek değişiklikler için
   useEffect(() => {
     if (!token || !selectedBranch) return;
 
@@ -200,8 +208,8 @@ export default function KitchenPage() {
       console.log('📦 Yeni sipariş geldi:', data);
       if (data.branchId === selectedBranch.id) {
         toast.success('Yeni sipariş geldi!');
-        // Sadece yeni sipariş geldiğinde güncelle
-        fetchOrders(selectedBranch.id);
+        // Sadece yeni sipariş geldiğinde sessizce güncelle
+        fetchOrders(selectedBranch.id, true); // silent = true
       }
     };
 
@@ -209,8 +217,8 @@ export default function KitchenPage() {
     const handleOrderStatusChanged = (data: any) => {
       console.log('🔄 Sipariş durumu güncellendi:', data);
       if (data.branchId === selectedBranch.id) {
-        // Sadece durum değişikliği varsa güncelle
-        fetchOrders(selectedBranch.id);
+        // Sadece durum değişikliği varsa sessizce güncelle
+        fetchOrders(selectedBranch.id, true); // silent = true
       }
     };
 
@@ -237,9 +245,9 @@ export default function KitchenPage() {
       );
 
       if (response.data.success) {
-        // Sadece durum güncellendiğinde yeniden yükle
+        // Sadece durum güncellendiğinde sessizce yeniden yükle
         if (selectedBranch) {
-          fetchOrders(selectedBranch.id);
+          fetchOrders(selectedBranch.id, true); // silent = true
         }
         toast.success(`Sipariş durumu güncellendi`);
       }
@@ -344,7 +352,7 @@ export default function KitchenPage() {
           <p>Auth Checking: {authChecking ? 'Evet' : 'Hayır'}</p>
           <p>Orders Count: {orders.length}</p>
           <p>Selected Branch: {selectedBranch ? selectedBranch.name : 'Yok'}</p>
-                     <p>Sessiz Veri Kontrolü: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
+                     <p>Tamamen Sessiz Kontrol: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
           <p>Last Update: {lastUpdate.toLocaleTimeString('tr-TR')}</p>
         </div>
       )}
@@ -365,11 +373,11 @@ export default function KitchenPage() {
                     onChange={(e) => setAutoRefresh(e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                                     <span>Sessiz Veri Kontrolü</span>
+                                     <span>Tamamen Sessiz Kontrol</span>
                 </label>
                                  {autoRefresh && (
                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
-                     Sessiz 3s
+                     Sessiz 5s
                    </span>
                  )}
               </div>
@@ -381,11 +389,11 @@ export default function KitchenPage() {
 
                              {/* Manuel Yenileme Butonu */}
                <button
-                 onClick={() => selectedBranch && fetchOrders(selectedBranch.id)}
+                 onClick={() => selectedBranch && fetchOrders(selectedBranch.id, false)}
                  disabled={loading}
                  className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
                >
-                 {loading ? '🔄' : '🔄 Veri Güncelle'}
+                 {loading ? '🔄' : '🔄 Manuel Güncelle'}
                </button>
 
               {/* Şube Seçimi */}
