@@ -20,6 +20,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCartStore()
   const [imageError, setImageError] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   const handleAddToCart = () => {
     const categoryName = typeof product.category === 'object' ? product.category.name : product.category;
@@ -38,23 +39,41 @@ export default function ProductCard({ product }: ProductCardProps) {
     setImageError(true)
   }
 
-  // Açıklamayı kısalt
-  const truncateDescription = (text: string, maxLength: number = 60) => {
+  const handleImageLoad = () => {
+    setImageLoaded(true)
+  }
+
+  // Açıklamayı kısalt - memoize edilmiş
+  const truncatedDescription = React.useMemo(() => {
+    const text = product.description
+    const maxLength = 60
     if (text.length <= maxLength) return text
     return text.substring(0, maxLength) + '...'
-  }
+  }, [product.description])
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full">
-      <div className="h-48 bg-gray-200 flex items-center justify-center">
+      <div className="h-48 bg-gray-200 flex items-center justify-center relative">
         {product.image && !imageError ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover"
-            onError={handleImageError}
-            crossOrigin="anonymous"
-          />
+          <>
+            {/* Loading placeholder */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
+                <div className="animate-pulse bg-gray-300 w-full h-full"></div>
+              </div>
+            )}
+            <img
+              src={product.image}
+              alt={product.name}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              loading="lazy"
+              crossOrigin="anonymous"
+            />
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center text-gray-500">
             <svg className="w-12 h-12 mb-2" fill="currentColor" viewBox="0 0 20 20">
@@ -73,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         
         {/* Açıklama - kısaltılacak */}
         <p className="text-sm text-gray-600 mb-3 flex-grow">
-          {truncateDescription(product.description)}
+          {truncatedDescription}
         </p>
         
         {/* Alt kısım - kategori, fiyat ve buton */}

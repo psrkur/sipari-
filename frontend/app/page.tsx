@@ -96,10 +96,10 @@ export default function Home() {
   const { items: products, setItems: setProducts } = useOptimizedList<Product>()
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
-  // Optimize edilmiş fetch hook'ları
+  // Optimize edilmiş fetch hook'ları - daha uzun cache süresi
   const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<Branch[]>(
     API_ENDPOINTS.BRANCHES,
-    { cacheTime: 10 * 60 * 1000 } // 10 dakika cache
+    { cacheTime: 30 * 60 * 1000 } // 30 dakika cache
   )
 
   // Şubeleri yükle
@@ -122,7 +122,7 @@ export default function Home() {
     }
   }, [branchesData, setBranches])
 
-  // Ürünleri yükle - optimize edilmiş
+  // Ürünleri yükle - optimize edilmiş ve debounced
   useEffect(() => {
     if (!selectedBranch) return;
 
@@ -130,6 +130,19 @@ export default function Home() {
     
     const fetchProducts = async () => {
       try {
+        // Cache key oluştur
+        const cacheKey = `products_${selectedBranch.id}`;
+        const cachedData = sessionStorage.getItem(cacheKey);
+        
+        if (cachedData) {
+          const parsedData = JSON.parse(cachedData);
+          setProducts(parsedData.products);
+          setCategories(parsedData.categories);
+          setLoading(false);
+          setProductsLoading(false);
+          return;
+        }
+
         const response = await apiClient.get(API_ENDPOINTS.PRODUCTS(selectedBranch.id));
         const productsData = Array.isArray(response.data) ? response.data : [];
         
@@ -141,11 +154,17 @@ export default function Home() {
             : product.category || 'Diğer'
         }));
         
-        setProducts(processedProducts);
-        
         // Kategorileri optimize et
         const productCategories = Array.from(new Set(processedProducts.map((p: any) => p.category)));
         
+        // Cache'e kaydet
+        sessionStorage.setItem(cacheKey, JSON.stringify({
+          products: processedProducts,
+          categories: productCategories,
+          timestamp: Date.now()
+        }));
+        
+        setProducts(processedProducts);
         setCategories(productCategories);
         setLoading(false);
         setProductsLoading(false);
@@ -156,7 +175,9 @@ export default function Home() {
       }
     };
 
-    fetchProducts();
+    // Debounce ile API çağrısını optimize et
+    const timeoutId = setTimeout(fetchProducts, 300);
+    return () => clearTimeout(timeoutId);
   }, [selectedBranch, setProducts, setCategories]);
 
   // Kategori ikonları - basitleştirilmiş
@@ -388,12 +409,35 @@ export default function Home() {
     return groupProductsByCategory(filteredProducts)
   }, [filteredProducts, groupProductsByCategory])
 
+  // Image preloading için optimize edilmiş
+  const preloadImages = useCallback((products: Product[]) => {
+    const imageUrls = products
+      .filter(product => product.image || product.imagePath)
+      .map(product => product.image || product.imagePath)
+      .slice(0, 10); // İlk 10 resmi preload et
+
+    imageUrls.forEach(url => {
+      if (url) {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, []);
+
+  // Ürünler yüklendiğinde resimleri preload et
+  useEffect(() => {
+    if (products.length > 0) {
+      preloadImages(products);
+    }
+  }, [products, preloadImages]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+          <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
+          <div className="mt-2 text-sm text-gray-500">Lütfen bekleyin</div>
         </div>
       </div>
     )
