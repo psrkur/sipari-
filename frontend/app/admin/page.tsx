@@ -499,14 +499,21 @@ export default function AdminPage() {
         const newProduct = Array.isArray(response.data) ? response.data[0] : response.data;
         setProducts(prev => [...prev, newProduct]);
         setShowAddProductModal(false);
+        
+        // Form'u reset et ama kategori ve şube seçimlerini koru
+        const currentCategoryId = productForm.categoryId;
+        const currentBranchId = productForm.branchId;
         resetProductForm();
+        setProductFormValue('categoryId', currentCategoryId);
+        setProductFormValue('branchId', currentBranchId);
+        
         toast.success('Ürün eklendi');
       }
     } catch (error: any) {
       console.error('Ürün eklenemedi:', error);
       toast.error('Ürün eklenemedi');
     }
-  }, [token, productForm, setProducts, resetProductForm]);
+  }, [token, productForm, setProducts, resetProductForm, setProductFormValue]);
 
   const addCategory = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -592,9 +599,14 @@ export default function AdminPage() {
     setProductFormValue('name', product.name);
     setProductFormValue('description', product.description);
     setProductFormValue('price', product.price.toString());
-    setProductFormValue('categoryId', product.categoryId?.toString() || '');
-    setProductFormValue('branchId', product.branchId?.toString() || '');
-    setProductFormValue('image', product.image || '');
+    
+    // Kategori ve şube ID'lerini doğru şekilde set et
+    const categoryId = product.category?.id?.toString() || product.categoryId?.toString() || '';
+    const branchId = product.branch?.id?.toString() || product.branchId?.toString() || '';
+    
+    setProductFormValue('categoryId', categoryId);
+    setProductFormValue('branchId', branchId);
+    setProductFormValue('image', product.image || product.imagePath || '');
     setShowEditProductModal(true);
   }, [setProductFormValue]);
 
@@ -631,9 +643,16 @@ export default function AdminPage() {
         );
         
         setShowEditProductModal(false);
+        
+        // Form'u reset et ama kategori ve şube seçimlerini koru
+        const currentCategoryId = productForm.categoryId;
+        const currentBranchId = productForm.branchId;
         resetProductForm();
+        setProductFormValue('categoryId', currentCategoryId);
+        setProductFormValue('branchId', currentBranchId);
+        
         setEditingProduct(null);
-        alert('Ürün başarıyla güncellendi!');
+        toast.success('Ürün başarıyla güncellendi!');
       } else {
         const error = await response.json();
         console.error('Ürün güncelleme hatası:', error);
