@@ -45,12 +45,15 @@ export default function ImageManagement() {
 
   // Resimleri yükle
   const fetchImages = useCallback(async () => {
-    if (!token) return
-
     setLoading(true)
     try {
+      const headers: any = {}
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+      
       const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers
       })
       
       // Backend'den gelen veriyi frontend formatına çevir

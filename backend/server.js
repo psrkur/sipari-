@@ -3923,7 +3923,7 @@ app.post('/api/admin/fix-images', async (req, res) => {
 
 // İlk upload endpoint'i kaldırıldı - çakışma önlendi
 
-// Resim listesi endpoint'i - Dosya tabanlı
+// Resim listesi endpoint'i - Dosya tabanlı (authentication opsiyonel)
 app.get('/api/admin/images', async (req, res) => {
   try {
     console.log('🔍 GET /api/admin/images çağrıldı - Dosya tabanlı');
