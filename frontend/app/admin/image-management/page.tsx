@@ -114,13 +114,6 @@ export default function ImageManagement() {
       setLoading(false)
     }
   }, [token])
-                 } catch (error) {
-       console.error('Resimler yüklenemedi:', error)
-       toast.error('Resimler yüklenemedi')
-     } finally {
-       setLoading(false)
-     }
-   }, [token])
 
   // İlk yükleme
   useEffect(() => {
