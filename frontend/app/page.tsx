@@ -290,30 +290,24 @@ export default function Home() {
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('🔍 Giriş denemesi başlatılıyor...');
-    console.log('🔍 API URL:', API_ENDPOINTS.LOGIN);
     console.log('🔍 Login form data:', loginForm);
     
     try {
-      const response = await apiClient.post(API_ENDPOINTS.LOGIN, loginForm);
-      console.log('✅ Login response:', response.data);
+      // Auth store'dan login fonksiyonunu al
+      const { login } = useAuthStore.getState();
       
-      if (response.data.token) {
-        // Auth store'u güncelle
-        const { login } = useAuthStore.getState();
-        login(response.data.user, response.data.token);
-        
-        // localStorage'a da kaydet (backup için)
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        toast.success('Giriş başarılı!');
-        setShowLoginModal(false);
-        setLoginForm({ email: '', password: '' });
-        
-        // Kullanıcı rolüne göre yönlendirme
-        const user = response.data.user;
-        console.log('🔍 Kullanıcı rolü:', user.role);
-        
+      // Auth store'un login fonksiyonunu kullan
+      await login(loginForm.email, loginForm.password);
+      
+      toast.success('Giriş başarılı!');
+      setShowLoginModal(false);
+      setLoginForm({ email: '', password: '' });
+      
+      // Kullanıcı rolüne göre yönlendirme
+      const user = useAuthStore.getState().user;
+      console.log('🔍 Kullanıcı rolü:', user?.role);
+      
+      if (user) {
         // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
         const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'admin'];
         const branchManagerRoles = ['BRANCH_MANAGER'];
@@ -328,15 +322,10 @@ export default function Home() {
           // Normal kullanıcıları ana sayfada bırak
           window.location.reload();
         }
-      } else {
-        console.error('❌ Token alınamadı');
-        toast.error('Giriş başarısız - Token alınamadı');
       }
     } catch (error: any) {
       console.error('❌ Giriş hatası:', error);
-      console.error('❌ Error response:', error.response?.data);
-      console.error('❌ Error status:', error.response?.status);
-      toast.error(`Giriş başarısız: ${error.response?.data?.error || error.message}`);
+      toast.error(error.message || 'Giriş başarısız');
     }
   }, [loginForm])
 
@@ -347,20 +336,18 @@ export default function Home() {
       return;
     }
     try {
-      const response = await apiClient.post(API_ENDPOINTS.REGISTER, {
-        name: registerForm.name,
-        email: registerForm.email,
-        phone: registerForm.phone,
-        password: registerForm.password
-      });
-      if (response.data) {
-        toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
-        setIsRegistering(false);
-        setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
-      }
+      // Auth store'dan register fonksiyonunu al
+      const { register } = useAuthStore.getState();
+      
+      // Auth store'un register fonksiyonunu kullan
+      await register(registerForm.name, registerForm.email, registerForm.phone, registerForm.password);
+      
+      toast.success('Kayıt başarılı! Giriş yapabilirsiniz.');
+      setIsRegistering(false);
+      setRegisterForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
     } catch (error: any) {
       console.error('Kayıt hatası:', error);
-      toast.error('Kayıt başarısız');
+      toast.error(error.message || 'Kayıt başarısız');
     }
   }, [registerForm])
 
