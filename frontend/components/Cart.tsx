@@ -376,11 +376,17 @@ export default function Cart({ selectedBranch }: CartProps) {
 
           {!showCheckout ? (
             <button
-              onClick={() => setShowCheckout(true)}
+              onClick={() => {
+                if (!token) {
+                  toast.error('Sipariş vermek için giriş yapmanız gerekiyor')
+                  return
+                }
+                setShowCheckout(true)
+              }}
               disabled={!selectedBranch}
               className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
             >
-              {!selectedBranch ? 'Önce Şube Seçin' : 'Sipariş Ver'}
+              {!selectedBranch ? 'Önce Şube Seçin' : !token ? 'Giriş Yapın' : 'Sipariş Ver'}
             </button>
           ) : (
             <form onSubmit={handleSubmit(handleCheckout)} className="space-y-6">
