@@ -720,7 +720,7 @@ export default function AdminPage() {
 
     try {
       const response = await axios.put(
-        `${API_ENDPOINTS.BRANCHES}/${editingBranch.id}`,
+        API_ENDPOINTS.ADMIN_UPDATE_BRANCH(editingBranch.id),
         branchForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -741,12 +741,16 @@ export default function AdminPage() {
   }, [token, branchForm, editingBranch, updateBranchItem, resetBranchForm]);
 
   const deleteBranch = useCallback(async (branchId: number) => {
+    if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+      return;
+    }
+
     try {
-      await axios.delete(`${API_ENDPOINTS.BRANCHES}/${branchId}`, {
+      await axios.delete(API_ENDPOINTS.ADMIN_DELETE_BRANCH(branchId), {
         headers: { Authorization: `Bearer ${token}` }
       });
       setBranches(prev => prev.filter((branch: any) => branch.id !== branchId));
-      toast.success('Şube silindi');
+      toast.success('Şube başarıyla silindi');
     } catch (error: any) {
       console.error('Şube silinemedi:', error);
       toast.error('Şube silinemedi');
@@ -1176,7 +1180,7 @@ export default function AdminPage() {
               )}
 
               {activePage === 'branches' && (
-                <div><BranchManagement branches={branches} onEditBranch={() => {}} onDeleteBranch={() => {}} /></div>
+                <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} /></div>
               )}
 
               {/* Veritabanı İstatistikleri */}

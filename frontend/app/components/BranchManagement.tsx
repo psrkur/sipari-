@@ -54,15 +54,15 @@ const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBra
                   <div className="flex space-x-2">
                     <button
                       onClick={() => onEditBranch(branch)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-blue-600 hover:text-blue-900 font-medium hover:bg-blue-50 px-2 py-1 rounded transition-colors"
                     >
-                      Düzenle
+                      ✏️ Düzenle
                     </button>
                     <button
                       onClick={() => onDeleteBranch(branch.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 font-medium hover:bg-red-50 px-2 py-1 rounded transition-colors"
                     >
-                      Sil
+                      🗑️ Sil
                     </button>
                   </div>
                 </td>
