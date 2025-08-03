@@ -100,9 +100,15 @@ export default function ImageManagement() {
         }
       } else {
         // Development ortamında backend'den al
+        console.log('🔍 Development ortamında resimler yükleniyor...')
+        console.log('🔗 API Endpoint:', API_ENDPOINTS.ADMIN_IMAGES)
+        console.log('🔗 API Base URL:', getApiBaseUrl())
+        
         const response = await axios.get(API_ENDPOINTS.ADMIN_IMAGES, {
           headers
         })
+        
+        console.log('📊 Backend response:', response.data)
         
         // Backend'den gelen veriyi frontend formatına çevir
         const imagesData = response.data.map((img: any) => ({
@@ -114,6 +120,8 @@ export default function ImageManagement() {
           uploadedAt: img.uploadedAt,
           url: `${getApiBaseUrl()}${img.path}`
         }))
+        
+        console.log('📋 Frontend images data:', imagesData)
         
         setImages(imagesData)
         toast.success(`${imagesData.length} resim yüklendi`)
