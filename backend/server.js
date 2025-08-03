@@ -1,9 +1,11 @@
 // Environment variables - Manuel yükleme
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const isProduction = false; // Development modunda çalıştır
+const isProduction = process.env.NODE_ENV === 'production';
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
+console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
+console.log('🔧 isProduction:', isProduction);
 // SABİT PORT - Development için 3001, Production için process.env.PORT
-const SERVER_PORT = isProduction ? (process.env.PORT || 3001) : 3001;
+const SERVER_PORT = isProduction ? (process.env.PORT || 10000) : 3001;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
 const DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30';
