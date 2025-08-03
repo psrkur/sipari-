@@ -129,9 +129,14 @@ export default function ImageManagement() {
         console.log('📊 Backend response:', response.data)
         
         // Backend'den gelen veriyi frontend formatına çevir ve base64'e çevir
-        const imagesData = await Promise.all(response.data.map(async (img: any) => {
+        console.log('🔄 Resim dönüşümü başlatılıyor...')
+        const imagesData = await Promise.all(response.data.map(async (img: any, index: number) => {
           const originalUrl = `${getApiBaseUrl()}${img.path}`
+          console.log(`📸 Resim ${index + 1}/${response.data.length}:`, img.filename)
+          console.log('🔗 Orijinal URL:', originalUrl)
+          
           const base64Url = await convertImageToBase64(originalUrl)
+          console.log('✅ Dönüşüm tamamlandı:', img.filename)
           
           return {
             id: img.filename,
@@ -331,16 +336,31 @@ export default function ImageManagement() {
   // Resim URL'sini base64'e çevir
   const convertImageToBase64 = useCallback(async (imageUrl: string): Promise<string> => {
     try {
+      console.log('🔄 Base64 dönüşümü başlatılıyor:', imageUrl)
+      
       const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       const blob = await response.blob()
+      console.log('📦 Blob oluşturuldu:', blob.size, 'bytes')
+      
       return new Promise((resolve, reject) => {
         const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = reject
+        reader.onload = () => {
+          console.log('✅ Base64 dönüşümü başarılı')
+          resolve(reader.result as string)
+        }
+        reader.onerror = (error) => {
+          console.error('❌ FileReader hatası:', error)
+          reject(error)
+        }
         reader.readAsDataURL(blob)
       })
     } catch (error) {
-      console.error('Resim base64\'e çevrilemedi:', error)
+      console.error('❌ Resim base64\'e çevrilemedi:', error)
+      console.log('🔄 Orijinal URL kullanılıyor:', imageUrl)
       return imageUrl // Hata durumunda orijinal URL'yi döndür
     }
   }, [])
