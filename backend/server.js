@@ -4505,10 +4505,10 @@ app.post('/api/admin/tables/:tableId/reset', authenticateToken, async (req, res)
   }
 });
 
-// Resim yükleme endpoint'i - authentication ile korunuyor
+// Resim yükleme endpoint'i - Base64 formatında veritabanına kaydet
 app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), async (req, res) => {
   try {
-    console.log('🔍 POST /api/admin/upload-image çağrıldı - v8 - FIXED FOR IMAGE SELECTOR');
+    console.log('🔍 POST /api/admin/upload-image çağrıldı - v9 - BASE64 DATABASE');
     console.log('🔍 Request body:', req.body);
     console.log('🔍 Request file:', req.file);
     console.log('🔍 Request headers:', req.headers);
@@ -4531,20 +4531,46 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
       return res.status(400).json({ error: 'Resim dosyası yüklenmedi' });
     }
 
-    // Dosya yolunu oluştur - uploads/products formatında
-    const imagePath = `/uploads/products/${req.file.filename}`;
+    // Dosyayı base64'e çevir
+    const fileBuffer = fs.readFileSync(req.file.path);
+    const base64String = fileBuffer.toString('base64');
     
-    console.log('✅ Resim başarıyla yüklendi:', req.file.filename);
-    console.log('✅ Dosya yolu:', imagePath);
-    console.log('✅ Fiziksel dosya yolu:', req.file.path);
+    // Dosya uzantısına göre MIME type belirle
+    const ext = path.extname(req.file.filename).toLowerCase();
+    let mimeType = 'image/png'; // Varsayılan
+    if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+    else if (ext === '.gif') mimeType = 'image/gif';
+    else if (ext === '.webp') mimeType = 'image/webp';
     
-    // Sadece dosya yolunu döndür, base64'e çevirme
+    // Base64 data URL oluştur
+    const dataUrl = `data:${mimeType};base64,${base64String}`;
+    
+    // Veritabanına kaydet
+    const savedImage = await prisma.image.create({
+      data: {
+        filename: req.file.filename,
+        originalName: req.file.originalname,
+        mimeType: mimeType,
+        size: req.file.size,
+        dataUrl: dataUrl,
+        uploadedBy: req.user.userId
+      }
+    });
+    
+    // Fiziksel dosyayı sil (veritabanında saklandığı için)
+    fs.unlinkSync(req.file.path);
+    
+    console.log('✅ Resim base64 formatında veritabanına kaydedildi:', req.file.filename);
+    console.log('✅ Veritabanı ID:', savedImage.id);
+    console.log('✅ Dosya boyutu:', req.file.size);
+    
     res.json({
       message: 'Resim başarıyla yüklendi',
-      imagePath: imagePath,
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      size: req.file.size
+      id: savedImage.id,
+      filename: savedImage.filename,
+      originalName: savedImage.originalName,
+      size: savedImage.size,
+      mimeType: savedImage.mimeType
     });
   } catch (error) {
     console.error('❌ Resim yükleme hatası:', error);
@@ -4552,88 +4578,84 @@ app.post('/api/admin/upload-image', authenticateToken, upload.single('image'), a
   }
 });
 
-// Resim listesi endpoint'i - authentication ile korunuyor
+// Resim listesi endpoint'i - Veritabanından base64 formatında
 app.get('/api/admin/images', authenticateToken, async (req, res) => {
   try {
-    console.log('🔍 GET /api/admin/images çağrıldı - v4 - DEPLOYMENT TRIGGER');
+    console.log('🔍 GET /api/admin/images çağrıldı - v5 - BASE64 DATABASE');
     console.log('🔍 User:', req.user);
     console.log('🔍 Request headers:', req.headers);
-    console.log('🔍 Request URL:', req.url);
-    console.log('🔍 Request method:', req.method);
     
-    const uploadDir = path.join(__dirname, 'uploads', 'products');
-    console.log('🔍 Upload directory:', uploadDir);
+    // Veritabanından resimleri al
+    const images = await prisma.image.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        id: true,
+        filename: true,
+        originalName: true,
+        mimeType: true,
+        size: true,
+        dataUrl: true,
+        createdAt: true,
+        uploadedBy: true
+      }
+    });
     
-    if (!fs.existsSync(uploadDir)) {
-      console.log('📁 Upload directory yok, boş array döndürülüyor');
-      return res.json([]);
-    }
-
-    const files = fs.readdirSync(uploadDir);
-    console.log('📁 Bulunan dosyalar:', files);
+    console.log('✅ Veritabanından alınan resim sayısı:', images.length);
     
-    const images = files
-      .filter(file => {
-        try {
-          const ext = path.extname(file).toLowerCase();
-          const isValid = ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext);
-          console.log(`🔍 Dosya: ${file}, uzantı: ${ext}, geçerli: ${isValid}`);
-          return isValid;
-        } catch (error) {
-          console.error('Dosya filtresi hatası:', error);
-          return false;
-        }
-      })
-      .map(file => {
-        try {
-          const filePath = path.join(uploadDir, file);
-          const stats = fs.statSync(filePath);
-          const imageInfo = {
-            filename: file,
-            path: `/uploads/products/${file}`,
-            size: stats.size,
-            uploadedAt: stats.mtime
-          };
-          console.log('📄 Resim bilgisi:', imageInfo);
-          return imageInfo;
-        } catch (error) {
-          console.error('Dosya bilgisi alma hatası:', error);
-          return null;
-        }
-      })
-      .filter(image => image !== null)
-      .sort((a, b) => b.uploadedAt - a.uploadedAt);
-
-    console.log('✅ Toplam resim sayısı:', images.length);
-    console.log('✅ Response gönderiliyor:', images);
-    res.json(images);
+    // Base64 data URL'lerini döndür
+    const imageList = images.map(img => ({
+      id: img.id,
+      filename: img.filename,
+      originalName: img.originalName,
+      size: img.size,
+      type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+      uploadedAt: img.createdAt,
+      url: img.dataUrl // Base64 data URL
+    }));
+    
+    console.log('✅ Response gönderiliyor:', imageList.length, 'resim');
+    
+        res.json(imageList);
   } catch (error) {
     console.error('❌ Resim listesi hatası:', error);
-    res.status(500).json({ error: 'Resim listesi alınamadı' });
+    res.status(500).json({ error: 'Resim listesi alınamadı: ' + error.message });
   }
 });
 
-// Resim silme endpoint'i - geçici olarak authentication kaldırıldı
-app.delete('/api/admin/images/:filename', async (req, res) => {
+// Resim silme endpoint'i - Veritabanından sil
+app.delete('/api/admin/images/:id', authenticateToken, async (req, res) => {
   try {
-    const { filename } = req.params;
+    const { id } = req.params;
     
-    // Güvenlik kontrolü - sadece dosya adı
-    if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
-      return res.status(400).json({ error: 'Geçersiz dosya adı' });
-    }
+    console.log('🔍 DELETE /api/admin/images/:id çağrıldı - v2 - DATABASE');
+    console.log('🔍 Resim ID:', id);
+    console.log('🔍 User:', req.user);
     
-    const filePath = path.join(__dirname, 'uploads', 'products', filename);
+    // Veritabanından resmi sil
+    const deletedImage = await prisma.image.delete({
+      where: {
+        id: parseInt(id)
+      }
+    });
     
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      res.json({ message: 'Resim başarıyla silindi' });
-    } else {
-      res.status(404).json({ error: 'Resim bulunamadı' });
-    }
+    console.log('✅ Resim veritabanından silindi:', deletedImage.filename);
+    
+    res.json({ 
+      message: 'Resim başarıyla silindi',
+      deletedImage: {
+        id: deletedImage.id,
+        filename: deletedImage.filename
+      }
+    });
   } catch (error) {
-    console.error('Resim silme hatası:', error);
-    res.status(500).json({ error: 'Resim silinemedi' });
+    console.error('❌ Resim silme hatası:', error);
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Resim bulunamadı' });
+    } else {
+      res.status(500).json({ error: 'Resim silinemedi: ' + error.message });
+    }
   }
 });
 
