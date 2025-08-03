@@ -93,6 +93,7 @@ export default function AdminPage() {
   const [databaseStats, setDatabaseStats] = useState<any>(null);
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
@@ -820,365 +821,409 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Admin Navigasyon Menüsü */}
-      <div className="bg-white shadow-lg border-b mb-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-            <Link 
-              href="/admin/dashboard" 
-              className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 text-sm sm:text-base"
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sol Sidebar */}
+      <div className={`${sidebarOpen ? 'w-80' : 'w-20'} bg-white shadow-lg transition-all duration-300 ease-in-out flex flex-col`}>
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            {sidebarOpen && (
+              <h2 className="text-xl font-bold text-gray-800">Admin Panel</h2>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
-              <span className="text-lg sm:text-xl">📊</span>
-              <span className="hidden sm:inline">Dashboard</span>
-              <span className="sm:hidden">📊</span>
-            </Link>
-            
-            <button 
-              onClick={() => setActivePage('orders')} 
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                activePage === 'orders' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-              }`}
-            >
-              <span className="hidden sm:inline">📋 Siparişler</span>
-              <span className="sm:hidden">📋</span>
+              <span className="text-gray-600">
+                {sidebarOpen ? '◀' : '▶'}
+              </span>
             </button>
-            
-            <button 
-              onClick={() => setActivePage('products')} 
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                activePage === 'products' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-              }`}
+          </div>
+        </div>
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Ana Navigasyon */}
+          <div className="p-4">
+            <h3 className={`font-semibold text-gray-700 mb-3 ${!sidebarOpen && 'hidden'}`}>
+              📊 Ana Menü
+            </h3>
+            <div className="space-y-2">
+              <Link 
+                href="/admin/dashboard" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">📊</span>
+                {sidebarOpen && <span>Dashboard</span>}
+              </Link>
+              
+              <button 
+                onClick={() => setActivePage('orders')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'orders' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">📋</span>
+                {sidebarOpen && <span>Siparişler</span>}
+              </button>
+              
+              <button 
+                onClick={() => setActivePage('products')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'products' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">🍽️</span>
+                {sidebarOpen && <span>Ürünler</span>}
+              </button>
+              
+              <button 
+                onClick={() => setActivePage('categories')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'categories' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">📂</span>
+                {sidebarOpen && <span>Kategoriler</span>}
+              </button>
+              
+              <button 
+                onClick={() => setActivePage('users')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'users' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">👤</span>
+                {sidebarOpen && <span>Kullanıcılar</span>}
+              </button>
+              
+              <button 
+                onClick={() => setActivePage('branches')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'branches' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">🏢</span>
+                {sidebarOpen && <span>Şubeler</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Hızlı Erişim */}
+          <div className="p-4 border-t border-gray-200">
+            <h3 className={`font-semibold text-gray-700 mb-3 ${!sidebarOpen && 'hidden'}`}>
+              🚀 Hızlı Erişim
+            </h3>
+            <div className="space-y-2">
+              <Link 
+                href="/kitchen" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">👨‍🍳</span>
+                {sidebarOpen && <span>Mutfak</span>}
+              </Link>
+              
+              <Link 
+                href="/pos" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">💳</span>
+                {sidebarOpen && <span>POS</span>}
+              </Link>
+              
+              <Link 
+                href="/admin/qr-codes" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">🔗</span>
+                {sidebarOpen && <span>QR Kodlar</span>}
+              </Link>
+              
+              <Link 
+                href="/admin/table-management" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">🍽️</span>
+                {sidebarOpen && <span>Masa Yönetimi</span>}
+              </Link>
+              
+              <Link 
+                href="/admin/chat-management" 
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">💬</span>
+                {sidebarOpen && <span>Sohbet</span>}
+              </Link>
+            </div>
+          </div>
+
+          {/* Yönetim Butonları */}
+          <div className="p-4 border-t border-gray-200">
+            <h3 className={`font-semibold text-gray-700 mb-3 ${!sidebarOpen && 'hidden'}`}>
+              ⚙️ Yönetim
+            </h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">👤</span>
+                {sidebarOpen && <span>Kullanıcı Ekle</span>}
+              </button>
+              
+              <button
+                onClick={() => setShowAddProductModal(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">🍽️</span>
+                {sidebarOpen && <span>Ürün Ekle</span>}
+              </button>
+              
+              <button
+                onClick={() => setShowAddCategoryModal(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">📂</span>
+                {sidebarOpen && <span>Kategori Ekle</span>}
+              </button>
+              
+              <button
+                onClick={() => setShowAddBranchModal(true)}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-200 hover:shadow-md"
+              >
+                <span className="text-lg">🏢</span>
+                {sidebarOpen && <span>Şube Ekle</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Temizlik Butonu */}
+          <div className="p-4 border-t border-gray-200">
+            <h3 className={`font-semibold text-gray-700 mb-3 ${!sidebarOpen && 'hidden'}`}>
+              🧹 Bakım
+            </h3>
+            <button
+              onClick={handleCleanupOrders}
+              disabled={cleanupLoading}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-all duration-200 hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="hidden sm:inline">🍽️ Ürünler</span>
-              <span className="sm:hidden">🍽️</span>
-            </button>
-            
-            <button 
-              onClick={() => setActivePage('categories')} 
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                activePage === 'categories' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-              }`}
-            >
-              <span className="hidden sm:inline">📂 Kategoriler</span>
-              <span className="sm:hidden">📂</span>
-            </button>
-            
-            <button 
-              onClick={() => setActivePage('users')} 
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                activePage === 'users' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-              }`}
-            >
-              <span className="hidden sm:inline">👤 Kullanıcılar</span>
-              <span className="sm:hidden">👤</span>
-            </button>
-            
-            <button 
-              onClick={() => setActivePage('branches')} 
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                activePage === 'branches' 
-                  ? 'bg-blue-500 text-white shadow-md' 
-                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-              }`}
-            >
-              <span className="hidden sm:inline">🏢 Şubeler</span>
-              <span className="sm:hidden">🏢</span>
+              <span className="text-lg">🗑️</span>
+              {sidebarOpen && (
+                <span>
+                  {cleanupLoading ? 'Temizleniyor...' : 'Eski Siparişleri Temizle'}
+                </span>
+              )}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Ana içerik */}
-          <div className="flex-1">
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Siparişler yükleniyor...</p>
+      {/* Ana İçerik */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Content Header */}
+        <div className="bg-white shadow-sm border-b px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {activePage === 'orders' && '📋 Siparişler'}
+              {activePage === 'products' && '🍽️ Ürünler'}
+              {activePage === 'categories' && '📂 Kategoriler'}
+              {activePage === 'users' && '👤 Kullanıcılar'}
+              {activePage === 'branches' && '🏢 Şubeler'}
+            </h1>
+            <div className="text-sm text-gray-500">
+              Hoş geldin, {user?.name}
+            </div>
           </div>
-        ) : (
-          <div className="space-y-6">
-            {activePage === 'orders' && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">📋 Siparişler ({filteredOrders.length})</h2>
-              
-              {filteredOrders.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Sipariş bulunmuyor</p>
-              ) : (
-                <div className="space-y-4">
-                  {filteredOrders.map((order) => (
-                    <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">#{order.orderNumber}</h3>
-                          <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {getStatusText(order.status)}
-                          </span>
-                          <span className="text-sm text-gray-500">
-                            {order.orderType === 'DELIVERY' ? '🚚 Teslimat' : '🍽️ Masa'}
-                          </span>
-                        </div>
-                      </div>
+        </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">Şube</p>
-                          <p className="text-sm text-gray-600">{order.branch.name}</p>
+        {/* Content Body */}
+        <div className="p-6">
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Siparişler yükleniyor...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {activePage === 'orders' && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">📋 Siparişler ({filteredOrders.length})</h2>
+                
+                {filteredOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">Sipariş bulunmuyor</p>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredOrders.map((order) => (
+                      <div key={order.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-semibold text-gray-900">#{order.orderNumber}</h3>
+                            <p className="text-sm text-gray-500">{formatDate(order.createdAt)}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                              {getStatusText(order.status)}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {order.orderType === 'DELIVERY' ? '🚚 Teslimat' : '🍽️ Masa'}
+                            </span>
+                          </div>
                         </div>
-                        {order.customer && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Müşteri</p>
-                            <p className="text-sm text-gray-600">{order.customer.name}</p>
-                            <p className="text-sm text-gray-600">{order.customer.phone}</p>
-                          </div>
-                        )}
-                        {order.table && (
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">Masa</p>
-                            <p className="text-sm text-gray-600">Masa {order.table.number}</p>
-                          </div>
-                        )}
-                      </div>
 
-                      <div className="mb-3">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Ürünler:</p>
-                        <div className="space-y-1">
-                          {order.orderItems?.map((item) => (
-                            <div key={item.id} className="flex justify-between text-sm">
-                              <span>{item.quantity}x {item.product.name}</span>
-                              <span className="text-gray-600">₺{item.price}</span>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">Şube</p>
+                            <p className="text-sm text-gray-600">{order.branch.name}</p>
+                          </div>
+                          {order.customer && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">Müşteri</p>
+                              <p className="text-sm text-gray-600">{order.customer.name}</p>
+                              <p className="text-sm text-gray-600">{order.customer.phone}</p>
                             </div>
-                          ))}
+                          )}
+                          {order.table && (
+                            <div>
+                              <p className="text-sm font-medium text-gray-700">Masa</p>
+                              <p className="text-sm text-gray-600">Masa {order.table.number}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mb-3">
+                          <p className="text-sm font-medium text-gray-700 mb-2">Ürünler:</p>
+                          <div className="space-y-1">
+                            {order.orderItems?.map((item) => (
+                              <div key={item.id} className="flex justify-between text-sm">
+                                <span>{item.quantity}x {item.product.name}</span>
+                                <span className="text-gray-600">₺{item.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-lg font-bold text-gray-900">Toplam: ₺{order.totalAmount}</p>
+                            {order.notes && (
+                              <p className="text-sm text-gray-600 mt-1">Not: {order.notes}</p>
+                            )}
+                          </div>
+                          <div className="flex space-x-2">
+                            {order.status === 'PENDING' && (
+                              <button
+                                onClick={() => updateOrderStatus(order.id, 'PREPARING')}
+                                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+                              >
+                                Hazırlamaya Başla
+                              </button>
+                            )}
+                            {order.status === 'PREPARING' && (
+                              <button
+                                onClick={() => updateOrderStatus(order.id, 'READY')}
+                                className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
+                              >
+                                Hazır
+                              </button>
+                            )}
+                            {order.status === 'READY' && (
+                              <button
+                                onClick={() => updateOrderStatus(order.id, 'DELIVERED')}
+                                className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
+                              >
+                                Teslim Edildi
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              )}
 
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-lg font-bold text-gray-900">Toplam: ₺{order.totalAmount}</p>
-                          {order.notes && (
-                            <p className="text-sm text-gray-600 mt-1">Not: {order.notes}</p>
-                          )}
-                        </div>
-                        <div className="flex space-x-2">
-                          {order.status === 'PENDING' && (
-                            <button
-                              onClick={() => updateOrderStatus(order.id, 'PREPARING')}
-                              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
-                            >
-                              Hazırlamaya Başla
-                            </button>
-                          )}
-                          {order.status === 'PREPARING' && (
-                            <button
-                              onClick={() => updateOrderStatus(order.id, 'READY')}
-                              className="px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 transition-colors"
-                            >
-                              Hazır
-                            </button>
-                          )}
-                          {order.status === 'READY' && (
-                            <button
-                              onClick={() => updateOrderStatus(order.id, 'DELIVERED')}
-                              className="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors"
-                            >
-                              Teslim Edildi
-                            </button>
-                          )}
-                        </div>
+                  {activePage === 'products' && (
+        <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} user={user} /></div>
+      )}
+
+              {activePage === 'categories' && (
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">📂 Kategoriler</h2>
+                  <div className="space-y-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="border border-gray-200 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                        <p className="text-sm text-gray-600">{category.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activePage === 'users' && (
+                <div><UserList users={users} onDeleteUser={handleDeleteUser} onActivateUser={handleActivateUser} /></div>
+              )}
+
+              {activePage === 'branches' && (
+                <div><BranchManagement branches={branches} onEditBranch={() => {}} onDeleteBranch={() => {}} /></div>
+              )}
+
+              {/* Veritabanı İstatistikleri */}
+              {databaseStats && (
+                <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 Veritabanı İstatistikleri</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{databaseStats.stats.totalOrders}</div>
+                      <div className="text-sm text-blue-600">Toplam Sipariş</div>
+                    </div>
+                    <div className="bg-yellow-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-yellow-600">{databaseStats.stats.oldOrders}</div>
+                      <div className="text-sm text-yellow-600">12 Saatten Eski</div>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{databaseStats.stats.activeOrders}</div>
+                      <div className="text-sm text-green-600">Aktif Sipariş</div>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{databaseStats.stats.completedOrders}</div>
+                      <div className="text-sm text-purple-600">Tamamlanmış</div>
+                    </div>
+                  </div>
+                  
+                  {/* Bellek Kullanımı */}
+                  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">💾 Bellek Kullanımı</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <div className="text-sm text-gray-600">RSS</div>
+                        <div className="text-lg font-semibold">{databaseStats.memory.rss} MB</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Heap Used</div>
+                        <div className="text-lg font-semibold">{databaseStats.memory.heapUsed} MB</div>
+                      </div>
+                      <div>
+                        <div className="text-sm text-gray-600">Heap Total</div>
+                        <div className="text-lg font-semibold">{databaseStats.memory.heapTotal} MB</div>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               )}
             </div>
-            )}
-
-                {activePage === 'products' && (
-      <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} user={user} /></div>
-    )}
-
-            {activePage === 'categories' && (
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">📂 Kategoriler</h2>
-                <div className="space-y-4">
-                  {categories.map((category) => (
-                    <div key={category.id} className="border border-gray-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                      <p className="text-sm text-gray-600">{category.description}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activePage === 'users' && (
-              <div><UserList users={users} onDeleteUser={handleDeleteUser} onActivateUser={handleActivateUser} /></div>
-            )}
-
-            {activePage === 'branches' && (
-              <div><BranchManagement branches={branches} onEditBranch={() => {}} onDeleteBranch={() => {}} /></div>
-            )}
-
-            {/* Veritabanı İstatistikleri */}
-            {databaseStats && (
-              <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 Veritabanı İstatistikleri</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{databaseStats.stats.totalOrders}</div>
-                    <div className="text-sm text-blue-600">Toplam Sipariş</div>
-                  </div>
-                  <div className="bg-yellow-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-600">{databaseStats.stats.oldOrders}</div>
-                    <div className="text-sm text-yellow-600">12 Saatten Eski</div>
-                  </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{databaseStats.stats.activeOrders}</div>
-                    <div className="text-sm text-green-600">Aktif Sipariş</div>
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">{databaseStats.stats.completedOrders}</div>
-                    <div className="text-sm text-purple-600">Tamamlanmış</div>
-                  </div>
-                </div>
-                
-                {/* Bellek Kullanımı */}
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">💾 Bellek Kullanımı</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <div className="text-sm text-gray-600">RSS</div>
-                      <div className="text-lg font-semibold">{databaseStats.memory.rss} MB</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Heap Used</div>
-                      <div className="text-lg font-semibold">{databaseStats.memory.heapUsed} MB</div>
-                    </div>
-                    <div>
-                      <div className="text-sm text-gray-600">Heap Total</div>
-                      <div className="text-lg font-semibold">{databaseStats.memory.heapTotal} MB</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Yönetim Butonları */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <button
-                onClick={() => setShowAddUserModal(true)}
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-              >
-                👤 Kullanıcı Ekle
-              </button>
-              <button
-                onClick={() => setShowAddProductModal(true)}
-                className="bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
-              >
-                🍽️ Ürün Ekle
-              </button>
-              <button
-                onClick={() => setShowAddCategoryModal(true)}
-                className="bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 transition-colors"
-              >
-                📂 Kategori Ekle
-              </button>
-              <button
-                onClick={() => setShowAddBranchModal(true)}
-                className="bg-orange-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors"
-              >
-                🏢 Şube Ekle
-              </button>
-            </div>
-
-            {/* Temizlik Butonları */}
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold text-red-800 mb-4">🧹 Veritabanı Temizliği</h3>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={handleCleanupOrders}
-                  disabled={cleanupLoading}
-                  className="bg-red-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                >
-                  {cleanupLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Temizleniyor...
-                    </>
-                  ) : (
-                    '🗑️ Eski Siparişleri Temizle'
-                  )}
-                </button>
-                <div className="text-sm text-red-600">
-                  ⚠️ Bu işlem 12 saatten eski tamamlanmış siparişleri kalıcı olarak siler
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-          </div>
-
-          {/* Sağ taraf - Hızlı erişim butonları */}
-          <div className="lg:w-80">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 Hızlı Erişim</h3>
-              <div className="space-y-3">
-                <Link 
-                  href="/kitchen" 
-                  className="w-full px-4 py-3 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
-                >
-                  <span className="text-lg">👨‍🍳</span>
-                  <span>Mutfak</span>
-                </Link>
-                
-                <Link 
-                  href="/pos" 
-                  className="w-full px-4 py-3 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
-                >
-                  <span className="text-lg">💳</span>
-                  <span>POS</span>
-                </Link>
-                
-                <Link 
-                  href="/admin/qr-codes" 
-                  className="w-full px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
-                >
-                  <span className="text-lg">🔗</span>
-                  <span>QR Kodlar</span>
-                </Link>
-                
-                <Link 
-                  href="/admin/table-management" 
-                  className="w-full px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
-                >
-                  <span className="text-lg">🍽️</span>
-                  <span>Masa Yönetimi</span>
-                </Link>
-                
-                <Link 
-                  href="/admin/chat-management" 
-                  className="w-full px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
-                >
-                  <span className="text-lg">💬</span>
-                  <span>Sohbet</span>
-                </Link>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
