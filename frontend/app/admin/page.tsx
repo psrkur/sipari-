@@ -17,6 +17,7 @@ import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
 import ChatManagement from './chat-management';
 import Dashboard from './dashboard/page';
+import ImageManagement from './image-management/page';
 
 interface OrderItem {
   id: number;
@@ -979,6 +980,18 @@ export default function AdminPage() {
                 <span className="text-lg">🏢</span>
                 {sidebarOpen && <span>Şubeler</span>}
               </button>
+              
+              <button 
+                onClick={() => setActivePage('images')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'images' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
+              >
+                <span className="text-lg">🖼️</span>
+                {sidebarOpen && <span>Resimler</span>}
+              </button>
             </div>
           </div>
 
@@ -1103,6 +1116,7 @@ export default function AdminPage() {
               {activePage === 'categories' && '📂 Kategoriler'}
               {activePage === 'users' && '👤 Kullanıcılar'}
               {activePage === 'branches' && '🏢 Şubeler'}
+              {activePage === 'images' && '🖼️ Resimler'}
             </h1>
             <div className="text-sm text-gray-500">
               Hoş geldin, {user?.name}
@@ -1245,6 +1259,10 @@ export default function AdminPage() {
 
               {activePage === 'branches' && (
                 <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} onDeactivateBranch={deactivateBranch} /></div>
+              )}
+
+              {activePage === 'images' && (
+                <ImageManagement />
               )}
 
               {/* Veritabanı İstatistikleri */}

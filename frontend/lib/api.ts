@@ -151,6 +151,9 @@ export const API_ENDPOINTS = {
   // Database Cleanup
   get ADMIN_CLEANUP_ORDERS() { return `${getCurrentApiBaseUrl()}/api/admin/cleanup-orders` },
   get ADMIN_DATABASE_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/database-stats` },
+  get ADMIN_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/images` },
+  get ADMIN_UPLOAD_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/upload-images` },
+  get ADMIN_DELETE_IMAGE() { return (imageId: string) => `${getCurrentApiBaseUrl()}/api/admin/images/${imageId}` },
   
   // Table Management
   get ADMIN_TABLES() { return `${getCurrentApiBaseUrl()}/api/admin/tables` },
