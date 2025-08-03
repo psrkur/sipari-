@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -8,6 +8,27 @@ import { useCartStore } from '../store/cart'
 import { useAuthStore } from '../store/auth'
 import { API_ENDPOINTS } from '../lib/api'
 import AddressManager from '../app/components/AddressManager'
+import { 
+  ShoppingCart, 
+  Truck, 
+  Store, 
+  User, 
+  Phone, 
+  Mail, 
+  MapPin, 
+  CreditCard, 
+  Banknote,
+  Globe,
+  Plus,
+  Minus,
+  Trash2,
+  CheckCircle,
+  AlertCircle,
+  Info,
+  Clock,
+  Package,
+  DollarSign
+} from 'lucide-react'
 
 interface Branch {
   id: number
@@ -31,6 +52,7 @@ interface CustomerInfo {
   address: string
   deliveryType: 'delivery' | 'pickup'
   paymentMethod?: 'cash' | 'card' | 'online'
+  notes?: string
 }
 
 interface CartProps {
@@ -44,120 +66,106 @@ export default function Cart({ selectedBranch }: CartProps) {
   const [showAddressManager, setShowAddressManager] = useState(false)
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null)
   const [userAddresses, setUserAddresses] = useState<Address[]>([])
-  const { items, removeItem, updateQuantity, clearCart, getTotal } = useCartStore()
+  const [cartPersisted, setCartPersisted] = useState(false)
+  const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } = useCartStore()
   const { token, user } = useAuthStore()
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<CustomerInfo>({
+  
+  const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<CustomerInfo>({
     defaultValues: {
       deliveryType: 'pickup',
       name: '',
       phone: '',
       email: '',
       address: '',
-      paymentMethod: 'cash'
+      paymentMethod: 'cash',
+      notes: ''
     }
   })
 
+  // Sepet verilerinin localStorage'da kalıcı olmasını sağla
   useEffect(() => {
-    const loadCustomerData = async () => {
-      if (!token || !user) return
-
-      try {
-        console.log('Loading customer data...')
-        const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-
-        console.log('Customer data response:', response.data)
-
-        const customerInfo = {
-          name: response.data.user.name,
-          email: response.data.user.email,
-          phone: response.data.user.phone || '',
-          address: response.data.user.address || '',
-          deliveryType: 'pickup' as const,
-          paymentMethod: 'cash' as const
+    const checkCartPersistence = () => {
+      const cartData = localStorage.getItem('cart-storage')
+      if (cartData) {
+        try {
+          const parsed = JSON.parse(cartData)
+          if (parsed.state && parsed.state.items && parsed.state.items.length > 0) {
+            setCartPersisted(true)
+            console.log('✅ Sepet verileri localStorage\'da mevcut:', parsed.state.items.length, 'ürün')
+          }
+        } catch (error) {
+          console.error('Sepet verileri okunamadı:', error)
         }
-
-        setCustomerData(customerInfo)
-        setUserAddresses(response.data.addresses || [])
-        
-        // Varsayılan adresi seç
-        const defaultAddress = response.data.addresses?.find((addr: Address) => addr.isDefault)
-        if (defaultAddress) {
-          setSelectedAddress(defaultAddress)
-          setValue('address', defaultAddress.address)
-        } else {
-          setValue('address', customerInfo.address)
-        }
-        
-        // Form değerlerini set et
-        setValue('name', customerInfo.name)
-        setValue('email', customerInfo.email)
-        setValue('phone', customerInfo.phone)
-        setValue('deliveryType', customerInfo.deliveryType)
-        setValue('paymentMethod', customerInfo.paymentMethod)
-        
-        console.log('Customer data loaded successfully:', customerInfo)
-        toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
-      } catch (error: any) {
-        console.error('Customer data loading error:', error)
-        toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
       }
     }
 
-    // Kullanıcı ve token varsa hemen yükle
-    if (token && user) {
-      loadCustomerData()
+    checkCartPersistence()
+    
+    // Her 5 saniyede bir sepet durumunu kontrol et
+    const interval = setInterval(checkCartPersistence, 5000)
+    
+    return () => clearInterval(interval)
+  }, [])
+
+  // Müşteri verilerini yükle
+  const loadCustomerData = useCallback(async () => {
+    if (!token || !user) return
+
+    try {
+      console.log('🔄 Müşteri verileri yükleniyor...')
+      const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const customerInfo = {
+        name: response.data.user.name,
+        email: response.data.user.email,
+        phone: response.data.user.phone || '',
+        address: response.data.user.address || '',
+        deliveryType: 'pickup' as const,
+        paymentMethod: 'cash' as const,
+        notes: ''
+      }
+
+      setCustomerData(customerInfo)
+      setUserAddresses(response.data.addresses || [])
+      
+      // Varsayılan adresi seç
+      const defaultAddress = response.data.addresses?.find((addr: Address) => addr.isDefault)
+      if (defaultAddress) {
+        setSelectedAddress(defaultAddress)
+        setValue('address', defaultAddress.address)
+      } else {
+        setValue('address', customerInfo.address)
+      }
+      
+      // Form değerlerini set et
+      setValue('name', customerInfo.name)
+      setValue('email', customerInfo.email)
+      setValue('phone', customerInfo.phone)
+      setValue('deliveryType', customerInfo.deliveryType)
+      setValue('paymentMethod', customerInfo.paymentMethod)
+      
+      console.log('✅ Müşteri verileri başarıyla yüklendi')
+      toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
+    } catch (error: any) {
+      console.error('❌ Müşteri verileri yüklenemedi:', error)
+      toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
     }
   }, [token, user, setValue])
 
-  // showCheckout değiştiğinde de yükle (ek güvenlik için)
   useEffect(() => {
-    if (showCheckout && token && user && !customerData) {
-      const loadCustomerData = async () => {
-        try {
-          console.log('Loading customer data for checkout...')
-          const response = await axios.get(API_ENDPOINTS.CUSTOMER_PROFILE, {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-
-          const customerInfo = {
-            name: response.data.user.name,
-            email: response.data.user.email,
-            phone: response.data.user.phone || '',
-            address: response.data.user.address || '',
-            deliveryType: 'pickup' as const,
-            paymentMethod: 'cash' as const
-          }
-
-          setCustomerData(customerInfo)
-          setUserAddresses(response.data.addresses || [])
-          
-          // Varsayılan adresi seç
-          const defaultAddress = response.data.addresses?.find((addr: Address) => addr.isDefault)
-          if (defaultAddress) {
-            setSelectedAddress(defaultAddress)
-            setValue('address', defaultAddress.address)
-          } else {
-            setValue('address', customerInfo.address)
-          }
-          
-          // Form değerlerini set et
-          setValue('name', customerInfo.name)
-          setValue('email', customerInfo.email)
-          setValue('phone', customerInfo.phone)
-          setValue('deliveryType', customerInfo.deliveryType)
-          setValue('paymentMethod', customerInfo.paymentMethod)
-          
-          console.log('Customer data loaded for checkout:', customerInfo)
-        } catch (error: any) {
-          console.error('Customer data loading error for checkout:', error)
-        }
-      }
-
+    if (token && user) {
       loadCustomerData()
     }
-  }, [showCheckout, token, user, customerData, setValue])
+  }, [token, user, loadCustomerData])
+
+  // showCheckout değiştiğinde de yükle
+  useEffect(() => {
+    if (showCheckout && token && user && !customerData) {
+      loadCustomerData()
+    }
+  }, [showCheckout, token, user, customerData, loadCustomerData])
 
   const handleCheckout = async (customerInfo: CustomerInfo) => {
     if (!selectedBranch) {
@@ -194,27 +202,28 @@ export default function Cart({ selectedBranch }: CartProps) {
         customerInfo: finalCustomerInfo,
         deliveryType: customerInfo.deliveryType,
         paymentMethod: customerInfo.paymentMethod || 'cash',
-        notes: ''
+        notes: customerInfo.notes || ''
       }
 
       await axios.post(API_ENDPOINTS.ORDERS, orderData, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      toast.success('Siparişiniz oluşturuldu, afiyet olsun! 🍕')
+      toast.success('Siparişiniz başarıyla oluşturuldu! 🍕 Afiyet olsun!')
       
-      // Sepeti temizle - hem local state hem de store'u temizle
+      // Sepeti temizle
       clearCart()
       
-      // Form'u da temizle
+      // Form'u temizle
       setCustomerData(null)
       setUserAddresses([])
       setSelectedAddress(null)
       setShowCheckout(false)
+      reset()
       
-      // Sayfayı yenile veya ana sayfaya yönlendir
+      // Sayfayı yenileme yerine sadece sepeti temizle
       setTimeout(() => {
-        window.location.reload()
+        toast.success('Sepetiniz temizlendi, yeni sipariş verebilirsiniz')
       }, 1000)
       
     } catch (error: any) {
@@ -225,6 +234,7 @@ export default function Cart({ selectedBranch }: CartProps) {
   }
 
   const total = getTotal()
+  const itemCount = getItemCount()
   const deliveryType = watch('deliveryType')
   const deliveryFee = deliveryType === 'delivery' ? 5.0 : 0.0
   const finalTotal = total + deliveryFee
@@ -232,13 +242,11 @@ export default function Cart({ selectedBranch }: CartProps) {
   // Teslimat seçeneği değiştiğinde müşteri bilgilerini otomatik güncelle
   useEffect(() => {
     if (deliveryType === 'delivery' && customerData) {
-      // Adrese teslim seçildiğinde müşteri bilgilerini otomatik doldur
       setValue('name', customerData.name)
       setValue('email', customerData.email)
       setValue('phone', customerData.phone)
       setValue('address', customerData.address)
       
-      // Varsayılan adresi seç
       if (userAddresses.length > 0) {
         const defaultAddress = userAddresses.find(addr => addr.isDefault)
         if (defaultAddress) {
@@ -247,70 +255,121 @@ export default function Cart({ selectedBranch }: CartProps) {
         }
       }
       
-      toast.success('Müşteri bilgileriniz otomatik olarak dolduruldu')
+      toast.success('Adrese teslim için müşteri bilgileriniz otomatik dolduruldu')
     } else if (deliveryType === 'pickup') {
-      // Şubeden al seçildiğinde sadece temel bilgileri doldur
       if (customerData) {
         setValue('name', customerData.name)
         setValue('phone', customerData.phone)
         setValue('email', customerData.email)
-        setValue('address', '') // Adres alanını temizle
+        setValue('address', '')
         setSelectedAddress(null)
       }
     }
   }, [deliveryType, customerData, userAddresses, setValue])
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Sepet</h3>
+    <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+      {/* Sepet Başlığı */}
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <ShoppingCart className="h-6 w-6 text-white" />
+            <h3 className="text-lg font-bold text-white">Sepetim</h3>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="bg-white bg-opacity-20 text-white text-sm px-3 py-1 rounded-full">
+              {itemCount} ürün
+            </span>
+            {cartPersisted && (
+              <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                Kayıtlı
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
       
       {items.length === 0 ? (
-        <p className="text-gray-500 text-center py-8">Sepetiniz boş</p>
+        <div className="p-8 text-center">
+          <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h4 className="text-lg font-medium text-gray-900 mb-2">Sepetiniz Boş</h4>
+          <p className="text-gray-500 mb-4">Lezzetli ürünlerimizi keşfetmek için ürünler sayfasına gidin</p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center space-x-2">
+              <Info className="h-5 w-5 text-blue-600" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium">Sepet Verileriniz Güvende</p>
+                <p className="text-xs">Sayfa yenilendiğinde sepetiniz kaybolmaz</p>
+              </div>
+            </div>
+          </div>
+        </div>
       ) : (
-        <>
-          <div className="space-y-3 mb-4">
+        <div className="p-6">
+          {/* Ürün Listesi */}
+          <div className="space-y-4 mb-6">
             {items.map((item) => (
-              <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+              <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex-1">
-                  <h4 className="font-medium text-sm">{item.name}</h4>
-                  <p className="text-xs text-gray-600">₺{item.price.toFixed(2)}</p>
+                  <h4 className="font-semibold text-gray-900">{item.name}</h4>
+                  <p className="text-sm text-gray-600">{item.description}</p>
+                  <p className="text-sm font-medium text-orange-600">₺{item.price.toFixed(2)}</p>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.quantity}
-                    onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
-                    className="w-12 px-2 py-1 text-sm border rounded"
-                  />
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2 bg-white border border-gray-300 rounded-lg">
+                    <button
+                      onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                      className="p-2 hover:bg-gray-100 rounded-l-lg transition-colors"
+                    >
+                      <Minus className="h-4 w-4 text-gray-600" />
+                    </button>
+                    <span className="px-3 py-2 text-sm font-medium min-w-[3rem] text-center">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                      className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors"
+                    >
+                      <Plus className="h-4 w-4 text-gray-600" />
+                    </button>
+                  </div>
                   
                   <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-red-500 hover:text-red-700 text-sm"
+                    onClick={() => {
+                      removeItem(item.id)
+                      toast.success(`${item.name} sepetten kaldırıldı`)
+                    }}
+                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                   >
-                    ✕
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t pt-4 mb-4">
-            <div className="space-y-2">
+          {/* Toplam Fiyat */}
+          <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg p-4 mb-6">
+            <div className="space-y-3">
               <div className="flex justify-between items-center text-sm">
-                <span>Ara Toplam:</span>
-                <span>₺{total.toFixed(2)}</span>
+                <span className="text-gray-600">Ara Toplam:</span>
+                <span className="font-medium">₺{total.toFixed(2)}</span>
               </div>
               {deliveryType === 'delivery' && (
                 <div className="flex justify-between items-center text-sm text-blue-600">
-                  <span>🚚 Teslimat Ücreti:</span>
-                  <span>₺{deliveryFee.toFixed(2)}</span>
+                  <span className="flex items-center space-x-1">
+                    <Truck className="h-4 w-4" />
+                    <span>Teslimat Ücreti:</span>
+                  </span>
+                  <span className="font-medium">₺{deliveryFee.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center font-semibold border-t pt-2">
-                <span>Toplam:</span>
-                <span className="text-lg">₺{finalTotal.toFixed(2)}</span>
+              <div className="border-t border-gray-300 pt-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold text-gray-900">Toplam:</span>
+                  <span className="text-2xl font-bold text-orange-600">₺{finalTotal.toFixed(2)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -319,17 +378,19 @@ export default function Cart({ selectedBranch }: CartProps) {
             <button
               onClick={() => setShowCheckout(true)}
               disabled={!selectedBranch}
-              className="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
             >
-              Sipariş Ver
+              {!selectedBranch ? 'Önce Şube Seçin' : 'Sipariş Ver'}
             </button>
           ) : (
-            <form onSubmit={handleSubmit(handleCheckout)} className="space-y-4">
+            <form onSubmit={handleSubmit(handleCheckout)} className="space-y-6">
+              {/* Müşteri Bilgileri Uyarısı */}
               {customerData && (
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm text-blue-800 font-medium">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-800">
                         ✅ Müşteri bilgileriniz otomatik olarak dolduruldu
                       </p>
                       <p className="text-xs text-blue-600 mt-1">
@@ -341,11 +402,7 @@ export default function Cart({ selectedBranch }: CartProps) {
                         type="button"
                         onClick={() => {
                           setCustomerData(null)
-                          setValue('name', '')
-                          setValue('email', '')
-                          setValue('phone', '')
-                          setValue('address', '')
-                          setSelectedAddress(null)
+                          reset()
                           toast.success('Form alanları temizlendi, yeni bilgiler girebilirsiniz')
                         }}
                         className="text-xs text-blue-600 hover:text-blue-800 underline"
@@ -355,7 +412,6 @@ export default function Cart({ selectedBranch }: CartProps) {
                       <button
                         type="button"
                         onClick={() => {
-                          // Müşteri bilgilerini tekrar yükle
                           setValue('name', customerData.name)
                           setValue('email', customerData.email)
                           setValue('phone', customerData.phone)
@@ -371,14 +427,15 @@ export default function Cart({ selectedBranch }: CartProps) {
                 </div>
               )}
 
+              {/* Teslimat Seçenekleri */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Teslimat Seçeneği *
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                <div className="grid grid-cols-2 gap-4">
+                  <label className={`relative flex flex-col items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
                     watch('deliveryType') === 'delivery' 
-                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      ? 'border-blue-500 bg-blue-50 shadow-lg' 
                       : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
                   }`}>
                     <input
@@ -387,17 +444,17 @@ export default function Cart({ selectedBranch }: CartProps) {
                       {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
                       className="sr-only"
                     />
-                    <div className="text-2xl mb-2">🚚</div>
-                    <span className="text-sm font-medium text-gray-900">Adrese Teslim</span>
-                    <span className="text-xs text-gray-500 mt-1">Kapınıza kadar</span>
+                    <Truck className="h-8 w-8 text-blue-600 mb-3" />
+                    <span className="text-sm font-semibold text-gray-900">Adrese Teslim</span>
+                    <span className="text-xs text-gray-500 mt-1 text-center">Kapınıza kadar</span>
                     {watch('deliveryType') === 'delivery' && (
-                      <span className="text-xs text-blue-600 mt-1">+₺5.00</span>
+                      <span className="text-xs text-blue-600 mt-2 font-medium">+₺5.00</span>
                     )}
                   </label>
                   
-                  <label className={`flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  <label className={`relative flex flex-col items-center p-6 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
                     watch('deliveryType') === 'pickup' 
-                      ? 'border-green-500 bg-green-50 shadow-md' 
+                      ? 'border-green-500 bg-green-50 shadow-lg' 
                       : 'border-gray-200 hover:border-green-300 hover:bg-green-25'
                   }`}>
                     <input
@@ -406,75 +463,83 @@ export default function Cart({ selectedBranch }: CartProps) {
                       {...register('deliveryType', { required: 'Teslimat seçeneği gerekli' })}
                       className="sr-only"
                     />
-                    <div className="text-2xl mb-2">🏪</div>
-                    <span className="text-sm font-medium text-gray-900">Şubeden Al</span>
-                    <span className="text-xs text-gray-500 mt-1">Ücretsiz</span>
+                    <Store className="h-8 w-8 text-green-600 mb-3" />
+                    <span className="text-sm font-semibold text-gray-900">Şubeden Al</span>
+                    <span className="text-xs text-gray-500 mt-1 text-center">Ücretsiz</span>
                     {watch('deliveryType') === 'pickup' && (
-                      <span className="text-xs text-green-600 mt-1">Ücretsiz</span>
+                      <span className="text-xs text-green-600 mt-2 font-medium">Ücretsiz</span>
                     )}
                   </label>
                 </div>
                 {errors.deliveryType && (
-                  <p className="text-red-500 text-xs mt-1">{errors.deliveryType.message}</p>
+                  <p className="text-red-500 text-xs mt-2">{errors.deliveryType.message}</p>
                 )}
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ad Soyad *
-                </label>
-                <input
-                  type="text"
-                  {...register('name', { required: 'Ad soyad gerekli' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  placeholder="Ad Soyad"
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
-                )}
+              {/* Müşteri Bilgileri */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <User className="h-4 w-4 inline mr-2" />
+                    Ad Soyad *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('name', { required: 'Ad soyad gerekli' })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="Ad Soyad"
+                  />
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Phone className="h-4 w-4 inline mr-2" />
+                    Telefon *
+                  </label>
+                  <input
+                    type="tel"
+                    {...register('phone', { required: 'Telefon gerekli' })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="0555 123 45 67"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Teslimat için gerekli
+                  </p>
+                  {errors.phone && (
+                    <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefon *
-                </label>
-                <input
-                  type="tel"
-                  {...register('phone', { required: 'Telefon gerekli' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                  placeholder="0555 123 45 67"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Teslimat için gerekli
-                </p>
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Mail className="h-4 w-4 inline mr-2" />
                   Email
                 </label>
                 <input
                   type="email"
                   {...register('email')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   placeholder="ornek@email.com"
                 />
               </div>
 
+              {/* Adrese Teslim Seçenekleri */}
               {watch('deliveryType') === 'delivery' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <MapPin className="h-4 w-4 inline mr-2" />
                       Teslimat Adresi *
                     </label>
                     
-                    {/* Adres Seçimi Bölümü */}
+                    {/* Adres Seçimi */}
                     <div className="mb-4">
                       {userAddresses.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-gray-700">
                               📍 Kayıtlı Adresleriniz ({userAddresses.length})
@@ -488,11 +553,11 @@ export default function Cart({ selectedBranch }: CartProps) {
                             </button>
                           </div>
                           
-                          <div className="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-3 bg-gray-50">
+                          <div className="max-h-48 overflow-y-auto space-y-3 border rounded-lg p-4 bg-gray-50">
                             {userAddresses.map((address) => (
                               <div
                                 key={address.id}
-                                className={`border rounded-lg p-3 cursor-pointer transition-all duration-200 ${
+                                className={`border rounded-lg p-4 cursor-pointer transition-all duration-200 ${
                                   selectedAddress?.id === address.id 
                                     ? 'border-blue-500 bg-blue-50 shadow-md' 
                                     : 'border-gray-200 hover:border-blue-300 hover:bg-blue-25'
@@ -523,14 +588,14 @@ export default function Cart({ selectedBranch }: CartProps) {
                                     <p className="text-gray-600 text-sm mt-1">{address.address}</p>
                                   </div>
                                   {selectedAddress?.id === address.id && (
-                                    <span className="text-blue-600 text-lg">✓</span>
+                                    <CheckCircle className="h-5 w-5 text-blue-600" />
                                   )}
                                 </div>
                               </div>
                             ))}
                           </div>
                           
-                          <div className="flex space-x-2">
+                          <div className="flex space-x-3">
                             <button
                               type="button"
                               onClick={() => {
@@ -552,12 +617,13 @@ export default function Cart({ selectedBranch }: CartProps) {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                        <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                           <p className="text-gray-500 mb-3">Henüz kayıtlı adresiniz yok</p>
                           <button
                             type="button"
                             onClick={() => setShowAddressManager(true)}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
                           >
                             + İlk Adresinizi Ekleyin
                           </button>
@@ -567,9 +633,9 @@ export default function Cart({ selectedBranch }: CartProps) {
                     
                     {/* Seçili Adres Gösterimi */}
                     {selectedAddress && (
-                      <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-green-600">✓</span>
+                      <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
                           <div>
                             <p className="text-sm font-medium text-green-800">
                               Seçili Adres: {selectedAddress.title}
@@ -590,7 +656,7 @@ export default function Cart({ selectedBranch }: CartProps) {
                           return true
                         }
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                       rows={3}
                       placeholder={selectedAddress ? "Adres detaylarını düzenleyebilirsiniz..." : "Detaylı teslimat adresi (mahalle, sokak, bina no, daire no)"}
                     />
@@ -602,36 +668,41 @@ export default function Cart({ selectedBranch }: CartProps) {
                     )}
                   </div>
 
+                  {/* Ödeme Yöntemi */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <CreditCard className="h-4 w-4 inline mr-2" />
                       Ödeme Yöntemi *
                     </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center space-x-2 cursor-pointer">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                         <input
                           type="radio"
                           value="cash"
                           {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
-                          className="text-red-600 focus:ring-red-500"
+                          className="text-orange-600 focus:ring-orange-500"
                         />
+                                                 <Banknote className="h-5 w-5 text-green-600" />
                         <span className="text-sm text-gray-700">💵 Nakit</span>
                       </label>
-                      <label className="flex items-center space-x-2 cursor-pointer">
+                      <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                         <input
                           type="radio"
                           value="card"
                           {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
-                          className="text-red-600 focus:ring-red-500"
+                          className="text-orange-600 focus:ring-orange-500"
                         />
+                        <CreditCard className="h-5 w-5 text-blue-600" />
                         <span className="text-sm text-gray-700">💳 Kart (Kapıda)</span>
                       </label>
-                      <label className="flex items-center space-x-2 cursor-pointer">
+                      <label className="flex items-center space-x-3 p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
                         <input
                           type="radio"
                           value="online"
                           {...register('paymentMethod', { required: 'Ödeme yöntemi gerekli' })}
-                          className="text-red-600 focus:ring-red-500"
+                          className="text-orange-600 focus:ring-orange-500"
                         />
+                        <Globe className="h-5 w-5 text-purple-600" />
                         <span className="text-sm text-gray-700">🌐 Online Ödeme</span>
                       </label>
                     </div>
@@ -642,10 +713,11 @@ export default function Cart({ selectedBranch }: CartProps) {
                 </>
               )}
 
+              {/* Şubeden Al Bilgisi */}
               {watch('deliveryType') === 'pickup' && (
-                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                   <div className="flex items-start space-x-3">
-                    <div className="text-green-600 text-lg">🏪</div>
+                    <Store className="h-6 w-6 text-green-600" />
                     <div>
                       <p className="text-sm font-medium text-green-800">
                         Şubeden Alım Seçildi
@@ -661,25 +733,46 @@ export default function Cart({ selectedBranch }: CartProps) {
                 </div>
               )}
 
-              <div className="flex space-x-2">
+              {/* Notlar */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Sipariş Notları
+                </label>
+                <textarea
+                  {...register('notes')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  rows={2}
+                  placeholder="Özel istekleriniz, alerjileriniz veya ek notlarınız..."
+                />
+              </div>
+
+              {/* Butonlar */}
+              <div className="flex space-x-3">
                 <button
                   type="button"
                   onClick={() => setShowCheckout(false)}
-                  className="flex-1 bg-gray-600 text-white py-2 px-4 rounded-md text-sm hover:bg-gray-700"
+                  className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-medium hover:bg-gray-700 transition-colors"
                 >
                   İptal
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-red-600 text-white py-2 px-4 rounded-md text-sm hover:bg-red-700 disabled:opacity-50"
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4 rounded-lg text-sm font-semibold hover:from-orange-600 hover:to-red-600 disabled:opacity-50 transition-all duration-200"
                 >
-                  {loading ? 'Gönderiliyor...' : 'Siparişi Tamamla'}
+                  {loading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Gönderiliyor...</span>
+                    </div>
+                  ) : (
+                    'Siparişi Tamamla'
+                  )}
                 </button>
               </div>
             </form>
           )}
-        </>
+        </div>
       )}
       
       {/* Adres Yöneticisi Modal */}
