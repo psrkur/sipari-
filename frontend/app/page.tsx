@@ -245,7 +245,16 @@ export default function Home() {
   }, [products, groupProductsByCategory])
 
   const addToCart = useCallback((product: Product) => {
-    // Yeni Cart bileşeni kullanıyor, sadece toast göster
+    // Zustand store'u kullanarak sepete ekle
+    const { addItem } = useCartStore.getState();
+    addItem({
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      quantity: 1,
+      category: typeof product.category === 'object' ? product.category.name : product.category
+    });
     toast.success(`${product.name} sepete eklendi!`)
   }, [])
 
