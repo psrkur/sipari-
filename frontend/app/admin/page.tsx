@@ -889,13 +889,17 @@ export default function AdminPage() {
               📊 Ana Menü
             </h3>
             <div className="space-y-2">
-              <Link 
-                href="/admin/dashboard" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 hover:shadow-md"
+              <button 
+                onClick={() => setActivePage('dashboard')} 
+                className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activePage === 'dashboard' 
+                    ? 'bg-blue-500 text-white shadow-md' 
+                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+                }`}
               >
                 <span className="text-lg">📊</span>
                 {sidebarOpen && <span>Dashboard</span>}
-              </Link>
+              </button>
               
               <button 
                 onClick={() => setActivePage('orders')} 
@@ -1074,6 +1078,7 @@ export default function AdminPage() {
         <div className="bg-white shadow-sm border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">
+              {activePage === 'dashboard' && '📊 Dashboard'}
               {activePage === 'orders' && '📋 Siparişler'}
               {activePage === 'products' && '🍽️ Ürünler'}
               {activePage === 'categories' && '📂 Kategoriler'}
@@ -1095,6 +1100,10 @@ export default function AdminPage() {
             </div>
           ) : (
             <div className="space-y-6">
+              {activePage === 'dashboard' && (
+                <Dashboard />
+              )}
+
               {activePage === 'orders' && (
                 <div className="bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">📋 Siparişler ({filteredOrders.length})</h2>

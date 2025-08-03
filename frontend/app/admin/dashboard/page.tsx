@@ -278,33 +278,27 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gerçek Zamanlı Dashboard</h1>
-          <p className="text-gray-600">İşletmenizin canlı durumu</p>
-        </div>
-        <div className="flex space-x-2">
-          <Button
-            variant={timeRange === 'today' ? 'default' : 'outline'}
-            onClick={() => setTimeRange('today')}
-          >
-            Bugün
-          </Button>
-          <Button
-            variant={timeRange === 'week' ? 'default' : 'outline'}
-            onClick={() => setTimeRange('week')}
-          >
-            Bu Hafta
-          </Button>
-          <Button
-            variant={timeRange === 'month' ? 'default' : 'outline'}
-            onClick={() => setTimeRange('month')}
-          >
-            Bu Ay
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* Zaman Aralığı Seçimi */}
+      <div className="flex justify-end space-x-2">
+        <Button
+          variant={timeRange === 'today' ? 'default' : 'outline'}
+          onClick={() => setTimeRange('today')}
+        >
+          Bugün
+        </Button>
+        <Button
+          variant={timeRange === 'week' ? 'default' : 'outline'}
+          onClick={() => setTimeRange('week')}
+        >
+          Bu Hafta
+        </Button>
+        <Button
+          variant={timeRange === 'month' ? 'default' : 'outline'}
+          onClick={() => setTimeRange('month')}
+        >
+          Bu Ay
+        </Button>
       </div>
 
       {/* Ana Metrikler */}
