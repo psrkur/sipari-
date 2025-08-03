@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 
 // Memoize edilmiş state hook'u
 export function useMemoizedState<T>(
@@ -97,8 +97,13 @@ export function useOptimizedForm<T extends Record<string, any>>(
   isDirty: boolean;
 } {
   const [values, setValues] = useState<T>(initialValues);
-  const [originalValues] = useState<T>(initialValues);
+  const [originalValues, setOriginalValues] = useState<T>(initialValues);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Update original values when initialValues change
+  useEffect(() => {
+    setOriginalValues(initialValues);
+  }, [initialValues]);
 
   const setValue = useCallback(<K extends keyof T>(key: K, value: T[K]) => {
     setValues(prev => {

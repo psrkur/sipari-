@@ -171,14 +171,19 @@ export default function AdminPage() {
 
   // Ürün düzenleme fonksiyonu
   const handleEditProduct = (product: any) => {
-    setEditingProduct(product);
-    setProductFormValue('name', product.name);
-    setProductFormValue('description', product.description);
-    setProductFormValue('price', product.price.toString());
-    setProductFormValue('categoryId', product.categoryId?.toString() || '');
-    setProductFormValue('branchId', product.branchId?.toString() || '');
-    setProductFormValue('image', product.image || '');
-    setShowEditProductModal(true);
+    try {
+      setEditingProduct(product);
+      setProductFormValue('name', product.name || '');
+      setProductFormValue('description', product.description || '');
+      setProductFormValue('price', product.price?.toString() || '');
+      setProductFormValue('categoryId', product.categoryId?.toString() || '');
+      setProductFormValue('branchId', product.branchId?.toString() || '');
+      setProductFormValue('image', product.image || product.imagePath || '');
+      setShowEditProductModal(true);
+    } catch (error) {
+      console.error('Ürün düzenleme hatası:', error);
+      toast.error('Ürün düzenleme formu yüklenemedi');
+    }
   };
 
   // Ürün silme fonksiyonu
@@ -643,16 +648,29 @@ export default function AdminPage() {
           )
         );
         
+        // Modal'ı kapat
         setShowEditProductModal(false);
         
-        // Form'u reset et ama kategori ve şube seçimlerini koru
-        const currentCategoryId = productForm.categoryId;
-        const currentBranchId = productForm.branchId;
-        resetProductForm();
-        setProductFormValue('categoryId', currentCategoryId);
-        setProductFormValue('branchId', currentBranchId);
+        // Form'u güvenli şekilde reset et
+        try {
+          resetProductForm();
+          
+          // Kategori ve şube seçimlerini koru (eğer varsa)
+          if (productForm.categoryId) {
+            setProductFormValue('categoryId', productForm.categoryId);
+          }
+          if (productForm.branchId) {
+            setProductFormValue('branchId', productForm.branchId);
+          }
+        } catch (formError) {
+          console.error('Form reset hatası:', formError);
+          // Form reset hatası kritik değil, devam et
+        }
         
+        // Editing product'ı temizle
         setEditingProduct(null);
+        
+        // Başarı mesajı göster
         toast.success('Ürün başarıyla güncellendi!');
       } else {
         const error = await response.json();
@@ -663,7 +681,7 @@ export default function AdminPage() {
       console.error('Ürün güncelleme hatası:', error);
       alert('Ürün güncellenirken bir hata oluştu');
     }
-  }, [token, productForm, editingProduct, setProducts, resetProductForm]);
+  }, [token, productForm, editingProduct, setProducts, resetProductForm, setProductFormValue]);
 
   const toggleProductStatus = useCallback(async (productId: number, isActive: boolean) => {
     try {
@@ -1511,7 +1529,15 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold mb-4">✏️ Ürün Düzenle</h3>
-            <form onSubmit={(e) => { e.preventDefault(); updateProductHandler(); }}>
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              try {
+                updateProductHandler();
+              } catch (error) {
+                console.error('Form submission error:', error);
+                toast.error('Form gönderilirken bir hata oluştu');
+              }
+            }}>
               <div className="space-y-4">
                 <input
                   type="text"
@@ -1584,7 +1610,17 @@ export default function AdminPage() {
               <div className="flex justify-end space-x-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => setShowEditProductModal(false)}
+                  onClick={() => {
+                    try {
+                      setShowEditProductModal(false);
+                      setEditingProduct(null);
+                      resetProductForm();
+                    } catch (error) {
+                      console.error('Modal kapatma hatası:', error);
+                      // Force close modal
+                      setShowEditProductModal(false);
+                    }
+                  }}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
                   İptal
