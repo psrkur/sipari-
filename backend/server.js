@@ -3801,6 +3801,97 @@ app.post('/api/admin/fix-images', async (req, res) => {
 
 // Eski dosya tabanlı endpoint'ler kaldırıldı - Base64 veritabanı sistemi kullanılıyor
 
+// İki taraflı resim senkronizasyon endpoint'i
+app.post('/api/admin/sync-images', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔄 Resim senkronizasyonu başlatılıyor...');
+    
+    // Local dosyaları kontrol et
+    const uploadDir = path.join(__dirname, 'uploads', 'products');
+    const localFiles = fs.existsSync(uploadDir) ? fs.readdirSync(uploadDir) : [];
+    
+    console.log('📁 Local dosyalar:', localFiles);
+    
+    // Veritabanından resimleri al
+    const dbImages = await prisma.image.findMany({
+      select: {
+        id: true,
+        filename: true,
+        dataUrl: true,
+        size: true,
+        createdAt: true
+      }
+    });
+    
+    console.log('🗄️ Veritabanı resimleri:', dbImages.length);
+    
+    // Senkronizasyon raporu
+    const syncReport = {
+      localFiles: localFiles.length,
+      dbImages: dbImages.length,
+      synced: 0,
+      errors: []
+    };
+    
+    // Local dosyaları veritabanına ekle (yoksa)
+    for (const filename of localFiles) {
+      try {
+        const filePath = path.join(uploadDir, filename);
+        const stats = fs.statSync(filePath);
+        
+        // Dosyayı base64'e çevir
+        const fileBuffer = fs.readFileSync(filePath);
+        const base64String = fileBuffer.toString('base64');
+        
+        // MIME type belirle
+        const ext = path.extname(filename).toLowerCase();
+        let mimeType = 'image/png';
+        if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+        else if (ext === '.gif') mimeType = 'image/gif';
+        else if (ext === '.webp') mimeType = 'image/webp';
+        
+        const dataUrl = `data:${mimeType};base64,${base64String}`;
+        
+        // Veritabanında var mı kontrol et
+        const existingImage = await prisma.image.findFirst({
+          where: { filename }
+        });
+        
+        if (!existingImage) {
+          // Veritabanına ekle
+          await prisma.image.create({
+            data: {
+              filename,
+              originalName: filename,
+              mimeType,
+              size: stats.size,
+              dataUrl,
+              uploadedBy: req.user.userId
+            }
+          });
+          
+          syncReport.synced++;
+          console.log('✅ Local dosya veritabanına eklendi:', filename);
+        }
+      } catch (error) {
+        console.error('❌ Dosya işleme hatası:', filename, error);
+        syncReport.errors.push(`${filename}: ${error.message}`);
+      }
+    }
+    
+    console.log('✅ Senkronizasyon tamamlandı:', syncReport);
+    
+    res.json({
+      message: 'Resim senkronizasyonu tamamlandı',
+      report: syncReport
+    });
+    
+  } catch (error) {
+    console.error('❌ Senkronizasyon hatası:', error);
+    res.status(500).json({ error: 'Senkronizasyon hatası: ' + error.message });
+  }
+});
+
 // E-ticaret entegrasyonu router'ını ekle
 const ecommerceIntegrationRouter = require('./integrations/api');
 app.use('/api/integrations', ecommerceIntegrationRouter);

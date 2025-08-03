@@ -154,6 +154,7 @@ export const API_ENDPOINTS = {
   get ADMIN_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/images` },
   get ADMIN_UPLOAD_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/upload-images` },
   get ADMIN_DELETE_IMAGE() { return (imageId: string) => `${getCurrentApiBaseUrl()}/api/admin/images/${imageId}` },
+  get SYNC_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/sync-images` },
   
   // Table Management
   get ADMIN_TABLES() { return `${getCurrentApiBaseUrl()}/api/admin/tables` },

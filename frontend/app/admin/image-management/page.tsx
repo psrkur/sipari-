@@ -190,6 +190,32 @@ export default function ImageManagement() {
     }
   }, [token])
 
+  // Resim senkronizasyonu
+  const handleSyncImages = useCallback(async () => {
+    if (!token) return
+
+    try {
+      setLoading(true)
+      console.log('🔄 Resim senkronizasyonu başlatılıyor...')
+      
+      const response = await axios.post(API_ENDPOINTS.SYNC_IMAGES, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      
+      console.log('✅ Senkronizasyon tamamlandı:', response.data)
+      
+      // Resimleri yeniden yükle
+      await fetchImages()
+      
+      toast.success(`Senkronizasyon tamamlandı! ${response.data.report.synced} resim eklendi`)
+    } catch (error: any) {
+      console.error('Senkronizasyon hatası:', error)
+      toast.error('Senkronizasyon hatası')
+    } finally {
+      setLoading(false)
+    }
+  }, [token, fetchImages])
+
   // Resim görüntüleme
   const handleViewImage = useCallback((image: ImageFile) => {
     setSelectedImage(image)
@@ -306,6 +332,14 @@ export default function ImageManagement() {
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Yenile</span>
+            </button>
+            <button
+              onClick={handleSyncImages}
+              disabled={loading}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Senkronize Et</span>
             </button>
           </div>
         </div>
