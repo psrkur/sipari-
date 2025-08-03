@@ -62,53 +62,16 @@ export default function ImageManagement() {
       
       console.log('📊 Backend response:', response.data)
       
-             // Her resmi sırayla yükle (Promise.all yerine for loop)
-       const imagesData = []
-       for (const img of response.data) {
-         try {
-           console.log('🔄 Resim yükleniyor:', img.filename)
-           
-           // Base64 formatında resmi al (10 saniye timeout)
-           const imageResponse = await axios.get(`${getApiBaseUrl()}/api/images/${img.filename}`, {
-             timeout: 10000 // 10 saniye timeout
-           })
-           
-           if (imageResponse.data.success) {
-             console.log('✅ Resim başarıyla yüklendi:', img.filename)
-             imagesData.push({
-               id: img.filename,
-               name: img.filename,
-               path: img.path,
-               size: img.size,
-               type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-               uploadedAt: img.uploadedAt,
-               url: imageResponse.data.dataUrl // Base64 data URL
-             })
-           } else {
-             console.error('❌ Resim base64\'e çevrilemedi:', img.filename)
-             imagesData.push({
-               id: img.filename,
-               name: img.filename,
-               path: img.path,
-               size: img.size,
-               type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-               uploadedAt: img.uploadedAt,
-               url: '/placeholder-image.svg' // Placeholder
-             })
-           }
-         } catch (error) {
-           console.error('❌ Resim yüklenemedi:', img.filename, error)
-           imagesData.push({
-             id: img.filename,
-             name: img.filename,
-             path: img.path,
-             size: img.size,
-             type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
-             uploadedAt: img.uploadedAt,
-             url: '/placeholder-image.svg' // Placeholder
-           })
-         }
-       }
+      // Backend'den gelen base64 verileri doğrudan kullan
+      const imagesData = response.data.map((img: any) => ({
+        id: img.filename,
+        name: img.filename,
+        path: img.filename,
+        size: img.size,
+        type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+        uploadedAt: img.uploadedAt,
+        url: img.url // Backend'den gelen base64 data URL
+      }))
       
       setImages(imagesData)
       toast.success(`${imagesData.length} resim yüklendi`)
