@@ -824,127 +824,84 @@ export default function AdminPage() {
       {/* Admin Navigasyon Menüsü */}
       <div className="bg-white shadow-lg border-b mb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Sol taraf - Ana sayfa butonları */}
-            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
-              <Link 
-                href="/admin/dashboard" 
-                className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 text-sm sm:text-base"
-              >
-                <span className="text-lg sm:text-xl">📊</span>
-                <span className="hidden sm:inline">Dashboard</span>
-                <span className="sm:hidden">📊</span>
-              </Link>
-              
-              <button 
-                onClick={() => setActivePage('orders')} 
-                className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  activePage === 'orders' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                }`}
-              >
-                <span className="hidden sm:inline">📋 Siparişler</span>
-                <span className="sm:hidden">📋</span>
-              </button>
-              
-              <button 
-                onClick={() => setActivePage('products')} 
-                className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  activePage === 'products' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                }`}
-              >
-                <span className="hidden sm:inline">🍽️ Ürünler</span>
-                <span className="sm:hidden">🍽️</span>
-              </button>
-              
-              <button 
-                onClick={() => setActivePage('categories')} 
-                className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  activePage === 'categories' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                }`}
-              >
-                <span className="hidden sm:inline">📂 Kategoriler</span>
-                <span className="sm:hidden">📂</span>
-              </button>
-              
-              <button 
-                onClick={() => setActivePage('users')} 
-                className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  activePage === 'users' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                }`}
-              >
-                <span className="hidden sm:inline">👤 Kullanıcılar</span>
-                <span className="sm:hidden">👤</span>
-              </button>
-              
-              <button 
-                onClick={() => setActivePage('branches')} 
-                className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
-                  activePage === 'branches' 
-                    ? 'bg-blue-500 text-white shadow-md' 
-                    : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
-                }`}
-              >
-                <span className="hidden sm:inline">🏢 Şubeler</span>
-                <span className="sm:hidden">🏢</span>
-              </button>
-            </div>
-
-            {/* Sağ taraf - Hızlı erişim butonları */}
-            <div className="flex flex-wrap items-center gap-2">
-              <Link 
-                href="/kitchen" 
-                className="px-3 sm:px-4 py-2 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-1 text-sm sm:text-base"
-              >
-                <span>👨‍🍳</span>
-                <span className="hidden sm:inline">Mutfak</span>
-              </Link>
-              
-              <Link 
-                href="/pos" 
-                className="px-3 sm:px-4 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-1 text-sm sm:text-base"
-              >
-                <span>💳</span>
-                <span className="hidden sm:inline">POS</span>
-              </Link>
-              
-              <Link 
-                href="/admin/qr-codes" 
-                className="px-3 sm:px-4 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-1 text-sm sm:text-base"
-              >
-                <span>🔗</span>
-                <span className="hidden sm:inline">QR Kodlar</span>
-              </Link>
-              
-              <Link 
-                href="/admin/table-management" 
-                className="px-3 sm:px-4 py-2 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-1 text-sm sm:text-base"
-              >
-                <span>🍽️</span>
-                <span className="hidden sm:inline">Masa Yönetimi</span>
-              </Link>
-              
-              <Link 
-                href="/admin/chat-management" 
-                className="px-3 sm:px-4 py-2 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-1 text-sm sm:text-base"
-              >
-                <span>💬</span>
-                <span className="hidden sm:inline">Sohbet</span>
-              </Link>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+            <Link 
+              href="/admin/dashboard" 
+              className="px-4 sm:px-6 py-2 sm:py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 text-sm sm:text-base"
+            >
+              <span className="text-lg sm:text-xl">📊</span>
+              <span className="hidden sm:inline">Dashboard</span>
+              <span className="sm:hidden">📊</span>
+            </Link>
+            
+            <button 
+              onClick={() => setActivePage('orders')} 
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                activePage === 'orders' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+              }`}
+            >
+              <span className="hidden sm:inline">📋 Siparişler</span>
+              <span className="sm:hidden">📋</span>
+            </button>
+            
+            <button 
+              onClick={() => setActivePage('products')} 
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                activePage === 'products' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+              }`}
+            >
+              <span className="hidden sm:inline">🍽️ Ürünler</span>
+              <span className="sm:hidden">🍽️</span>
+            </button>
+            
+            <button 
+              onClick={() => setActivePage('categories')} 
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                activePage === 'categories' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+              }`}
+            >
+              <span className="hidden sm:inline">📂 Kategoriler</span>
+              <span className="sm:hidden">📂</span>
+            </button>
+            
+            <button 
+              onClick={() => setActivePage('users')} 
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                activePage === 'users' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+              }`}
+            >
+              <span className="hidden sm:inline">👤 Kullanıcılar</span>
+              <span className="sm:hidden">👤</span>
+            </button>
+            
+            <button 
+              onClick={() => setActivePage('branches')} 
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
+                activePage === 'branches' 
+                  ? 'bg-blue-500 text-white shadow-md' 
+                  : 'bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-700'
+              }`}
+            >
+              <span className="hidden sm:inline">🏢 Şubeler</span>
+              <span className="sm:hidden">🏢</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Ana içerik */}
+          <div className="flex-1">
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -1173,6 +1130,56 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+          </div>
+
+          {/* Sağ taraf - Hızlı erişim butonları */}
+          <div className="lg:w-80">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🚀 Hızlı Erişim</h3>
+              <div className="space-y-3">
+                <Link 
+                  href="/kitchen" 
+                  className="w-full px-4 py-3 rounded-lg bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
+                >
+                  <span className="text-lg">👨‍🍳</span>
+                  <span>Mutfak</span>
+                </Link>
+                
+                <Link 
+                  href="/pos" 
+                  className="w-full px-4 py-3 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
+                >
+                  <span className="text-lg">💳</span>
+                  <span>POS</span>
+                </Link>
+                
+                <Link 
+                  href="/admin/qr-codes" 
+                  className="w-full px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
+                >
+                  <span className="text-lg">🔗</span>
+                  <span>QR Kodlar</span>
+                </Link>
+                
+                <Link 
+                  href="/admin/table-management" 
+                  className="w-full px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
+                >
+                  <span className="text-lg">🍽️</span>
+                  <span>Masa Yönetimi</span>
+                </Link>
+                
+                <Link 
+                  href="/admin/chat-management" 
+                  className="w-full px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md flex items-center space-x-3 text-sm"
+                >
+                  <span className="text-lg">💬</span>
+                  <span>Sohbet</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Modals */}
