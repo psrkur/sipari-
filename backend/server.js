@@ -418,7 +418,60 @@ app.use('/uploads/products', (req, res, next) => {
   next();
 }, express.static(path.join(__dirname, 'uploads', 'products')));
 
-// Resim endpoint'i - /uploads/products/ formatı için (DUPLICATE REMOVED)
+// Resim endpoint'i - Base64 formatında resim döndür
+app.get('/api/images/:filename', async (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', 'products', filename);
+  
+  console.log('🖼️ /api/images/ çağrıldı:', filename);
+  
+  // Development için en permissive CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400'); // 24 saat cache
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  try {
+    // Dosya var mı kontrol et
+    if (!fs.existsSync(filePath)) {
+      console.error('Resim dosyası bulunamadı:', filePath);
+      return res.status(404).json({ error: 'Resim bulunamadı' });
+    }
+    
+    // Dosyayı base64'e çevir
+    const fileBuffer = fs.readFileSync(filePath);
+    const base64String = fileBuffer.toString('base64');
+    
+    // Dosya uzantısına göre MIME type belirle
+    const ext = path.extname(filename).toLowerCase();
+    let mimeType = 'image/png'; // Varsayılan
+    if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+    else if (ext === '.gif') mimeType = 'image/gif';
+    else if (ext === '.webp') mimeType = 'image/webp';
+    
+    // Base64 data URL oluştur
+    const dataUrl = `data:${mimeType};base64,${base64String}`;
+    
+    res.json({ 
+      success: true, 
+      dataUrl: dataUrl,
+      filename: filename,
+      size: fileBuffer.length,
+      mimeType: mimeType
+    });
+    
+  } catch (error) {
+    console.error('Resim base64\'e çevrilemedi:', filename, error);
+    res.status(500).json({ error: 'Resim işlenemedi' });
+  }
+});
 
 // Eski resim endpoint'i - geriye uyumluluk için
 app.get('/uploads/:filename', (req, res) => {

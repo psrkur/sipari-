@@ -55,25 +55,20 @@ export default function ImageManagement() {
         headers.Authorization = `Bearer ${token}`
       }
       
-      // Canlı ortamda local resimleri kullan
-      const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
+      // Backend'den resim listesini al
+      const response = await axios.get(`${getApiBaseUrl()}/api/admin/images`, {
+        headers
+      })
       
-      if (isProduction) {
-        // Canlı ortamda local resimleri kullan (canlı backend'de resim yok)
-        console.log('🌐 Canlı ortamda resimler yükleniyor...')
-        
-        // Local backend'den resimleri al
+      console.log('📊 Backend response:', response.data)
+      
+      // Her resmi base64 formatında al
+      const imagesData = await Promise.all(response.data.map(async (img: any) => {
         try {
-          const response = await axios.get('http://localhost:3001/api/admin/images', {
-            headers
-          })
+          // Base64 formatında resmi al
+          const imageResponse = await axios.get(`${getApiBaseUrl()}/api/images/${img.filename}`)
           
-          console.log('📊 Local backend response:', response.data)
-          
-                            // Backend'den gelen veriyi frontend formatına çevir
-          const imagesData = response.data.map((img: any) => {
-            const imageUrl = `http://localhost:3001/api/images/${img.filename}`
-            
+          if (imageResponse.data.success) {
             return {
               id: img.filename,
               name: img.filename,
@@ -81,23 +76,44 @@ export default function ImageManagement() {
               size: img.size,
               type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
               uploadedAt: img.uploadedAt,
-              url: imageUrl
+              url: imageResponse.data.dataUrl // Base64 data URL
             }
-          })
-        
-        setImages(imagesData)
-        toast.success(`${imagesData.length} resim yüklendi (Local)`)
+          } else {
+            console.error('Resim base64\'e çevrilemedi:', img.filename)
+            return {
+              id: img.filename,
+              name: img.filename,
+              path: img.path,
+              size: img.size,
+              type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+              uploadedAt: img.uploadedAt,
+              url: '/placeholder-image.svg' // Placeholder
+            }
+          }
         } catch (error) {
-          console.error('Local backend\'den resimler yüklenemedi:', error)
-          // Local backend'de resim yoksa, varsayılan resimler göster
-          const defaultImages = [
-            'sanayi-tostu.png', 'fanta.png', 'cocacola.png', 'pepsi.png', 'sprite.png',
-            'ayran.png', 'su.png', 'kumru-sandvic.png', 'hamburger.png', 'pizza.png',
-            'doner.png', 'kebap.png', 'lahmacun.png', 'pide.png', 'borek.png',
-            'patates.png', 'salata.png', 'corba.png', 'pilav.png', 'makarna.png'
-          ]
-          
-          const imagesData = defaultImages.map((filename, index) => {
+          console.error('Resim yüklenemedi:', img.filename, error)
+          return {
+            id: img.filename,
+            name: img.filename,
+            path: img.path,
+            size: img.size,
+            type: img.filename.split('.').pop()?.toUpperCase() || 'UNKNOWN',
+            uploadedAt: img.uploadedAt,
+            url: '/placeholder-image.svg' // Placeholder
+          }
+        }
+      }))
+      
+      setImages(imagesData)
+      toast.success(`${imagesData.length} resim yüklendi`)
+      
+    } catch (error) {
+      console.error('Resimler yüklenemedi:', error)
+      toast.error('Resimler yüklenemedi')
+    } finally {
+      setLoading(false)
+    }
+  }, [token])
             const imageUrl = `http://localhost:3001/api/images/${filename}`
             
             return {
@@ -170,36 +186,6 @@ export default function ImageManagement() {
     setUploadProgress(0)
 
     try {
-      // Canlı ortamda local resimleri kullan
-      const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
-      
-      if (isProduction) {
-        // Canlı ortamda canlı backend'e yükle
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i]
-          const formData = new FormData()
-          formData.append('image', file)
-
-          const response = await axios.post('https://yemek5-backend.onrender.com/api/admin/upload-image', formData, {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            },
-            onUploadProgress: (progressEvent) => {
-              const progress = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1))
-              setUploadProgress(progress)
-            }
-          })
-
-          console.log(`${file.name} yüklendi:`, response.data)
-        }
-
-        toast.success(`${files.length} resim yüklendi (Canlı)`)
-        fetchImages() // Resimleri yeniden yükle
-        setUploading(false)
-        return
-      }
-
       // Her dosya için ayrı ayrı yükle
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
@@ -238,26 +224,6 @@ export default function ImageManagement() {
   // Resim silme
   const handleDeleteImage = useCallback(async (imageId: string) => {
     if (!token) return
-
-    // Canlı ortamda local resimleri kullan
-    const isProduction = typeof window !== 'undefined' && window.location.hostname === 'arsut.net.tr'
-    
-    if (isProduction) {
-      // Canlı ortamda canlı backend'den sil
-      try {
-        const response = await axios.delete(`https://yemek5-backend.onrender.com/api/admin/images/${imageId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        
-        console.log('Resim silindi:', response.data)
-        toast.success('Resim silindi (Canlı)')
-        fetchImages() // Resimleri yeniden yükle
-      } catch (error: any) {
-        console.error('Resim silinemedi:', error)
-        toast.error('Resim silinemedi')
-      }
-      return
-    }
 
     if (!confirm('Bu resmi silmek istediğinizden emin misiniz?')) {
       return
