@@ -56,83 +56,31 @@ export default function KitchenPage() {
   const { token, user } = useAuthStore();
   const { on, off } = useSocket();
 
-  // Optimize edilmiş state'ler
+  // Basit state'ler - hook'ları güvenli kullan
   const [selectedOrderType, setSelectedOrderType] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
 
-  // Optimize edilmiş list state'leri
-  const { items: branches, setItems: setBranches } = useOptimizedList<any>();
-  const { items: orders, setItems: setOrders, updateItem: updateOrder } = useOptimizedList<Order>();
-
-  // Optimize edilmiş fetch hook'ları
-  const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<any[]>(
-    API_ENDPOINTS.BRANCHES,
-    { 
-      cacheTime: 5 * 60 * 1000, // 5 dakika cache
-      enabled: false // Geçici olarak devre dışı
-    }
-  );
-
-  // Branches data'sını set et
+  // Token kontrolü - basitleştirilmiş
   useEffect(() => {
-    if (branchesData) {
-      setBranches(branchesData);
-      // İlk şubeyi otomatik seç
-      if (branchesData.length > 0 && !selectedBranch) {
-        setSelectedBranch(branchesData[0]);
-      }
-    }
-  }, [branchesData, setBranches, selectedBranch]);
-
-  // Token kontrolü - iyileştirilmiş
-  useEffect(() => {
-    let authToken = token;
-    
-    if (!authToken) {
-      try {
-        const authStorage = localStorage.getItem('auth-storage');
-        if (authStorage) {
-          const parsed = JSON.parse(authStorage);
-          authToken = parsed.state?.token;
-        }
-      } catch (error) {
-        console.error('Auth storage parse error:', error);
-      }
-    }
+    console.log('🔍 Mutfak sayfası yükleniyor...');
+    console.log('Token:', token ? 'Var' : 'Yok');
+    console.log('User:', user ? user.name : 'Yok');
     
     // Auth checking tamamlandı
     setAuthChecking(false);
     
-    // Geçici olarak authentication kontrolünü devre dışı bırak
-    console.log('✅ Mutfak paneline erişim verildi (debug modu)');
-    
-    /*
-    if (!authToken) {
-      console.log('❌ Token bulunamadı, login sayfasına yönlendiriliyor');
-      toast.error('Giriş yapmanız gerekiyor');
-      if (window.opener) {
-        window.opener.postMessage({ type: 'AUTH_REQUIRED' }, '*');
-        window.close();
-      } else {
-        router.push('/');
-      }
-      return;
-    }
-    
-    console.log('✅ Token bulundu, mutfak paneline erişim verildi');
-    */
-  }, [token, router]);
+    console.log('✅ Mutfak paneline erişim verildi');
+  }, [token, user]);
 
-  // Optimize edilmiş sipariş yükleme fonksiyonu
-  const fetchOrders = useCallback(async (branchId: number, showLoading = true) => {
-    if (!branchId) return;
+  // Basit sipariş yükleme fonksiyonu
+  const fetchOrders = useCallback(async (branchId: number) => {
+    if (!branchId || !token) return;
 
-    if (showLoading) {
-      setLoading(true);
-    }
-
+    setLoading(true);
     try {
       const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: { Authorization: `Bearer ${token}` },
@@ -149,19 +97,16 @@ export default function KitchenPage() {
       setOrders(activeOrders);
     } catch (error: any) {
       console.error('Siparişler yüklenemedi:', error);
-      if (error.response?.status === 401) {
-        toast.error('Oturum süresi dolmuş');
-        router.push('/');
-      }
+      toast.error('Siparişler yüklenemedi');
     } finally {
-      if (showLoading) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
-  }, [token, router, setOrders]);
+  }, [token]);
 
-  // Sipariş durumu güncelleme - optimize edilmiş
+  // Sipariş durumu güncelleme
   const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
+    if (!token) return;
+    
     try {
       const response = await axios.put(
         API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId),
@@ -170,68 +115,18 @@ export default function KitchenPage() {
       );
 
       if (response.data.success) {
-        // Local state'i güncelle
-        updateOrder(orderId, (order) => ({
-          ...order,
-          status: newStatus
-        }));
-
-        toast.success(`Sipariş durumu güncellendi: ${getStatusText(newStatus)}`);
+        setOrders(prev => prev.map(order => 
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ));
+        toast.success(`Sipariş durumu güncellendi`);
       }
     } catch (error: any) {
       console.error('Sipariş durumu güncellenemedi:', error);
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token, updateOrder]);
+  }, [token]);
 
-  // Socket event handlers - optimize edilmiş
-  useEffect(() => {
-    if (!selectedBranch) return;
-
-    const handleNewOrder = useCallback((data: any) => {
-      if (data.branchId === selectedBranch.id) {
-        toast.success(`Yeni sipariş: ${data.orderNumber}`);
-        fetchOrders(selectedBranch.id, false);
-      }
-    }, [selectedBranch, fetchOrders]);
-
-    const handleOrderStatusChanged = useCallback((data: any) => {
-      if (data.branchId === selectedBranch.id) {
-        toast.success(`Sipariş durumu güncellendi: ${data.orderNumber} - ${data.statusText}`);
-        fetchOrders(selectedBranch.id, false);
-      }
-    }, [selectedBranch, fetchOrders]);
-
-    // Event listener'ları ekle
-    on('newOrder', handleNewOrder);
-    on('orderStatusChanged', handleOrderStatusChanged);
-
-    // Cleanup
-    return () => {
-      off('newOrder', handleNewOrder);
-      off('orderStatusChanged', handleOrderStatusChanged);
-    };
-  }, [selectedBranch, on, off, fetchOrders]);
-
-  // Optimize edilmiş interval - sadece aktif şube varsa çalış
-  useOptimizedInterval(
-    () => {
-      if (selectedBranch) {
-        fetchOrders(selectedBranch.id, false);
-      }
-    },
-    10000, // 10 saniye
-    !!selectedBranch // Sadece şube seçiliyse aktif
-  );
-
-  // Şube değiştiğinde siparişleri yükle
-  useEffect(() => {
-    if (selectedBranch) {
-      fetchOrders(selectedBranch.id);
-    }
-  }, [selectedBranch, fetchOrders]);
-
-  // Optimize edilmiş callback'ler
+  // Status utility functions
   const getStatusColor = useCallback((status: string) => {
     const colors: { [key: string]: string } = {
       PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -289,7 +184,7 @@ export default function KitchenPage() {
     return 'border-green-500 bg-green-50';
   }, []);
 
-  // Filtrelenmiş siparişler - memoize edilmiş
+  // Filtrelenmiş siparişler
   const filteredOrders = useMemo(() => {
     let filtered = orders;
 
@@ -314,17 +209,6 @@ export default function KitchenPage() {
     );
   }
 
-  if (branchesLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Yükleniyor...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Debug Bilgileri */}
@@ -335,7 +219,7 @@ export default function KitchenPage() {
           <p>User: {user ? user.name : 'Yok'}</p>
           <p>User Role: {user ? user.role : 'Yok'}</p>
           <p>Auth Checking: {authChecking ? 'Evet' : 'Hayır'}</p>
-          <p>Branches Loading: {branchesLoading ? 'Evet' : 'Hayır'}</p>
+          <p>Orders Count: {orders.length}</p>
           <p>Selected Branch: {selectedBranch ? selectedBranch.name : 'Yok'}</p>
         </div>
       )}
@@ -347,7 +231,7 @@ export default function KitchenPage() {
             <h1 className="text-2xl font-bold text-gray-900">🍳 Mutfak Paneli</h1>
             
             <div className="flex items-center space-x-4">
-              <p className="text-gray-600">Debug Modu - API çağrıları devre dışı</p>
+              <p className="text-gray-600">Basitleştirilmiş Mod</p>
             </div>
           </div>
         </div>
@@ -358,7 +242,7 @@ export default function KitchenPage() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Mutfak Paneli</h2>
           <p className="text-gray-600 mb-4">
-            Bu sayfa şu anda debug modunda çalışıyor. API çağrıları geçici olarak devre dışı bırakıldı.
+            Bu sayfa şu anda basitleştirilmiş modda çalışıyor. Hook'lar güvenli şekilde kullanılıyor.
           </p>
           
           <div className="space-y-4">
@@ -371,7 +255,7 @@ export default function KitchenPage() {
             <div className="p-4 bg-green-50 rounded-lg">
               <h3 className="font-medium text-green-900">Sayfa Durumu</h3>
               <p className="text-sm text-green-700">Auth Checking: {authChecking ? 'Devam ediyor' : 'Tamamlandı'}</p>
-              <p className="text-sm text-green-700">Branches Loading: {branchesLoading ? 'Devam ediyor' : 'Tamamlandı'}</p>
+              <p className="text-sm text-green-700">Sipariş Sayısı: {orders.length}</p>
             </div>
             
             <div className="p-4 bg-yellow-50 rounded-lg">
@@ -394,6 +278,12 @@ export default function KitchenPage() {
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                 >
                   Ana Sayfaya Dön
+                </button>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Sayfayı Yenile
                 </button>
               </div>
             </div>
