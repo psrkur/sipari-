@@ -1094,7 +1094,16 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  router.push('/admin/chat-management');
+                  console.log('Sohbet butonuna tıklandı');
+                  console.log('Router:', router);
+                  console.log('Current pathname:', window.location.pathname);
+                  try {
+                    router.push('/admin/chat-management');
+                    console.log('Navigation başlatıldı');
+                  } catch (error) {
+                    console.error('Navigation hatası:', error);
+                    window.location.href = '/admin/chat-management';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
@@ -1105,7 +1114,16 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  router.push('/admin/backup-management');
+                  console.log('Yedekleme butonuna tıklandı');
+                  console.log('Router:', router);
+                  console.log('Current pathname:', window.location.pathname);
+                  try {
+                    router.push('/admin/backup-management');
+                    console.log('Navigation başlatıldı');
+                  } catch (error) {
+                    console.error('Navigation hatası:', error);
+                    window.location.href = '/admin/backup-management';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
@@ -1116,7 +1134,16 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  router.push('/admin/email-test');
+                  console.log('Email Test butonuna tıklandı');
+                  console.log('Router:', router);
+                  console.log('Current pathname:', window.location.pathname);
+                  try {
+                    router.push('/admin/email-test');
+                    console.log('Navigation başlatıldı');
+                  } catch (error) {
+                    console.error('Navigation hatası:', error);
+                    window.location.href = '/admin/email-test';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
