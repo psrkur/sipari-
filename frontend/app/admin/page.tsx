@@ -1075,16 +1075,12 @@ export default function AdminPage() {
                   console.log('=== QR KODLAR BUTON DEBUG ===');
                   console.log('1. Buton tıklandı');
                   console.log('2. Router durumu:', router);
-                  console.log('3. Router ready:', router.ready);
+                  console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/qr-codes');
                   
                   // Router'ın hazır olup olmadığını kontrol et
-                  if (!router.ready) {
-                    console.log('6. Router hazır değil, window.location kullanılıyor');
-                    window.location.href = '/admin/qr-codes';
-                    return;
-                  }
+                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
@@ -1116,16 +1112,12 @@ export default function AdminPage() {
                   console.log('=== MASA YÖNETİMİ BUTON DEBUG ===');
                   console.log('1. Buton tıklandı');
                   console.log('2. Router durumu:', router);
-                  console.log('3. Router ready:', router.ready);
+                  console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/table-management');
                   
                   // Router'ın hazır olup olmadığını kontrol et
-                  if (!router.ready) {
-                    console.log('6. Router hazır değil, window.location kullanılıyor');
-                    window.location.href = '/admin/table-management';
-                    return;
-                  }
+                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
@@ -1157,16 +1149,12 @@ export default function AdminPage() {
                   console.log('=== SOHBET BUTON DEBUG ===');
                   console.log('1. Buton tıklandı');
                   console.log('2. Router durumu:', router);
-                  console.log('3. Router ready:', router.ready);
+                  console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/chat-management');
                   
                   // Router'ın hazır olup olmadığını kontrol et
-                  if (!router.ready) {
-                    console.log('6. Router hazır değil, window.location kullanılıyor');
-                    window.location.href = '/admin/chat-management';
-                    return;
-                  }
+                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
@@ -1198,16 +1186,12 @@ export default function AdminPage() {
                   console.log('=== YEDEKLEME BUTON DEBUG ===');
                   console.log('1. Buton tıklandı');
                   console.log('2. Router durumu:', router);
-                  console.log('3. Router ready:', router.ready);
+                  console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/backup-management');
                   
                   // Router'ın hazır olup olmadığını kontrol et
-                  if (!router.ready) {
-                    console.log('6. Router hazır değil, window.location kullanılıyor');
-                    window.location.href = '/admin/backup-management';
-                    return;
-                  }
+                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
@@ -1239,16 +1223,12 @@ export default function AdminPage() {
                   console.log('=== EMAIL TEST BUTON DEBUG ===');
                   console.log('1. Buton tıklandı');
                   console.log('2. Router durumu:', router);
-                  console.log('3. Router ready:', router.ready);
+                  console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/email-test');
                   
                   // Router'ın hazır olup olmadığını kontrol et
-                  if (!router.ready) {
-                    console.log('6. Router hazır değil, window.location kullanılıyor');
-                    window.location.href = '/admin/email-test';
-                    return;
-                  }
+                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
