@@ -1071,7 +1071,10 @@ export default function AdminPage() {
               </button>
               
               <button
-                onClick={() => router.push('/admin/qr-codes')}
+                onClick={() => {
+                  console.log('QR Kodlar butonuna tıklandı');
+                  router.push('/admin/qr-codes');
+                }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">🔗</span>
@@ -1079,7 +1082,10 @@ export default function AdminPage() {
               </button>
               
               <button
-                onClick={() => router.push('/admin/table-management')}
+                onClick={() => {
+                  console.log('Masa Yönetimi butonuna tıklandı');
+                  router.push('/admin/table-management');
+                }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">🍽️</span>
