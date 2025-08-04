@@ -1072,7 +1072,37 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  router.push('/admin/qr-codes');
+                  console.log('=== QR KODLAR BUTON DEBUG ===');
+                  console.log('1. Buton tıklandı');
+                  console.log('2. Router durumu:', router);
+                  console.log('3. Router ready:', router.ready);
+                  console.log('4. Current pathname:', window.location.pathname);
+                  console.log('5. Target path: /admin/qr-codes');
+                  
+                  // Router'ın hazır olup olmadığını kontrol et
+                  if (!router.ready) {
+                    console.log('6. Router hazır değil, window.location kullanılıyor');
+                    window.location.href = '/admin/qr-codes';
+                    return;
+                  }
+                  
+                  try {
+                    console.log('7. Router.push() deneniyor...');
+                    router.push('/admin/qr-codes');
+                    console.log('8. Router.push() başarılı');
+                    
+                    // 2 saniye sonra pathname'i kontrol et
+                    setTimeout(() => {
+                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
+                      if (window.location.pathname !== '/admin/qr-codes') {
+                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/qr-codes';
+                      }
+                    }, 2000);
+                  } catch (error) {
+                    console.error('11. Router.push() hatası:', error);
+                    window.location.href = '/admin/qr-codes';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
@@ -1083,7 +1113,37 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  router.push('/admin/table-management');
+                  console.log('=== MASA YÖNETİMİ BUTON DEBUG ===');
+                  console.log('1. Buton tıklandı');
+                  console.log('2. Router durumu:', router);
+                  console.log('3. Router ready:', router.ready);
+                  console.log('4. Current pathname:', window.location.pathname);
+                  console.log('5. Target path: /admin/table-management');
+                  
+                  // Router'ın hazır olup olmadığını kontrol et
+                  if (!router.ready) {
+                    console.log('6. Router hazır değil, window.location kullanılıyor');
+                    window.location.href = '/admin/table-management';
+                    return;
+                  }
+                  
+                  try {
+                    console.log('7. Router.push() deneniyor...');
+                    router.push('/admin/table-management');
+                    console.log('8. Router.push() başarılı');
+                    
+                    // 2 saniye sonra pathname'i kontrol et
+                    setTimeout(() => {
+                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
+                      if (window.location.pathname !== '/admin/table-management') {
+                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/table-management';
+                      }
+                    }, 2000);
+                  } catch (error) {
+                    console.error('11. Router.push() hatası:', error);
+                    window.location.href = '/admin/table-management';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
