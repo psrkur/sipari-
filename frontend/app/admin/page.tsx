@@ -1070,45 +1070,45 @@ export default function AdminPage() {
                 {sidebarOpen && <span>POS</span>}
               </button>
               
-              <Link 
-                href="/admin/qr-codes" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => router.push('/admin/qr-codes')}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">🔗</span>
                 {sidebarOpen && <span>QR Kodlar</span>}
-              </Link>
+              </button>
               
-              <Link 
-                href="/admin/table-management" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => router.push('/admin/table-management')}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">🍽️</span>
                 {sidebarOpen && <span>Masa Yönetimi</span>}
-              </Link>
+              </button>
               
-              <Link 
-                href="/admin/chat-management" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => router.push('/admin/chat-management')}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">💬</span>
                 {sidebarOpen && <span>Sohbet</span>}
-              </Link>
+              </button>
               
-              <Link 
-                href="/admin/backup-management" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => router.push('/admin/backup-management')}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">💾</span>
                 {sidebarOpen && <span>Yedekleme</span>}
-              </Link>
+              </button>
               
-              <Link 
-                href="/admin/email-test" 
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md"
+              <button
+                onClick={() => router.push('/admin/email-test')}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left"
               >
                 <span className="text-lg">📧</span>
                 {sidebarOpen && <span>Email Test</span>}
-              </Link>
+              </button>
             </div>
           </div>
 
