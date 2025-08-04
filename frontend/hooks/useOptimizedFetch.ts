@@ -8,6 +8,8 @@ interface UseOptimizedFetchOptions {
   retryCount?: number; // Retry sayısı
   retryDelay?: number; // Retry gecikmesi (ms)
   enabled?: boolean; // Fetch'in aktif olup olmadığı
+  maxCacheSize?: number; // Maximum cache boyutu
+  enableMemoryOptimization?: boolean; // Bellek optimizasyonu
 }
 
 interface UseOptimizedFetchReturn<T> {
@@ -16,10 +18,108 @@ interface UseOptimizedFetchReturn<T> {
   error: string | null;
   refetch: () => void;
   clearCache: () => void;
+  cacheStats: {
+    size: number;
+    hits: number;
+    misses: number;
+  };
 }
 
-// Global cache store
-const cache = new Map<string, { data: any; timestamp: number }>();
+// Gelişmiş cache store
+class OptimizedCache {
+  private cache = new Map<string, { data: any; timestamp: number; hits: number }>();
+  private maxSize: number;
+  private hits = 0;
+  private misses = 0;
+
+  constructor(maxSize: number = 100) {
+    this.maxSize = maxSize;
+  }
+
+  get(key: string): any | null {
+    const item = this.cache.get(key);
+    if (item) {
+      item.hits++;
+      this.hits++;
+      return item.data;
+    }
+    this.misses++;
+    return null;
+  }
+
+  set(key: string, data: any): void {
+    // Cache boyutunu kontrol et
+    if (this.cache.size >= this.maxSize) {
+      this.evictLeastUsed();
+    }
+    
+    this.cache.set(key, { 
+      data, 
+      timestamp: Date.now(),
+      hits: 0 
+    });
+  }
+
+  private evictLeastUsed(): void {
+    let leastUsedKey = '';
+    let minHits = Infinity;
+
+    for (const [key, item] of this.cache.entries()) {
+      if (item.hits < minHits) {
+        minHits = item.hits;
+        leastUsedKey = key;
+      }
+    }
+
+    if (leastUsedKey) {
+      this.cache.delete(leastUsedKey);
+    }
+  }
+
+  clear(): void {
+    this.cache.clear();
+    this.hits = 0;
+    this.misses = 0;
+  }
+
+  getStats() {
+    return {
+      size: this.cache.size,
+      hits: this.hits,
+      misses: this.misses
+    };
+  }
+
+  // Eski cache'leri temizle
+  cleanup(maxAge: number): void {
+    const now = Date.now();
+    for (const [key, item] of this.cache.entries()) {
+      if (now - item.timestamp > maxAge) {
+        this.cache.delete(key);
+      }
+    }
+  }
+}
+
+// Global cache instance
+const globalCache = new OptimizedCache(50); // Maximum 50 cache entry
+
+// Memory leak önleme için cleanup
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+if (typeof window !== 'undefined') {
+  // Her 5 dakikada bir eski cache'leri temizle
+  cleanupInterval = setInterval(() => {
+    globalCache.cleanup(10 * 60 * 1000); // 10 dakikadan eski cache'leri temizle
+  }, 5 * 60 * 1000);
+
+  // Sayfa kapatılırken cleanup
+  window.addEventListener('beforeunload', () => {
+    if (cleanupInterval) {
+      clearInterval(cleanupInterval);
+    }
+  });
+}
 
 export function useOptimizedFetch<T = any>(
   url: string,
@@ -30,7 +130,9 @@ export function useOptimizedFetch<T = any>(
     debounceTime = 300,
     retryCount = 3,
     retryDelay = 1000,
-    enabled = true
+    enabled = true,
+    maxCacheSize = 50,
+    enableMemoryOptimization = true
   } = options;
 
   const [data, setData] = useState<T | null>(null);
@@ -40,29 +142,34 @@ export function useOptimizedFetch<T = any>(
   const abortControllerRef = useRef<AbortController | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const retryCountRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   // Cache'den veri al
   const getCachedData = useCallback((cacheKey: string): T | null => {
-    const cached = cache.get(cacheKey);
+    if (!enableMemoryOptimization) return null;
+    
+    const cached = globalCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cacheTime) {
-      return cached.data;
+      return cached;
     }
     return null;
-  }, [cacheTime]);
+  }, [cacheTime, enableMemoryOptimization]);
 
   // Cache'e veri kaydet
   const setCachedData = useCallback((cacheKey: string, data: T) => {
-    cache.set(cacheKey, { data, timestamp: Date.now() });
-  }, []);
+    if (!enableMemoryOptimization) return;
+    
+    globalCache.set(cacheKey, data);
+  }, [enableMemoryOptimization]);
 
   // Cache temizle
   const clearCache = useCallback(() => {
-    cache.clear();
+    globalCache.clear();
   }, []);
 
   // Fetch fonksiyonu
   const fetchData = useCallback(async (config?: AxiosRequestConfig) => {
-    if (!enabled) return;
+    if (!enabled || !isMountedRef.current) return;
 
     // Önceki isteği iptal et
     if (abortControllerRef.current) {
@@ -79,8 +186,10 @@ export function useOptimizedFetch<T = any>(
       // Cache kontrolü
       const cachedData = getCachedData(url);
       if (cachedData) {
-        setData(cachedData);
-        setLoading(false);
+        if (isMountedRef.current) {
+          setData(cachedData);
+          setLoading(false);
+        }
         return;
       }
 
@@ -93,12 +202,14 @@ export function useOptimizedFetch<T = any>(
         signal: abortControllerRef.current.signal
       });
 
-      setData(response.data);
-      setCachedData(url, response.data);
-      retryCountRef.current = 0; // Başarılı istek sonrası retry sayacını sıfırla
+      if (isMountedRef.current) {
+        setData(response.data);
+        setCachedData(url, response.data);
+        retryCountRef.current = 0;
+      }
     } catch (err: any) {
-      if (err.name === 'AbortError') {
-        return; // İptal edilen istek
+      if (err.name === 'AbortError' || !isMountedRef.current) {
+        return; // İptal edilen istek veya component unmount
       }
 
       console.error('Fetch error:', err);
@@ -107,15 +218,21 @@ export function useOptimizedFetch<T = any>(
       if (retryCountRef.current < retryCount) {
         retryCountRef.current++;
         setTimeout(() => {
-          fetchData(config);
+          if (isMountedRef.current) {
+            fetchData(config);
+          }
         }, retryDelay);
         return;
       }
 
-      setError(err.message || 'Veri yüklenemedi');
-      retryCountRef.current = 0;
+      if (isMountedRef.current) {
+        setError(err.message || 'Veri yüklenemedi');
+        retryCountRef.current = 0;
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [url, enabled, getCachedData, setCachedData, retryCount, retryDelay]);
 
@@ -126,20 +243,25 @@ export function useOptimizedFetch<T = any>(
     }
 
     debounceTimeoutRef.current = setTimeout(() => {
-      fetchData(config);
+      if (isMountedRef.current) {
+        fetchData(config);
+      }
     }, debounceTime);
   }, [fetchData, debounceTime]);
 
   // Refetch fonksiyonu
   const refetch = useCallback((config?: AxiosRequestConfig) => {
-    cache.delete(url); // Cache'i temizle
-    retryCountRef.current = 0; // Retry sayacını sıfırla
+    globalCache.clear(); // Cache'i temizle
+    retryCountRef.current = 0;
     fetchData(config);
-  }, [url, fetchData]);
+  }, [fetchData]);
 
   // Cleanup
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
+      isMountedRef.current = false;
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
@@ -151,7 +273,7 @@ export function useOptimizedFetch<T = any>(
 
   // İlk yükleme
   useEffect(() => {
-    if (enabled) {
+    if (enabled && isMountedRef.current) {
       debouncedFetch();
     }
   }, [enabled, debouncedFetch]);
@@ -161,7 +283,8 @@ export function useOptimizedFetch<T = any>(
     loading,
     error,
     refetch,
-    clearCache
+    clearCache,
+    cacheStats: globalCache.getStats()
   };
 }
 

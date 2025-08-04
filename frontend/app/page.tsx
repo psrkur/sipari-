@@ -12,6 +12,8 @@ import CategoryFilter from './components/CategoryFilter'
 import Cart from '@/components/Cart'
 import { useOptimizedFetch, useDebounce } from '@/hooks/useOptimizedFetch'
 import { useOptimizedList } from '@/hooks/useMemoizedState'
+import { useMemoryOptimization } from '@/hooks/useMemoryOptimization'
+import PerformanceMonitor from '@/components/PerformanceMonitor'
 import { 
   ShoppingCart, 
   Plus, 
@@ -72,7 +74,6 @@ export default function Home() {
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
   const [loading, setLoading] = useState(true)
-  const [productsLoading, setProductsLoading] = useState(false)
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -89,17 +90,27 @@ export default function Home() {
   })
   const [isRegistering, setIsRegistering] = useState(false)
 
-
+  // Bellek optimizasyonu
+  useMemoryOptimization({
+    maxMemoryUsage: 50, // 50MB
+    cleanupInterval: 60000, // 1 dakika
+    enableLogging: true
+  })
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches } = useOptimizedList<Branch>()
   const { items: products, setItems: setProducts } = useOptimizedList<Product>()
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
-  // Optimize edilmiş fetch hook'ları - cache geçici olarak devre dışı
-  const { data: branchesData, loading: branchesLoading } = useOptimizedFetch<Branch[]>(
+  // Optimize edilmiş fetch hook'ları - bellek optimizasyonu aktif
+  const { data: branchesData, loading: branchesLoading, cacheStats } = useOptimizedFetch<Branch[]>(
     API_ENDPOINTS.BRANCHES,
-    { cacheTime: 0 } // Cache devre dışı
+    { 
+      cacheTime: 10 * 60 * 1000, // 10 dakika cache
+      debounceTime: 500, // 500ms debounce
+      enableMemoryOptimization: true,
+      maxCacheSize: 20
+    }
   );
 
   // Şubeleri yükle
@@ -122,80 +133,36 @@ export default function Home() {
     }
   }, [branchesData, setBranches])
 
-  // Ürünleri yükle - optimize edilmiş ve debounced
+  // Ürünler için optimize edilmiş fetch hook'u
+  const { data: productsData, loading: productsLoading, error: productsError } = useOptimizedFetch<any[]>(
+    selectedBranch ? `/api/products/${selectedBranch.id}` : '',
+    {
+      cacheTime: 5 * 60 * 1000, // 5 dakika cache
+      debounceTime: 300, // 300ms debounce
+      enabled: !!selectedBranch,
+      enableMemoryOptimization: true,
+      maxCacheSize: 10
+    }
+  );
+
+  // Ürünleri işle
   useEffect(() => {
-    if (!selectedBranch) return;
+    if (!productsData) return;
 
-    setProductsLoading(true);
+    const processedProducts = Array.isArray(productsData) ? productsData.map((product: any) => ({
+      ...product,
+      category: typeof product.category === 'object' && product.category !== null 
+        ? product.category.name 
+        : product.category || 'Diğer'
+    })) : [];
     
-    const fetchProducts = async () => {
-      try {
-        // Cache key oluştur
-        const cacheKey = `products_${selectedBranch.id}`;
-        
-        // Cache'i geçici olarak devre dışı bırak (quota hatası nedeniyle)
-        // const cachedData = sessionStorage.getItem(cacheKey);
-        
-        // if (cachedData) {
-        //   const parsedData = JSON.parse(cachedData);
-        //   setProducts(parsedData.products);
-        //   setCategories(parsedData.categories);
-        //   setLoading(false);
-        //   setProductsLoading(false);
-        //   return;
-        // }
-
-        // Products endpoint'ini kullan
-        const apiUrl = `/api/products/${selectedBranch.id}`;
-        console.log('🔍 Products API çağrısı:', apiUrl);
-        
-        const response = await fetch(apiUrl);
-        console.log('🔍 Products response status:', response.status);
-        console.log('🔍 Products response ok:', response.ok);
-        
-        if (!response.ok) {
-          throw new Error(`Products API error: ${response.status}`);
-        }
-        
-        const productsData = await response.json();
-        console.log('🔍 Products data received:', productsData);
-        
-        const processedProducts = Array.isArray(productsData) ? productsData.map((product: any) => ({
-          ...product,
-          category: typeof product.category === 'object' && product.category !== null 
-            ? product.category.name 
-            : product.category || 'Diğer'
-        })) : [];
-        
-        // Kategorileri optimize et
-        const productCategories = Array.from(new Set(processedProducts.map((p: any) => p.category)));
-        
-        // Cache'i geçici olarak devre dışı bırak (quota hatası nedeniyle)
-        // try {
-        //   sessionStorage.setItem(cacheKey, JSON.stringify({
-        //     products: processedProducts,
-        //     categories: productCategories,
-        //     timestamp: Date.now()
-        //   }));
-        // } catch (cacheError) {
-        //   console.warn('⚠️ Cache kaydetme hatası (quota aşıldı):', cacheError);
-        // }
-        
-        setProducts(processedProducts);
-        setCategories(productCategories);
-        setLoading(false);
-        setProductsLoading(false);
-      } catch (error) {
-        console.error('Ürünler yüklenirken hata:', error);
-        setLoading(false);
-        setProductsLoading(false);
-      }
-    };
-
-    // Debounce ile API çağrısını optimize et
-    const timeoutId = setTimeout(fetchProducts, 300);
-    return () => clearTimeout(timeoutId);
-  }, [selectedBranch, setProducts, setCategories]);
+    // Kategorileri optimize et
+    const productCategories = Array.from(new Set(processedProducts.map((p: any) => p.category)));
+    
+    setProducts(processedProducts);
+    setCategories(productCategories);
+    setLoading(false);
+  }, [productsData, setProducts, setCategories]);
 
   // Kategori ikonları - basitleştirilmiş
   const getCategoryIcon = useCallback((category: string) => {
@@ -464,6 +431,7 @@ export default function Home() {
 
     return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
+      <PerformanceMonitor show={false} position="top-right" />
       {/* Responsive Header */}
       <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-orange-100 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
