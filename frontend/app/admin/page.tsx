@@ -95,7 +95,6 @@ export default function AdminPage() {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [buttonClickTest, setButtonClickTest] = useState(false);
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
@@ -1073,62 +1072,18 @@ export default function AdminPage() {
               
               <button 
                 onClick={() => {
-                  console.log('QR Kodlar butonuna tıklandı');
-                  setButtonClickTest(true);
-                  setTimeout(() => setButtonClickTest(false), 1000);
-                  console.log('Router:', router);
-                  console.log('Current pathname:', window.location.pathname);
-                  
-                  // Önce router.push deneyelim
-                  try {
-                    router.push('/admin/qr-codes');
-                    console.log('Router.push ile navigation başlatıldı');
-                    
-                    // 2 saniye sonra hala aynı sayfadaysak window.location kullan
-                    setTimeout(() => {
-                      if (window.location.pathname !== '/admin/qr-codes') {
-                        console.log('Router.push başarısız, window.location kullanılıyor');
-                        window.location.href = '/admin/qr-codes';
-                      }
-                    }, 2000);
-                  } catch (error) {
-                    console.error('Navigation hatası:', error);
-                    // Hata durumunda direkt window.location kullan
-                    window.location.href = '/admin/qr-codes';
-                  }
+                  router.push('/admin/qr-codes');
                 }}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer ${
-                  buttonClickTest ? 'bg-red-500 text-white' : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
-                }`}
+                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
               >
                 <span className="text-lg">🔗</span>
-                {sidebarOpen && <span>QR Kodlar {buttonClickTest ? '(TIKLANDI!)' : ''}</span>}
+                {sidebarOpen && <span>QR Kodlar</span>}
               </button>
               
               <button 
                 onClick={() => {
-                  console.log('Masa Yönetimi butonuna tıklandı');
-                  console.log('Router:', router);
-                  console.log('Current pathname:', window.location.pathname);
-                  
-                  // Önce router.push deneyelim
-                  try {
-                    router.push('/admin/table-management');
-                    console.log('Router.push ile navigation başlatıldı');
-                    
-                    // 2 saniye sonra hala aynı sayfadaysak window.location kullan
-                    setTimeout(() => {
-                      if (window.location.pathname !== '/admin/table-management') {
-                        console.log('Router.push başarısız, window.location kullanılıyor');
-                        window.location.href = '/admin/table-management';
-                      }
-                    }, 2000);
-                  } catch (error) {
-                    console.error('Navigation hatası:', error);
-                    // Hata durumunda direkt window.location kullan
-                    window.location.href = '/admin/table-management';
-                  }
+                  router.push('/admin/table-management');
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
                 type="button"
@@ -1139,7 +1094,6 @@ export default function AdminPage() {
               
               <div 
                 onClick={() => {
-                  console.log('Sohbet butonuna tıklandı');
                   router.push('/admin/chat-management');
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
@@ -1150,7 +1104,6 @@ export default function AdminPage() {
               
               <div 
                 onClick={() => {
-                  console.log('Yedekleme butonuna tıklandı');
                   router.push('/admin/backup-management');
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
@@ -1161,7 +1114,6 @@ export default function AdminPage() {
               
               <div 
                 onClick={() => {
-                  console.log('Email Test butonuna tıklandı');
                   router.push('/admin/email-test');
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
