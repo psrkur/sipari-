@@ -1094,13 +1094,35 @@ export default function AdminPage() {
               
               <button
                 onClick={() => {
-                  console.log('Sohbet butonuna tıklandı');
-                  console.log('Current pathname:', window.location.pathname);
+                  console.log('=== SOHBET BUTON DEBUG ===');
+                  console.log('1. Buton tıklandı');
+                  console.log('2. Router durumu:', router);
+                  console.log('3. Router ready:', router.ready);
+                  console.log('4. Current pathname:', window.location.pathname);
+                  console.log('5. Target path: /admin/chat-management');
+                  
+                  // Router'ın hazır olup olmadığını kontrol et
+                  if (!router.ready) {
+                    console.log('6. Router hazır değil, window.location kullanılıyor');
+                    window.location.href = '/admin/chat-management';
+                    return;
+                  }
+                  
                   try {
+                    console.log('7. Router.push() deneniyor...');
                     router.push('/admin/chat-management');
-                    console.log('Navigation başlatıldı');
+                    console.log('8. Router.push() başarılı');
+                    
+                    // 2 saniye sonra pathname'i kontrol et
+                    setTimeout(() => {
+                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
+                      if (window.location.pathname !== '/admin/chat-management') {
+                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/chat-management';
+                      }
+                    }, 2000);
                   } catch (error) {
-                    console.error('Navigation hatası:', error);
+                    console.error('11. Router.push() hatası:', error);
                     window.location.href = '/admin/chat-management';
                   }
                 }}
@@ -1113,13 +1135,35 @@ export default function AdminPage() {
               
               <button
                 onClick={() => {
-                  console.log('Yedekleme butonuna tıklandı');
-                  console.log('Current pathname:', window.location.pathname);
+                  console.log('=== YEDEKLEME BUTON DEBUG ===');
+                  console.log('1. Buton tıklandı');
+                  console.log('2. Router durumu:', router);
+                  console.log('3. Router ready:', router.ready);
+                  console.log('4. Current pathname:', window.location.pathname);
+                  console.log('5. Target path: /admin/backup-management');
+                  
+                  // Router'ın hazır olup olmadığını kontrol et
+                  if (!router.ready) {
+                    console.log('6. Router hazır değil, window.location kullanılıyor');
+                    window.location.href = '/admin/backup-management';
+                    return;
+                  }
+                  
                   try {
+                    console.log('7. Router.push() deneniyor...');
                     router.push('/admin/backup-management');
-                    console.log('Navigation başlatıldı');
+                    console.log('8. Router.push() başarılı');
+                    
+                    // 2 saniye sonra pathname'i kontrol et
+                    setTimeout(() => {
+                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
+                      if (window.location.pathname !== '/admin/backup-management') {
+                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/backup-management';
+                      }
+                    }, 2000);
                   } catch (error) {
-                    console.error('Navigation hatası:', error);
+                    console.error('11. Router.push() hatası:', error);
                     window.location.href = '/admin/backup-management';
                   }
                 }}
@@ -1132,13 +1176,35 @@ export default function AdminPage() {
               
               <button
                 onClick={() => {
-                  console.log('Email Test butonuna tıklandı');
-                  console.log('Current pathname:', window.location.pathname);
+                  console.log('=== EMAIL TEST BUTON DEBUG ===');
+                  console.log('1. Buton tıklandı');
+                  console.log('2. Router durumu:', router);
+                  console.log('3. Router ready:', router.ready);
+                  console.log('4. Current pathname:', window.location.pathname);
+                  console.log('5. Target path: /admin/email-test');
+                  
+                  // Router'ın hazır olup olmadığını kontrol et
+                  if (!router.ready) {
+                    console.log('6. Router hazır değil, window.location kullanılıyor');
+                    window.location.href = '/admin/email-test';
+                    return;
+                  }
+                  
                   try {
+                    console.log('7. Router.push() deneniyor...');
                     router.push('/admin/email-test');
-                    console.log('Navigation başlatıldı');
+                    console.log('8. Router.push() başarılı');
+                    
+                    // 2 saniye sonra pathname'i kontrol et
+                    setTimeout(() => {
+                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
+                      if (window.location.pathname !== '/admin/email-test') {
+                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/email-test';
+                      }
+                    }, 2000);
                   } catch (error) {
-                    console.error('Navigation hatası:', error);
+                    console.error('11. Router.push() hatası:', error);
                     window.location.href = '/admin/email-test';
                   }
                 }}
