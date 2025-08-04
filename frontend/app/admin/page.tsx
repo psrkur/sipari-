@@ -15,7 +15,7 @@ import ProductManagement from '../components/ProductManagement';
 import BranchManagement from '../components/BranchManagement';
 import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
-import ChatManagement from './chat-management';
+import ChatManagement from './chat-management/page';
 import Dashboard from './dashboard/page';
 import ImageManagement from './image-management/page';
 
