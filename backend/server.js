@@ -800,31 +800,38 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       });
     }
 
-    // Email bildirimleri gönder (asenkron olarak)
+    // Email bildirimleri gönder (asenkron olarak) - POS satışları hariç
     try {
-      // Şube bilgilerini al
-      const branch = await prisma.branch.findUnique({
-        where: { id: parseInt(branchId) }
-      });
+      // POS satışı kontrolü - "Kasa Satışı" notu varsa mail gönderme
+      const isPOSSale = order.notes && order.notes.includes('Kasa Satışı');
+      
+      if (!isPOSSale) {
+        // Şube bilgilerini al
+        const branch = await prisma.branch.findUnique({
+          where: { id: parseInt(branchId) }
+        });
 
-      // Müşteriye email gönder
-      if (customer?.email) {
-        const orderWithItems = await prisma.order.findUnique({
-          where: { id: order.id },
-          include: {
-            orderItems: {
-              include: {
-                product: true
+        // Müşteriye email gönder
+        if (customer?.email) {
+          const orderWithItems = await prisma.order.findUnique({
+            where: { id: order.id },
+            include: {
+              orderItems: {
+                include: {
+                  product: true
+                }
               }
             }
-          }
-        });
-        
-        sendOrderNotification(orderWithItems, customer, branch);
-      }
+          });
+          
+          sendOrderNotification(orderWithItems, customer, branch);
+        }
 
-      // Admin'e email bildirimi gönder
-      sendAdminNotification(order, customer, branch);
+        // Admin'e email bildirimi gönder
+        sendAdminNotification(order, customer, branch);
+      } else {
+        console.log('📧 POS satışı tespit edildi - Email bildirimi gönderilmedi');
+      }
       
     } catch (emailError) {
       console.error('❌ Email gönderme hatası:', emailError);
