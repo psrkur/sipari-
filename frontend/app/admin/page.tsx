@@ -95,6 +95,7 @@ export default function AdminPage() {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [buttonClickTest, setButtonClickTest] = useState(false);
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
@@ -1070,27 +1071,51 @@ export default function AdminPage() {
                 {sidebarOpen && <span>POS</span>}
               </button>
               
-              <div 
+              <button 
                 onClick={() => {
                   console.log('QR Kodlar butonuna tıklandı');
-                  router.push('/admin/qr-codes');
+                  setButtonClickTest(true);
+                  setTimeout(() => setButtonClickTest(false), 1000);
+                  console.log('Router:', router);
+                  console.log('Current pathname:', window.location.pathname);
+                  try {
+                    router.push('/admin/qr-codes');
+                    console.log('Navigation başlatıldı');
+                  } catch (error) {
+                    console.error('Navigation hatası:', error);
+                    // Fallback: window.location kullan
+                    window.location.href = '/admin/qr-codes';
+                  }
                 }}
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer ${
+                  buttonClickTest ? 'bg-red-500 text-white' : 'bg-purple-100 hover:bg-purple-200 text-purple-700'
+                }`}
+                type="button"
               >
                 <span className="text-lg">🔗</span>
-                {sidebarOpen && <span>QR Kodlar</span>}
-              </div>
+                {sidebarOpen && <span>QR Kodlar {buttonClickTest ? '(TIKLANDI!)' : ''}</span>}
+              </button>
               
-              <div 
+              <button 
                 onClick={() => {
                   console.log('Masa Yönetimi butonuna tıklandı');
-                  router.push('/admin/table-management');
+                  console.log('Router:', router);
+                  console.log('Current pathname:', window.location.pathname);
+                  try {
+                    router.push('/admin/table-management');
+                    console.log('Navigation başlatıldı');
+                  } catch (error) {
+                    console.error('Navigation hatası:', error);
+                    // Fallback: window.location kullan
+                    window.location.href = '/admin/table-management';
+                  }
                 }}
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
+                type="button"
               >
                 <span className="text-lg">🍽️</span>
                 {sidebarOpen && <span>Masa Yönetimi</span>}
-              </div>
+              </button>
               
               <div 
                 onClick={() => {
