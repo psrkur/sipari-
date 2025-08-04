@@ -1092,65 +1092,29 @@ export default function AdminPage() {
                 {sidebarOpen && <span>Masa Yönetimi</span>}
               </button>
               
-              <button 
-                onClick={() => {
-                  console.log('Sohbet butonuna tıklandı');
-                  console.log('Router:', router);
-                  console.log('Current pathname:', window.location.pathname);
-                  try {
-                    router.push('/admin/chat-management');
-                    console.log('Navigation başlatıldı');
-                  } catch (error) {
-                    console.error('Navigation hatası:', error);
-                    window.location.href = '/admin/chat-management';
-                  }
-                }}
+              <Link 
+                href="/admin/chat-management"
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
-                type="button"
               >
                 <span className="text-lg">💬</span>
                 {sidebarOpen && <span>Sohbet</span>}
-              </button>
+              </Link>
               
-              <button 
-                onClick={() => {
-                  console.log('Yedekleme butonuna tıklandı');
-                  console.log('Router:', router);
-                  console.log('Current pathname:', window.location.pathname);
-                  try {
-                    router.push('/admin/backup-management');
-                    console.log('Navigation başlatıldı');
-                  } catch (error) {
-                    console.error('Navigation hatası:', error);
-                    window.location.href = '/admin/backup-management';
-                  }
-                }}
+              <Link 
+                href="/admin/backup-management"
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-teal-100 hover:bg-teal-200 text-teal-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
-                type="button"
               >
                 <span className="text-lg">💾</span>
                 {sidebarOpen && <span>Yedekleme</span>}
-              </button>
+              </Link>
               
-              <button 
-                onClick={() => {
-                  console.log('Email Test butonuna tıklandı');
-                  console.log('Router:', router);
-                  console.log('Current pathname:', window.location.pathname);
-                  try {
-                    router.push('/admin/email-test');
-                    console.log('Navigation başlatıldı');
-                  } catch (error) {
-                    console.error('Navigation hatası:', error);
-                    window.location.href = '/admin/email-test';
-                  }
-                }}
+              <Link 
+                href="/admin/email-test"
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
-                type="button"
               >
                 <span className="text-lg">📧</span>
                 {sidebarOpen && <span>Email Test</span>}
-              </button>
+              </Link>
             </div>
           </div>
 
