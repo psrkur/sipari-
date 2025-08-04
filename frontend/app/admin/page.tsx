@@ -1078,12 +1078,22 @@ export default function AdminPage() {
                   setTimeout(() => setButtonClickTest(false), 1000);
                   console.log('Router:', router);
                   console.log('Current pathname:', window.location.pathname);
+                  
+                  // Önce router.push deneyelim
                   try {
                     router.push('/admin/qr-codes');
-                    console.log('Navigation başlatıldı');
+                    console.log('Router.push ile navigation başlatıldı');
+                    
+                    // 2 saniye sonra hala aynı sayfadaysak window.location kullan
+                    setTimeout(() => {
+                      if (window.location.pathname !== '/admin/qr-codes') {
+                        console.log('Router.push başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/qr-codes';
+                      }
+                    }, 2000);
                   } catch (error) {
                     console.error('Navigation hatası:', error);
-                    // Fallback: window.location kullan
+                    // Hata durumunda direkt window.location kullan
                     window.location.href = '/admin/qr-codes';
                   }
                 }}
@@ -1101,12 +1111,22 @@ export default function AdminPage() {
                   console.log('Masa Yönetimi butonuna tıklandı');
                   console.log('Router:', router);
                   console.log('Current pathname:', window.location.pathname);
+                  
+                  // Önce router.push deneyelim
                   try {
                     router.push('/admin/table-management');
-                    console.log('Navigation başlatıldı');
+                    console.log('Router.push ile navigation başlatıldı');
+                    
+                    // 2 saniye sonra hala aynı sayfadaysak window.location kullan
+                    setTimeout(() => {
+                      if (window.location.pathname !== '/admin/table-management') {
+                        console.log('Router.push başarısız, window.location kullanılıyor');
+                        window.location.href = '/admin/table-management';
+                      }
+                    }, 2000);
                   } catch (error) {
                     console.error('Navigation hatası:', error);
-                    // Fallback: window.location kullan
+                    // Hata durumunda direkt window.location kullan
                     window.location.href = '/admin/table-management';
                   }
                 }}
