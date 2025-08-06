@@ -36,12 +36,12 @@ class OptimizedCache {
     this.maxSize = maxSize;
   }
 
-  get(key: string): any | null {
+  get(key: string): { data: any; timestamp: number; hits: number } | null {
     const item = this.cache.get(key);
     if (item) {
       item.hits++;
       this.hits++;
-      return item.data;
+      return item;
     }
     this.misses++;
     return null;
@@ -150,7 +150,7 @@ export function useOptimizedFetch<T = any>(
     
     const cached = globalCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cacheTime) {
-      return cached;
+      return cached.data;
     }
     return null;
   }, [cacheTime, enableMemoryOptimization]);
@@ -159,7 +159,11 @@ export function useOptimizedFetch<T = any>(
   const setCachedData = useCallback((cacheKey: string, data: T) => {
     if (!enableMemoryOptimization) return;
     
-    globalCache.set(cacheKey, data);
+    globalCache.set(cacheKey, {
+      data,
+      timestamp: Date.now(),
+      hits: 0
+    });
   }, [enableMemoryOptimization]);
 
   // Cache temizle
