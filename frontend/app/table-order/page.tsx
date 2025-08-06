@@ -249,7 +249,7 @@ export default function TableOrder() {
     return ['Tümü', ...sortedCategories];
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = useCallback((category: string) => {
     const icons: Record<string, string> = {
       // Ana Yemekler
       'Ana Yemek': '🍽️',
@@ -426,7 +426,7 @@ export default function TableOrder() {
       'Çeşitli': '🍽️'
     };
     return icons[category] || '🍽️';
-  };
+  }, []);
 
   const getFilteredProducts = () => {
     // Products array kontrolü ekle
