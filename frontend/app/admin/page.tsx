@@ -527,7 +527,7 @@ export default function AdminPage() {
       console.error('Kullanıcı eklenemedi:', error);
       toast.error('Kullanıcı eklenemedi');
     }
-  }, [token, userForm]);
+  }, [token]);
 
   const addProduct = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -554,7 +554,7 @@ export default function AdminPage() {
       console.error('Ürün eklenemedi:', error);
       toast.error('Ürün eklenemedi');
     }
-  }, [token, productForm]);
+  }, [token]);
 
   const addCategory = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -572,7 +572,7 @@ export default function AdminPage() {
       console.error('Kategori eklenemedi:', error);
       toast.error('Kategori eklenemedi');
     }
-  }, [token, categoryForm]);
+  }, [token]);
 
   const addBranch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,7 +590,7 @@ export default function AdminPage() {
       console.error('Şube eklenemedi:', error);
       toast.error('Şube eklenemedi');
     }
-  }, [token, branchForm]);
+  }, [token]);
 
   // Utility functions
   const formatDate = useCallback((date: string) => {
@@ -716,7 +716,7 @@ export default function AdminPage() {
       console.error('Ürün güncelleme hatası:', error);
       alert('Ürün güncellenirken bir hata oluştu');
     }
-  }, [token, productForm, editingProduct]);
+  }, [token, editingProduct]);
 
   const toggleProductStatus = useCallback(async (productId: number, isActive: boolean) => {
     try {
@@ -792,7 +792,7 @@ export default function AdminPage() {
       console.error('Kategori güncellenemedi:', error);
       toast.error('Kategori güncellenemedi');
     }
-  }, [token, categoryForm, editingCategory]);
+  }, [token, editingCategory]);
 
   const editBranch = useCallback((branch: any) => {
     setEditingBranch(branch);
@@ -825,7 +825,7 @@ export default function AdminPage() {
       console.error('Şube güncellenemedi:', error);
       toast.error('Şube güncellenemedi');
     }
-  }, [token, branchForm, editingBranch]);
+  }, [token, editingBranch]);
 
   const deleteBranch = useCallback(async (branchId: number) => {
     if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
