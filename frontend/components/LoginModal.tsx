@@ -26,12 +26,11 @@ export default function LoginModal({ onClose, onSwitchToRegister, onSwitchToForg
   const onSubmit = async (data: LoginForm) => {
     setLoading(true)
     try {
-      const response = await axios.post(API_ENDPOINTS.LOGIN, data)
-      login(response.data.user, response.data.token)
+      await login(data.email, data.password)
       toast.success('Başarıyla giriş yapıldı')
       onClose()
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Giriş yapılamadı')
+      toast.error(error.message || 'Giriş yapılamadı')
     } finally {
       setLoading(false)
     }

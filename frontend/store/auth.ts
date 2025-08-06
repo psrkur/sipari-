@@ -26,21 +26,35 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       login: async (email: string, password: string) => {
         try {
+          console.log('🔍 Login işlemi başlatılıyor...');
+          console.log('📧 Email:', email);
+          console.log('🔑 Password:', password ? '***' : 'boş');
+          
           // API base URL'yi al
           const apiBaseUrl = process.env.NODE_ENV === 'development' 
             ? 'http://localhost:3001' 
             : 'https://yemek5-backend.onrender.com';
+          
+          console.log('🌐 API Base URL:', apiBaseUrl);
+          
+          const loginData = { email, password };
+          console.log('📤 Login data:', loginData);
           
           const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify(loginData),
           });
 
+          console.log('📡 Response status:', response.status);
+          console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
           if (!response.ok) {
-            const errorData = await response.json();
+            const errorText = await response.text();
+            console.error('❌ Login hatası:', response.status, errorText);
+            const errorData = await response.json().catch(() => ({ error: errorText }));
             throw new Error(errorData.error || 'Giriş yapılamadı');
           }
 
