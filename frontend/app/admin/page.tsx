@@ -322,24 +322,29 @@ export default function AdminPage() {
     // Auth checking tamamlandı
     setAuthChecking(false);
     
-    if (!user) {
-      console.log('❌ Kullanıcı bulunamadı, ana sayfaya yönlendiriliyor');
-      router.push('/');
-      return;
-    }
+    // Kısa bir gecikme ekle - auth store'un yüklenmesi için
+    const timeoutId = setTimeout(() => {
+      if (!user) {
+        console.log('❌ Kullanıcı bulunamadı, ana sayfaya yönlendiriliyor');
+        router.push('/');
+        return;
+      }
+      
+      // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
+      const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
+      if (!allowedRoles.includes(user.role)) {
+        console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
+        console.log('❌ Kullanıcı rolü:', user.role);
+        console.log('❌ İzin verilen roller:', allowedRoles);
+        toast.error('Bu sayfaya erişim yetkiniz yok');
+        router.push('/');
+        return;
+      }
+      
+      console.log('✅ Kullanıcı yetkili, admin paneline erişim verildi');
+    }, 100); // 100ms gecikme
     
-    // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
-    const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
-    if (!allowedRoles.includes(user.role)) {
-      console.log('❌ Kullanıcı yetkisiz, ana sayfaya yönlendiriliyor');
-      console.log('❌ Kullanıcı rolü:', user.role);
-      console.log('❌ İzin verilen roller:', allowedRoles);
-      toast.error('Bu sayfaya erişim yetkiniz yok');
-      router.push('/');
-      return;
-    }
-    
-    console.log('✅ Kullanıcı yetkili, admin paneline erişim verildi');
+    return () => clearTimeout(timeoutId);
   }, [user, token, router]);
 
   // Pencere mesajlarını dinle

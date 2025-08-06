@@ -90,12 +90,6 @@ export default function Home() {
     setLoginForm(prev => ({ ...prev, [field]: value }));
   }, []);
 
-  // Login form state'ini doğrudan güncelle
-  const handleLoginFormChange = useCallback((field: 'email' | 'password', value: string) => {
-    console.log(`📝 Form değişikliği: ${field} = ${field === 'password' ? '***' : value}`);
-    setLoginForm(prev => ({ ...prev, [field]: value }));
-  }, []);
-
   const [registerForm, setRegisterForm] = useState({ 
     name: '', 
     email: '', 
@@ -508,7 +502,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, []) // Dependency array'i boş bırak, loginForm'u closure içinde kullan
+  }, [loginForm]) // loginForm'u dependency olarak ekle
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1200,10 +1194,10 @@ export default function Home() {
                      type="email"
                      required
                      value={loginForm.email}
-                     onChange={(e) => {
-                       console.log('📧 Email değişti:', e.target.value);
-                       handleLoginFormChange('email', e.target.value);
-                     }}
+                                           onChange={(e) => {
+                        console.log('📧 Email değişti:', e.target.value);
+                        updateLoginForm('email', e.target.value);
+                      }}
                      onBlur={(e) => {
                        console.log('📧 Email blur:', e.target.value);
                      }}
@@ -1219,7 +1213,7 @@ export default function Home() {
                      value={loginForm.password}
                      onChange={(e) => {
                        console.log('🔑 Şifre değişti:', e.target.value ? '***' : 'boş');
-                       handleLoginFormChange('password', e.target.value);
+                       updateLoginForm('password', e.target.value);
                      }}
                      onBlur={(e) => {
                        console.log('🔑 Şifre blur:', e.target.value ? '***' : 'boş');
