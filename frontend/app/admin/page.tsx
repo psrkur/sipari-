@@ -456,7 +456,7 @@ export default function AdminPage() {
     } finally {
       setCleanupLoading(false);
     }
-  }, [token]);
+  }, [token, fetchDatabaseStats, fetchOrders]);
 
   // Tüm siparişleri silme işlemi
   const handleDeleteAllOrders = useCallback(async () => {

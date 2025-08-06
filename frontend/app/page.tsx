@@ -403,7 +403,7 @@ export default function Home() {
   const getAvailableCategories = useCallback(() => {
     const grouped = groupProductsByCategory(products)
     return ['Tümü', ...Object.keys(grouped)]
-  }, [products])
+  }, [products, groupProductsByCategory])
 
   const addToCart = useCallback((product: Product) => {
     // Zustand store'u kullanarak sepete ekle
@@ -502,7 +502,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, []) // Dependency array'i boş bırak, loginForm'u closure içinde kullan
+  }, [loginForm]) // loginForm dependency'si eklendi
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -524,7 +524,7 @@ export default function Home() {
       console.error('Kayıt hatası:', error);
       toast.error(error.message || 'Kayıt başarısız');
     }
-  }, [])
+  }, [registerForm])
 
   // Dropdown dışına tıklandığında kapat
   useEffect(() => {
@@ -561,7 +561,7 @@ export default function Home() {
   // Gruplandırılmış ürünler - memoize edilmiş
   const groupedProducts = useMemo(() => {
     return groupProductsByCategory(filteredProducts)
-  }, [filteredProducts])
+  }, [filteredProducts, groupProductsByCategory])
 
   // Image preloading için optimize edilmiş
   const preloadImages = useCallback((products: Product[]) => {

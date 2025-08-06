@@ -193,7 +193,7 @@ export default function Cart({ selectedBranch }: CartProps) {
       console.error('❌ Müşteri verileri yüklenemedi:', error)
       toast.error('Müşteri bilgileri yüklenemedi, lütfen manuel olarak doldurun')
     }
-  }, [token, user, setValue, setCustomerData, setUserAddresses, setSelectedAddress])
+  }, [token, user])
 
   useEffect(() => {
     if (token && user) {

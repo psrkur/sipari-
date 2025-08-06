@@ -163,7 +163,7 @@ export default function KitchenPage() {
         setLoading(false);
       }
     }
-  }, [token, orders, setOrders, setLoading, setLastUpdate]);
+  }, [token, setOrders, setLoading, setLastUpdate]);
 
   // Şube değiştiğinde siparişleri yükle
   useEffect(() => {
