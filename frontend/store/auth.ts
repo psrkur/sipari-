@@ -30,10 +30,8 @@ export const useAuthStore = create<AuthState>()(
           console.log('📧 Email:', email);
           console.log('🔑 Password:', password ? '***' : 'boş');
           
-          // API base URL'yi al
-          const apiBaseUrl = process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:3001' 
-            : 'https://yemek5-backend.onrender.com';
+          // API base URL'yi al - Geçici olarak production backend kullan
+          const apiBaseUrl = 'https://yemek5-backend.onrender.com';
           
           console.log('🌐 API Base URL:', apiBaseUrl);
           
@@ -68,10 +66,8 @@ export const useAuthStore = create<AuthState>()(
       },
       register: async (name: string, email: string, phone: string, password: string) => {
         try {
-          // API base URL'yi al
-          const apiBaseUrl = process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:3001' 
-            : 'https://yemek5-backend.onrender.com';
+          // API base URL'yi al - Geçici olarak production backend kullan
+          const apiBaseUrl = 'https://yemek5-backend.onrender.com';
           
           const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
             method: 'POST',
