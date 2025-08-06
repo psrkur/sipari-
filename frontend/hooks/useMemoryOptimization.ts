@@ -8,8 +8,8 @@ interface MemoryOptimizationOptions {
 
 export function useMemoryOptimization(options: MemoryOptimizationOptions = {}) {
   const {
-    maxMemoryUsage = 100, // 100MB
-    cleanupInterval = 30000, // 30 saniye
+    maxMemoryUsage = 150, // 150MB'ye çıkarıldı
+    cleanupInterval = 60000, // 60 saniyeye çıkarıldı
     enableLogging = false
   } = options;
 
@@ -94,7 +94,7 @@ export function useMemoryOptimization(options: MemoryOptimizationOptions = {}) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Periyodik bellek kontrolü
+    // Periyodik bellek kontrolü - daha az sıklıkta
     intervalRef.current = setInterval(() => {
       checkMemoryUsage();
       
@@ -103,7 +103,7 @@ export function useMemoryOptimization(options: MemoryOptimizationOptions = {}) {
       if (timeSinceLastCleanup > cleanupInterval) {
         performCleanup();
       }
-    }, 10000); // Her 10 saniyede bir kontrol
+    }, 30000); // 30 saniyede bir kontrol (10 saniyeden 30'a çıkarıldı)
 
     // Sayfa kapatılırken temizlik
     const handleBeforeUnload = () => {

@@ -105,21 +105,21 @@ export default function Home() {
   })
   const [isRegistering, setIsRegistering] = useState(false)
 
-  // Bellek optimizasyonu - daha agresif ayarlar
+  // Bellek optimizasyonu - daha az agresif ayarlar
   useMemoryOptimization({
-    maxMemoryUsage: 30, // 30MB - daha düşük limit
-    cleanupInterval: 30000, // 30 saniye - daha sık temizlik
-    enableLogging: true
+    maxMemoryUsage: 100, // 100MB - daha yüksek limit
+    cleanupInterval: 60000, // 60 saniye - daha az sık temizlik
+    enableLogging: false // Logging'i kapat
   })
 
-  // Ek bellek temizliği - her 10 saniyede bir
+  // Ek bellek temizliği - her 60 saniyede bir
   useEffect(() => {
     const memoryCleanupInterval = setInterval(() => {
       if (typeof window !== 'undefined' && 'memory' in performance) {
         const memory = (performance as any).memory;
         const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
         
-        if (usedMemoryMB > 25) { // 25MB üzerinde ise
+        if (usedMemoryMB > 80) { // 80MB üzerinde ise
           console.log('🧹 Ek bellek temizliği yapılıyor...');
           
           // Garbage collection'ı zorla
@@ -136,7 +136,7 @@ export default function Home() {
           cleanup();
         }
       }
-    }, 10000); // 10 saniye
+    }, 60000); // 60 saniye
 
     return () => clearInterval(memoryCleanupInterval);
   }, []);
@@ -462,7 +462,6 @@ export default function Home() {
     // Form validation - daha sıkı kontrol
     if (!loginForm.email || !loginForm.password || 
         loginForm.email.trim() === '' || loginForm.password.trim() === '') {
-      console.log('❌ Form validasyon hatası: Boş alanlar');
       toast.error('Lütfen email ve şifre alanlarını doldurun');
       return;
     }
@@ -470,12 +469,9 @@ export default function Home() {
     // Email format kontrolü
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(loginForm.email.trim())) {
-      console.log('❌ Form validasyon hatası: Geçersiz email formatı');
       toast.error('Lütfen geçerli bir email adresi girin');
       return;
     }
-    
-    console.log('✅ Form validasyonu başarılı, giriş işlemi başlatılıyor...');
     
     try {
       // Auth store'dan login fonksiyonunu al
@@ -512,7 +508,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, [loginForm, updateLoginForm]) // updateLoginForm'u da dependency olarak ekle
+  }, []) // Dependency array'i boş bırak, loginForm'u closure içinde kullan
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1206,7 +1202,7 @@ export default function Home() {
                      value={loginForm.email}
                      onChange={(e) => {
                        console.log('📧 Email değişti:', e.target.value);
-                       updateLoginForm('email', e.target.value);
+                       handleLoginFormChange('email', e.target.value);
                      }}
                      onBlur={(e) => {
                        console.log('📧 Email blur:', e.target.value);
@@ -1223,7 +1219,7 @@ export default function Home() {
                      value={loginForm.password}
                      onChange={(e) => {
                        console.log('🔑 Şifre değişti:', e.target.value ? '***' : 'boş');
-                       updateLoginForm('password', e.target.value);
+                       handleLoginFormChange('password', e.target.value);
                      }}
                      onBlur={(e) => {
                        console.log('🔑 Şifre blur:', e.target.value ? '***' : 'boş');
