@@ -944,7 +944,6 @@ export default function AdminPage() {
       'Pilav': '🍚',
       'Makarna': '🍝',
       'Noodle': '🍜',
-      'Pasta': '🍝',
       
       // Pizza ve İtalyan
       'Pizza': '🍕',
@@ -1075,7 +1074,7 @@ export default function AdminPage() {
       'Et': '🥩',
       'Dana': '🥩',
       'Kuzu': '🥩',
-      'Tavuk': '🍗',
+      'Tavuk Et': '🍗',
       'Hindi': '🦃',
       'Kuzu Pirzola': '🥩',
       'Dana Pirzola': '🥩',
