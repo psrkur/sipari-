@@ -102,7 +102,7 @@ export default function KitchenPage() {
       console.error('Şubeler yüklenemedi:', error);
       toast.error('Şubeler yüklenemedi');
     }
-  }, [token, selectedBranch]);
+  }, [token, selectedBranch, setSelectedBranch]);
 
   // Token kontrolü - basitleştirilmiş
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function KitchenPage() {
         setLoading(false);
       }
     }
-  }, [token, orders]);
+  }, [token, orders, setOrders, setLoading, setLastUpdate]);
 
   // Şube değiştiğinde siparişleri yükle
   useEffect(() => {

@@ -68,7 +68,7 @@ export default function PerformanceMonitor({
     }
 
     setStats(newStats);
-  }, []);
+  }, [setStats]);
 
   // Periyodik güncelleme
   useEffect(() => {

@@ -136,7 +136,7 @@ export default function ImageSelector({ isOpen, onClose, onSelect, selectedImage
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setLoading, setImages]);
 
   useEffect(() => {
     if (isOpen && images.length === 0) {
