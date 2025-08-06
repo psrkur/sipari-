@@ -486,7 +486,7 @@ export default function AdminPage() {
     } finally {
       setCleanupLoading(false);
     }
-  }, [token, fetchDatabaseStats, fetchOrders]);
+  }, [token]);
 
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
@@ -527,7 +527,7 @@ export default function AdminPage() {
       console.error('Kullanıcı eklenemedi:', error);
       toast.error('Kullanıcı eklenemedi');
     }
-  }, [token]);
+  }, [token, userForm]);
 
   const addProduct = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -554,7 +554,7 @@ export default function AdminPage() {
       console.error('Ürün eklenemedi:', error);
       toast.error('Ürün eklenemedi');
     }
-  }, [token]);
+  }, [token, productForm]);
 
   const addCategory = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -572,7 +572,7 @@ export default function AdminPage() {
       console.error('Kategori eklenemedi:', error);
       toast.error('Kategori eklenemedi');
     }
-  }, [token]);
+  }, [token, categoryForm]);
 
   const addBranch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,7 +590,7 @@ export default function AdminPage() {
       console.error('Şube eklenemedi:', error);
       toast.error('Şube eklenemedi');
     }
-  }, [token]);
+  }, [token, branchForm]);
 
   // Utility functions
   const formatDate = useCallback((date: string) => {
@@ -599,11 +599,11 @@ export default function AdminPage() {
 
   const handleImageSelect = useCallback((imagePath: string) => {
     setProductFormValue('image', imagePath);
-  }, []);
+  }, [setProductFormValue]);
 
   const handleEditImageSelect = useCallback((imagePath: string) => {
     setProductFormValue('image', imagePath);
-  }, []);
+  }, [setProductFormValue]);
 
   // Eksik fonksiyonlar
   const deleteUser = useCallback(async (userId: number) => {
