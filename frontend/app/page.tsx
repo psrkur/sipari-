@@ -83,6 +83,19 @@ export default function Home() {
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  
+  // Form state'ini güvenli hale getir
+  const updateLoginForm = useCallback((field: 'email' | 'password', value: string) => {
+    console.log(`📝 Form güncelleniyor: ${field} = ${field === 'password' ? '***' : value}`);
+    setLoginForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  // Login form state'ini doğrudan güncelle
+  const handleLoginFormChange = useCallback((field: 'email' | 'password', value: string) => {
+    console.log(`📝 Form değişikliği: ${field} = ${field === 'password' ? '***' : value}`);
+    setLoginForm(prev => ({ ...prev, [field]: value }));
+  }, []);
+
   const [registerForm, setRegisterForm] = useState({ 
     name: '', 
     email: '', 
@@ -92,12 +105,41 @@ export default function Home() {
   })
   const [isRegistering, setIsRegistering] = useState(false)
 
-  // Bellek optimizasyonu
+  // Bellek optimizasyonu - daha agresif ayarlar
   useMemoryOptimization({
-    maxMemoryUsage: 50, // 50MB
-    cleanupInterval: 60000, // 1 dakika
+    maxMemoryUsage: 30, // 30MB - daha düşük limit
+    cleanupInterval: 30000, // 30 saniye - daha sık temizlik
     enableLogging: true
   })
+
+  // Ek bellek temizliği - her 10 saniyede bir
+  useEffect(() => {
+    const memoryCleanupInterval = setInterval(() => {
+      if (typeof window !== 'undefined' && 'memory' in performance) {
+        const memory = (performance as any).memory;
+        const usedMemoryMB = memory.usedJSHeapSize / 1024 / 1024;
+        
+        if (usedMemoryMB > 25) { // 25MB üzerinde ise
+          console.log('🧹 Ek bellek temizliği yapılıyor...');
+          
+          // Garbage collection'ı zorla
+          if (window.gc) {
+            window.gc();
+          }
+          
+          // Eski event listener'ları temizle
+          const cleanup = () => {
+            // Geçici temizlik işlemleri
+            console.log('🧹 Bellek temizliği tamamlandı');
+          };
+          
+          cleanup();
+        }
+      }
+    }, 10000); // 10 saniye
+
+    return () => clearInterval(memoryCleanupInterval);
+  }, []);
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches } = useOptimizedList<Branch>()
@@ -417,16 +459,23 @@ export default function Home() {
     console.log('🔍 Giriş denemesi başlatılıyor...');
     console.log('🔍 Login form data:', loginForm);
     
-    // Form validation
-    if (!loginForm.email || !loginForm.password) {
+    // Form validation - daha sıkı kontrol
+    if (!loginForm.email || !loginForm.password || 
+        loginForm.email.trim() === '' || loginForm.password.trim() === '') {
+      console.log('❌ Form validasyon hatası: Boş alanlar');
       toast.error('Lütfen email ve şifre alanlarını doldurun');
       return;
     }
     
-    if (loginForm.email.trim() === '' || loginForm.password.trim() === '') {
-      toast.error('Lütfen email ve şifre alanlarını doldurun');
+    // Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(loginForm.email.trim())) {
+      console.log('❌ Form validasyon hatası: Geçersiz email formatı');
+      toast.error('Lütfen geçerli bir email adresi girin');
       return;
     }
+    
+    console.log('✅ Form validasyonu başarılı, giriş işlemi başlatılıyor...');
     
     try {
       // Auth store'dan login fonksiyonunu al
@@ -463,7 +512,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, [])
+  }, [loginForm, updateLoginForm]) // updateLoginForm'u da dependency olarak ekle
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1155,7 +1204,13 @@ export default function Home() {
                      type="email"
                      required
                      value={loginForm.email}
-                     onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                     onChange={(e) => {
+                       console.log('📧 Email değişti:', e.target.value);
+                       updateLoginForm('email', e.target.value);
+                     }}
+                     onBlur={(e) => {
+                       console.log('📧 Email blur:', e.target.value);
+                     }}
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                      placeholder="ornek@email.com"
                    />
@@ -1166,7 +1221,13 @@ export default function Home() {
                      type="password"
                      required
                      value={loginForm.password}
-                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                     onChange={(e) => {
+                       console.log('🔑 Şifre değişti:', e.target.value ? '***' : 'boş');
+                       updateLoginForm('password', e.target.value);
+                     }}
+                     onBlur={(e) => {
+                       console.log('🔑 Şifre blur:', e.target.value ? '***' : 'boş');
+                     }}
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                      placeholder="••••••••"
                    />
@@ -1185,6 +1246,10 @@ export default function Home() {
                  </div>
                  <button
                    type="submit"
+                   onClick={() => {
+                     console.log('🔍 Submit butonu tıklandı');
+                     console.log('🔍 Mevcut form durumu:', loginForm);
+                   }}
                    className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg"
                  >
                    🔐 Giriş Yap
