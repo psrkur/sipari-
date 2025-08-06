@@ -502,7 +502,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, [loginForm]) // loginForm'u dependency olarak ekle
+  }, []) // Dependency array'i boş bırak, loginForm'u closure içinde kullan
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
