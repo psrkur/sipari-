@@ -14,13 +14,16 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({ categories, selectedCat
         <button
           key={category}
           onClick={() => onSelect(category)}
-          className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
+          className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 transform hover:scale-105 flex items-center gap-2 ${
             selectedCategory === category
               ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
               : 'bg-gray-100 text-gray-700 hover:bg-orange-100 hover:text-orange-700'
           }`}
         >
-          {category === 'Tümü' ? '🍽️ Tümü' : `${getCategoryIcon(category)} ${category}`}
+          <span className="text-lg sm:text-xl">
+            {category === 'Tümü' ? '🍽️' : getCategoryIcon(category)}
+          </span>
+          <span>{category}</span>
         </button>
       ))}
     </div>

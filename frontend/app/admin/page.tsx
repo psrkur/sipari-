@@ -933,6 +933,186 @@ export default function AdminPage() {
     );
   }
 
+  // Kategori icon sistemi
+  const getCategoryIcon = useCallback((categoryName: string) => {
+    const icons: { [key: string]: string } = {
+      // Ana Yemekler
+      'Ana Yemek': '🍽️',
+      'Ana Yemekler': '🍽️',
+      'Yemek': '🍽️',
+      'Yemekler': '🍽️',
+      'Pilav': '🍚',
+      'Makarna': '🍝',
+      'Noodle': '🍜',
+      'Pasta': '🍝',
+      
+      // Pizza ve İtalyan
+      'Pizza': '🍕',
+      'İtalyan': '🍕',
+      'Margherita': '🍕',
+      'Pepperoni': '🍕',
+      
+      // Burger ve Fast Food
+      'Burger': '🍔',
+      'Hamburger': '🍔',
+      'Fast Food': '🍔',
+      'Sandviç': '🥪',
+      'Soğuk Sandviç': '🥪',
+      'Sıcak Sandviç': '🥪',
+      'Wrap': '🌯',
+      'Döner': '🥙',
+      'Kebap': '🍖',
+      'Izgara': '🔥',
+      'Köfte': '🍖',
+      'Şiş': '🍖',
+      'Adana': '🍖',
+      'Urfa': '🍖',
+      
+      // Yan Ürünler
+      'Yan Ürün': '🍟',
+      'Yan Ürünler': '🍟',
+      'Patates': '🍟',
+      'Cips': '🍟',
+      'Kızartma': '🍟',
+      'Soğan Halkası': '🍟',
+      'Nugget': '🍗',
+      
+      // İçecekler
+      'İçecek': '🥤',
+      'İçecekler': '🥤',
+      'Teneke İçecek': '🥤',
+      'Kola': '🥤',
+      'Fanta': '🥤',
+      'Sprite': '🥤',
+      'Su': '💧',
+      'Maden Suyu': '💧',
+      'Ayran': '🥛',
+      'Süt': '🥛',
+      'Kahve': '☕',
+      'Çay': '🫖',
+      'Türk Çayı': '🫖',
+      'Yeşil Çay': '🫖',
+      'Meyve Suyu': '🧃',
+      'Portakal Suyu': '🧃',
+      'Elma Suyu': '🧃',
+      'Smoothie': '🥤',
+      'Milkshake': '🥤',
+      'Limonata': '🍋',
+      'Ice Tea': '🫖',
+      'Soğuk Çay': '🫖',
+      
+      // Tatlılar
+      'Tatlı': '🍰',
+      'Tatlılar': '🍰',
+      'Dessert': '🍰',
+      'Pasta Tatlı': '🎂',
+      'Kek': '🎂',
+      'Cheesecake': '🍰',
+      'Tiramisu': '🍰',
+      'Dondurma': '🍦',
+      'Ice Cream': '🍦',
+      'Çikolata': '🍫',
+      'Baklava': '🍯',
+      'Künefe': '🍯',
+      'Kazandibi': '🍯',
+      'Sütlaç': '🍮',
+      'Kemalpaşa': '🍮',
+      'Külah': '🍦',
+      'Cookie': '🍪',
+      'Kurabiye': '🍪',
+      'Brownie': '🍫',
+      'Muffin': '🧁',
+      'Cupcake': '🧁',
+      
+      // Salatalar
+      'Salata': '🥗',
+      'Salatalar': '🥗',
+      'Çoban Salata': '🥗',
+      'Sezar Salata': '🥗',
+      'Gavurdağı': '🥗',
+      'Mevsim Salata': '🥗',
+      'Yeşil Salata': '🥗',
+      
+      // Çorbalar
+      'Çorba': '🍲',
+      'Çorbalar': '🍲',
+      'Mercimek Çorba': '🍲',
+      'Tavuk Çorba': '🍲',
+      'Domates Çorba': '🍲',
+      'Mantar Çorba': '🍲',
+      'Ezogelin': '🍲',
+      'Yayla': '🍲',
+      'Düğün': '🍲',
+      
+      // Kahvaltı
+      'Kahvaltı': '🍳',
+      'Kahvaltılık': '🍳',
+      'Omlet': '🍳',
+      'Menemen': '🍳',
+      'Sucuk': '🥓',
+      'Pastırma': '🥓',
+      'Peynir': '🧀',
+      'Zeytin': '🫒',
+      'Bal': '🍯',
+      'Reçel': '🍯',
+      'Kaymak': '🥛',
+      'Tereyağı': '🧈',
+      'Ekmek': '🥖',
+      'Simit': '🥨',
+      'Poğaça': '🥐',
+      'Börek': '🥐',
+      
+      // Deniz Ürünleri
+      'Deniz Ürünleri': '🦐',
+      'Balık': '🐟',
+      'Karides': '🦐',
+      'Kalamar': '🦑',
+      'Midye': '🦪',
+      'Sushi': '🍣',
+      'Sashimi': '🍣',
+      
+      // Et Ürünleri
+      'Et': '🥩',
+      'Dana': '🥩',
+      'Kuzu': '🥩',
+      'Tavuk': '🍗',
+      'Hindi': '🦃',
+      'Kuzu Pirzola': '🥩',
+      'Dana Pirzola': '🥩',
+      'Tavuk Pirzola': '🍗',
+      'Tavuk Göğsü': '🍗',
+      'Tavuk But': '🍗',
+      'Tavuk Kanat': '🍗',
+      
+      // Vejetaryen
+      'Vejetaryen': '🥬',
+      'Vegan': '🥬',
+      'Sebze': '🥬',
+      'Mercimek Yemek': '🫘',
+      'Nohut': '🫘',
+      'Fasulye': '🫘',
+      
+      // Özel Kategoriler
+      'Özel': '⭐',
+      'Önerilen': '⭐',
+      'Popüler': '🔥',
+      'Yeni': '🆕',
+      'Kampanya': '🎉',
+      'Fırsat': '🎯',
+      'Çocuk': '👶',
+      'Diyet': '🥗',
+      'Glutensiz': '🌾',
+      'Laktozsuz': '🥛',
+      
+      // Diğer
+      'Diğer': '🍽️',
+      'Genel': '🍽️',
+      'Çeşitli': '🍽️'
+    }
+    
+    return icons[categoryName] || '🍽️'
+  }, [])
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sol Sidebar */}
@@ -1457,11 +1637,32 @@ export default function AdminPage() {
               {activePage === 'categories' && (
                 <div className="bg-white rounded-lg shadow-md p-6">
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">📂 Kategoriler</h2>
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => (
-                      <div key={category.id} className="border border-gray-200 rounded-lg p-4">
-                        <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                        <p className="text-sm text-gray-600">{category.description}</p>
+                      <div key={category.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-400 rounded-lg flex items-center justify-center">
+                            <span className="text-xl">{getCategoryIcon(category.name)}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-gray-900">{category.name}</h3>
+                            <p className="text-sm text-gray-600">{category.description}</p>
+                          </div>
+                        </div>
+                        <div className="flex justify-end space-x-2 mt-3">
+                          <button
+                            onClick={() => editCategory(category)}
+                            className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                          >
+                            Düzenle
+                          </button>
+                          <button
+                            onClick={() => deleteCategory(category.id)}
+                            className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                          >
+                            Sil
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1822,25 +2023,47 @@ export default function AdminPage() {
       {showAddCategoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">📂 Kategori Ekle</h3>
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <span className="mr-2">📂</span>
+              Kategori Ekle
+            </h3>
             <form onSubmit={addCategory}>
               <div className="space-y-4">
-                <input
-                  type="text"
-                  placeholder="Kategori Adı"
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryFormValue('name', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                />
-                <textarea
-                  placeholder="Açıklama"
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryFormValue('description', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  required
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Kategori Adı
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Örn: Pizza, Burger, İçecek"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryFormValue('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
+                  {categoryForm.name && (
+                    <div className="mt-2 flex items-center space-x-2">
+                      <span className="text-sm text-gray-500">Önizleme:</span>
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded-lg">
+                        <span className="text-lg">{getCategoryIcon(categoryForm.name)}</span>
+                        <span className="text-sm font-medium">{categoryForm.name}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Açıklama
+                  </label>
+                  <textarea
+                    placeholder="Kategori açıklaması"
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryFormValue('description', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    rows={3}
+                    required
+                  />
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button
@@ -1907,6 +2130,72 @@ export default function AdminPage() {
                   className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
                 >
                   Ekle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Kategori Düzenleme Modal */}
+      {showEditCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <span className="mr-2">📂</span>
+              Kategori Düzenle
+            </h3>
+            <form onSubmit={(e) => { e.preventDefault(); updateCategoryHandler(); }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Kategori Adı
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Örn: Pizza, Burger, İçecek"
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryFormValue('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    required
+                  />
+                  {categoryForm.name && (
+                    <div className="mt-2 flex items-center space-x-2">
+                      <span className="text-sm text-gray-500">Önizleme:</span>
+                      <div className="flex items-center space-x-2 px-3 py-1 bg-gray-100 rounded-lg">
+                        <span className="text-lg">{getCategoryIcon(categoryForm.name)}</span>
+                        <span className="text-sm font-medium">{categoryForm.name}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Açıklama
+                  </label>
+                  <textarea
+                    placeholder="Kategori açıklaması"
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryFormValue('description', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    rows={3}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditCategoryModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                >
+                  Güncelle
                 </button>
               </div>
             </form>
