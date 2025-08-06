@@ -417,12 +417,23 @@ export default function Home() {
     console.log('🔍 Giriş denemesi başlatılıyor...');
     console.log('🔍 Login form data:', loginForm);
     
+    // Form validation
+    if (!loginForm.email || !loginForm.password) {
+      toast.error('Lütfen email ve şifre alanlarını doldurun');
+      return;
+    }
+    
+    if (loginForm.email.trim() === '' || loginForm.password.trim() === '') {
+      toast.error('Lütfen email ve şifre alanlarını doldurun');
+      return;
+    }
+    
     try {
       // Auth store'dan login fonksiyonunu al
       const { login } = useAuthStore.getState();
       
       // Auth store'un login fonksiyonunu kullan
-      await login(loginForm.email, loginForm.password);
+      await login(loginForm.email.trim(), loginForm.password);
       
       toast.success('Giriş başarılı!');
       setShowLoginModal(false);
