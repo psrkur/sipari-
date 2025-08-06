@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { API_ENDPOINTS, apiRequest, handleImageError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
