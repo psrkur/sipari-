@@ -66,14 +66,7 @@ const truncateDescription = (text: string, maxLength: number = 60) => {
 }
 
 // Ürünleri kategorilere göre gruplandır
-const groupProductsByCategory = (products: Product[]) => {
-  return products.reduce((acc, product) => {
-    const categoryName = product.category?.name || 'Diğer';
-    if (!acc[categoryName]) acc[categoryName] = [];
-    acc[categoryName].push(product);
-    return acc;
-  }, {} as Record<string, Product[]>);
-};
+
 
 export default function TableOrder() {
   const searchParams = useSearchParams();
@@ -248,6 +241,15 @@ export default function TableOrder() {
     });
     return ['Tümü', ...sortedCategories];
   };
+
+  const groupProductsByCategory = useCallback((products: Product[]) => {
+    return products.reduce((acc, product) => {
+      const categoryName = product.category?.name || 'Diğer';
+      if (!acc[categoryName]) acc[categoryName] = [];
+      acc[categoryName].push(product);
+      return acc;
+    }, {} as Record<string, Product[]>);
+  }, []);
 
   const getCategoryIcon = useCallback((category: string) => {
     const icons: Record<string, string> = {

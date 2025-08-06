@@ -347,6 +347,23 @@ export default function Home() {
     return icons[category] || '🍽️'
   }, [])
 
+  const groupProductsByCategory = useCallback((products: Product[]) => {
+    const grouped: { [key: string]: Product[] } = {}
+    
+    products.forEach(product => {
+      const categoryName = typeof product.category === 'object' && product.category !== null 
+        ? product.category.name 
+        : product.category || 'Diğer'
+      
+      if (!grouped[categoryName]) {
+        grouped[categoryName] = []
+      }
+      grouped[categoryName].push(product)
+    })
+    
+    return grouped
+  }, [])
+
   const getAvailableCategories = useCallback(() => {
     const grouped = groupProductsByCategory(products)
     return ['Tümü', ...Object.keys(grouped)]
@@ -1190,20 +1207,4 @@ export default function Home() {
   )
 }
 
-// Ürünleri kategoriye göre grupla
-function groupProductsByCategory(products: Product[]) {
-  const grouped: { [key: string]: Product[] } = {}
-  
-  products.forEach(product => {
-    const categoryName = typeof product.category === 'object' && product.category !== null 
-      ? product.category.name 
-      : product.category || 'Diğer'
-    
-    if (!grouped[categoryName]) {
-      grouped[categoryName] = []
-    }
-    grouped[categoryName].push(product)
-  })
-  
-  return grouped
-} 
+ 
