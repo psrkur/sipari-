@@ -1,0 +1,114 @@
+# GüzelHosting'e Yüklenecek Dosyalar Listesi
+# =============================================
+
+## 📁 Ana Dizin Yapısı
+yemek5/
+├── backend/                    # Backend klasörü
+├── frontend/                   # Frontend klasörü
+├── package.json                # Ana proje
+├── deploy.sh                   # Deploy script
+└── render.yaml                 # Render konfigürasyonu
+
+## 🔧 Backend Dosyaları (Zorunlu)
+backend/
+├── server.js                   # Ana sunucu dosyası
+├── package.json                # Backend bağımlılıkları
+├── prisma/
+│   └── schema.prisma          # MySQL'e çevrilecek
+├── middleware/
+│   └── auth.js                # Kimlik doğrulama
+├── utils/
+│   ├── email-service.js       # Email servisi
+│   └── logger.js              # Log sistemi
+├── integrations/               # Entegrasyon dosyaları
+│   ├── api.js
+│   ├── getir-yemek.js
+│   ├── migros-yemek.js
+│   ├── trendyol-yemek.js
+│   └── yemeksepeti.js
+├── backups/
+│   └── database-export-2025-08-06T18-17-18-011Z.json  # Veri dosyası (25MB)
+└── uploads/                   # Yüklenen dosyalar
+
+## 🎨 Frontend Dosyaları (Zorunlu)
+frontend/
+├── package.json               # Frontend bağımlılıkları
+├── next.config.js             # Next.js konfigürasyonu
+├── tailwind.config.js         # Tailwind CSS
+├── tsconfig.json              # TypeScript
+├── app/                       # Next.js app router
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── globals.css
+│   ├── admin/
+│   ├── orders/
+│   ├── kitchen/
+│   ├── pos/
+│   └── qr-menu/
+├── components/                # React bileşenleri
+│   ├── ui/
+│   ├── BranchSelector.tsx
+│   ├── Cart.tsx
+│   ├── Chatbot.tsx
+│   └── ProductCard.tsx
+├── lib/                       # API ve socket bağlantıları
+│   ├── api.ts
+│   ├── axios.ts
+│   └── socket.ts
+├── store/                     # Zustand store
+│   ├── auth.ts
+│   └── cart.ts
+└── hooks/                     # Custom hooks
+
+## 📋 Yükleme Öncesi Yapılacaklar
+
+### 1. Environment Dosyası Oluşturma
+backend/.env dosyası oluşturun:
+```env
+DATABASE_URL="mysql://kullanici:sifre@guzelhosting_host:3306/veritabani"
+JWT_SECRET="your-jwt-secret-key"
+EMAIL_USER="your-email@gmail.com"
+EMAIL_PASS="your-app-password"
+NODE_ENV="production"
+```
+
+### 2. Prisma Schema MySQL'e Çevirme
+backend/prisma/schema.prisma dosyasında:
+```prisma
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+```
+
+### 3. Frontend Environment
+frontend/.env.local dosyası oluşturun:
+```env
+NEXT_PUBLIC_API_URL="https://your-domain.com"
+NEXT_PUBLIC_SOCKET_URL="https://your-domain.com"
+```
+
+## 🚫 Yüklenmeyecek Dosyalar
+- node_modules/                 # npm install ile yüklenecek
+- .git/                        # Git geçmişi
+- backups/*.sql                # Placeholder dosyalar
+- *.log                        # Log dosyaları
+- dist/                        # Build dosyaları
+- .next/                       # Next.js build
+- .env                         # Güvenlik için
+
+## 📦 Yükleme Sırası
+1. Backend dosyalarını yükle
+2. Frontend dosyalarını yükle
+3. Ana proje dosyalarını yükle
+4. Environment dosyalarını oluştur
+5. npm install komutlarını çalıştır
+6. Prisma migration çalıştır
+7. Veritabanı verilerini import et
+
+## 🔗 GüzelHosting Ayarları
+- PHP sürümü: 8.1+
+- Node.js: 18+
+- MySQL: 8.0+
+- SSL sertifikası aktif
+- Domain yönlendirmesi yapılandırılmış 

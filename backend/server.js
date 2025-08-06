@@ -3981,6 +3981,61 @@ app.use('/api', dashboardRouter);
 // Yedekleme router'ını ekle
 app.use('/api/backup', backupRouter);
 
+// Admin backup endpoint'leri
+app.get('/api/admin/backup/stats', authenticateToken, async (req, res) => {
+  try {
+    const backupSystem = require('./backup-system');
+    const stats = backupSystem.getBackupStatus();
+    res.json(stats);
+  } catch (error) {
+    console.error('Backup stats hatası:', error);
+    res.status(500).json({ error: 'Backup istatistikleri alınamadı' });
+  }
+});
+
+app.get('/api/admin/backup/list', authenticateToken, async (req, res) => {
+  try {
+    const backupSystem = require('./backup-system');
+    const backupList = backupSystem.getBackupList();
+    res.json(backupList);
+  } catch (error) {
+    console.error('Backup list hatası:', error);
+    res.status(500).json({ error: 'Backup listesi alınamadı' });
+  }
+});
+
+app.post('/api/admin/backup/create', authenticateToken, async (req, res) => {
+  try {
+    const backupSystem = require('./backup-system');
+    const backupFile = await backupSystem.triggerManualBackup();
+    res.json({ 
+      success: true, 
+      message: 'Yedekleme başarıyla oluşturuldu',
+      filename: require('path').basename(backupFile)
+    });
+  } catch (error) {
+    console.error('Backup oluşturma hatası:', error);
+    res.status(500).json({ error: 'Yedekleme oluşturulamadı' });
+  }
+});
+
+app.get('/api/admin/backup/download/:filename', authenticateToken, async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const backupSystem = require('./backup-system');
+    const backupPath = require('path').join(backupSystem.backupDir, filename);
+    
+    if (!require('fs').existsSync(backupPath)) {
+      return res.status(404).json({ error: 'Yedek dosyası bulunamadı' });
+    }
+    
+    res.download(backupPath, filename);
+  } catch (error) {
+    console.error('Backup indirme hatası:', error);
+    res.status(500).json({ error: 'Yedek dosyası indirilemedi' });
+  }
+});
+
 
 
 // 404 handler - En sona taşındı

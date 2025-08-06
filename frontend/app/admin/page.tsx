@@ -1079,9 +1079,6 @@ export default function AdminPage() {
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/qr-codes');
                   
-                  // Router'ın hazır olup olmadığını kontrol et
-                  try {
-                  
                   try {
                     console.log('7. Router.push() deneniyor...');
                     router.push('/admin/qr-codes');
@@ -1115,9 +1112,6 @@ export default function AdminPage() {
                   console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/table-management');
-                  
-                  // Router'ın hazır olup olmadığını kontrol et
-                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');
@@ -1153,9 +1147,6 @@ export default function AdminPage() {
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/chat-management');
                   
-                  // Router'ın hazır olup olmadığını kontrol et
-                  try {
-                  
                   try {
                     console.log('7. Router.push() deneniyor...');
                     router.push('/admin/chat-management');
@@ -1190,9 +1181,6 @@ export default function AdminPage() {
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/backup-management');
                   
-                  // Router'ın hazır olup olmadığını kontrol et
-                  try {
-                  
                   try {
                     console.log('7. Router.push() deneniyor...');
                     router.push('/admin/backup-management');
@@ -1226,9 +1214,6 @@ export default function AdminPage() {
                   console.log('3. Router durumu kontrol ediliyor...');
                   console.log('4. Current pathname:', window.location.pathname);
                   console.log('5. Target path: /admin/email-test');
-                  
-                  // Router'ın hazır olup olmadığını kontrol et
-                  try {
                   
                   try {
                     console.log('7. Router.push() deneniyor...');

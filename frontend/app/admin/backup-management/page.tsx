@@ -1,91 +1,85 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/store/auth';
+import { API_ENDPOINTS } from '@/lib/api';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Download, 
-  Trash2, 
-  RefreshCw, 
-  Database, 
-  Clock, 
-  HardDrive,
-  AlertCircle,
-  CheckCircle,
-  XCircle
-} from 'lucide-react';
+import { Download, Upload, Database, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
-interface BackupStatus {
-  lastBackup: string | null;
+interface BackupStats {
+  lastBackup: string;
   totalBackups: number;
   successRate: number;
   databaseType: string;
 }
 
 interface BackupFile {
+  timestamp: string;
   filename: string;
-  size: string;
-  created: string;
+  size: number;
   type: string;
+  success: boolean;
 }
 
-interface BackupStats {
-  totalBackups: number;
-  successRate: number;
-  lastBackup: string | null;
-  totalSize: number;
-  averageSize: number;
-}
-
-const BackupManagement = () => {
-  const [status, setStatus] = useState<BackupStatus | null>(null);
-  const [backups, setBackups] = useState<BackupFile[]>([]);
-  const [stats, setStats] = useState<BackupStats | null>(null);
+export default function BackupManagement() {
+  const { token } = useAuthStore();
   const [loading, setLoading] = useState(false);
-  const [triggering, setTriggering] = useState(false);
+  const [backupStats, setBackupStats] = useState<BackupStats | null>(null);
+  const [backupFiles, setBackupFiles] = useState<BackupFile[]>([]);
+  const [creatingBackup, setCreatingBackup] = useState(false);
 
-  const fetchData = async () => {
+  const fetchBackupStats = async () => {
     try {
       setLoading(true);
-      const [statusRes, backupsRes, statsRes] = await Promise.all([
-        axios.get('/api/backup/status'),
-        axios.get('/api/backup/list'),
-        axios.get('/api/backup/stats')
-      ]);
-
-      setStatus(statusRes.data.data);
-      setBackups(backupsRes.data.data.backups);
-      setStats(statsRes.data.data);
+      const response = await axios.get(API_ENDPOINTS.ADMIN_BACKUP_STATS, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBackupStats(response.data);
     } catch (error) {
-      console.error('Yedekleme verileri alınamadı:', error);
+      console.error('Backup stats hatası:', error);
+      toast.error('Backup istatistikleri yüklenemedi');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const triggerBackup = async () => {
+  const fetchBackupFiles = async () => {
     try {
-      setTriggering(true);
-      await axios.post('/api/backup/trigger');
-      await fetchData();
-      alert('Yedekleme başarıyla tamamlandı!');
+      const response = await axios.get(API_ENDPOINTS.ADMIN_BACKUP_LIST, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBackupFiles(response.data);
     } catch (error) {
-      console.error('Yedekleme hatası:', error);
-      alert('Yedekleme işlemi başarısız!');
+      console.error('Backup dosyaları hatası:', error);
+      toast.error('Backup dosyaları yüklenemedi');
+    }
+  };
+
+  const createBackup = async () => {
+    try {
+      setCreatingBackup(true);
+      const response = await axios.post(API_ENDPOINTS.ADMIN_BACKUP_CREATE, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Yedekleme başarıyla oluşturuldu');
+      fetchBackupStats();
+      fetchBackupFiles();
+    } catch (error) {
+      console.error('Backup oluşturma hatası:', error);
+      toast.error('Yedekleme oluşturulamadı');
     } finally {
-      setTriggering(false);
+      setCreatingBackup(false);
     }
   };
 
   const downloadBackup = async (filename: string) => {
     try {
-      const response = await axios.get(`/api/backup/download/${filename}`, {
+      const response = await axios.get(`${API_ENDPOINTS.ADMIN_BACKUP_DOWNLOAD}/${filename}`, {
+        headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });
       
@@ -96,229 +90,172 @@ const BackupManagement = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      
+      toast.success('Yedek dosyası indirildi');
     } catch (error) {
-      console.error('İndirme hatası:', error);
-      alert('Yedek indirilemedi!');
+      console.error('Backup indirme hatası:', error);
+      toast.error('Yedek dosyası indirilemedi');
     }
   };
 
-  const deleteBackup = async (filename: string) => {
-    if (!confirm(`${filename} dosyasını silmek istediğinizden emin misiniz?`)) {
-      return;
-    }
+  useEffect(() => {
+    fetchBackupStats();
+    fetchBackupFiles();
+  }, []);
 
-    try {
-      await axios.delete(`/api/backup/delete/${filename}`);
-      await fetchData();
-      alert('Yedek başarıyla silindi!');
-    } catch (error) {
-      console.error('Silme hatası:', error);
-      alert('Yedek silinemedi!');
-    }
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('tr-TR');
   };
 
-  const getStatusColor = (successRate: number) => {
-    if (successRate >= 90) return 'bg-green-500';
-    if (successRate >= 70) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Yedekleme Yönetimi</h1>
-        <Button 
-          onClick={triggerBackup} 
-          disabled={triggering}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          {triggering ? (
-            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Database className="w-4 h-4 mr-2" />
-          )}
-          Manuel Yedekleme
-        </Button>
-      </div>
-
-      {/* Durum Kartları */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Veritabanı Türü</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{status?.databaseType || 'Bilinmiyor'}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Yedek</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{status?.totalBackups || 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Başarı Oranı</CardTitle>
-            <div className={`h-4 w-4 rounded-full ${getStatusColor(status?.successRate || 0)}`} />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{status?.successRate || 0}%</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Son Yedekleme</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              {status?.lastBackup ? formatDate(status.lastBackup) : 'Hiç yedeklenmemiş'}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* İstatistikler */}
-      {stats && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Yedekleme İstatistikleri</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-sm text-gray-500">Toplam Boyut</div>
-                <div className="text-lg font-semibold">
-                  {Math.round(stats.totalSize / 1024 / 1024 * 100) / 100} MB
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Ortalama Boyut</div>
-                <div className="text-lg font-semibold">
-                  {Math.round(stats.averageSize / 1024 / 1024 * 100) / 100} MB
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Başarı Oranı</div>
-                <div className="text-lg font-semibold">{stats.successRate}%</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Toplam Yedek</div>
-                <div className="text-lg font-semibold">{stats.totalBackups}</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Yedek Listesi */}
-      <Card>
-        <CardHeader>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
           <div className="flex items-center justify-between">
-            <CardTitle>Yedek Dosyaları</CardTitle>
-            <Button onClick={fetchData} disabled={loading} variant="outline" size="sm">
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Yenile
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                <Database className="h-6 w-6 mr-2 text-blue-600" />
+                Yedekleme Yönetimi
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Veritabanı yedeklerini oluşturun ve yönetin
+              </p>
+            </div>
+            <Button
+              onClick={createBackup}
+              disabled={creatingBackup}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {creatingBackup ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Yedekleniyor...
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Yeni Yedek Oluştur
+                </>
+              )}
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin" />
-              <span className="ml-2">Yükleniyor...</span>
-            </div>
-          ) : backups.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Database className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>Henüz yedek dosyası bulunmuyor</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {backups.map((backup, index) => (
-                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <Database className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <div className="font-medium">{backup.filename}</div>
-                        <div className="text-sm text-gray-500">
-                          {formatDate(backup.created)} • {backup.size}
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant={backup.type === 'postgresql' ? 'default' : 'secondary'}>
-                      {backup.type.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      onClick={() => downloadBackup(backup.filename)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      onClick={() => deleteBackup(backup.filename)}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+        </div>
+
+        {/* İstatistikler */}
+        {backupStats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Clock className="h-8 w-8 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Son Yedekleme</p>
+                    <p className="text-lg font-semibold">
+                      {formatDate(backupStats.lastBackup)}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </CardContent>
+            </Card>
 
-      {/* Otomatik Yedekleme Bilgisi */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Otomatik Yedekleme Ayarları</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <div>
-                <div className="font-medium">Günlük Yedekleme</div>
-                <div className="text-sm text-gray-500">Her gün saat 02:00</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <div>
-                <div className="font-medium">Haftalık Yedekleme</div>
-                <div className="text-sm text-gray-500">Her Pazar saat 03:00</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
-              <div>
-                <div className="font-medium">Yedek Saklama</div>
-                <div className="text-sm text-gray-500">Günlük: 7 gün, Haftalık: 30 gün, Aylık: 90 gün</div>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <Database className="h-8 w-8 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Toplam Yedek</p>
+                    <p className="text-lg font-semibold">{backupStats.totalBackups}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Başarı Oranı</p>
+                    <p className="text-lg font-semibold">{backupStats.successRate}%</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center">
+                  <AlertCircle className="h-8 w-8 text-purple-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Veritabanı Tipi</p>
+                    <p className="text-lg font-semibold">{backupStats.databaseType}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Yedek Dosyaları */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Yedek Dosyaları</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Yedek dosyaları yükleniyor...</p>
+              </div>
+            ) : backupFiles.length === 0 ? (
+              <div className="text-center py-8">
+                <Database className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">Henüz yedek dosyası bulunmuyor</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {backupFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {file.success ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      <div>
+                        <p className="font-medium">{file.filename}</p>
+                        <p className="text-sm text-gray-600">
+                          {formatDate(file.timestamp)} • {formatFileSize(file.size)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => downloadBackup(file.filename)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      İndir
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
-};
-
-export default BackupManagement; 
+} 

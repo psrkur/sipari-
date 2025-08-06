@@ -232,7 +232,11 @@ export const API_ENDPOINTS = {
   get COMPANIES() { return `${getCurrentApiBaseUrl()}/api/companies` },
   get CUSTOMERS() { return `${getCurrentApiBaseUrl()}/api/customers` },
   
-
+  // Backup Management
+  get ADMIN_BACKUP_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/backup/stats` },
+  get ADMIN_BACKUP_LIST() { return `${getCurrentApiBaseUrl()}/api/admin/backup/list` },
+  get ADMIN_BACKUP_CREATE() { return `${getCurrentApiBaseUrl()}/api/admin/backup/create` },
+  get ADMIN_BACKUP_DOWNLOAD() { return (filename: string) => `${getCurrentApiBaseUrl()}/api/admin/backup/download/${filename}` },
 };
 
 export { apiRequest };
