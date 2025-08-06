@@ -317,7 +317,7 @@ export function useOptimizedInterval(
         intervalRef.current = null;
       }
     };
-  }, [callback, delay, enabled]);
+  }, [delay, enabled]); // callback dependency'sini kaldırdık
 
   return intervalRef.current;
 }
