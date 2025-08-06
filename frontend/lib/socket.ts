@@ -61,7 +61,7 @@ export const useSocket = () => {
   useEffect(() => {
     // Socket bağlantısını oluştur
     socketRef.current = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
+      transports: ['polling', 'websocket'], // Polling'i önce dene
       autoConnect: true,
       timeout: 60000, // 60 saniye timeout (artırıldı)
       forceNew: false, // Mevcut bağlantıyı yeniden kullan
