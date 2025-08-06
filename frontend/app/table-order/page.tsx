@@ -259,7 +259,6 @@ export default function TableOrder() {
       'Pilav': '🍚',
       'Makarna': '🍝',
       'Noodle': '🍜',
-      'Makarna': '🍝',
       
       // Pizza ve İtalyan
       'Pizza': '🍕',
