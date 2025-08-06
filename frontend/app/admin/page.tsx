@@ -451,7 +451,7 @@ export default function AdminPage() {
     } finally {
       setCleanupLoading(false);
     }
-  }, [token, fetchDatabaseStats, fetchOrders]);
+  }, [token]);
 
   // Tüm siparişleri silme işlemi
   const handleDeleteAllOrders = useCallback(async () => {
@@ -508,7 +508,7 @@ export default function AdminPage() {
       console.error('Sipariş durumu güncellenemedi:', error);
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token, updateOrderItem]);
+  }, [token]);
 
   // Form submit handlers
   const addUser = useCallback(async (e: React.FormEvent) => {
@@ -527,7 +527,7 @@ export default function AdminPage() {
       console.error('Kullanıcı eklenemedi:', error);
       toast.error('Kullanıcı eklenemedi');
     }
-  }, [token, userForm, setUsers, resetUserForm]);
+  }, [token, userForm]);
 
   const addProduct = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -554,7 +554,7 @@ export default function AdminPage() {
       console.error('Ürün eklenemedi:', error);
       toast.error('Ürün eklenemedi');
     }
-  }, [token, productForm, setProducts, resetProductForm, setProductFormValue]);
+  }, [token, productForm]);
 
   const addCategory = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -572,7 +572,7 @@ export default function AdminPage() {
       console.error('Kategori eklenemedi:', error);
       toast.error('Kategori eklenemedi');
     }
-  }, [token, categoryForm, setCategories, resetCategoryForm]);
+  }, [token, categoryForm]);
 
   const addBranch = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -590,7 +590,7 @@ export default function AdminPage() {
       console.error('Şube eklenemedi:', error);
       toast.error('Şube eklenemedi');
     }
-  }, [token, branchForm, setBranches, resetBranchForm]);
+  }, [token, branchForm]);
 
   // Utility functions
   const formatDate = useCallback((date: string) => {
@@ -599,11 +599,11 @@ export default function AdminPage() {
 
   const handleImageSelect = useCallback((imagePath: string) => {
     setProductFormValue('image', imagePath);
-  }, [setProductFormValue]);
+  }, []);
 
   const handleEditImageSelect = useCallback((imagePath: string) => {
     setProductFormValue('image', imagePath);
-  }, [setProductFormValue]);
+  }, []);
 
   // Eksik fonksiyonlar
   const deleteUser = useCallback(async (userId: number) => {
@@ -617,7 +617,7 @@ export default function AdminPage() {
       console.error('Kullanıcı silinemedi:', error);
       toast.error('Kullanıcı silinemedi');
     }
-  }, [token, setUsers]);
+  }, [token]);
 
   const activateUser = useCallback(async (userId: number) => {
     try {
@@ -633,7 +633,7 @@ export default function AdminPage() {
       console.error('Kullanıcı aktifleştirilemedi:', error);
       toast.error('Kullanıcı aktifleştirilemedi');
     }
-  }, [token, updateUserItem]);
+  }, [token]);
 
   const editProduct = useCallback((product: any) => {
     setEditingProduct(product);
@@ -649,7 +649,7 @@ export default function AdminPage() {
     setProductFormValue('branchId', branchId);
     setProductFormValue('image', product.image || product.imagePath || '');
     setShowEditProductModal(true);
-  }, [setProductFormValue]);
+  }, []);
 
   const updateProductHandler = useCallback(async () => {
     if (!editingProduct) {
@@ -716,7 +716,7 @@ export default function AdminPage() {
       console.error('Ürün güncelleme hatası:', error);
       alert('Ürün güncellenirken bir hata oluştu');
     }
-  }, [token, productForm, editingProduct, setProducts, resetProductForm, setProductFormValue]);
+  }, [token, productForm, editingProduct]);
 
   const toggleProductStatus = useCallback(async (productId: number, isActive: boolean) => {
     try {
@@ -734,7 +734,7 @@ export default function AdminPage() {
       console.error('Ürün durumu güncellenemedi:', error);
       toast.error('Ürün durumu güncellenemedi');
     }
-  }, [token, updateProductItem]);
+  }, [token]);
 
   const deleteProduct = useCallback(async (productId: number) => {
     try {
@@ -747,7 +747,7 @@ export default function AdminPage() {
       console.error('Ürün silinemedi:', error);
       toast.error('Ürün silinemedi');
     }
-  }, [token, setProducts]);
+  }, [token]);
 
   const deleteCategory = useCallback(async (categoryId: number) => {
     try {
@@ -760,14 +760,14 @@ export default function AdminPage() {
       console.error('Kategori silinemedi:', error);
       toast.error('Kategori silinemedi');
     }
-  }, [token, setCategories]);
+  }, [token]);
 
   const editCategory = useCallback((category: Category) => {
     setEditingCategory(category);
     setCategoryFormValue('name', category.name);
     setCategoryFormValue('description', category.description);
     setShowEditCategoryModal(true);
-  }, [setCategoryFormValue]);
+  }, []);
 
   const updateCategoryHandler = useCallback(async () => {
     if (!editingCategory) return;
@@ -792,7 +792,7 @@ export default function AdminPage() {
       console.error('Kategori güncellenemedi:', error);
       toast.error('Kategori güncellenemedi');
     }
-  }, [token, categoryForm, editingCategory, updateCategoryItem, resetCategoryForm]);
+  }, [token, categoryForm, editingCategory]);
 
   const editBranch = useCallback((branch: any) => {
     setEditingBranch(branch);
@@ -800,7 +800,7 @@ export default function AdminPage() {
     setBranchFormValue('address', branch.address);
     setBranchFormValue('phone', branch.phone);
     setShowEditBranchModal(true);
-  }, [setBranchFormValue]);
+  }, []);
 
   const updateBranchHandler = useCallback(async () => {
     if (!editingBranch) return;
@@ -825,7 +825,7 @@ export default function AdminPage() {
       console.error('Şube güncellenemedi:', error);
       toast.error('Şube güncellenemedi');
     }
-  }, [token, branchForm, editingBranch, updateBranchItem, resetBranchForm]);
+  }, [token, branchForm, editingBranch]);
 
   const deleteBranch = useCallback(async (branchId: number) => {
     if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
@@ -842,7 +842,7 @@ export default function AdminPage() {
       console.error('Şube silinemedi:', error);
       toast.error('Şube silinemedi');
     }
-  }, [token, setBranches]);
+  }, [token]);
 
   const deactivateBranch = useCallback(async (branchId: number) => {
     if (!confirm('Bu şubeyi pasif hale getirmek istediğinizden emin misiniz? Şube artık aktif olmayacak.')) {
@@ -864,7 +864,7 @@ export default function AdminPage() {
       console.error('Şube pasif hale getirilemedi:', error);
       toast.error('Şube pasif hale getirilemedi');
     }
-  }, [token, setBranches]);
+  }, [token]);
 
   // Filtrelenmiş siparişler
   const filteredOrders = useMemo(() => {
