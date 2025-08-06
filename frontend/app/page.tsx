@@ -441,7 +441,7 @@ export default function Home() {
       setSelectedProduct(null);
       setQuantity(1);
     }
-  }, [selectedProduct, quantity])
+  }, [selectedProduct, quantity, addToCart])
 
   const handlePlaceOrder = useCallback(async () => {
     // Yeni Cart bileşeni kendi sipariş işlemini yapıyor
@@ -502,7 +502,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, [loginForm]) // loginForm'u dependency olarak ekle
+  }, []) // Dependency array'i boş bırak, loginForm'u closure içinde kullan
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -561,7 +561,7 @@ export default function Home() {
   // Gruplandırılmış ürünler - memoize edilmiş
   const groupedProducts = useMemo(() => {
     return groupProductsByCategory(filteredProducts)
-  }, [filteredProducts, groupProductsByCategory])
+  }, [filteredProducts])
 
   // Image preloading için optimize edilmiş
   const preloadImages = useCallback((products: Product[]) => {
