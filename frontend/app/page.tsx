@@ -367,7 +367,7 @@ export default function Home() {
   const getAvailableCategories = useCallback(() => {
     const grouped = groupProductsByCategory(products)
     return ['Tümü', ...Object.keys(grouped)]
-  }, [products, groupProductsByCategory])
+  }, [products])
 
   const addToCart = useCallback((product: Product) => {
     // Zustand store'u kullanarak sepete ekle
@@ -405,7 +405,7 @@ export default function Home() {
       setSelectedProduct(null);
       setQuantity(1);
     }
-  }, [selectedProduct, quantity, addToCart])
+  }, [selectedProduct, quantity])
 
   const handlePlaceOrder = useCallback(async () => {
     // Yeni Cart bileşeni kendi sipariş işlemini yapıyor
@@ -452,7 +452,7 @@ export default function Home() {
       console.error('❌ Giriş hatası:', error);
       toast.error(error.message || 'Giriş başarısız');
     }
-  }, [loginForm])
+  }, [])
 
   const handleRegister = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -474,7 +474,7 @@ export default function Home() {
       console.error('Kayıt hatası:', error);
       toast.error(error.message || 'Kayıt başarısız');
     }
-  }, [registerForm])
+  }, [])
 
   // Dropdown dışına tıklandığında kapat
   useEffect(() => {
