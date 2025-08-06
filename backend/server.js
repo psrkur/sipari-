@@ -528,6 +528,130 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Şifre sıfırlama talebi endpoint'i
+app.post('/api/auth/forgot-password', async (req, res) => {
+  // CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ error: 'Email adresi gerekli' });
+    }
+
+    // Kullanıcıyı bul
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      // Güvenlik için kullanıcı bulunamasa da aynı mesajı döndür
+      return res.json({ message: 'Şifre sıfırlama linki email adresinize gönderildi' });
+    }
+
+    // Reset token oluştur (1 saat geçerli)
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 saat
+
+    // Kullanıcıyı güncelle
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken,
+        resetTokenExpiry
+      }
+    });
+
+    // Reset link oluştur
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+    // Email gönder
+    const emailService = require('./utils/email-service');
+    const emailResult = await emailService.sendPasswordResetEmail(email, resetLink, user.name);
+
+    if (emailResult.success) {
+      console.log('✅ Şifre sıfırlama emaili gönderildi:', email);
+      res.json({ message: 'Şifre sıfırlama linki email adresinize gönderildi' });
+    } else {
+      console.error('❌ Email gönderme hatası:', emailResult.error);
+      res.status(500).json({ error: 'Email gönderilemedi' });
+    }
+
+  } catch (error) {
+    console.error('❌ Şifre sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Şifre sıfırlama işlemi başarısız' });
+  }
+});
+
+// Şifre sıfırlama endpoint'i
+app.post('/api/auth/reset-password', async (req, res) => {
+  // CORS ayarları
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Length, Content-Type');
+  res.set('Access-Control-Max-Age', '86400');
+  res.set('Access-Control-Allow-Credentials', 'false');
+  
+  // OPTIONS request için
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token ve yeni şifre gerekli' });
+    }
+
+    // Kullanıcıyı token ile bul
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: token,
+        resetTokenExpiry: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş token' });
+    }
+
+    // Yeni şifreyi hash'le
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Kullanıcıyı güncelle
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null
+      }
+    });
+
+    console.log('✅ Şifre başarıyla sıfırlandı:', user.email);
+    res.json({ message: 'Şifreniz başarıyla sıfırlandı' });
+
+  } catch (error) {
+    console.error('❌ Şifre sıfırlama hatası:', error);
+    res.status(500).json({ error: 'Şifre sıfırlama işlemi başarısız' });
+  }
+});
+
 app.get('/api/branches', async (req, res) => {
   try {
     const branches = await prisma.branch.findMany({

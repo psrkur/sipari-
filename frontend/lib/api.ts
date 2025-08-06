@@ -99,6 +99,8 @@ export const API_ENDPOINTS = {
   // Auth
   get REGISTER() { return `${getCurrentApiBaseUrl()}/api/auth/register` },
   get LOGIN() { return `${getCurrentApiBaseUrl()}/api/auth/login` },
+  get FORGOT_PASSWORD() { return `${getCurrentApiBaseUrl()}/api/auth/forgot-password` },
+  get RESET_PASSWORD() { return `${getCurrentApiBaseUrl()}/api/auth/reset-password` },
   
   // Branches
   get BRANCHES() { 

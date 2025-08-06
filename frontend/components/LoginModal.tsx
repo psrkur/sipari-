@@ -15,9 +15,10 @@ interface LoginForm {
 interface LoginModalProps {
   onClose: () => void
   onSwitchToRegister: () => void
+  onSwitchToForgotPassword: () => void
 }
 
-export default function LoginModal({ onClose, onSwitchToRegister }: LoginModalProps) {
+export default function LoginModal({ onClose, onSwitchToRegister, onSwitchToForgotPassword }: LoginModalProps) {
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>()
   const { login } = useAuthStore()
@@ -78,6 +79,15 @@ export default function LoginModal({ onClose, onSwitchToRegister }: LoginModalPr
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
+            <div className="text-right mt-1">
+              <button
+                type="button"
+                onClick={onSwitchToForgotPassword}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Şifremi unuttum
+              </button>
+            </div>
           </div>
 
           <button

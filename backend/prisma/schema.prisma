@@ -18,6 +18,8 @@ model User {
   branchId   Int?
   isActive   Boolean       @default(false)
   isApproved Boolean       @default(false)
+  resetToken String?       // Şifre sıfırlama token'ı
+  resetTokenExpiry DateTime? // Token geçerlilik süresi
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
   orders     Order[]

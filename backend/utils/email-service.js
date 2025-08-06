@@ -193,7 +193,83 @@ const sendAdminNotification = async (order, customer, branch) => {
   }
 };
 
+// Şifre sıfırlama email template'i
+const createPasswordResetEmailTemplate = (resetLink, userName) => {
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background-color: #007bff; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h1 style="margin: 0;">🔐 Şifre Sıfırlama</h1>
+        <p style="margin: 10px 0 0 0;">Şifrenizi sıfırlamak için aşağıdaki linke tıklayın.</p>
+      </div>
+      
+      <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; margin-top: 0;">Merhaba ${userName},</h2>
+        
+        <p style="color: #666; line-height: 1.6;">
+          Hesabınız için şifre sıfırlama talebinde bulundunuz. Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetLink}" 
+             style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+            Şifremi Sıfırla
+          </a>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <p style="margin: 0; color: #6c757d; font-size: 14px;">
+            <strong>Önemli:</strong> Bu link 1 saat süreyle geçerlidir. Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+          </p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+          <p style="color: #6c757d; margin: 0;">Bu email otomatik olarak gönderilmiştir.</p>
+          <p style="color: #6c757d; margin: 5px 0 0 0;">Sorularınız için destek ekibimizle iletişime geçebilirsiniz.</p>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+// Şifre sıfırlama emaili gönderme
+const sendPasswordResetEmail = async (email, resetLink, userName) => {
+  try {
+    const transporter = createTransporter();
+    
+    const emailHtml = createPasswordResetEmailTemplate(resetLink, userName);
+    
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: '🔐 Şifre Sıfırlama Talebi - Yemek5',
+      html: emailHtml,
+      text: `
+        Şifre Sıfırlama Talebi
+        
+        Merhaba ${userName},
+        
+        Hesabınız için şifre sıfırlama talebinde bulundunuz. Şifrenizi sıfırlamak için aşağıdaki linke tıklayın:
+        
+        ${resetLink}
+        
+        Bu link 1 saat süreyle geçerlidir. Eğer bu talebi siz yapmadıysanız, bu emaili görmezden gelebilirsiniz.
+        
+        Yemek5 Ekibi
+      `
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Şifre sıfırlama emaili gönderildi:', result.messageId);
+    return { success: true, messageId: result.messageId };
+    
+  } catch (error) {
+    console.error('❌ Şifre sıfırlama email gönderme hatası:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendOrderNotification,
-  sendAdminNotification
+  sendAdminNotification,
+  sendPasswordResetEmail
 }; 

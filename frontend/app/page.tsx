@@ -31,6 +31,7 @@ import {
   User,
   LogOut
 } from 'lucide-react'
+import ForgotPasswordModal from '@/components/ForgotPasswordModal'
 
 interface Branch {
   id: number
@@ -80,6 +81,7 @@ export default function Home() {
   const [showProductModal, setShowProductModal] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false)
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
   const [registerForm, setRegisterForm] = useState({ 
     name: '', 
@@ -1039,6 +1041,18 @@ export default function Home() {
                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                      placeholder="••••••••"
                    />
+                   <div className="text-right mt-1">
+                     <button
+                       type="button"
+                       onClick={() => {
+                         setShowLoginModal(false);
+                         setShowForgotPasswordModal(true);
+                       }}
+                       className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                     >
+                       Şifremi unuttum
+                     </button>
+                   </div>
                  </div>
                  <button
                    type="submit"
@@ -1059,6 +1073,17 @@ export default function Home() {
              )}
       </div>
          </div>
+       )}
+
+       {/* Şifremi Unuttum Modalı */}
+       {showForgotPasswordModal && (
+         <ForgotPasswordModal
+           onClose={() => setShowForgotPasswordModal(false)}
+           onSwitchToLogin={() => {
+             setShowForgotPasswordModal(false);
+             setShowLoginModal(true);
+           }}
+         />
        )}
     </div>
   )
