@@ -49,21 +49,72 @@ cloudinary.config({
 
 const { PrismaClient } = require('@prisma/client');
 
-// Prisma client configuration - En basit hali
-const prisma = new PrismaClient();
+// Prisma client configuration - Bağlantı havuzu ayarları ile
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: DATABASE_URL
+    }
+  },
+  // Bağlantı havuzu ayarları
+  log: ['error', 'warn'],
+  errorFormat: 'pretty',
+  // Bağlantı yeniden deneme ayarları
+  __internal: {
+    engine: {
+      connectionLimit: 5,
+      pool: {
+        min: 0,
+        max: 10,
+        acquireTimeoutMillis: 30000,
+        createTimeoutMillis: 30000,
+        destroyTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000,
+        reapIntervalMillis: 1000,
+        createRetryIntervalMillis: 200,
+      }
+    }
+  }
+});
 
 // Global prisma instance'ını export et
 global.prisma = prisma;
 
 console.log('🔧 Prisma client oluşturuldu');
 
+// Bağlantı yeniden deneme fonksiyonu
+async function connectWithRetry(maxRetries = 5, delay = 2000) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await prisma.$connect();
+      console.log('✅ Prisma client başarıyla bağlandı');
+      return true;
+    } catch (error) {
+      console.error(`❌ Bağlantı denemesi ${i + 1}/${maxRetries} başarısız:`, error.message);
+      
+      if (i < maxRetries - 1) {
+        console.log(`⏳ ${delay}ms sonra tekrar deneniyor...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 1.5; // Exponential backoff
+      } else {
+        console.error('❌ Maksimum deneme sayısına ulaşıldı');
+        return false;
+      }
+    }
+  }
+}
+
 // Prisma bağlantısını test et
-prisma.$connect()
-  .then(() => {
-    console.log('✅ Prisma client başarıyla bağlandı');
+connectWithRetry()
+  .then((success) => {
+    if (!success) {
+      console.error('❌ Veritabanı bağlantısı kurulamadı');
+      process.exit(1);
+    }
   })
   .catch((error) => {
-    console.error('❌ Prisma client bağlantı hatası:', error);
+    console.error('❌ Bağlantı hatası:', error);
+    process.exit(1);
   });
 
 // Prisma client'ı global olarak tanımla
@@ -5116,4 +5167,32 @@ app.use('*', (req, res) => {
   console.log('❌ 404 - Endpoint bulunamadı:', req.method, req.url);
   res.status(404).json({ error: 'Endpoint bulunamadı' });
 });
+
+// Graceful shutdown mekanizması
+process.on('SIGTERM', async () => {
+  console.log('🛑 SIGTERM sinyali alındı, graceful shutdown başlatılıyor...');
+  try {
+    await prisma.$disconnect();
+    console.log('✅ Prisma bağlantısı güvenli şekilde kapatıldı');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Prisma bağlantısı kapatılırken hata:', error);
+    process.exit(1);
+  }
+});
+
+process.on('SIGINT', async () => {
+  console.log('🛑 SIGINT sinyali alındı, graceful shutdown başlatılıyor...');
+  try {
+    await prisma.$disconnect();
+    console.log('✅ Prisma bağlantısı güvenli şekilde kapatıldı');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Prisma bağlantısı kapatılırken hata:', error);
+    process.exit(1);
+  }
+});
+
+// Prisma client'ı global olarak tanımla
+global.prismaClient = prisma;
 

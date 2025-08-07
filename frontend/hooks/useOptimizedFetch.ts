@@ -122,7 +122,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function useOptimizedFetch<T = any>(
-  url: string,
+  url: string | null,
   options: UseOptimizedFetchOptions = {}
 ): UseOptimizedFetchReturn<T> {
   const {
@@ -144,9 +144,9 @@ export function useOptimizedFetch<T = any>(
   const retryCountRef = useRef(0);
   const isMountedRef = useRef(true);
 
-  // Cache'den veri al
-  const getCachedData = useCallback((cacheKey: string): T | null => {
-    if (!enableMemoryOptimization) return null;
+  // Cache\'den veri al
+  const getCachedData = useCallback((cacheKey: string | null): T | null => {
+    if (!enableMemoryOptimization || !cacheKey) return null;
     
     const cached = globalCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cacheTime) {
@@ -155,9 +155,9 @@ export function useOptimizedFetch<T = any>(
     return null;
   }, [cacheTime, enableMemoryOptimization]);
 
-  // Cache'e veri kaydet
-  const setCachedData = useCallback((cacheKey: string, data: T) => {
-    if (!enableMemoryOptimization) return;
+  // Cache\'e veri kaydet
+  const setCachedData = useCallback((cacheKey: string | null, data: T) => {
+    if (!enableMemoryOptimization || !cacheKey) return;
     
     globalCache.set(cacheKey, {
       data,
@@ -173,7 +173,16 @@ export function useOptimizedFetch<T = any>(
 
   // Fetch fonksiyonu
   const fetchData = useCallback(async (config?: AxiosRequestConfig) => {
-    if (!enabled || !isMountedRef.current) return;
+    console.log('🔍 fetchData çağrıldı:', {
+      enabled,
+      isMounted: isMountedRef.current,
+      url
+    });
+    
+    if (!enabled || !isMountedRef.current || !url) {
+      console.log('🔍 fetchData iptal edildi');
+      return;
+    }
 
     // Önceki isteği iptal et
     if (abortControllerRef.current) {
@@ -190,6 +199,7 @@ export function useOptimizedFetch<T = any>(
       // Cache kontrolü
       const cachedData = getCachedData(url);
       if (cachedData) {
+        console.log('🔍 Cache\'den veri alındı');
         if (isMountedRef.current) {
           setData(cachedData);
           setLoading(false);
@@ -201,26 +211,31 @@ export function useOptimizedFetch<T = any>(
       const fullUrl = url.startsWith('http') ? url : url;
       console.log('🔍 OptimizedFetch URL:', fullUrl);
       
+      console.log('🔍 API çağrısı yapılıyor...');
       const response = await apiClient.get(fullUrl, {
         ...config,
         signal: abortControllerRef.current.signal
       });
+      console.log('🔍 API yanıtı alındı:', response.data?.length || 'boş');
 
       if (isMountedRef.current) {
+        console.log('🔍 Data set ediliyor:', response.data?.length || 'boş');
         setData(response.data);
         setCachedData(url, response.data);
         retryCountRef.current = 0;
       }
     } catch (err: any) {
+      console.error('❌ Fetch error:', err);
+      
       if (err.name === 'AbortError' || !isMountedRef.current) {
+        console.log('🔍 İstek iptal edildi veya component unmount');
         return; // İptal edilen istek veya component unmount
       }
-
-      console.error('Fetch error:', err);
 
       // Retry logic
       if (retryCountRef.current < retryCount) {
         retryCountRef.current++;
+        console.log(`🔍 Retry ${retryCountRef.current}/${retryCount}`);
         setTimeout(() => {
           if (isMountedRef.current) {
             fetchData(config);
@@ -230,11 +245,13 @@ export function useOptimizedFetch<T = any>(
       }
 
       if (isMountedRef.current) {
+        console.log('🔍 Hata set ediliyor:', err.message || 'Veri yüklenemedi');
         setError(err.message || 'Veri yüklenemedi');
         retryCountRef.current = 0;
       }
     } finally {
       if (isMountedRef.current) {
+        console.log('🔍 Loading false yapılıyor');
         setLoading(false);
       }
     }
@@ -277,6 +294,12 @@ export function useOptimizedFetch<T = any>(
 
   // İlk yükleme
   useEffect(() => {
+    console.log('🔍 useOptimizedFetch useEffect:', {
+      url,
+      enabled,
+      isMounted: isMountedRef.current
+    });
+    
     if (enabled && isMountedRef.current) {
       debouncedFetch();
     }

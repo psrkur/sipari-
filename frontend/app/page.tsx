@@ -74,7 +74,7 @@ export default function Home() {
   // Optimize edilmiş state'ler
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('Tümü')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Başlangıçta false olarak değiştirildi
   const [showBranchDropdown, setShowBranchDropdown] = useState(false)
   const [showCart, setShowCart] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
@@ -153,11 +153,17 @@ export default function Home() {
 
   // Şubeleri yükle
   useEffect(() => {
+    console.log('🔍 Şubeler yükleniyor:', {
+      branchesData: branchesData?.length,
+      branchesLoading
+    });
+
     // Local storage'dan seçili şubeyi kontrol et
     const savedBranch = localStorage.getItem('selectedBranch');
     if (savedBranch) {
       try {
         const parsedBranch = JSON.parse(savedBranch);
+        console.log('🔍 Kayıtlı şube bulundu:', parsedBranch.name);
         setSelectedBranch(parsedBranch);
       } catch (error) {
         console.error('Kayıtlı şube bilgisi okunamadı:', error);
@@ -167,13 +173,14 @@ export default function Home() {
 
     // Branches data'sını set et
     if (branchesData) {
+      console.log('🔍 BranchesData set ediliyor:', branchesData.length, 'şube');
       setBranches(branchesData.filter(branch => branch.isActive));
     }
   }, [branchesData, setBranches])
 
   // Ürünler için optimize edilmiş fetch hook'u
   const { data: productsData, loading: productsLoading, error: productsError } = useOptimizedFetch<any[]>(
-    selectedBranch ? `/api/products/${selectedBranch.id}` : '',
+    selectedBranch ? `/api/products/${selectedBranch.id}` : null,
     {
       cacheTime: 5 * 60 * 1000, // 5 dakika cache
       debounceTime: 300, // 300ms debounce
@@ -185,8 +192,33 @@ export default function Home() {
 
   // Ürünleri işle
   useEffect(() => {
-    if (!productsData) return;
+    console.log('🔍 Ürün işleme useEffect:', {
+      selectedBranch: selectedBranch?.name,
+      productsData: productsData?.length,
+      productsLoading,
+      productsError
+    });
 
+    // Eğer şube seçilmemişse loading'i false yap
+    if (!selectedBranch) {
+      console.log('🔍 Şube seçilmemiş, loading false yapılıyor');
+      setLoading(false);
+      return;
+    }
+
+    // Eğer productsData henüz gelmemişse ve loading true ise, loading'i false yap
+    if (!productsData && !productsLoading) {
+      console.log('🔍 ProductsData yok ve loading değil, loading false yapılıyor');
+      setLoading(false);
+      return;
+    }
+
+    if (!productsData) {
+      console.log('🔍 ProductsData yok, return');
+      return;
+    }
+
+    console.log('🔍 ProductsData işleniyor:', productsData.length, 'ürün');
     const processedProducts = Array.isArray(productsData) ? productsData.map((product: any) => ({
       ...product,
       category: typeof product.category === 'object' && product.category !== null 
@@ -200,7 +232,8 @@ export default function Home() {
     setProducts(processedProducts);
     setCategories(productCategories);
     setLoading(false);
-  }, [productsData, setProducts, setCategories]);
+    console.log('🔍 Loading false yapıldı, işlem tamamlandı');
+  }, [productsData, productsLoading, selectedBranch, setProducts, setCategories]);
 
   // Kategori ikonları - genişletilmiş Türkçe kategoriler
   const getCategoryIcon = useCallback((category: string) => {
@@ -420,9 +453,11 @@ export default function Home() {
   }, [])
 
   const handleBranchSelect = useCallback((branch: Branch) => {
+    console.log('🔍 Şube seçildi:', branch.name);
     setSelectedBranch(branch);
     localStorage.setItem('selectedBranch', JSON.stringify(branch));
     setSelectedCategory('Tümü');
+    setLoading(true); // Şube seçildiğinde loading'i true yap
     toast.success(`${branch.name} şubesi seçildi`);
   }, [])
 
@@ -585,13 +620,32 @@ export default function Home() {
     }
   }, [products, preloadImages]);
 
-  if (loading) {
+  if (loading && selectedBranch) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Menü yükleniyor...</p>
           <div className="mt-2 text-sm text-gray-500">Lütfen bekleyin</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Hata durumu
+  if (productsError && selectedBranch) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Hata Oluştu</h3>
+          <p className="text-gray-600 mb-4">{productsError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+          >
+            Sayfayı Yenile
+          </button>
         </div>
       </div>
     )

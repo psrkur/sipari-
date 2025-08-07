@@ -95,6 +95,7 @@ export default function AdminPage() {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Optimize edilmiş list state'leri
   const { items: branches, setItems: setBranches, updateItem: updateBranchItem } = useOptimizedList<any>();
@@ -363,20 +364,53 @@ export default function AdminPage() {
 
   // Optimize edilmiş sipariş yükleme
   const fetchOrders = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      console.error('Token bulunamadı');
+      toast.error('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+      router.push('/login');
+      return;
+    }
 
     setLoading(true);
     try {
+      console.log('🔍 Siparişler yükleniyor...');
+      console.log('🔍 API URL:', API_ENDPOINTS.ADMIN_ORDERS);
+      console.log('🔍 Token var mı:', !!token);
+      
       const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('✅ Siparişler başarıyla yüklendi:', response.data);
       setOrders(Array.isArray(response.data) ? response.data : []);
+      setError(null); // Hata durumunu temizle
     } catch (error: any) {
-      console.error('Siparişler yüklenemedi:', error);
+      console.error('❌ Siparişler yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error.response?.data);
+      console.error('❌ HTTP Status:', error.response?.status);
+      
+      let errorMessage = 'Beklenmeyen bir hata oluştu';
+      
       if (error.response?.status === 401) {
-        toast.error('Oturum süresi dolmuş');
+        errorMessage = 'Oturum süresi dolmuş. Lütfen tekrar giriş yapın.';
+        toast.error(errorMessage);
         router.push('/login');
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Bu sayfaya erişim yetkiniz yok.';
+        toast.error(errorMessage);
+        router.push('/');
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+        toast.error(errorMessage);
+      } else if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        errorMessage = 'Backend sunucusuna bağlanılamıyor. Lütfen backend\'in çalıştığından emin olun.';
+        toast.error(errorMessage);
+      } else {
+        errorMessage = `Beklenmeyen bir hata oluştu: ${error.message || 'Bilinmeyen hata'}`;
+        toast.error(errorMessage);
       }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -420,15 +454,22 @@ export default function AdminPage() {
 
   // Veritabanı istatistiklerini yükle
   const fetchDatabaseStats = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      console.error('Token bulunamadı - istatistikler yüklenemiyor');
+      return;
+    }
     
     try {
+      console.log('🔍 Veritabanı istatistikleri yükleniyor...');
       const response = await axios.get(API_ENDPOINTS.ADMIN_DATABASE_STATS, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('✅ İstatistikler başarıyla yüklendi:', response.data);
       setDatabaseStats(response.data);
     } catch (error: any) {
-      console.error('İstatistikler yüklenemedi:', error);
+      console.error('❌ İstatistikler yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error.response?.data);
+      // İstatistik hatası kritik değil, sadece log'la
     }
   }, [token]);
 
@@ -913,31 +954,6 @@ export default function AdminPage() {
     return texts[status] || status;
   }, []);
 
-  // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
-  const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
-  if (!user || !allowedRoles.includes(user.role)) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Yetkisiz erişim</p>
-          <p className="text-sm text-gray-500 mt-2">Kullanıcı rolü: {user?.role}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading kontrolü
-  if (authChecking) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Yetki kontrolü yapılıyor...</p>
-        </div>
-      </div>
-    );
-  }
-
   // Kategori icon sistemi
   const getCategoryIcon = useCallback((categoryName: string) => {
     const icons: { [key: string]: string } = {
@@ -1118,6 +1134,67 @@ export default function AdminPage() {
     
     return icons[categoryName] || '🍽️'
   }, [])
+
+  // Rol kontrolü - hem büyük hem küçük harf versiyonlarını kontrol et
+  const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'admin', 'BRANCH_MANAGER'];
+  if (!user || !allowedRoles.includes(user.role)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Yetkisiz erişim</p>
+          <p className="text-sm text-gray-500 mt-2">Kullanıcı rolü: {user?.role}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading kontrolü
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yetki kontrolü yapılıyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Hata kontrolü
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div className="flex items-center">
+              <div className="text-2xl mr-3">⚠️</div>
+              <div>
+                <h3 className="font-bold text-lg mb-2">Bir Hata Oluştu</h3>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setError(null);
+                fetchOrders();
+              }}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            >
+              Tekrar Dene
+            </button>
+            <button
+              onClick={() => router.push('/')}
+              className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded ml-2"
+            >
+              Ana Sayfaya Dön
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
