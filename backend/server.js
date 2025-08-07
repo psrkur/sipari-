@@ -537,7 +537,11 @@ app.post('/api/auth/login', async (req, res) => {
   
   try {
     console.log('🔍 Login isteği:', req.body);
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    // Eğer email bir nesne ise, içinden email değerini al
+    if (typeof email !== 'string' && email && typeof email === 'object') {
+      email = email.email || '';
+    }
     
     const user = await prisma.user.findFirst({
       where: { email }
