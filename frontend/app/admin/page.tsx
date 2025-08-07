@@ -816,29 +816,42 @@ export default function AdminPage() {
   }, []);
 
   const updateCategoryHandler = useCallback(async () => {
-    if (!editingCategory) return;
+    if (!editingCategory) {
+      console.error('Düzenlenecek kategori bulunamadı');
+      toast.error('Düzenlenecek kategori bulunamadı');
+      return;
+    }
 
     try {
+      console.log('Kategori güncelleniyor:', { id: editingCategory.id, form: categoryForm });
+      
       const response = await axios.put(
         `${API_ENDPOINTS.ADMIN_CATEGORIES}/${editingCategory.id}`,
         categoryForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.success) {
+      console.log('Kategori güncelleme response:', response.data);
+
+      // Backend sadece kategori objesi döndürüyor, success field'ı yok
+      if (response.data && response.data.id) {
         updateCategoryItem(editingCategory.id, (category: Category) => ({
           ...category,
           ...categoryForm
         }));
         setShowEditCategoryModal(false);
+        setEditingCategory(null);
         resetCategoryForm();
         toast.success('Kategori güncellendi');
+      } else {
+        console.error('Kategori güncelleme response geçersiz:', response.data);
+        toast.error('Kategori güncellenemedi - geçersiz response');
       }
     } catch (error: any) {
       console.error('Kategori güncellenemedi:', error);
-      toast.error('Kategori güncellenemedi');
+      toast.error(`Kategori güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
-  }, [token, editingCategory]);
+  }, [token, editingCategory, categoryForm, updateCategoryItem, resetCategoryForm]);
 
   const editBranch = useCallback((branch: any) => {
     setEditingBranch(branch);
@@ -849,29 +862,42 @@ export default function AdminPage() {
   }, []);
 
   const updateBranchHandler = useCallback(async () => {
-    if (!editingBranch) return;
+    if (!editingBranch) {
+      console.error('Düzenlenecek şube bulunamadı');
+      toast.error('Düzenlenecek şube bulunamadı');
+      return;
+    }
 
     try {
+      console.log('Şube güncelleniyor:', { id: editingBranch.id, form: branchForm });
+      
       const response = await axios.put(
         API_ENDPOINTS.ADMIN_UPDATE_BRANCH(editingBranch.id),
         branchForm,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.success) {
+      console.log('Şube güncelleme response:', response.data);
+
+      // Backend sadece şube objesi döndürüyor, success field'ı yok
+      if (response.data && response.data.id) {
         updateBranchItem(editingBranch.id, (branch: any) => ({
           ...branch,
           ...branchForm
         }));
         setShowEditBranchModal(false);
+        setEditingBranch(null);
         resetBranchForm();
         toast.success('Şube güncellendi');
+      } else {
+        console.error('Şube güncelleme response geçersiz:', response.data);
+        toast.error('Şube güncellenemedi - geçersiz response');
       }
     } catch (error: any) {
       console.error('Şube güncellenemedi:', error);
-      toast.error('Şube güncellenemedi');
+      toast.error(`Şube güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
-  }, [token, editingBranch]);
+  }, [token, editingBranch, branchForm, updateBranchItem, resetBranchForm]);
 
   const deleteBranch = useCallback(async (branchId: number) => {
     if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
@@ -2270,7 +2296,10 @@ export default function AdminPage() {
               <span className="mr-2">📂</span>
               Kategori Düzenle
             </h3>
-            <form onSubmit={(e) => { e.preventDefault(); updateCategoryHandler(); }}>
+            <form onSubmit={async (e) => { 
+              e.preventDefault(); 
+              await updateCategoryHandler(); 
+            }}>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2319,6 +2348,79 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600"
+                >
+                  Güncelle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Şube Düzenleme Modal */}
+      {showEditBranchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <span className="mr-2">🏢</span>
+              Şube Düzenle
+            </h3>
+            <form onSubmit={async (e) => { 
+              e.preventDefault(); 
+              await updateBranchHandler(); 
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Şube Adı
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Şube Adı"
+                    value={branchForm.name}
+                    onChange={(e) => setBranchFormValue('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Adres
+                  </label>
+                  <textarea
+                    placeholder="Adres"
+                    value={branchForm.address}
+                    onChange={(e) => setBranchFormValue('address', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={3}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefon
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Telefon"
+                    value={branchForm.phone}
+                    onChange={(e) => setBranchFormValue('phone', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowEditBranchModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
                 >
                   Güncelle
                 </button>
