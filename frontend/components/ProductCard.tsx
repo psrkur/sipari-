@@ -104,7 +104,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             
             {/* Fiyat - alt kısma taşındı */}
             <span className="text-lg font-bold text-primary-600">
-              ₺{product.price.toFixed(2)}
+                                        ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
             </span>
           </div>
           

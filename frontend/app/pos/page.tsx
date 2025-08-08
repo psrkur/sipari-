@@ -699,7 +699,7 @@ export default function POSPage() {
                 <Card>
                   <CardContent className="p-3 md:p-4">
                     <h3 className="font-semibold text-sm md:text-lg mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{product.price.toFixed(2)}</p>
+                    <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}</p>
                     <Badge variant="secondary" className="text-xs">
                       {product.category.name}
                     </Badge>

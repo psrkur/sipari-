@@ -84,7 +84,7 @@ const ProductManagement: React.FC<ProductManagementProps> = ({ products, categor
                   {product.branch?.name || 'Şube Yok'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ₺{product.price.toFixed(2)}
+                  ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

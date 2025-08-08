@@ -1036,7 +1036,7 @@ export default function Home() {
                                 
                                 {/* Fiyat */}
                                 <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                                  ₺{product.price.toFixed(2)}
+                                  ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
                                 </span>
                               </div>
                               
@@ -1139,7 +1139,7 @@ export default function Home() {
                 <div>
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">Fiyat</h3>
                   <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                    ₺{selectedProduct.price.toFixed(2)}
+                    ₺{typeof selectedProduct.price === 'number' ? selectedProduct.price.toFixed(2) : parseFloat(selectedProduct.price || 0).toFixed(2)}
                   </span>
                 </div>
 

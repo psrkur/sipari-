@@ -826,7 +826,7 @@ export default function TableOrder() {
                             
                             {/* Fiyat - alt kısma taşındı */}
                             <span className="text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                              ₺{product.price.toFixed(2)}
+                              ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
                             </span>
                           </div>
                           
@@ -1025,7 +1025,7 @@ export default function TableOrder() {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Toplam:</span>
                     <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                      ₺{(selectedProduct.price * quantity).toFixed(2)}
+                      ₺{(typeof selectedProduct.price === 'number' ? selectedProduct.price : parseFloat(selectedProduct.price || 0)) * quantity).toFixed(2)}
                     </span>
                   </div>
                 </div>

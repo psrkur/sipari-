@@ -332,7 +332,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                       <div className="flex-1">
                         <div className="font-medium">{item.product.name}</div>
                         <div className="text-sm text-gray-600">
-                          {item.quantity} adet × ₺{item.price.toFixed(2)}
+                          {item.quantity} adet × ₺{typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(item.price || 0).toFixed(2)}
                         </div>
                         {item.note && (
                           <div className="text-sm text-blue-600 mt-1">
@@ -341,7 +341,7 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onUpdateStatus, getStatus
                         )}
                       </div>
                       <div className="text-right">
-                        ₺{(item.quantity * item.price).toFixed(2)}
+                        ₺{(item.quantity * (typeof item.price === 'number' ? item.price : parseFloat(item.price || 0))).toFixed(2)}
                       </div>
                     </div>
                   ))}
