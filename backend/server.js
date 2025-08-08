@@ -1710,12 +1710,18 @@ app.delete('/api/admin/users/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/admin/products', authenticateToken, async (req, res) => {
   try {
+    console.log('=== FETCHING PRODUCTS ===');
+    console.log('User role:', req.user.role);
+    console.log('User branchId:', req.user.branchId);
+    
     let whereClause = {};
     
     // Branch manager sadece kendi şubesindeki ürünleri görebilir
     if (req.user.role === 'BRANCH_MANAGER') {
       whereClause.branchId = req.user.branchId;
     }
+    
+    console.log('Where clause:', whereClause);
     
     // Sadece gerekli alanları seç - gereksiz include'ları kaldır
     const products = await prisma.product.findMany({
@@ -1745,6 +1751,9 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
       },
       orderBy: { name: 'asc' }
     });
+    
+    console.log('Products fetched:', products.length);
+    console.log('Sample product structure:', products[0]);
     
     res.json(products);
   } catch (error) {
@@ -1852,6 +1861,15 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
     console.log('Request body:', req.body);
     console.log('User role:', req.user.role);
     console.log('Product ID:', req.params.id);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body values:', {
+      name: req.body.name,
+      price: req.body.price,
+      categoryId: req.body.categoryId,
+      branchId: req.body.branchId,
+      categoryIdType: typeof req.body.categoryId,
+      branchIdType: typeof req.body.branchId
+    });
     
     const { id } = req.params;
     const { name, description, price, categoryId, branchId, isActive, imagePath, image } = req.body;
@@ -1865,12 +1883,43 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
     console.log('Request body keys:', Object.keys(req.body));
     console.log('Has isActive property:', Object.prototype.hasOwnProperty.call(req.body, 'isActive'));
 
+    console.log('Validation check:', {
+      name: !!name,
+      price: !!price,
+      categoryId: !!categoryId,
+      categoryIdValue: categoryId,
+      categoryIdType: typeof categoryId
+    });
+    
     if (!isOnlyStatusUpdate && (!name || !price || !categoryId)) {
+      console.log('Validation failed - missing required fields:', {
+        name: !!name,
+        price: !!price,
+        categoryId: !!categoryId,
+        categoryIdValue: categoryId
+      });
       return res.status(400).json({ error: 'Tüm gerekli alanları doldurun' });
     }
 
     // Sadece tam güncelleme yapılıyorsa kategori kontrolü yap
     if (!isOnlyStatusUpdate) {
+      console.log('Category validation:', {
+        categoryId,
+        categoryIdType: typeof categoryId,
+        parsedCategoryId: parseInt(categoryId),
+        isNaN: isNaN(parseInt(categoryId))
+      });
+      
+      if (!categoryId || categoryId === '' || isNaN(parseInt(categoryId))) {
+        console.log('Invalid categoryId:', {
+          categoryId,
+          categoryIdType: typeof categoryId,
+          isEmpty: categoryId === '',
+          isNaN: isNaN(parseInt(categoryId))
+        });
+        return res.status(400).json({ error: 'Geçersiz kategori ID' });
+      }
+      
       const category = await prisma.category.findUnique({
         where: { id: parseInt(categoryId) }
       });
@@ -1918,6 +1967,13 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
       console.log('Branch manager update data:', updateData);
     } else {
       // Süper admin tüm alanları güncelleyebilir
+      console.log('Update data preparation:', {
+        name,
+        price: Number(price),
+        categoryId: parseInt(categoryId),
+        categoryIdOriginal: categoryId
+      });
+      
       updateData = {
         name,
         description: description || '',

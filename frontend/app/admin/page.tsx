@@ -170,17 +170,47 @@ export default function AdminPage() {
     }
   );
 
+  // Debug form values when editing product
+  useEffect(() => {
+    if (editingProduct) {
+      console.log('Form values after editing product:', productForm);
+    }
+  }, [editingProduct, productForm]);
+
   // Ürün düzenleme fonksiyonu
   const handleEditProduct = (product: any) => {
     try {
+      console.log('=== HANDLE EDIT PRODUCT ===');
+      console.log('Original product data:', product);
+      console.log('Product category:', product.category);
+      console.log('Product branch:', product.branch);
+      
       setEditingProduct(product);
+      
+      // Form değerlerini set et
       setProductFormValue('name', product.name || '');
       setProductFormValue('description', product.description || '');
       setProductFormValue('price', product.price?.toString() || '');
-      setProductFormValue('categoryId', product.categoryId?.toString() || '');
-      setProductFormValue('branchId', product.branchId?.toString() || '');
+      
+      // Backend'den gelen veri yapısına göre category.id ve branch.id kullan
+      const categoryId = product.category?.id?.toString() || '';
+      const branchId = product.branch?.id?.toString() || '';
+      
+      console.log('Extracted IDs:', { 
+        categoryId, 
+        branchId, 
+        category: product.category, 
+        branch: product.branch,
+        categoryIdType: typeof categoryId,
+        branchIdType: typeof branchId
+      });
+      
+      setProductFormValue('categoryId', categoryId);
+      setProductFormValue('branchId', branchId);
       setProductFormValue('image', product.image || product.imagePath || '');
       setShowEditProductModal(true);
+      
+      console.log('Form values set successfully');
     } catch (error) {
       console.error('Ürün düzenleme hatası:', error);
       toast.error('Ürün düzenleme formu yüklenemedi');
@@ -688,8 +718,17 @@ export default function AdminPage() {
     setProductFormValue('price', product.price.toString());
     
     // Kategori ve şube ID'lerini doğru şekilde set et
-    const categoryId = product.category?.id?.toString() || product.categoryId?.toString() || '';
-    const branchId = product.branch?.id?.toString() || product.branchId?.toString() || '';
+    // Backend'den gelen veri yapısına göre category.id ve branch.id kullan
+    const categoryId = product.category?.id?.toString() || '';
+    const branchId = product.branch?.id?.toString() || '';
+    
+    console.log('Product data for editing:', {
+      product,
+      categoryId,
+      branchId,
+      category: product.category,
+      branch: product.branch
+    });
     
     setProductFormValue('categoryId', categoryId);
     setProductFormValue('branchId', branchId);
@@ -703,9 +742,41 @@ export default function AdminPage() {
       return;
     }
 
+    console.log('=== PRODUCT UPDATE HANDLER ===');
+    console.log('Editing product:', editingProduct);
+    console.log('Current form values:', productForm);
+    console.log('Form validation check:', {
+      name: !!productForm.name,
+      price: !!productForm.price,
+      categoryId: !!productForm.categoryId,
+      branchId: !!productForm.branchId,
+      categoryIdValue: productForm.categoryId,
+      branchIdValue: productForm.branchId
+    });
+
+    // Form validation
+    if (!productForm.name || !productForm.price || !productForm.categoryId) {
+      console.error('Form validation failed:', {
+        name: !!productForm.name,
+        price: !!productForm.price,
+        categoryId: !!productForm.categoryId,
+        branchId: !!productForm.branchId
+      });
+      toast.error('Lütfen tüm gerekli alanları doldurun');
+      return;
+    }
+
     try {
       console.log('Ürün güncelleme başlatılıyor:', editingProduct.id);
       console.log('Güncellenecek veriler:', productForm);
+      console.log('Form validation check:', {
+        name: !!productForm.name,
+        price: !!productForm.price,
+        categoryId: !!productForm.categoryId,
+        branchId: !!productForm.branchId
+      });
+      
+      console.log('Final form data being sent:', productForm);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${editingProduct.id}`, {
         method: 'PUT',
@@ -732,21 +803,8 @@ export default function AdminPage() {
         // Modal'ı kapat
         setShowEditProductModal(false);
         
-        // Form'u güvenli şekilde reset et
-        try {
-          resetProductForm();
-          
-          // Kategori ve şube seçimlerini koru (eğer varsa)
-          if (productForm.categoryId) {
-            setProductFormValue('categoryId', productForm.categoryId);
-          }
-          if (productForm.branchId) {
-            setProductFormValue('branchId', productForm.branchId);
-          }
-        } catch (formError) {
-          console.error('Form reset hatası:', formError);
-          // Form reset hatası kritik değil, devam et
-        }
+        // Form'u reset et
+        resetProductForm();
         
         // Editing product'ı temizle
         setEditingProduct(null);
@@ -762,7 +820,7 @@ export default function AdminPage() {
       console.error('Ürün güncelleme hatası:', error);
       alert('Ürün güncellenirken bir hata oluştu');
     }
-  }, [token, editingProduct]);
+  }, [token, editingProduct, productForm, resetProductForm]);
 
   const toggleProductStatus = useCallback(async (productId: number, isActive: boolean) => {
     try {
