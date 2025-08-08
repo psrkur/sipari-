@@ -637,8 +637,6 @@ export default function TableOrder() {
     );
   }
 
-  const grouped = groupProductsByCategory(products);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50">
       {/* Responsive Header */}
@@ -771,7 +769,7 @@ export default function TableOrder() {
           
           {/* Ürün Listesi */}
           <div className="space-y-8 sm:space-y-12">
-            {Object.entries(grouped)
+            {Object.entries(groupProductsByCategory(products))
               .filter(([category]) => selectedCategory === 'Tümü' || category === selectedCategory)
               .map(([category, categoryProducts]) => (
                 <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
@@ -1025,7 +1023,7 @@ export default function TableOrder() {
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-gray-900">Toplam:</span>
                     <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                      ₺{(typeof selectedProduct.price === 'number' ? selectedProduct.price : parseFloat(selectedProduct.price || 0)) * quantity).toFixed(2)}
+                      ₺{((typeof selectedProduct.price === 'number' ? selectedProduct.price : parseFloat(selectedProduct.price || 0)) * quantity).toFixed(2)}
                     </span>
                   </div>
                 </div>
