@@ -185,8 +185,11 @@ export default function Home() {
   }, [branchesData, setBranches])
 
   // Ürünler için optimize edilmiş fetch hook'u
+  const productsUrl = selectedBranch ? API_ENDPOINTS.PRODUCTS(selectedBranch.id) : null;
+  console.log('🔍 Products URL:', productsUrl, 'for branch:', selectedBranch?.name);
+  
   const { data: productsData, loading: productsLoading, error: productsError } = useOptimizedFetch<any[]>(
-    selectedBranch ? `/api/products/${selectedBranch.id}` : null,
+    productsUrl,
     {
       cacheTime: 5 * 60 * 1000, // 5 dakika cache
       debounceTime: 300, // 300ms debounce
