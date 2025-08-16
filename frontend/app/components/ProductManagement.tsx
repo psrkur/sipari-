@@ -37,15 +37,27 @@ interface ProductManagementProps {
   branches: Branch[];
   onEditProduct: (product: Product) => void;
   onDeleteProduct: (productId: number) => void;
+  onAddProduct: () => void;
   onToggleProductStatus?: (productId: number, isActive: boolean) => void;
   user?: any;
 }
 
-const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct, onToggleProductStatus, user }) => {
+const ProductManagement: React.FC<ProductManagementProps> = ({ products, categories, branches, onEditProduct, onDeleteProduct, onAddProduct, onToggleProductStatus, user }) => {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">Ürünler ({products.length})</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Ürünler ({products.length})</h2>
+          {user && (user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' || user.role === 'admin') && (
+            <button
+              onClick={onAddProduct}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 hover:shadow-md"
+            >
+              <span className="text-lg">➕</span>
+              <span>Ürün Ekle</span>
+            </button>
+          )}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
