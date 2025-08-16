@@ -1631,45 +1631,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Yönetim Butonları */}
-          <div className="p-4 border-t border-gray-200">
-            <h3 className={`font-semibold text-gray-700 mb-3 ${!sidebarOpen && 'hidden'}`}>
-              ⚙️ Yönetim
-            </h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowAddUserModal(true)}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-all duration-200 hover:shadow-md"
-              >
-                <span className="text-lg">👤</span>
-                {sidebarOpen && <span>Kullanıcı Ekle</span>}
-              </button>
-              
-              <button
-                onClick={() => setShowAddProductModal(true)}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-all duration-200 hover:shadow-md"
-              >
-                <span className="text-lg">🍽️</span>
-                {sidebarOpen && <span>Ürün Ekle</span>}
-              </button>
-              
-              <button
-                onClick={() => setShowAddCategoryModal(true)}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-500 text-white font-medium hover:bg-purple-600 transition-all duration-200 hover:shadow-md"
-              >
-                <span className="text-lg">📂</span>
-                {sidebarOpen && <span>Kategori Ekle</span>}
-              </button>
-              
-              <button
-                onClick={() => setShowAddBranchModal(true)}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg bg-orange-500 text-white font-medium hover:bg-orange-600 transition-all duration-200 hover:shadow-md"
-              >
-                <span className="text-lg">🏢</span>
-                {sidebarOpen && <span>Şube Ekle</span>}
-              </button>
-            </div>
-          </div>
+
 
           {/* Temizlik Butonu */}
           <div className="p-4 border-t border-gray-200">
@@ -1840,12 +1802,21 @@ export default function AdminPage() {
               )}
 
                   {activePage === 'products' && (
-        <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} user={user} /></div>
+        <div><ProductManagement products={products} categories={categories} branches={branches} onEditProduct={handleEditProduct} onDeleteProduct={handleDeleteProduct} onAddProduct={() => setShowAddProductModal(true)} user={user} /></div>
       )}
 
               {activePage === 'categories' && (
                 <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">📂 Kategoriler</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900">📂 Kategoriler</h2>
+                    <button
+                      onClick={() => setShowAddCategoryModal(true)}
+                      className="flex items-center space-x-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all duration-200 hover:shadow-md"
+                    >
+                      <span className="text-lg">📂</span>
+                      <span>Kategori Ekle</span>
+                    </button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => (
                       <div key={category.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -1879,11 +1850,11 @@ export default function AdminPage() {
               )}
 
               {activePage === 'users' && (
-                <div><UserList users={users} onDeleteUser={handleDeleteUser} onActivateUser={handleActivateUser} /></div>
+                <div><UserList users={users} onDeleteUser={handleDeleteUser} onActivateUser={handleActivateUser} onAddUser={() => setShowAddUserModal(true)} /></div>
               )}
 
               {activePage === 'branches' && (
-                <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} onDeactivateBranch={deactivateBranch} /></div>
+                <div><BranchManagement branches={branches} onEditBranch={editBranch} onDeleteBranch={deleteBranch} onDeactivateBranch={deactivateBranch} onAddBranch={() => setShowAddBranchModal(true)} /></div>
               )}
 
               {activePage === 'images' && (

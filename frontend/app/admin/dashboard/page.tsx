@@ -144,6 +144,9 @@ export default function Dashboard() {
       });
 
       setData(dashboardData);
+      
+      // Chart verilerini de yükle
+      await loadChartData();
     } catch (error: any) {
       console.error('Dashboard verileri yüklenemedi:', error);
       
@@ -199,45 +202,129 @@ export default function Dashboard() {
     };
   }, [token]); // Sadece token'ı dependency olarak kullan
 
-  // Grafik verileri
-  const salesChartData = {
+  // Gerçek veri ile grafik verileri
+  const [salesChartData, setSalesChartData] = useState({
     labels: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
     datasets: [
       {
         label: 'Günlük Satış (₺)',
-        data: [12000, 15000, 18000, 14000, 22000, 25000, data?.sales.today || 0],
+        data: [0, 0, 0, 0, 0, 0, 0],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
       },
     ],
-  };
+  });
 
-  const orderStatusData = {
-    labels: ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen'],
+  const [orderStatusData, setOrderStatusData] = useState({
+    labels: ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen', 'İptal Edilen'],
     datasets: [
       {
-        data: [
-          data?.orders.pending || 0,
-          data?.orders.preparing || 0,
-          data?.orders.ready || 0,
-          data?.orders.delivered || 0,
-        ],
+        data: [0, 0, 0, 0, 0],
         backgroundColor: [
           'rgba(255, 206, 86, 0.8)',
           'rgba(54, 162, 235, 0.8)',
           'rgba(75, 192, 192, 0.8)',
           'rgba(153, 102, 255, 0.8)',
+          'rgba(255, 99, 132, 0.8)',
         ],
         borderColor: [
           'rgba(255, 206, 86, 1)',
           'rgba(54, 162, 235, 1)',
           'rgba(75, 192, 192, 1)',
           'rgba(153, 102, 255, 1)',
+          'rgba(255, 99, 132, 1)',
         ],
         borderWidth: 2,
       },
     ],
+  });
+
+  // Chart verilerini yükle
+  const loadChartData = async () => {
+    try {
+      // Satış trendi verilerini yükle
+      const salesTrendRes = await axios.get(`${API_BASE_URL}/api/dashboard/sales-trend`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (salesTrendRes.data) {
+        setSalesChartData({
+          labels: salesTrendRes.data.labels,
+          datasets: [{
+            label: 'Günlük Satış (₺)',
+            data: salesTrendRes.data.datasets[0].data,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+          }],
+        });
+      }
+
+      // Sipariş durumu verilerini yükle
+      const orderStatusRes = await axios.get(`${API_BASE_URL}/api/dashboard/order-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (orderStatusRes.data) {
+        setOrderStatusData({
+          labels: orderStatusRes.data.labels,
+          datasets: [{
+            data: orderStatusRes.data.datasets[0].data,
+            backgroundColor: [
+              'rgba(255, 206, 86, 0.8)',
+              'rgba(54, 162, 235, 0.8)',
+              'rgba(75, 192, 192, 0.8)',
+              'rgba(153, 102, 255, 0.8)',
+              'rgba(255, 99, 132, 0.8)',
+            ],
+            borderColor: [
+              'rgba(255, 206, 86, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 99, 132, 1)',
+            ],
+            borderWidth: 2,
+          }],
+        });
+      }
+    } catch (error) {
+      console.error('Chart verileri yüklenemedi:', error);
+      // Hata durumunda varsayılan veriler kullan
+      setSalesChartData({
+        labels: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
+        datasets: [{
+          label: 'Günlük Satış (₺)',
+          data: [0, 0, 0, 0, 0, 0, 0],
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+        }],
+      });
+      
+      setOrderStatusData({
+        labels: ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen', 'İptal Edilen'],
+        datasets: [{
+          data: [0, 0, 0, 0, 0],
+          backgroundColor: [
+            'rgba(255, 206, 86, 0.8)',
+            'rgba(54, 162, 235, 0.8)',
+            'rgba(75, 192, 192, 0.8)',
+            'rgba(153, 102, 255, 0.8)',
+            'rgba(255, 99, 132, 0.8)',
+          ],
+          borderColor: [
+            'rgba(255, 206, 86, 1)',
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)',
+            'rgba(255, 99, 132, 1)',
+          ],
+          borderWidth: 2,
+        }],
+      });
+    }
   };
 
   const popularProductsData = {
@@ -271,7 +358,17 @@ export default function Dashboard() {
     return (
       <div className="p-6">
         <div className="text-center text-gray-500">
-          Dashboard verileri yüklenemedi
+          <div className="mb-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4 animate-pulse"></div>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">Dashboard verileri yüklenemedi</h3>
+            <p className="text-sm text-gray-500 mb-4">Veritabanı bağlantısında sorun olabilir</p>
+            <button 
+              onClick={loadDashboardData}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Tekrar Dene
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -310,16 +407,18 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.sales.today.toLocaleString('tr-TR')} ₺</div>
+                         <div className="text-2xl font-bold">
+               {data.sales.today > 0 ? data.sales.today.toLocaleString('tr-TR') : '0'} ₺
+             </div>
             <div className="flex items-center space-x-2">
               {data.sales.percentage >= 100 ? (
                 <TrendingUp className="h-4 w-4 text-green-600" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
-              <p className={`text-xs ${data.sales.percentage >= 100 ? 'text-green-600' : 'text-red-600'}`}>
-                Hedefin %{data.sales.percentage}'i
-              </p>
+                             <p className={`text-xs ${(data.sales.percentage || 0) >= 100 ? 'text-green-600' : 'text-red-600'}`}>
+                 Hedefin %{data.sales.percentage || 0}'i
+               </p>
             </div>
           </CardContent>
         </Card>
@@ -331,9 +430,11 @@ export default function Dashboard() {
             <ShoppingCart className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.orders.pending + data.orders.preparing}</div>
+                         <div className="text-2xl font-bold">
+               {(data.orders.pending || 0) + (data.orders.preparing || 0)}
+             </div>
             <p className="text-xs text-gray-600">
-              Ortalama hazırlama: {data.orders.averageTime} dk
+              Ortalama hazırlama: {data.orders.averageTime || 0} dk
             </p>
           </CardContent>
         </Card>
@@ -345,9 +446,9 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.customers.activeNow}</div>
+                         <div className="text-2xl font-bold">{data.customers.activeNow || 0}</div>
             <p className="text-xs text-gray-600">
-              Ortalama puan: {data.customers.averageRating} ⭐
+              Ortalama puan: {data.customers.averageRating || 0} ⭐
             </p>
           </CardContent>
         </Card>
@@ -359,10 +460,10 @@ export default function Dashboard() {
             <MessageCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.customers.chatbotConversations}</div>
-            <p className="text-xs text-gray-600">
-              Bugün aktif sohbetler
-            </p>
+                         <div className="text-2xl font-bold">{data.customers.chatbotConversations || 0}</div>
+                         <p className="text-xs text-gray-600">
+               Bugün aktif sohbetler
+             </p>
           </CardContent>
         </Card>
       </div>
@@ -378,26 +479,33 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Line 
-              data={salesChartData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'top' as const,
+            {salesChartData.datasets[0].data.some(value => value > 0) ? (
+              <Line 
+                data={salesChartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: 'top' as const,
+                    },
+                    title: {
+                      display: true,
+                      text: 'Günlük Satış Grafiği',
+                    },
                   },
-                  title: {
-                    display: true,
-                    text: 'Günlük Satış Grafiği',
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                    },
                   },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                  },
-                },
-              }}
-            />
+                }}
+              />
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                <p>Henüz satış verisi bulunmuyor</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -410,21 +518,28 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Doughnut 
-              data={orderStatusData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'bottom' as const,
-                  },
-                  title: {
-                    display: true,
-                    text: 'Sipariş Durumu',
-                  },
-                },
-              }}
-            />
+                         {orderStatusData.datasets[0].data.some(value => value > 0) ? (
+               <Doughnut 
+                 data={orderStatusData}
+                 options={{
+                   responsive: true,
+                   plugins: {
+                     legend: {
+                       position: 'bottom' as const,
+                     },
+                     title: {
+                       display: true,
+                       text: 'Sipariş Durumu',
+                     },
+                   },
+                 }}
+               />
+             ) : (
+               <div className="text-center text-gray-500 py-8">
+                 <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                 <p>Henüz sipariş durumu verisi bulunmuyor</p>
+               </div>
+             )}
           </CardContent>
         </Card>
       </div>
@@ -446,28 +561,35 @@ export default function Dashboard() {
                   <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                   <span>Bekleyen</span>
                 </div>
-                <Badge variant="secondary">{data.orders.pending}</Badge>
+                <Badge variant="secondary">{data.orders.pending || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <span>Hazırlanan</span>
                 </div>
-                <Badge variant="secondary">{data.orders.preparing}</Badge>
+                <Badge variant="secondary">{data.orders.preparing || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   <span>Hazır</span>
                 </div>
-                <Badge variant="secondary">{data.orders.ready}</Badge>
+                <Badge variant="secondary">{data.orders.ready || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                   <span>Teslim Edilen</span>
                 </div>
-                <Badge variant="secondary">{data.orders.delivered}</Badge>
+                <Badge variant="secondary">{data.orders.delivered || 0}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span>İptal Edilen</span>
+                </div>
+                <Badge variant="secondary">{data.orders.cancelled || 0}</Badge>
               </div>
             </div>
           </CardContent>
@@ -482,26 +604,33 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Bar 
-              data={popularProductsData}
-              options={{
-                responsive: true,
-                plugins: {
-                  legend: {
-                    position: 'top' as const,
-                  },
-                  title: {
-                    display: true,
-                    text: 'Satış Adedi',
-                  },
-                },
-                scales: {
-                  y: {
-                    beginAtZero: true,
-                  },
-                },
-              }}
-            />
+                         {data.products.popular && data.products.popular.length > 0 ? (
+               <Bar 
+                 data={popularProductsData}
+                 options={{
+                   responsive: true,
+                   plugins: {
+                     legend: {
+                       position: 'top' as const,
+                     },
+                     title: {
+                       display: true,
+                       text: 'Satış Adedi',
+                     },
+                   },
+                   scales: {
+                     y: {
+                       beginAtZero: true,
+                     },
+                   },
+                 }}
+               />
+             ) : (
+               <div className="text-center text-gray-500 py-8">
+                 <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                 <p>Henüz popüler ürün bulunmuyor</p>
+               </div>
+             )}
           </CardContent>
         </Card>
       </div>
@@ -518,27 +647,34 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.realTime.currentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">{order.customerName}</span>
-                      <Badge variant={
-                        order.status === 'PENDING' ? 'secondary' :
-                        order.status === 'PREPARING' ? 'default' :
-                        order.status === 'READY' ? 'outline' : 'destructive'
-                      }>
-                        {order.status}
-                      </Badge>
+                             {data.realTime.currentOrders && data.realTime.currentOrders.length > 0 ? (
+                data.realTime.currentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">{order.customerName}</span>
+                        <Badge variant={
+                          order.status === 'PENDING' ? 'secondary' :
+                          order.status === 'PREPARING' ? 'default' :
+                          order.status === 'READY' ? 'outline' : 'destructive'
+                        }>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">{order.items}</p>
+                      <p className="text-xs text-gray-500">{order.time}</p>
                     </div>
-                    <p className="text-sm text-gray-600">{order.items}</p>
-                    <p className="text-xs text-gray-500">{order.time}</p>
+                    <div className="text-right">
+                      <div className="font-medium">{order.total} ₺</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-medium">{order.total} ₺</div>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                  <p>Henüz sipariş bulunmuyor</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
@@ -553,20 +689,27 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.realTime.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    {activity.icon === 'ShoppingCart' && <ShoppingCart className="h-4 w-4 text-blue-600" />}
-                    {activity.icon === 'Users' && <Users className="h-4 w-4 text-blue-600" />}
-                    {activity.icon === 'MessageCircle' && <MessageCircle className="h-4 w-4 text-blue-600" />}
-                    {activity.icon === 'Truck' && <Truck className="h-4 w-4 text-blue-600" />}
+                             {data.realTime.recentActivity && data.realTime.recentActivity.length > 0 ? (
+                data.realTime.recentActivity.map((activity, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      {activity.icon === 'ShoppingCart' && <ShoppingCart className="h-4 w-4 text-blue-600" />}
+                      {activity.icon === 'Users' && <Users className="h-4 w-4 text-blue-600" />}
+                      {activity.icon === 'MessageCircle' && <MessageCircle className="h-4 w-4 text-blue-600" />}
+                      {activity.icon === 'Truck' && <Truck className="h-4 w-4 text-blue-600" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{activity.message}</p>
+                      <p className="text-xs text-gray-500">{activity.time}</p>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.message}</p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
+                  <p>Henüz aktivite bulunmuyor</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>

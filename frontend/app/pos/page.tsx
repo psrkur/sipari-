@@ -556,7 +556,7 @@ export default function POSPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="flex items-center justify-between p-4">
+        <div className="flex items-center justify-between p-3 md:p-4 lg:p-6">
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button
               onClick={() => {
@@ -568,16 +568,16 @@ export default function POSPage() {
               }}
               variant="outline"
               size="sm"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 md:space-x-3"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
               <span className="hidden sm:inline">{window.opener ? 'Kapat' : 'Admin'}</span>
             </Button>
-            <h1 className="text-lg md:text-2xl font-bold text-gray-800">🏪 Kasa</h1>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-800">🏪 Kasa</h1>
           </div>
           <div className="flex items-center space-x-2">
             {/* Yazdırma Ayarları */}
-            <div className="flex items-center space-x-2 mr-2">
+            <div className="flex items-center space-x-1 md:space-x-2 mr-2">
               <label className="flex items-center space-x-1 text-xs md:text-sm">
                 <input
                   type="checkbox"
@@ -589,18 +589,18 @@ export default function POSPage() {
                 <span className="sm:hidden">🖨️</span>
               </label>
               
-                             {autoPrint && (
-                 <label className="flex items-center space-x-1 text-xs md:text-sm">
-                   <input
-                     type="checkbox"
-                     checked={autoConfirm}
-                     onChange={(e) => setAutoConfirm(e.target.checked)}
-                     className="w-3 h-3 md:w-4 md:h-4"
-                   />
-                   <span className="hidden sm:inline">Otomatik Onay</span>
-                   <span className="sm:hidden">⚡</span>
-                 </label>
-               )}
+              {autoPrint && (
+                <label className="flex items-center space-x-1 text-xs md:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={autoConfirm}
+                    onChange={(e) => setAutoConfirm(e.target.checked)}
+                    className="w-3 h-3 md:w-4 md:h-4"
+                  />
+                  <span className="hidden sm:inline">Otomatik Onay</span>
+                  <span className="sm:hidden">⚡</span>
+                </label>
+              )}
             </div>
             
             <Button
@@ -610,14 +610,14 @@ export default function POSPage() {
               }}
               variant="outline"
               size="sm"
-              className="bg-purple-600 text-black hover:bg-purple-700"
+              className="bg-purple-600 text-black hover:bg-purple-700 text-xs md:text-sm lg:text-base px-3 md:px-4 py-2 md:py-2.5"
             >
               🍽️ Masa Tahsilatı
             </Button>
-            <Badge variant="secondary" className="text-xs md:text-sm">
+            <Badge variant="secondary" className="text-xs md:text-sm lg:text-base">
               {selectedBranch?.name || 'Şube'}
             </Badge>
-            <Badge variant="outline" className="text-xs md:text-sm">
+            <Badge variant="outline" className="text-xs md:text-sm lg:text-base">
               {cart.length}
             </Badge>
           </div>
@@ -629,20 +629,20 @@ export default function POSPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <ShoppingCart className="h-5 w-5 text-blue-600" />
-            <span className="font-medium">Sepet: {cart.length} ürün</span>
+            <span className="font-medium text-sm md:text-base">Sepet: {cart.length} ürün</span>
           </div>
-          <div className="text-lg font-bold text-green-600">
+          <div className="text-base md:text-lg font-bold text-green-600">
             ₺{getTotalPrice().toFixed(2)}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row h-[calc(100vh-120px)] md:h-screen">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-140px)] md:h-screen">
         {/* Ürünler Bölümü */}
-        <div className="flex-1 p-2 md:p-4 overflow-y-auto">
+        <div className="flex-1 p-3 md:p-4 lg:p-6 overflow-y-auto">
           {/* Şube Seçimi */}
-          <div className="mb-3 md:mb-4">
-            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1 md:mb-2">Şube</label>
+          <div className="mb-4 md:mb-6">
+            <label className="block text-sm md:text-base font-medium text-gray-700 mb-2 md:mb-3">Şube</label>
             <select
               value={selectedBranch?.id || ''}
               onChange={(e) => {
@@ -653,7 +653,7 @@ export default function POSPage() {
                   fetchCategories(branch.id);
                 }
               }}
-              className="w-full p-2 md:p-3 border border-gray-300 rounded-lg text-sm md:text-lg"
+              className="w-full p-3 md:p-4 border border-gray-300 rounded-lg text-sm md:text-base lg:text-lg"
             >
               {branches.map(branch => (
                 <option key={branch.id} value={branch.id}>
@@ -664,13 +664,13 @@ export default function POSPage() {
           </div>
 
           {/* Kategori Filtreleri */}
-          <div className="mb-4 md:mb-6">
-            <div className="flex flex-wrap gap-1 md:gap-2">
+          <div className="mb-5 md:mb-6">
+            <div className="flex flex-wrap gap-2 md:gap-3">
               <Button
                 onClick={() => setSelectedCategory('all')}
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
                 size="sm"
-                className="text-xs md:text-sm px-3 md:px-6 py-2 md:py-3"
+                className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 whitespace-nowrap"
               >
                 Tümü
               </Button>
@@ -680,7 +680,7 @@ export default function POSPage() {
                   onClick={() => setSelectedCategory(category.name)}
                   variant={selectedCategory === category.name ? 'default' : 'outline'}
                   size="sm"
-                  className="text-xs md:text-sm px-3 md:px-6 py-2 md:py-3"
+                  className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 whitespace-nowrap"
                 >
                   {category.name}
                 </Button>
@@ -688,19 +688,28 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Ürün Grid - Mobil için 2 sütun, desktop için daha fazla */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
+          {/* Ürün Grid - Responsive tasarım */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4">
             {filteredProducts.map(product => (
               <div
                 key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-blue-300 rounded-lg bg-white"
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-300 rounded-lg bg-white group"
                 onClick={() => addToCart(product)}
               >
-                <Card>
-                  <CardContent className="p-3 md:p-4">
-                    <h3 className="font-semibold text-sm md:text-lg mb-2 line-clamp-2">{product.name}</h3>
-                    <p className="text-lg md:text-2xl font-bold text-green-600 mb-2">₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}</p>
-                    <Badge variant="secondary" className="text-xs">
+                <Card className="h-full">
+                  <CardContent className="p-3 md:p-4 h-full flex flex-col">
+                    {/* Ürün Adı - Tam görünür, responsive */}
+                    <h3 className="font-semibold text-sm md:text-base lg:text-lg mb-2 break-words leading-tight min-h-[2.5rem] md:min-h-[3rem] lg:min-h-[3.5rem] flex items-start">
+                      {product.name}
+                    </h3>
+                    
+                    {/* Fiyat */}
+                    <p className="text-base md:text-lg lg:text-xl font-bold text-green-600 mb-2 mt-auto">
+                      ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
+                    </p>
+                    
+                    {/* Kategori */}
+                    <Badge variant="secondary" className="text-xs md:text-sm w-fit">
                       {product.category.name}
                     </Badge>
                   </CardContent>
@@ -711,12 +720,12 @@ export default function POSPage() {
         </div>
 
         {/* Sepet Bölümü - Mobilde bottom sheet, desktop'ta sidebar */}
-        <div className="md:w-96 bg-white border-t md:border-l border-gray-200 flex flex-col">
+        <div className="md:w-80 lg:w-96 bg-white border-t md:border-l border-gray-200 flex flex-col">
           {/* Desktop Sepet Header */}
-          <div className="hidden md:block p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2" />
+          <div className="hidden md:block p-3 md:p-4 border-b border-gray-200">
+                          <div className="flex items-center justify-between mb-3 md:mb-4">
+              <h2 className="text-lg md:text-xl lg:text-2xl font-bold flex items-center">
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5 mr-2" />
                 Sepet
               </h2>
               <Button
@@ -731,27 +740,27 @@ export default function POSPage() {
           </div>
 
           {/* Sepet İçeriği */}
-          <div className="flex-1 overflow-y-auto p-2 md:p-4">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4">
             {cart.length === 0 ? (
-              <div className="text-center text-gray-500 mt-8">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-sm md:text-base">Sepet boş</p>
-                <p className="text-xs md:text-sm">Ürün seçmek için ürünlere tıklayın</p>
+                              <div className="text-center text-gray-500 mt-6 md:mt-8">
+                <ShoppingCart className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-gray-300" />
+                                  <p className="text-sm md:text-base lg:text-lg">Sepet boş</p>
+                  <p className="text-xs md:text-sm lg:text-base">Ürün seçmek için ürünlere tıklayın</p>
               </div>
             ) : (
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-3 md:space-y-4">
                 {cart.map(item => (
-                  <div key={item.productId} className="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg">
+                  <div key={item.productId} className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 bg-gray-50 rounded-lg">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm md:text-base truncate">{item.name}</h3>
+                      <h3 className="font-medium text-sm md:text-base break-words leading-tight">{item.name}</h3>
                       <p className="text-xs md:text-sm text-gray-600">₺{item.price.toFixed(2)}</p>
                     </div>
-                    <div className="flex items-center space-x-1 md:space-x-2">
+                    <div className="flex items-center space-x-2 md:space-x-3">
                       <Button
                         onClick={() => updateQuantity(item.productId, item.quantity - 1)}
                         size="sm"
                         variant="outline"
-                        className="w-6 h-6 md:w-8 md:h-8 p-0"
+                        className="w-7 h-7 md:w-8 md:h-8 p-0"
                       >
                         <Minus className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
@@ -762,7 +771,7 @@ export default function POSPage() {
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                         size="sm"
                         variant="outline"
-                        className="w-6 h-6 md:w-8 md:h-8 p-0"
+                        className="w-7 h-7 md:w-8 md:h-8 p-0"
                       >
                         <Plus className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
@@ -770,7 +779,7 @@ export default function POSPage() {
                         onClick={() => removeFromCart(item.productId)}
                         size="sm"
                         variant="outline"
-                        className="w-6 h-6 md:w-8 md:h-8 p-0 text-red-600"
+                        className="w-7 h-7 md:w-8 md:h-8 p-0 text-red-600"
                       >
                         <X className="h-3 w-3 md:h-4 md:w-4" />
                       </Button>
@@ -782,15 +791,15 @@ export default function POSPage() {
           </div>
 
           {/* Toplam ve Ödeme */}
-          <div className="p-2 md:p-4 border-t border-gray-200 bg-gray-50">
-            <div className="mb-3 md:mb-4">
-              <div className="flex justify-between items-center text-lg md:text-xl font-bold">
+          <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50">
+            <div className="mb-4 md:mb-5">
+              <div className="flex justify-between items-center text-base md:text-lg lg:text-xl font-bold">
                 <span>Toplam:</span>
-                <span className="text-xl md:text-2xl text-green-600">₺{getTotalPrice().toFixed(2)}</span>
+                <span className="text-lg md:text-xl lg:text-2xl text-green-600">₺{getTotalPrice().toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="space-y-2 md:space-y-3">
+            <div className="space-y-3 md:space-y-4">
               <Button
                 onClick={() => handlePayment('cash')}
                 className="w-full bg-green-600 hover:bg-green-700 text-white text-sm md:text-lg py-3 md:py-4"
@@ -809,15 +818,15 @@ export default function POSPage() {
                 Kart
               </Button>
 
-                             <Button
-                 onClick={() => printReceipt(autoConfirm)}
-                 variant="outline"
-                 className="w-full text-sm md:text-lg py-3 md:py-4"
-                 disabled={cart.length === 0}
-               >
-                 <Printer className="h-4 w-4 md:h-5 md:w-5 mr-2" />
-                 Fiş
-               </Button>
+              <Button
+                onClick={() => printReceipt(autoConfirm)}
+                variant="outline"
+                className="w-full text-sm md:text-lg py-3 md:py-4"
+                disabled={cart.length === 0}
+              >
+                <Printer className="h-4 w-4 md:h-5 md:w-5 mr-2" />
+                Fiş
+              </Button>
             </div>
           </div>
         </div>

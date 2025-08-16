@@ -13,13 +13,25 @@ interface BranchManagementProps {
   onEditBranch: (branch: Branch) => void;
   onDeleteBranch: (branchId: number) => void;
   onDeactivateBranch?: (branchId: number) => void;
+  onAddBranch?: () => void; // Yeni prop ekle
 }
 
-const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBranch, onDeleteBranch, onDeactivateBranch }) => {
+const BranchManagement: React.FC<BranchManagementProps> = ({ branches, onEditBranch, onDeleteBranch, onDeactivateBranch, onAddBranch }) => {
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">Şubeler ({branches.length})</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Şubeler ({branches.length})</h2>
+          {onAddBranch && (
+            <button
+              onClick={onAddBranch}
+              className="flex items-center space-x-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 hover:shadow-md"
+            >
+              <span className="text-lg">🏢</span>
+              <span>Şube Ekle</span>
+            </button>
+          )}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">

@@ -8,7 +8,7 @@ console.log('🔧 isProduction:', isProduction);
 const SERVER_PORT = isProduction ? (process.env.PORT || 10000) : 3001;
 console.log('🔧 SERVER_PORT:', SERVER_PORT);
 console.log('🔧 process.env.PORT son:', process.env.PORT);
-const DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=30';
+const DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=60&pool_timeout=60&connection_limit=20&idle_timeout=60';
 const isPostgreSQL = DATABASE_URL.startsWith('postgresql://') || DATABASE_URL.startsWith('postgres://');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 const FRONTEND_URL = isProduction ? 'https://siparisnet.netlify.app' : (process.env.FRONTEND_URL || 'http://localhost:3000');
@@ -49,32 +49,16 @@ cloudinary.config({
 
 const { PrismaClient } = require('@prisma/client');
 
-// Prisma client configuration - Bağlantı havuzu ayarları ile
+// Prisma client configuration - Improved connection pool settings
 const prisma = new PrismaClient({
   datasources: {
     db: {
       url: DATABASE_URL
     }
   },
-  // Bağlantı havuzu ayarları
+  // Improved connection pool settings for remote PostgreSQL
   log: ['error', 'warn'],
-  errorFormat: 'pretty',
-  // Bağlantı yeniden deneme ayarları
-  __internal: {
-    engine: {
-      connectionLimit: 5,
-      pool: {
-        min: 0,
-        max: 10,
-        acquireTimeoutMillis: 30000,
-        createTimeoutMillis: 30000,
-        destroyTimeoutMillis: 5000,
-        idleTimeoutMillis: 30000,
-        reapIntervalMillis: 1000,
-        createRetryIntervalMillis: 200,
-      }
-    }
-  }
+  errorFormat: 'pretty'
 });
 
 // Global prisma instance'ını export et
@@ -82,20 +66,31 @@ global.prisma = prisma;
 
 console.log('🔧 Prisma client oluşturuldu');
 
-// Bağlantı yeniden deneme fonksiyonu
-async function connectWithRetry(maxRetries = 5, delay = 2000) {
+// Improved connection retry function with better error handling
+async function connectWithRetry(maxRetries = 10, delay = 3000) {
   for (let i = 0; i < maxRetries; i++) {
     try {
       await prisma.$connect();
       console.log('✅ Prisma client başarıyla bağlandı');
+      
+      // Test the connection with a simple query
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('✅ Veritabanı sorgusu test edildi');
+      
       return true;
     } catch (error) {
       console.error(`❌ Bağlantı denemesi ${i + 1}/${maxRetries} başarısız:`, error.message);
       
+      // Check if it's a connection pool timeout error
+      if (error.code === 'P2024') {
+        console.log('⚠️ Bağlantı havuzu zaman aşımı hatası, daha uzun bekleme...');
+        delay = Math.min(delay * 2, 15000); // Max 15 seconds delay
+      }
+      
       if (i < maxRetries - 1) {
         console.log(`⏳ ${delay}ms sonra tekrar deneniyor...`);
         await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 1.5; // Exponential backoff
+        delay = Math.min(delay * 1.5, 15000); // Exponential backoff with max limit
       } else {
         console.error('❌ Maksimum deneme sayısına ulaşıldı');
         return false;
@@ -120,12 +115,71 @@ connectWithRetry()
 // Prisma client'ı global olarak tanımla
 global.prismaClient = prisma;
 
+// Connection health check function
+async function checkConnectionHealth() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.error('❌ Bağlantı sağlık kontrolü başarısız:', error.message);
+    if (error.code === 'P2024') {
+      console.log('🔄 Bağlantı yeniden kurulmaya çalışılıyor...');
+      try {
+        await prisma.$disconnect();
+        await prisma.$connect();
+        console.log('✅ Bağlantı yeniden kuruldu');
+        return true;
+      } catch (reconnectError) {
+        console.error('❌ Bağlantı yeniden kurulamadı:', reconnectError.message);
+        return false;
+      }
+    }
+    return false;
+  }
+}
+
+// Safe database operation wrapper with retry logic
+async function safeDbOperation(operation, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (error.code === 'P2024' && attempt < maxRetries) {
+        console.log(`⚠️ Bağlantı havuzu hatası (deneme ${attempt}/${maxRetries}), yeniden deneniyor...`);
+        await new Promise(resolve => setTimeout(resolve, 2000 * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+// Periodic connection health check (every 5 minutes)
+setInterval(checkConnectionHealth, 5 * 60 * 1000);
+
 // Firma yönetimi modülünü import et
 // const companyManagement = require('./company-management');
 
-// Sadece hata durumlarında log - gereksiz query logging kaldırıldı
+// Enhanced Prisma error handling
 prisma.$on('error', (e) => {
   logger.error('Prisma Error: ' + e.message);
+  
+  // Handle connection pool timeout errors specifically
+  if (e.code === 'P2024') {
+    console.log('⚠️ Bağlantı havuzu zaman aşımı hatası tespit edildi');
+    console.log('🔄 Bağlantı yeniden kurulmaya çalışılıyor...');
+    
+    // Attempt to reconnect after a short delay
+    setTimeout(async () => {
+      try {
+        await prisma.$disconnect();
+        await prisma.$connect();
+        console.log('✅ Bağlantı havuzu hatası sonrası yeniden bağlantı başarılı');
+      } catch (reconnectError) {
+        console.error('❌ Yeniden bağlantı başarısız:', reconnectError.message);
+      }
+    }, 2000);
+  }
 });
 
 if (!process.env.DATABASE_URL) {
@@ -134,7 +188,7 @@ if (!process.env.DATABASE_URL) {
 
 // PostgreSQL URL override for Render
 if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL.includes('postgresql')) {
-  process.env.DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis';
+  process.env.DATABASE_URL = 'postgresql://naim:cibKjxXirpnFyQTor7DpBhGXf1XAqmmw@dpg-d1podn2dbo4c73bp2q7g-a.oregon-postgres.render.com/siparis?sslmode=require&connect_timeout=60&pool_timeout=60&connection_limit=20&idle_timeout=60';
   console.log('🔧 PostgreSQL URL override applied for production');
 }
 
@@ -709,9 +763,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.get('/api/branches', async (req, res) => {
   try {
-    const branches = await prisma.branch.findMany({
+    const branches = await safeDbOperation(() => prisma.branch.findMany({
       where: { isActive: true }
-    });
+    }));
     res.json(branches);
   } catch (error) {
     res.status(500).json({ error: 'Şubeler getirilemedi' });
@@ -727,9 +781,9 @@ app.get('/api/admin/branches', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz erişim' });
     }
     
-    const branches = await prisma.branch.findMany({
+    const branches = await safeDbOperation(() => prisma.branch.findMany({
       orderBy: { name: 'asc' }
-    });
+    }));
     res.json(branches);
   } catch (error) {
     res.status(500).json({ error: 'Şubeler getirilemedi' });
@@ -1383,14 +1437,14 @@ app.get('/api/orders/:id', async (req, res) => {
 
 app.get('/api/admin/orders', authenticateToken, async (req, res) => {
   try {
-    const user = await prisma.user.findUnique({
+    const user = await safeDbOperation(() => prisma.user.findUnique({
       where: { id: req.user.userId },
       select: { 
         id: true,
         role: true,
         branchId: true
       }
-    });
+    }));
 
     if (!user) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
@@ -1412,7 +1466,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
     }
 
     // Sadece gerekli alanları seç - gereksiz include'ları kaldır
-    const orders = await prisma.order.findMany({
+    const orders = await safeDbOperation(() => prisma.order.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -1452,8 +1506,8 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
           select: {
             id: true,
             quantity: true,
-            price: true,
             note: true,
+            price: true,
             product: {
               select: {
                 id: true,
@@ -1465,7 +1519,7 @@ app.get('/api/admin/orders', authenticateToken, async (req, res) => {
         }
       },
       orderBy: { createdAt: 'desc' }
-    });
+    }));
 
     res.json(orders);
   } catch (error) {
@@ -1604,7 +1658,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
     }
     
     // Sadece gerekli alanları seç - gereksiz include'ları kaldır
-    const users = await prisma.user.findMany({
+    const users = await safeDbOperation(() => prisma.user.findMany({
       select: {
         id: true,
         name: true,
@@ -1623,7 +1677,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
         }
       },
       orderBy: { createdAt: 'desc' }
-    });
+    }));
     
     res.json(users);
   } catch (e) {
@@ -1724,7 +1778,7 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
     console.log('Where clause:', whereClause);
     
     // Sadece gerekli alanları seç - gereksiz include'ları kaldır
-    const products = await prisma.product.findMany({
+    const products = await safeDbOperation(() => prisma.product.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -1750,7 +1804,7 @@ app.get('/api/admin/products', authenticateToken, async (req, res) => {
         }
       },
       orderBy: { name: 'asc' }
-    });
+    }));
     
     console.log('Products fetched:', products.length);
     console.log('Sample product structure:', products[0]);
@@ -2112,10 +2166,10 @@ app.delete('/api/admin/products/:id', authenticateToken, async (req, res) => {
 
 app.get('/api/categories', async (req, res) => {
   try {
-    const categories = await prisma.category.findMany({
+    const categories = await safeDbOperation(() => prisma.category.findMany({
       where: { isActive: true },
       orderBy: { name: 'asc' }
-    });
+    }));
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: 'Kategoriler getirilemedi' });
@@ -2136,10 +2190,10 @@ app.get('/api/admin/categories', authenticateToken, async (req, res) => {
       }
     }
 
-    const categories = await prisma.category.findMany({
+    const categories = await safeDbOperation(() => prisma.category.findMany({
       where: { companyId: companyId },
       orderBy: { name: 'asc' }
-    });
+    }));
     
     res.json(categories);
   } catch (error) {
@@ -3763,7 +3817,7 @@ app.get('/api/database-status', async (req, res) => {
     const branchCount = await prisma.branch.count();
     const categoryCount = await prisma.category.count();
     const productCount = await prisma.product.count();
-    const orderCount = await prisma.order.count();
+    const orderCount = await safeDbOperation(() => prisma.order.count());
     
     // Örnek verileri kontrol et
     const sampleUser = await prisma.user.findFirst();
@@ -3791,18 +3845,18 @@ app.get('/api/database-status', async (req, res) => {
 // Gerçek verileri listeleme endpoint'i
 app.get('/api/real-data', async (req, res) => {
   try {
-    const users = await prisma.user.findMany({
+    const users = await safeDbOperation(() => prisma.user.findMany({
       select: { id: true, email: true, name: true, role: true }
-    });
+    }));
     
-    const branches = await prisma.branch.findMany({
+    const branches = await safeDbOperation(() => prisma.branch.findMany({
       select: { id: true, name: true, address: true }
-    });
+    }));
     
-    const products = await prisma.product.findMany({
+    const products = await safeDbOperation(() => prisma.product.findMany({
       select: { id: true, name: true, price: true, categoryId: true },
       take: 5
-    });
+    }));
     
     res.json({
       message: 'Gerçek veritabanı verileri',
@@ -3821,9 +3875,9 @@ app.get('/api/real-data', async (req, res) => {
 app.post('/api/admin/create-admin', async (req, res) => {
   try {
     // Önce admin kullanıcısının var olup olmadığını kontrol et
-    const existingAdmin = await prisma.user.findFirst({
+    const existingAdmin = await safeDbOperation(() => prisma.user.findFirst({
       where: { email: 'admin@example.com' }
-    });
+    }));
     
     if (existingAdmin) {
       return res.json({ 
@@ -4416,9 +4470,9 @@ app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
 
     console.log('🗑️ Tüm siparişleri silme isteği alındı');
     
-    // Önce toplam sipariş sayısını al
-    const totalOrders = await prisma.order.count();
-    const totalOrderItems = await prisma.orderItem.count();
+    // Önce toplam sipariş sayısını güvenli şekilde al
+    const totalOrders = await safeDbOperation(() => prisma.order.count());
+    const totalOrderItems = await safeDbOperation(() => prisma.orderItem.count());
     
     if (totalOrders === 0) {
       return res.json({ 
@@ -4473,31 +4527,31 @@ app.get('/api/admin/database-stats', authenticateToken, async (req, res) => {
 
     console.log('📊 Veritabanı istatistikleri isteği alındı');
     
-    // İstatistikleri al
-    const totalOrders = await prisma.order.count();
-    const oldOrders = await prisma.order.count({
+    // İstatistikleri güvenli şekilde al
+    const totalOrders = await safeDbOperation(() => prisma.order.count());
+    const oldOrders = await safeDbOperation(() => prisma.order.count({
       where: {
         createdAt: {
           lt: new Date(Date.now() - 12 * 60 * 60 * 1000)
         }
       }
-    });
+    }));
     
-    const activeOrders = await prisma.order.count({
+    const activeOrders = await safeDbOperation(() => prisma.order.count({
       where: {
         status: {
           in: ['PENDING', 'PREPARING', 'READY']
         }
       }
-    });
+    }));
 
-    const completedOrders = await prisma.order.count({
+    const completedOrders = await safeDbOperation(() => prisma.order.count({
       where: {
         status: {
           in: ['DELIVERED', 'CANCELLED']
         }
       }
-    });
+    }));
 
     // Bellek kullanımı
     const memUsage = process.memoryUsage();

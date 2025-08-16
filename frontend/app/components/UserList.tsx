@@ -17,9 +17,10 @@ interface UserListProps {
   users: User[];
   onDeleteUser: (userId: number) => void;
   onActivateUser: (userId: number) => void;
+  onAddUser?: () => void; // Yeni prop ekle
 }
 
-const UserList: React.FC<UserListProps> = ({ users, onDeleteUser, onActivateUser }) => {
+const UserList: React.FC<UserListProps> = ({ users, onDeleteUser, onActivateUser, onAddUser }) => {
   const getRoleText = (role: string) => {
     switch (role) {
       case 'SUPER_ADMIN':
@@ -49,7 +50,18 @@ const UserList: React.FC<UserListProps> = ({ users, onDeleteUser, onActivateUser
   return (
     <div className="bg-white shadow rounded-lg">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900">Kullanıcılar ({users.length})</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-900">Kullanıcılar ({users.length})</h2>
+          {onAddUser && (
+            <button
+              onClick={onAddUser}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 hover:shadow-md"
+            >
+              <span className="text-lg">👤</span>
+              <span>Kullanıcı Ekle</span>
+            </button>
+          )}
+        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
