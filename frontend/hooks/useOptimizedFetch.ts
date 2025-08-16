@@ -212,17 +212,29 @@ export function useOptimizedFetch<T = any>(
       console.log('🔍 OptimizedFetch URL:', fullUrl);
       
       console.log('🔍 API çağrısı yapılıyor...');
+      
+      // Stream hatası için özel handling
       const response = await apiClient.get(fullUrl, {
         ...config,
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
+        timeout: 30000, // 30 saniye timeout
+        maxContentLength: Infinity, // Büyük veri için
+        maxBodyLength: Infinity,
+        responseType: 'json'
       });
+      
       console.log('🔍 API yanıtı alındı:', response.data?.length || 'boş');
 
-      if (isMountedRef.current) {
-        console.log('🔍 Data set ediliyor:', response.data?.length || 'boş');
-        setData(response.data);
-        setCachedData(url, response.data);
-        retryCountRef.current = 0;
+      // Stream hatası kontrolü
+      if (response.data && typeof response.data === 'object' && response.data.pipe === undefined) {
+        if (isMountedRef.current) {
+          console.log('🔍 Data set ediliyor:', response.data?.length || 'boş');
+          setData(response.data);
+          setCachedData(url, response.data);
+          retryCountRef.current = 0;
+        }
+      } else {
+        throw new Error('Stream hatası: Veri stream formatında geldi');
       }
     } catch (err: any) {
       console.error('❌ Fetch error:', err);
@@ -232,7 +244,22 @@ export function useOptimizedFetch<T = any>(
         return; // İptal edilen istek veya component unmount
       }
 
-      // Retry logic
+      // Stream hatası için özel handling
+      if (err.message && err.message.includes('Stream hatası')) {
+        console.log('🔍 Stream hatası tespit edildi, retry yapılıyor...');
+        if (retryCountRef.current < retryCount) {
+          retryCountRef.current++;
+          console.log(`🔍 Stream hatası retry ${retryCountRef.current}/${retryCount}`);
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              fetchData(config);
+            }
+          }, retryDelay * 2); // Stream hatası için daha uzun bekleme
+          return;
+        }
+      }
+
+      // Normal retry logic
       if (retryCountRef.current < retryCount) {
         retryCountRef.current++;
         console.log(`🔍 Retry ${retryCountRef.current}/${retryCount}`);

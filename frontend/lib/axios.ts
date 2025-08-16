@@ -4,10 +4,13 @@ import { getApiBaseUrl } from './api'
 // Axios instance oluştur
 const apiClient = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 10000, // 10 saniye timeout
+  timeout: 30000, // 30 saniye timeout - büyük veri için
   headers: {
     'Content-Type': 'application/json',
   },
+  maxContentLength: Infinity, // Büyük veri için
+  maxBodyLength: Infinity,
+  responseType: 'json'
 })
 
 // Request interceptor

@@ -141,13 +141,15 @@ export default function Home() {
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
   // Optimize edilmiş fetch hook'ları - bellek optimizasyonu aktif
-  const { data: branchesData, loading: branchesLoading, cacheStats } = useOptimizedFetch<Branch[]>(
+  const { data: branchesData, loading: branchesLoading, cacheStats, error: branchesError } = useOptimizedFetch<Branch[]>(
     API_ENDPOINTS.BRANCHES,
     { 
       cacheTime: 10 * 60 * 1000, // 10 dakika cache
       debounceTime: 500, // 500ms debounce
       enableMemoryOptimization: true,
-      maxCacheSize: 20
+      maxCacheSize: 20,
+      retryCount: 3, // 3 kez retry
+      retryDelay: 2000 // 2 saniye bekle
     }
   );
 
@@ -186,7 +188,9 @@ export default function Home() {
       debounceTime: 300, // 300ms debounce
       enabled: !!selectedBranch,
       enableMemoryOptimization: true,
-      maxCacheSize: 10
+      maxCacheSize: 10,
+      retryCount: 3, // 3 kez retry
+      retryDelay: 3000 // 3 saniye bekle - büyük veri için
     }
   );
 
@@ -674,20 +678,49 @@ export default function Home() {
     )
   }
 
-  // Hata durumu
+  // Hata durumu - branches
+  if (branchesError && !selectedBranch) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏪</div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Şube Bilgileri Yüklenemedi</h3>
+          <p className="text-gray-600 mb-4">{branchesError}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+            >
+              Sayfayı Yenile
+            </button>
+            <div className="text-sm text-gray-500">
+              💡 Backend sunucusu çalışıyor mu kontrol edin
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Hata durumu - products
   if (productsError && selectedBranch) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Hata Oluştu</h3>
+          <div className="text-6xl mb-4">🍽️</div>
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Menü Yüklenemedi</h3>
           <p className="text-gray-600 mb-4">{productsError}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
-          >
-            Sayfayı Yenile
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+            >
+              Sayfayı Yenile
+            </button>
+            <div className="text-sm text-gray-500">
+              💡 Stream hatası olabilir, lütfen tekrar deneyin
+            </div>
+          </div>
         </div>
       </div>
     )
