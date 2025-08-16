@@ -982,6 +982,12 @@ export default function AdminPage() {
     setWhatsAppSettings(newSettings);
     // LocalStorage'a kaydet
     localStorage.setItem('whatsAppSettings', JSON.stringify(newSettings));
+    
+    // Custom event tetikle (aynı tab içinde localStorage değişikliklerini dinlemek için)
+    window.dispatchEvent(new CustomEvent('whatsAppSettingsChanged', {
+      detail: { key: 'whatsAppSettings', value: newSettings }
+    }));
+    
     toast.success('WhatsApp ayarları güncellendi!');
     setShowWhatsAppSettingsModal(false);
   }, []);
