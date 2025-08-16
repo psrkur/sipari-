@@ -95,6 +95,12 @@ export default function AdminPage() {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [showWhatsAppSettingsModal, setShowWhatsAppSettingsModal] = useState(false);
+  const [whatsAppSettings, setWhatsAppSettings] = useState({
+    phoneNumber: '+90 555 123 45 67',
+    defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+    quickMessage1: 'Menü hakkında bilgi alabilir miyim?',
+    quickMessage2: 'Teslimat süresi ne kadar?'
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,6 +183,19 @@ export default function AdminPage() {
       console.log('Form values after editing product:', productForm);
     }
   }, [editingProduct, productForm]);
+
+  // WhatsApp ayarlarını localStorage'dan yükle
+  useEffect(() => {
+    const savedWhatsAppSettings = localStorage.getItem('whatsAppSettings');
+    if (savedWhatsAppSettings) {
+      try {
+        const parsed = JSON.parse(savedWhatsAppSettings);
+        setWhatsAppSettings(parsed);
+      } catch (error) {
+        console.error('WhatsApp ayarları parse edilemedi:', error);
+      }
+    }
+  }, []);
 
   // Ürün düzenleme fonksiyonu
   const handleEditProduct = (product: any) => {
@@ -957,6 +976,15 @@ export default function AdminPage() {
       toast.error(`Şube güncellenemedi: ${error.response?.data?.error || error.message}`);
     }
   }, [token, editingBranch, branchForm, updateBranchItem, resetBranchForm]);
+
+  // WhatsApp ayarlarını güncelle
+  const updateWhatsAppSettings = useCallback((newSettings: typeof whatsAppSettings) => {
+    setWhatsAppSettings(newSettings);
+    // LocalStorage'a kaydet
+    localStorage.setItem('whatsAppSettings', JSON.stringify(newSettings));
+    toast.success('WhatsApp ayarları güncellendi!');
+    setShowWhatsAppSettingsModal(false);
+  }, []);
 
   const deleteBranch = useCallback(async (branchId: number) => {
     if (!confirm('Bu şubeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
@@ -2591,9 +2619,14 @@ export default function AdminPage() {
             </h3>
             <form onSubmit={(e) => { 
               e.preventDefault(); 
-              // WhatsApp ayarlarını kaydet
-              setShowWhatsAppSettingsModal(false);
-              toast.success('WhatsApp ayarları güncellendi!');
+              const formData = new FormData(e.currentTarget);
+              const newSettings = {
+                phoneNumber: formData.get('phoneNumber') as string,
+                defaultMessage: formData.get('defaultMessage') as string,
+                quickMessage1: formData.get('quickMessage1') as string,
+                quickMessage2: formData.get('quickMessage2') as string
+              };
+              updateWhatsAppSettings(newSettings);
             }}>
               <div className="space-y-4">
                 <div>
@@ -2602,8 +2635,10 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="tel"
+                    name="phoneNumber"
+                    value={whatsAppSettings.phoneNumber}
+                    onChange={(e) => setWhatsAppSettings(prev => ({ ...prev, phoneNumber: e.target.value }))}
                     placeholder="+90 555 123 45 67"
-                    defaultValue="+90 555 123 45 67"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     required
                   />
@@ -2613,8 +2648,10 @@ export default function AdminPage() {
                     Varsayılan Mesaj
                   </label>
                   <textarea
+                    name="defaultMessage"
+                    value={whatsAppSettings.defaultMessage}
+                    onChange={(e) => setWhatsAppSettings(prev => ({ ...prev, defaultMessage: e.target.value }))}
                     placeholder="Merhaba! Sipariş vermek istiyorum."
-                    defaultValue="Merhaba! Sipariş vermek istiyorum."
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     rows={3}
                     required
@@ -2626,8 +2663,10 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    name="quickMessage1"
+                    value={whatsAppSettings.quickMessage1}
+                    onChange={(e) => setWhatsAppSettings(prev => ({ ...prev, quickMessage1: e.target.value }))}
                     placeholder="Menü hakkında bilgi alabilir miyim?"
-                    defaultValue="Menü hakkında bilgi alabilir miyim?"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
@@ -2637,8 +2676,10 @@ export default function AdminPage() {
                   </label>
                   <input
                     type="text"
+                    name="quickMessage2"
+                    value={whatsAppSettings.quickMessage2}
+                    onChange={(e) => setWhatsAppSettings(prev => ({ ...prev, quickMessage2: e.target.value }))}
                     placeholder="Teslimat süresi ne kadar?"
-                    defaultValue="Teslimat süresi ne kadar?"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
