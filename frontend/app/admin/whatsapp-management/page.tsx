@@ -53,7 +53,7 @@ export default function WhatsAppManagement() {
     }
   });
   const [whatsAppSettings, setWhatsAppSettings] = useState({
-    phoneNumber: '905551234567',
+    phoneNumber: '905322922609',
     defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
     isActive: true
   });
