@@ -749,6 +749,7 @@ router.get('/product-sales', async (req, res) => {
     // İki veri kaynağını birleştir ve formatla
     const activeItems = activeOrderItems.map(item => ({
       id: item.id,
+      productId: item.product.id,
       productName: item.product.name,
       categoryName: item.product.category.name,
       quantity: item.quantity,
@@ -759,6 +760,7 @@ router.get('/product-sales', async (req, res) => {
 
     const archivedItems = salesRecordItems.map(item => ({
       id: item.id,
+      productId: item.id, // SalesRecordItem için unique ID kullan
       productName: item.productName,
       categoryName: item.categoryName,
       quantity: item.quantity,
@@ -769,29 +771,33 @@ router.get('/product-sales', async (req, res) => {
 
     const productSales = [...activeItems, ...archivedItems];
     
+    console.log('📊 Aktif ürün satışları:', activeItems.length);
+    console.log('📊 Arşiv ürün satışları:', archivedItems.length);
+    console.log('📊 Toplam ürün satışları:', productSales.length);
+    
     // Ürün bazında satış verilerini grupla
     const productStats = {};
     const categoryStats = {};
     
     productSales.forEach(item => {
-      const productId = item.product.id;
-      const categoryName = item.product.category?.name || 'Kategorisiz';
+      const productId = item.productId;
+      const categoryName = item.categoryName || 'Kategorisiz';
       
       // Ürün istatistikleri
       if (!productStats[productId]) {
         productStats[productId] = {
           id: productId,
-          name: item.product.name,
+          name: item.productName,
           category: categoryName,
           totalQuantity: 0,
           totalRevenue: 0,
-          averagePrice: item.product.price,
+          averagePrice: item.price,
           orderCount: 0
         };
       }
       
       productStats[productId].totalQuantity += item.quantity;
-      productStats[productId].totalRevenue += item.price * item.quantity;
+      productStats[productId].totalRevenue += item.totalPrice;
       productStats[productId].orderCount += 1;
       
       // Kategori istatistikleri
@@ -806,7 +812,7 @@ router.get('/product-sales', async (req, res) => {
       }
       
       categoryStats[categoryName].totalQuantity += item.quantity;
-      categoryStats[categoryName].totalRevenue += item.price * item.quantity;
+      categoryStats[categoryName].totalRevenue += item.totalPrice;
       categoryStats[categoryName].products.add(productId);
     });
     
