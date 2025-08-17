@@ -141,7 +141,7 @@ export default function Home() {
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
   // WhatsApp ayarları
-  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('905551234567')
+  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('905322922609')
   const [whatsAppMessage, setWhatsAppMessage] = useState('Merhaba! Sipariş vermek istiyorum.')
 
   // Telefon numarasını formatla
