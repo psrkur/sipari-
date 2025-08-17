@@ -35,6 +35,7 @@ interface ChatStats {
 }
 
 export default function ChatManagement() {
+  // Tüm hook'ları en üstte çağır - hiçbir koşul olmadan
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [stats, setStats] = useState<ChatStats | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);

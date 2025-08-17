@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 // Socket.IO URL'sini belirle
@@ -57,157 +57,138 @@ export interface SocketEvents {
 }
 
 export const useSocket = () => {
+  // Client-side kontrolü ekle
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const socketRef = useRef<Socket | null>(null);
-  const reconnectAttemptsRef = useRef(0);
-  const maxReconnectAttempts = 10; // Artırıldı
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    // Sadece client-side'da socket bağlantısını kur
+    if (!isClient) return;
+    
     // Socket bağlantısını oluştur
-    socketRef.current = io(SOCKET_URL, {
-      transports: ['polling', 'websocket'], // Polling'i önce dene
-      autoConnect: true,
-      timeout: 60000, // 60 saniye timeout (artırıldı)
-      forceNew: false, // Mevcut bağlantıyı yeniden kullan
-      // Reconnection ayarları iyileştirildi
-      reconnection: true,
-      reconnectionAttempts: maxReconnectAttempts,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000, // Artırıldı
-    });
+    try {
+      socketRef.current = io(SOCKET_URL, {
+        transports: ['polling', 'websocket'],
+        autoConnect: true,
+        timeout: 60000,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+      });
 
-    const socket = socketRef.current;
+      const socket = socketRef.current;
 
-    // Bağlantı olayları
-    socket.on('connect', () => {
-      console.log('🔌 Socket.IO bağlantısı kuruldu');
-      reconnectAttemptsRef.current = 0; // Bağlantı başarılı olduğunda sıfırla
-      
-      // Reconnect timeout'u temizle
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-    });
+      // Bağlantı olayları
+      socket.on('connect', () => {
+        console.log('🔌 Socket.IO bağlantısı kuruldu');
+        setIsConnected(true);
+      });
 
-    socket.on('disconnect', (reason) => {
-      console.log(`❌ Socket.IO bağlantısı kesildi, Sebep: ${reason}`);
-      
-      // Yeniden bağlanma denemesi
-      if (reason === 'io server disconnect' || reason === 'transport close' || reason === 'ping timeout') {
-        reconnectAttemptsRef.current++;
-        if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
-          console.log(`🔄 Yeniden bağlanma denemesi ${reconnectAttemptsRef.current}/${maxReconnectAttempts}`);
-          
-          // Manuel yeniden bağlanma denemesi
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 10000);
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (socket && !socket.connected) {
-              console.log(`🔄 Manuel yeniden bağlanma denemesi...`);
-              socket.connect();
-            }
-          }, delay);
-        } else {
-          console.log(`❌ Maksimum yeniden bağlanma denemesi aşıldı`);
-        }
-      }
-    });
+      socket.on('disconnect', (reason) => {
+        console.log(`❌ Socket.IO bağlantısı kesildi, Sebep: ${reason}`);
+        setIsConnected(false);
+      });
 
-    socket.on('connect_error', (error) => {
-      console.error('🔌 Socket.IO bağlantı hatası:', error.message);
-      
-      // Bağlantı hatası durumunda yeniden deneme
-      reconnectAttemptsRef.current++;
-      if (reconnectAttemptsRef.current <= maxReconnectAttempts) {
-        const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 10000);
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (socket && !socket.connected) {
-            console.log(`🔄 Bağlantı hatası sonrası yeniden deneme...`);
-            socket.connect();
-          }
-        }, delay);
-      }
-    });
+      socket.on('connect_error', (error) => {
+        console.error('🔌 Socket.IO bağlantı hatası:', error.message);
+        setIsConnected(false);
+      });
 
-    socket.on('reconnect', (attemptNumber) => {
-      console.log(`✅ Socket.IO bağlantısı yeniden kuruldu, Deneme: ${attemptNumber}`);
-      reconnectAttemptsRef.current = 0;
-      
-      // Reconnect timeout'u temizle
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.current = null;
-      }
-    });
+      socket.on('reconnect', (attemptNumber) => {
+        console.log(`✅ Socket.IO bağlantısı yeniden kuruldu, Deneme: ${attemptNumber}`);
+        setIsConnected(true);
+      });
 
-    socket.on('reconnect_error', (error) => {
-      console.error('❌ Socket.IO yeniden bağlanma hatası:', error.message);
-    });
-
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`🔄 Socket.IO yeniden bağlanma denemesi: ${attemptNumber}`);
-    });
-
-    socket.on('reconnect_failed', () => {
-      console.log('❌ Socket.IO yeniden bağlanma başarısız');
-    });
-
-    // Ping/Pong kontrolü
-    socket.on('ping', () => {
-      socket.emit('pong');
-    });
+    } catch (error) {
+      console.error('Socket.IO başlatılamadı:', error);
+      setIsConnected(false);
+    }
 
     // Cleanup
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
+      if (socketRef.current) {
+        try {
+          socketRef.current.disconnect();
+        } catch (error) {
+          console.error('Socket disconnect hatası:', error);
+        }
       }
-      if (socket) {
-        socket.disconnect();
-      }
+      setIsConnected(false);
     };
+  }, [isClient]);
+
+  const joinRoom = useCallback((room: string) => {
+    if (socketRef.current && socketRef.current.connected) {
+      try {
+        socketRef.current.emit('joinRoom', room);
+        console.log(`👥 Odaya katılındı: ${room}`);
+      } catch (error) {
+        console.error('Odaya katılınamadı:', error);
+      }
+    }
   }, []);
 
-  const joinRoom = (room: string) => {
+  const leaveRoom = useCallback((room: string) => {
     if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit('joinRoom', room);
-      console.log(`👥 Odaya katılındı: ${room}`);
-    } else {
-      console.warn('⚠️ Socket bağlantısı yok, odaya katılınamıyor');
+      try {
+        socketRef.current.emit('leaveRoom', room);
+        console.log(`👋 Odadan ayrılındı: ${room}`);
+      } catch (error) {
+        console.error('Odadan ayrılınamadı:', error);
+      }
     }
-  };
+  }, []);
 
-  const leaveRoom = (room: string) => {
-    if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit('leaveRoom', room);
-      console.log(`👋 Odadan ayrılındı: ${room}`);
-    }
-  };
-
-  const on = <K extends keyof SocketEvents>(
+  const on = useCallback(<K extends keyof SocketEvents>(
     event: K,
     callback: SocketEvents[K]
   ) => {
     if (socketRef.current) {
-      socketRef.current.on(event, callback as any);
+      try {
+        socketRef.current.on(event, callback as any);
+      } catch (error) {
+        console.error('Socket event listener eklenemedi:', error);
+      }
     }
-  };
+  }, []);
 
-  const off = <K extends keyof SocketEvents>(
+  const off = useCallback(<K extends keyof SocketEvents>(
     event: K,
     callback: SocketEvents[K]
   ) => {
     if (socketRef.current) {
-      socketRef.current.off(event, callback as any);
+      try {
+        socketRef.current.off(event, callback as any);
+      } catch (error) {
+        console.error('Socket event listener kaldırılamadı:', error);
+      }
     }
-  };
+  }, []);
+
+  const emit = useCallback((event: string, data?: any) => {
+    if (socketRef.current && socketRef.current.connected) {
+      try {
+        socketRef.current.emit(event, data);
+      } catch (error) {
+        console.error('Socket emit hatası:', error);
+      }
+    }
+  }, []);
 
   return {
-    socket: socketRef.current,
-    joinRoom,
-    leaveRoom,
-    on,
-    off,
-    isConnected: socketRef.current?.connected || false,
+    socket: isClient ? socketRef.current : null,
+    joinRoom: isClient ? joinRoom : () => {},
+    leaveRoom: isClient ? leaveRoom : () => {},
+    on: isClient ? on : () => {},
+    off: isClient ? off : () => {},
+    emit: isClient ? emit : () => {},
+    isConnected: isClient && isConnected,
+    isClient,
   };
 }; 

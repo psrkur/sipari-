@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth';
-import { useSocket } from '@/lib/socket';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
@@ -121,7 +120,6 @@ export default function Dashboard() {
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sales-stats' | 'product-sales'>('dashboard');
   const { token } = useAuthStore();
-  const { on, off } = useSocket();
   const API_BASE_URL = getApiBaseUrl();
 
   // Dashboard verilerini yükle
@@ -182,7 +180,7 @@ export default function Dashboard() {
     }
   };
 
-  // Gerçek zamanlı güncellemeler
+  // Dashboard verilerini yükle
   useEffect(() => {
     if (!token) return;
     
@@ -196,12 +194,6 @@ export default function Dashboard() {
     
     loadData();
 
-    // Dashboard odasına katıl
-    const { socket } = useSocket();
-    if (socket) {
-      socket.emit('joinDashboard', 'all'); // Tüm şubeler için
-    }
-
     // Her 30 saniyede bir güncelle
     const interval = setInterval(() => {
       if (isMounted) {
@@ -209,40 +201,11 @@ export default function Dashboard() {
       }
     }, 30000);
 
-    // Socket.io ile gerçek zamanlı güncellemeler
-    const handleNewOrder = () => {
-      if (isMounted) {
-        loadData();
-        toast.success('Yeni sipariş alındı!');
-      }
-    };
-
-    const handleOrderStatusChanged = () => {
-      if (isMounted) {
-        loadData();
-        toast.success('Sipariş durumu güncellendi!');
-      }
-    };
-
-    const handleDashboardUpdate = () => {
-      if (isMounted) {
-        loadData();
-        console.log('📊 Dashboard gerçek zamanlı güncellendi');
-      }
-    };
-
-    on('newOrder', handleNewOrder);
-    on('orderStatusChanged', handleOrderStatusChanged);
-    on('dashboardUpdate', handleDashboardUpdate);
-
     return () => {
       isMounted = false;
       clearInterval(interval);
-      off('newOrder', handleNewOrder);
-      off('orderStatusChanged', handleOrderStatusChanged);
-      off('dashboardUpdate', handleDashboardUpdate);
     };
-  }, [token]); // Sadece token'ı dependency olarak kullan
+  }, [token]);
 
   // Gerçek veri ile grafik verileri
   const [salesChartData, setSalesChartData] = useState({

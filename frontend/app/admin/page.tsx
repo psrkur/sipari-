@@ -69,6 +69,7 @@ interface Category {
 }
 
 export default function AdminPage() {
+  // Tüm hook'ları en üstte çağır - hiçbir koşul olmadan
   const router = useRouter();
   const { user, token } = useAuthStore();
   const { on, off } = useSocket();
