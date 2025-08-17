@@ -66,7 +66,7 @@ export default function DashboardDebug() {
       // Test 3: Dashboard Stats
       try {
         console.log('🧪 Dashboard Stats endpoint test ediliyor...');
-        const dashboardResponse = await axios.get(`${API_BASE_URL}/api/admin/dashboard/stats`, {
+        const dashboardResponse = await axios.get(`${API_BASE_URL}/api/admin/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         results.dashboardStats = dashboardResponse.data;
@@ -80,7 +80,7 @@ export default function DashboardDebug() {
       // Test 4: Database Status
       try {
         console.log('🧪 Database Status endpoint test ediliyor...');
-        const dbResponse = await axios.get(`${API_BASE_URL}/api/test/db-status`);
+        const dbResponse = await axios.get(`${API_BASE_URL}/api/database-status`);
         results.dbStatus = dbResponse.data;
         console.log('✅ Database Status başarılı:', dbResponse.data);
       } catch (error: any) {

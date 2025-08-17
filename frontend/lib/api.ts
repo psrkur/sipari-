@@ -172,7 +172,7 @@ export const API_ENDPOINTS = {
   // Database Cleanup
   get ADMIN_CLEANUP_ORDERS() { return `${getCurrentApiBaseUrl()}/api/admin/cleanup-orders` },
   get ADMIN_DELETE_ALL_ORDERS() { return `${getCurrentApiBaseUrl()}/api/admin/orders` },
-  get ADMIN_DATABASE_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/database-stats` },
+  get ADMIN_DATABASE_STATS() { return `${getCurrentApiBaseUrl()}/api/database-status` },
   get ADMIN_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/images` },
   get ADMIN_UPLOAD_IMAGES() { return `${getCurrentApiBaseUrl()}/api/admin/upload-images` },
   get ADMIN_DELETE_IMAGE() { return (imageId: string) => `${getCurrentApiBaseUrl()}/api/admin/images/${imageId}` },
@@ -234,11 +234,11 @@ export const API_ENDPOINTS = {
   get COMPANIES() { return `${getCurrentApiBaseUrl()}/api/companies` },
   get CUSTOMERS() { return `${getCurrentApiBaseUrl()}/api/customers` },
   
-  // Dashboard
-  get DASHBOARD_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/stats` },
-  get DASHBOARD_SALES_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/sales-trend` },
-  get DASHBOARD_ORDER_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/order-status` },
-  get DASHBOARD_ORDER_COUNT_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/order-count-trend` },
+  // Dashboard - Production backend'de mevcut olan endpoint'leri kullan
+  get DASHBOARD_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats` },
+  get DASHBOARD_SALES_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=weekly` },
+  get DASHBOARD_ORDER_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=daily` },
+  get DASHBOARD_ORDER_COUNT_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=monthly` },
   
   // Backup Management
   get ADMIN_BACKUP_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/backup/stats` },
