@@ -671,7 +671,12 @@ router.get('/product-sales', async (req, res) => {
           select: {
             id: true,
             name: true,
-            price: true
+            price: true,
+            category: {
+              select: {
+                name: true
+              }
+            }
           }
         },
         order: {
@@ -684,37 +689,81 @@ router.get('/product-sales', async (req, res) => {
     
     // Ürün bazında satış verilerini grupla
     const productStats = {};
+    const categoryStats = {};
+    
     productSales.forEach(item => {
       const productId = item.product.id;
+      const categoryName = item.product.category?.name || 'Kategorisiz';
+      
+      // Ürün istatistikleri
       if (!productStats[productId]) {
         productStats[productId] = {
           id: productId,
           name: item.product.name,
+          category: categoryName,
           totalQuantity: 0,
           totalRevenue: 0,
-          averagePrice: item.product.price
+          averagePrice: item.product.price,
+          orderCount: 0
         };
       }
       
       productStats[productId].totalQuantity += item.quantity;
       productStats[productId].totalRevenue += item.price * item.quantity;
+      productStats[productId].orderCount += 1;
+      
+      // Kategori istatistikleri
+      if (!categoryStats[categoryName]) {
+        categoryStats[categoryName] = {
+          name: categoryName,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          productCount: 0,
+          products: new Set()
+        };
+      }
+      
+      categoryStats[categoryName].totalQuantity += item.quantity;
+      categoryStats[categoryName].totalRevenue += item.price * item.quantity;
+      categoryStats[categoryName].products.add(productId);
     });
+    
+    // Kategori istatistiklerini işle
+    const processedCategoryStats = Object.values(categoryStats).map(cat => ({
+      name: cat.name,
+      totalQuantity: cat.totalQuantity,
+      totalRevenue: cat.totalRevenue,
+      productCount: cat.products.size
+    }));
     
     // En çok satan ürünleri sırala
     const topProducts = Object.values(productStats)
       .sort((a, b) => b.totalQuantity - a.totalQuantity)
       .slice(0, 10);
     
+    // Tüm ürün satış verilerini hazırla
+    const allProductSales = Object.values(productStats).map(product => ({
+      name: product.name,
+      category: product.category,
+      totalQuantity: product.totalQuantity,
+      totalRevenue: product.totalRevenue,
+      averagePrice: product.averagePrice,
+      orderCount: product.orderCount
+    }));
+    
     res.json({
       period,
       startDate: startDate.toISOString(),
       endDate: today.toISOString(),
-      totalProducts: topProducts.length,
+      totalProducts: allProductSales.length,
       topProducts,
+      productSales: allProductSales,
+      categoryStats: processedCategoryStats,
       summary: {
-        totalRevenue: topProducts.reduce((sum, p) => sum + p.totalRevenue, 0),
-        totalQuantity: topProducts.reduce((sum, p) => sum + p.totalQuantity, 0)
-      }
+        totalRevenue: allProductSales.reduce((sum, p) => sum + p.totalRevenue, 0),
+        totalQuantity: allProductSales.reduce((sum, p) => sum + p.totalQuantity, 0)
+      },
+      salesRecords: allProductSales.length
     });
     
   } catch (error) {

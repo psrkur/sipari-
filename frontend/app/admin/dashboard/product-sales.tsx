@@ -56,13 +56,66 @@ export default function ProductSales() {
   const loadProductSales = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/admin/product-sales?period=${period}`, {
+      
+      // Production backend'de mevcut olan endpoint'i kullan
+      const response = await axios.get(`${API_BASE_URL}/api/admin/sales-stats?period=${period}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setData(response.data);
+      
+      console.log('📊 Product sales verileri yüklendi:', response.data);
+      
+      // Backend'den gelen veri yapısını frontend'e uygun hale getir
+      const backendData = response.data;
+      
+      // Veri yapısını kontrol et ve uygun hale getir
+      const processedData: ProductSalesData = {
+        period: backendData.period || period,
+        startDate: backendData.startDate || new Date().toISOString(),
+        endDate: backendData.endDate || new Date().toISOString(),
+        summary: {
+          totalProducts: backendData.summary?.totalProducts || backendData.totalProducts || 0,
+          totalQuantity: backendData.summary?.totalQuantity || backendData.totalQuantity || 0,
+          totalRevenue: backendData.summary?.totalRevenue || backendData.totalRevenue || 0
+        },
+        productSales: backendData.productSales || backendData.products || backendData.topProducts || [],
+        categoryStats: backendData.categoryStats || backendData.categories || backendData.categoryBreakdown || [],
+        salesRecords: backendData.salesRecords || backendData.records || 0
+      };
+      
+      console.log('📊 İşlenmiş product sales verileri:', processedData);
+      setData(processedData);
+      
     } catch (error: any) {
       console.error('❌ Ürün satış istatistikleri yüklenemedi:', error);
-      toast.error('Ürün satış istatistikleri yüklenemedi');
+      
+      // Daha detaylı hata mesajı
+      if (error.response) {
+        console.error('API Hatası:', error.response.status, error.response.data);
+        if (error.response.status === 401) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+        } else if (error.response.status === 404) {
+          toast.error('Ürün satış endpoint\'i bulunamadı. Backend\'de bu endpoint mevcut değil.');
+        } else {
+          toast.error(`API Hatası: ${error.response.status}`);
+        }
+      } else if (error.request) {
+        console.error('Bağlantı Hatası:', error.request);
+        toast.error('Sunucuya bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.');
+      } else {
+        console.error('Genel Hata:', error.message);
+        toast.error('Beklenmeyen bir hata oluştu.');
+      }
+      
+      // Hata durumunda varsayılan veriler kullan
+      setData({
+        period: period,
+        startDate: new Date().toISOString(),
+        endDate: new Date().toISOString(),
+        summary: { totalProducts: 0, totalQuantity: 0, totalRevenue: 0 },
+        productSales: [],
+        categoryStats: [],
+        salesRecords: 0
+      });
     } finally {
       setLoading(false);
     }
