@@ -141,7 +141,7 @@ export default function Home() {
   const { items: categories, setItems: setCategories } = useOptimizedList<string>()
 
   // WhatsApp ayarları
-  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('905551234567')
+  const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('905322922609')
   const [whatsAppMessage, setWhatsAppMessage] = useState('Merhaba! Sipariş vermek istiyorum.')
 
   // Telefon numarasını formatla
@@ -695,7 +695,7 @@ export default function Home() {
           const parsed = JSON.parse(savedWhatsAppSettings);
           console.log('🔍 Parse edilen ayarlar:', parsed);
           
-          const cleanPhoneNumber = parsed.phoneNumber?.replace(/\D/g, '') || '905551234567';
+          const cleanPhoneNumber = parsed.phoneNumber?.replace(/\D/g, '') || '905322922609';
           const message = parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.';
           
           console.log('🔍 Temizlenmiş veriler:', { cleanPhoneNumber, message });
@@ -712,7 +712,7 @@ export default function Home() {
           
           // Varsayılan ayarları localStorage'a kaydet
           const defaultSettings = {
-            phoneNumber: '905551234567',
+            phoneNumber: '905322922609',
             defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
             isActive: true
           };
@@ -720,7 +720,7 @@ export default function Home() {
           localStorage.setItem('whatsAppSettings', JSON.stringify(defaultSettings));
           console.log('✅ Varsayılan ayarlar localStorage\'a kaydedildi');
           
-          setWhatsAppPhoneNumber('905551234567');
+          setWhatsAppPhoneNumber('905322922609');
           setWhatsAppMessage('Merhaba! Sipariş vermek istiyorum.');
         }
       } catch (error) {
@@ -728,7 +728,7 @@ export default function Home() {
         
         // Hata durumunda varsayılan değerleri kullan
         const defaultSettings = {
-          phoneNumber: '905551234567',
+          phoneNumber: '905322922609',
           defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
           isActive: true
         };
@@ -736,7 +736,7 @@ export default function Home() {
         localStorage.setItem('whatsAppSettings', JSON.stringify(defaultSettings));
         console.log('✅ Hata sonrası varsayılan ayarlar kaydedildi');
         
-        setWhatsAppPhoneNumber('905551234567');
+        setWhatsAppPhoneNumber('905322922609');
         setWhatsAppMessage('Merhaba! Sipariş vermek istiyorum.');
       }
     };
@@ -771,7 +771,7 @@ export default function Home() {
       if (currentSettings) {
         try {
           const parsed = JSON.parse(currentSettings);
-          const currentPhone = parsed.phoneNumber?.replace(/\D/g, '') || '905551234567';
+          const currentPhone = parsed.phoneNumber?.replace(/\D/g, '') || '905322922609';
           const currentMessage = parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.';
           
           if (currentPhone !== whatsAppPhoneNumber || currentMessage !== whatsAppMessage) {

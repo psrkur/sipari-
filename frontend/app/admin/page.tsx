@@ -96,7 +96,7 @@ export default function AdminPage() {
   const [showImageSelector, setShowImageSelector] = useState(false);
   const [showWhatsAppSettingsModal, setShowWhatsAppSettingsModal] = useState(false);
   const [whatsAppSettings, setWhatsAppSettings] = useState({
-    phoneNumber: '+90 555 123 45 67',
+    phoneNumber: '905322922609',
     defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
     quickMessage1: 'Menü hakkında bilgi alabilir miyim?',
     quickMessage2: 'Teslimat süresi ne kadar?'

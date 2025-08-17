@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Numarası Güncelleme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .phone-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ade80;
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background: #4ade80;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #22c55e;
+            transform: translateY(-2px);
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 WhatsApp Numarası Güncelleme</h1>
+        
+        <div class="status">
+            <h3>Yeni Telefon Numarası:</h3>
+            <div class="phone-number">+90 532 292 26 09</div>
+            <p>Bu numara WhatsApp iletişim butonunda kullanılacak.</p>
+        </div>
+        
+        <button onclick="updateWhatsAppNumber()">🔄 WhatsApp Numarasını Güncelle</button>
+        <button onclick="checkCurrentSettings()">🔍 Mevcut Ayarları Kontrol Et</button>
+        <button onclick="clearSettings()">🗑️ Ayarları Temizle</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function updateWhatsAppNumber() {
+            log('🔍 WhatsApp telefon numarası güncelleniyor...');
+            
+            // Mevcut ayarları kontrol et
+            const currentSettings = localStorage.getItem('whatsAppSettings');
+            
+            if (currentSettings) {
+                try {
+                    const parsed = JSON.parse(currentSettings);
+                    log('🔍 Mevcut ayarlar: ' + JSON.stringify(parsed, null, 2));
+                    
+                    // Telefon numarasını güncelle
+                    const updatedSettings = {
+                        ...parsed,
+                        phoneNumber: '905322922609'
+                    };
+                    
+                    log('🔍 Güncellenmiş ayarlar: ' + JSON.stringify(updatedSettings, null, 2));
+                    
+                    // localStorage'a kaydet
+                    localStorage.setItem('whatsAppSettings', JSON.stringify(updatedSettings));
+                    
+                    log('✅ WhatsApp telefon numarası başarıyla güncellendi!');
+                    log('📱 Yeni numara: 905322922609');
+                    
+                    // Ana sayfayı bilgilendir
+                    window.dispatchEvent(new CustomEvent('whatsAppSettingsChanged', {
+                        detail: { key: 'whatsAppSettings', value: updatedSettings }
+                    }));
+                    log('✅ Ana sayfa bilgilendirildi');
+                    
+                } catch (error) {
+                    log('❌ Ayarlar güncellenirken hata: ' + error.message);
+                }
+            } else {
+                log('⚠️ localStorage\'da WhatsApp ayarları bulunamadı');
+                
+                // Yeni ayarlar oluştur
+                const newSettings = {
+                    phoneNumber: '905322922609',
+                    defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+                    isActive: true
+                };
+                
+                localStorage.setItem('whatsAppSettings', JSON.stringify(newSettings));
+                log('✅ Yeni WhatsApp ayarları oluşturuldu!');
+                log('📱 Telefon numarası: 905322922609');
+            }
+        }
+
+        function checkCurrentSettings() {
+            log('🔍 Mevcut WhatsApp ayarları kontrol ediliyor...');
+            
+            const currentSettings = localStorage.getItem('whatsAppSettings');
+            
+            if (currentSettings) {
+                try {
+                    const parsed = JSON.parse(currentSettings);
+                    log('📋 Mevcut ayarlar:');
+                    log('   Telefon: ' + (parsed.phoneNumber || 'Belirtilmemiş'));
+                    log('   Mesaj: ' + (parsed.defaultMessage || 'Belirtilmemiş'));
+                    log('   Aktif: ' + (parsed.isActive ? 'Evet' : 'Hayır'));
+                } catch (error) {
+                    log('❌ Ayarlar okunamadı: ' + error.message);
+                }
+            } else {
+                log('⚠️ localStorage\'da WhatsApp ayarları bulunamadı');
+            }
+        }
+
+        function clearSettings() {
+            log('🗑️ WhatsApp ayarları temizleniyor...');
+            localStorage.removeItem('whatsAppSettings');
+            log('✅ WhatsApp ayarları temizlendi');
+        }
+
+        // Sayfa yüklendiğinde mevcut ayarları kontrol et
+        window.onload = function() {
+            log('🚀 WhatsApp numarası güncelleme sayfası yüklendi');
+            checkCurrentSettings();
+        };
+    </script>
+</body>
+</html>
