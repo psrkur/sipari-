@@ -140,7 +140,8 @@ export default function Dashboard() {
         sales: dashboardData.sales,
         orders: dashboardData.orders,
         customers: dashboardData.customers,
-        products: dashboardData.products
+        products: dashboardData.products,
+        realTime: dashboardData.realTime
       });
 
       setData(dashboardData);
@@ -408,7 +409,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
                          <div className="text-2xl font-bold">
-               {data.sales.today > 0 ? data.sales.today.toLocaleString('tr-TR') : '0'} ₺
+               {(data.sales?.today || 0).toLocaleString('tr-TR')} ₺
              </div>
             <div className="flex items-center space-x-2">
               {data.sales.percentage >= 100 ? (
@@ -416,8 +417,8 @@ export default function Dashboard() {
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
               )}
-                             <p className={`text-xs ${(data.sales.percentage || 0) >= 100 ? 'text-green-600' : 'text-red-600'}`}>
-                 Hedefin %{data.sales.percentage || 0}'i
+                             <p className={`text-xs ${(data.sales?.percentage || 0) >= 100 ? 'text-green-600' : 'text-red-600'}`}>
+                 Hedefin %{data.sales?.percentage || 0}'i
                </p>
             </div>
           </CardContent>
@@ -431,10 +432,10 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
                          <div className="text-2xl font-bold">
-               {(data.orders.pending || 0) + (data.orders.preparing || 0)}
+               {(data.orders?.pending || 0) + (data.orders?.preparing || 0)}
              </div>
             <p className="text-xs text-gray-600">
-              Ortalama hazırlama: {data.orders.averageTime || 0} dk
+              Ortalama hazırlama: {data.orders?.averageTime || 0} dk
             </p>
           </CardContent>
         </Card>
@@ -446,9 +447,9 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-                         <div className="text-2xl font-bold">{data.customers.activeNow || 0}</div>
+                         <div className="text-2xl font-bold">{data.customers?.activeNow || 0}</div>
             <p className="text-xs text-gray-600">
-              Ortalama puan: {data.customers.averageRating || 0} ⭐
+              Ortalama puan: {data.customers?.averageRating || 0} ⭐
             </p>
           </CardContent>
         </Card>
@@ -460,7 +461,7 @@ export default function Dashboard() {
             <MessageCircle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-                         <div className="text-2xl font-bold">{data.customers.chatbotConversations || 0}</div>
+                         <div className="text-2xl font-bold">{data.customers?.chatbotConversations || 0}</div>
                          <p className="text-xs text-gray-600">
                Bugün aktif sohbetler
              </p>
