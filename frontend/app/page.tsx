@@ -686,29 +686,56 @@ export default function Home() {
   useEffect(() => {
     const loadWhatsAppSettings = () => {
       try {
+        console.log('🔍 WhatsApp ayarları yükleniyor...');
+        
         const savedWhatsAppSettings = localStorage.getItem('whatsAppSettings');
+        console.log('🔍 localStorage\'dan alınan veri:', savedWhatsAppSettings);
+        
         if (savedWhatsAppSettings) {
           const parsed = JSON.parse(savedWhatsAppSettings);
-          console.log('🔍 WhatsApp ayarları yüklendi:', parsed);
+          console.log('🔍 Parse edilen ayarlar:', parsed);
           
-          // Telefon numarasını temizle ve formatla
           const cleanPhoneNumber = parsed.phoneNumber?.replace(/\D/g, '') || '905551234567';
+          const message = parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.';
+          
+          console.log('🔍 Temizlenmiş veriler:', { cleanPhoneNumber, message });
+          
           setWhatsAppPhoneNumber(cleanPhoneNumber);
-          setWhatsAppMessage(parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.');
+          setWhatsAppMessage(message);
           
           console.log('✅ WhatsApp ayarları başarıyla yüklendi:', {
             phoneNumber: cleanPhoneNumber,
-            message: parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.'
+            message: message
           });
         } else {
           console.log('⚠️ WhatsApp ayarları localStorage\'da bulunamadı, varsayılan değerler kullanılıyor');
-          // Varsayılan değerleri ayarla
+          
+          // Varsayılan ayarları localStorage'a kaydet
+          const defaultSettings = {
+            phoneNumber: '905551234567',
+            defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+            isActive: true
+          };
+          
+          localStorage.setItem('whatsAppSettings', JSON.stringify(defaultSettings));
+          console.log('✅ Varsayılan ayarlar localStorage\'a kaydedildi');
+          
           setWhatsAppPhoneNumber('905551234567');
           setWhatsAppMessage('Merhaba! Sipariş vermek istiyorum.');
         }
       } catch (error) {
         console.error('❌ WhatsApp ayarları yüklenirken hata:', error);
+        
         // Hata durumunda varsayılan değerleri kullan
+        const defaultSettings = {
+          phoneNumber: '905551234567',
+          defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+          isActive: true
+        };
+        
+        localStorage.setItem('whatsAppSettings', JSON.stringify(defaultSettings));
+        console.log('✅ Hata sonrası varsayılan ayarlar kaydedildi');
+        
         setWhatsAppPhoneNumber('905551234567');
         setWhatsAppMessage('Merhaba! Sipariş vermek istiyorum.');
       }
@@ -720,7 +747,7 @@ export default function Home() {
     // LocalStorage değişikliklerini dinle
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'whatsAppSettings') {
-        console.log('🔍 WhatsApp ayarları değişti, yeniden yükleniyor...');
+        console.log('🔍 Storage event ile WhatsApp ayarları değişti');
         loadWhatsAppSettings();
       }
     };
@@ -738,7 +765,7 @@ export default function Home() {
 
     window.addEventListener('whatsAppSettingsChanged', handleCustomStorageChange as EventListener);
 
-    // Periyodik kontrol (her 5 saniyede bir)
+    // Periyodik kontrol (her 3 saniyede bir)
     const interval = setInterval(() => {
       const currentSettings = localStorage.getItem('whatsAppSettings');
       if (currentSettings) {
@@ -749,6 +776,8 @@ export default function Home() {
           
           if (currentPhone !== whatsAppPhoneNumber || currentMessage !== whatsAppMessage) {
             console.log('🔄 WhatsApp ayarları değişikliği algılandı, güncelleniyor...');
+            console.log('🔍 Eski:', { whatsAppPhoneNumber, whatsAppMessage });
+            console.log('🔍 Yeni:', { currentPhone, currentMessage });
             setWhatsAppPhoneNumber(currentPhone);
             setWhatsAppMessage(currentMessage);
           }
@@ -756,7 +785,7 @@ export default function Home() {
           console.error('❌ Periyodik kontrol sırasında hata:', error);
         }
       }
-    }, 5000);
+    }, 3000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -1215,58 +1244,61 @@ export default function Home() {
 
              {/* WhatsApp İletişim Butonu */}
        <div className="fixed bottom-6 right-6 z-40">
-         <a
-           href="#"
-           target="_blank"
-           rel="noopener noreferrer"
+         <button
+           type="button"
            className="flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
            title={`WhatsApp ile iletişime geçin (${formatPhoneNumber(whatsAppPhoneNumber)})`}
-                       onClick={(e) => {
-              e.preventDefault();
-              
-              try {
-                // Telefon numarasını kontrol et
-                if (!whatsAppPhoneNumber || whatsAppPhoneNumber.trim() === '') {
-                  toast.error('Telefon numarası bulunamadı. Lütfen admin panelinden ayarları kontrol edin.');
-                  return;
-                }
-                
-                const phoneNumber = whatsAppPhoneNumber.replace(/\D/g, '');
-                const message = whatsAppMessage || 'Merhaba! Sipariş vermek istiyorum.';
-                
-                // Telefon numarası formatını kontrol et
-                if (phoneNumber.length < 10) {
-                  toast.error('Geçersiz telefon numarası formatı. Lütfen admin panelinden kontrol edin.');
-                  return;
-                }
-                
-                const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                
-                console.log('🔍 WhatsApp butonu tıklandı:', {
-                  phoneNumber: phoneNumber,
-                  message: message,
-                  url: url,
-                  originalPhoneNumber: whatsAppPhoneNumber
-                });
-                
-                // WhatsApp'ı aç
-                const newWindow = window.open(url, '_blank');
-                
-                if (newWindow) {
-                  toast.success('WhatsApp açılıyor...');
-                } else {
-                  toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
-                }
-              } catch (error) {
-                console.error('❌ WhatsApp açılırken hata:', error);
-                toast.error('WhatsApp açılamadı. Lütfen tekrar deneyin.');
-              }
-            }}
+           onClick={() => {
+             console.log('🔍 WhatsApp butonu tıklandı!');
+             console.log('🔍 Mevcut ayarlar:', { whatsAppPhoneNumber, whatsAppMessage });
+             
+             try {
+               // Telefon numarasını kontrol et
+               if (!whatsAppPhoneNumber || whatsAppPhoneNumber.trim() === '') {
+                 console.error('❌ Telefon numarası boş');
+                 toast.error('Telefon numarası bulunamadı. Lütfen admin panelinden ayarları kontrol edin.');
+                 return;
+               }
+               
+               const phoneNumber = whatsAppPhoneNumber.replace(/\D/g, '');
+               const message = whatsAppMessage || 'Merhaba! Sipariş vermek istiyorum.';
+               
+               console.log('🔍 Temizlenmiş veriler:', { phoneNumber, message });
+               
+               // Telefon numarası formatını kontrol et
+               if (phoneNumber.length < 10) {
+                 console.error('❌ Geçersiz telefon numarası:', phoneNumber);
+                 toast.error('Geçersiz telefon numarası formatı. Lütfen admin panelinden kontrol edin.');
+                 return;
+               }
+               
+               const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+               
+               console.log('🔍 WhatsApp URL oluşturuldu:', url);
+               
+               // Önce toast göster
+               toast.success('WhatsApp açılıyor...');
+               
+               // Sonra popup aç
+               const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+               
+               if (newWindow) {
+                 console.log('✅ WhatsApp popup başarıyla açıldı');
+                 toast.success('WhatsApp açıldı!');
+               } else {
+                 console.error('❌ Popup engellendi');
+                 toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
+               }
+             } catch (error) {
+               console.error('❌ WhatsApp açılırken hata:', error);
+               toast.error('WhatsApp açılamadı. Lütfen tekrar deneyin.');
+             }
+           }}
          >
            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
            </svg>
-         </a>
+         </button>
        </div>
 
       {/* Ürün Detay Modalı */}
