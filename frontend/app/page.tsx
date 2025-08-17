@@ -187,9 +187,12 @@ export default function Home() {
     }
 
     // Branches data'sını set et
-    if (branchesData) {
+    if (branchesData && Array.isArray(branchesData)) {
       console.log('🔍 BranchesData set ediliyor:', branchesData.length, 'şube');
       setBranches(branchesData.filter(branch => branch.isActive));
+    } else {
+      console.log('🔍 BranchesData set ediliyor: undefined şube');
+      setBranches([]);
     }
   }, [branchesData, setBranches])
 

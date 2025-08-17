@@ -25,7 +25,12 @@ export default function BranchSelectPage() {
     axios.get(API_ENDPOINTS.BRANCHES)
       .then((response: any) => {
         console.log('Şubeler yüklendi:', response.data);
-        setBranches(response.data.filter((branch: Branch) => branch.isActive));
+        if (Array.isArray(response.data)) {
+          setBranches(response.data.filter((branch: Branch) => branch.isActive));
+        } else {
+          console.error('Şubeler array değil:', response.data);
+          setBranches([]);
+        }
       })
       .catch((error: any) => {
         console.error('Şubeler yüklenemedi:', error);
