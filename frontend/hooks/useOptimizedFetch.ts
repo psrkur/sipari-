@@ -330,7 +330,7 @@ export function useOptimizedFetch<T = any>(
     if (enabled && isMountedRef.current) {
       debouncedFetch();
     }
-  }, [enabled, debouncedFetch]);
+  }, [enabled, url]); // debouncedFetch dependency'sini kaldırdık, url ekledik
 
   return {
     data,
@@ -367,7 +367,7 @@ export function useOptimizedInterval(
         intervalRef.current = null;
       }
     };
-  }, [delay, enabled]); // callback dependency'sini kaldırdık
+  }, [delay, enabled, callback]); // callback dependency'sini geri ekledik
 
   return intervalRef.current;
 }

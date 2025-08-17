@@ -196,16 +196,16 @@ export default function Home() {
     }
   }, [branchesData, setBranches])
 
-  // Ürünler için optimize edilmiş fetch hook'u
-  const productsUrl = selectedBranch ? API_ENDPOINTS.PRODUCTS(selectedBranch.id) : null;
+  // Ürünler için optimize edilmiş fetch hook'u - her zaman çağrılmalı
+  const productsUrl = selectedBranch ? API_ENDPOINTS.PRODUCTS(selectedBranch.id) : '';
   console.log('🔍 Products URL:', productsUrl, 'for branch:', selectedBranch?.name);
   
   const { data: productsData, loading: productsLoading, error: productsError } = useOptimizedFetch<any[]>(
-    productsUrl,
+    productsUrl || null,
     {
       cacheTime: 5 * 60 * 1000, // 5 dakika cache
       debounceTime: 300, // 300ms debounce
-      enabled: !!selectedBranch,
+      enabled: !!selectedBranch && !!productsUrl,
       enableMemoryOptimization: true,
       maxCacheSize: 10,
       retryCount: 3, // 3 kez retry

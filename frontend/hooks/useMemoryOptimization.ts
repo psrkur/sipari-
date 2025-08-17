@@ -148,7 +148,7 @@ export function useOptimizedEventListener(
     return () => {
       element.removeEventListener(eventName, wrappedHandler, options);
     };
-  }, [eventName, element]); // options dependency'sini kaldırdık
+  }, [eventName, element, options, handler]); // Tüm dependency'leri ekledik
 }
 
 // Optimize edilmiş resize observer hook'u
@@ -174,5 +174,5 @@ export function useOptimizedResizeObserver(
         observerRef.current.disconnect();
       }
     };
-  }, [element]);
+  }, [element, callback]); // callback dependency'sini ekledik
 } 
