@@ -333,11 +333,11 @@ export default function Dashboard() {
   };
 
   const popularProductsData = {
-    labels: data?.products.popular.map(p => p.name) || [],
+    labels: data?.products?.popular?.map(p => p.name) || [],
     datasets: [
       {
         label: 'Satış Adedi',
-        data: data?.products.popular.map(p => p.sales) || [],
+        data: data?.products?.popular?.map(p => p.sales) || [],
         backgroundColor: 'rgba(255, 99, 132, 0.8)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
@@ -645,7 +645,7 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-                         {data.products.popular && data.products.popular.length > 0 ? (
+                         {data?.products?.popular && data.products.popular.length > 0 ? (
                <Bar 
                  data={popularProductsData}
                  options={{
