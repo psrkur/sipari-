@@ -2029,38 +2029,34 @@ export default function AdminPage() {
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">📊 Veritabanı İstatistikleri</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">{databaseStats.stats.totalOrders}</div>
+                      <div className="text-2xl font-bold text-blue-600">{databaseStats.counts?.orders || 0}</div>
                       <div className="text-sm text-blue-600">Toplam Sipariş</div>
                     </div>
                     <div className="bg-yellow-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-yellow-600">{databaseStats.stats.oldOrders}</div>
-                      <div className="text-sm text-yellow-600">12 Saatten Eski</div>
+                      <div className="text-2xl font-bold text-yellow-600">{databaseStats.counts?.products || 0}</div>
+                      <div className="text-sm text-yellow-600">Toplam Ürün</div>
                     </div>
                     <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{databaseStats.stats.activeOrders}</div>
-                      <div className="text-sm text-green-600">Aktif Sipariş</div>
+                      <div className="text-2xl font-bold text-green-600">{databaseStats.counts?.categories || 0}</div>
+                      <div className="text-sm text-green-600">Toplam Kategori</div>
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">{databaseStats.stats.completedOrders}</div>
-                      <div className="text-sm text-purple-600">Tamamlanmış</div>
+                      <div className="text-2xl font-bold text-purple-600">{databaseStats.counts?.users || 0}</div>
+                      <div className="text-sm text-purple-600">Toplam Kullanıcı</div>
                     </div>
                   </div>
                   
-                  {/* Bellek Kullanımı */}
+                  {/* Veritabanı Bilgileri */}
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">💾 Bellek Kullanımı</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">🗄️ Veritabanı Bilgileri</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="text-sm text-gray-600">RSS</div>
-                        <div className="text-lg font-semibold">{databaseStats.memory.rss} MB</div>
+                        <div className="text-sm text-gray-600">Veritabanı Tipi</div>
+                        <div className="text-lg font-semibold">{databaseStats.database}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-gray-600">Heap Used</div>
-                        <div className="text-lg font-semibold">{databaseStats.memory.heapUsed} MB</div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Heap Total</div>
-                        <div className="text-lg font-semibold">{databaseStats.memory.heapTotal} MB</div>
+                        <div className="text-sm text-gray-600">Şube Sayısı</div>
+                        <div className="text-lg font-semibold">{databaseStats.counts?.branches || 0}</div>
                       </div>
                     </div>
                   </div>
