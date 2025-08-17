@@ -73,19 +73,57 @@ export default function WhatsAppManagement() {
   }, []);
 
   const loadWhatsAppSettings = () => {
-    const savedSettings = localStorage.getItem('whatsAppSettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        // Telefon numarasını temizle
-        const cleanSettings = {
-          ...parsed,
-          phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905551234567'
+    try {
+      console.log('🔍 WhatsApp ayarları yükleniyor...');
+      
+      const savedSettings = localStorage.getItem('whatsAppSettings');
+      console.log('🔍 localStorage\'dan alınan veri:', savedSettings);
+      
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          console.log('🔍 Parse edilen ayarlar:', parsed);
+          
+          // Telefon numarasını temizle
+          const cleanSettings = {
+            ...parsed,
+            phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905551234567'
+          };
+          
+          console.log('🔍 Temizlenmiş ayarlar:', cleanSettings);
+          setWhatsAppSettings(prev => ({ ...prev, ...cleanSettings }));
+          
+          console.log('✅ WhatsApp ayarları başarıyla yüklendi');
+        } catch (error) {
+          console.error('❌ WhatsApp ayarları parse edilemedi:', error);
+          toast.error('WhatsApp ayarları yüklenemedi. Varsayılan değerler kullanılıyor.');
+          
+          // Varsayılan değerleri kullan
+          const defaultSettings = {
+            phoneNumber: '905551234567',
+            defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+            isActive: true
+          };
+          setWhatsAppSettings(defaultSettings);
+        }
+      } else {
+        console.log('⚠️ localStorage\'da WhatsApp ayarları bulunamadı, varsayılan değerler kullanılıyor');
+        
+        // Varsayılan değerleri kullan
+        const defaultSettings = {
+          phoneNumber: '905551234567',
+          defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
+          isActive: true
         };
-        setWhatsAppSettings(prev => ({ ...prev, ...cleanSettings }));
-      } catch (error) {
-        console.error('WhatsApp ayarları yüklenemedi:', error);
+        setWhatsAppSettings(defaultSettings);
+        
+        // Varsayılan ayarları localStorage'a kaydet
+        localStorage.setItem('whatsAppSettings', JSON.stringify(defaultSettings));
+        console.log('✅ Varsayılan ayarlar localStorage\'a kaydedildi');
       }
+    } catch (error) {
+      console.error('❌ WhatsApp ayarları yüklenirken genel hata:', error);
+      toast.error('WhatsApp ayarları yüklenemedi. Lütfen sayfayı yenileyin.');
     }
   };
 
@@ -102,27 +140,54 @@ export default function WhatsAppManagement() {
   };
 
   const updateWhatsAppSettings = (newSettings: typeof whatsAppSettings) => {
-    // Telefon numarasını temizle
-    const cleanSettings = {
-      ...newSettings,
-      phoneNumber: newSettings.phoneNumber.replace(/\D/g, '')
-    };
-    
-    setWhatsAppSettings(cleanSettings);
-    localStorage.setItem('whatsAppSettings', JSON.stringify(cleanSettings));
-    
-    // Ana sayfayı bilgilendir
-    window.dispatchEvent(new CustomEvent('whatsAppSettingsChanged', {
-      detail: { key: 'whatsAppSettings', value: cleanSettings }
-    }));
-    
-    toast.success('WhatsApp ayarları güncellendi!');
-    setShowSettingsModal(false);
+    try {
+      console.log('🔍 WhatsApp ayarları güncelleniyor...');
+      console.log('🔍 Yeni ayarlar:', newSettings);
+      
+      // Telefon numarasını temizle
+      const cleanSettings = {
+        ...newSettings,
+        phoneNumber: newSettings.phoneNumber.replace(/\D/g, '')
+      };
+      
+      console.log('🔍 Temizlenmiş ayarlar:', cleanSettings);
+      
+      // Ayarları state'e kaydet
+      setWhatsAppSettings(cleanSettings);
+      
+      // localStorage'a kaydet
+      localStorage.setItem('whatsAppSettings', JSON.stringify(cleanSettings));
+      console.log('✅ Ayarlar localStorage\'a kaydedildi');
+      
+      // Ana sayfayı bilgilendir
+      window.dispatchEvent(new CustomEvent('whatsAppSettingsChanged', {
+        detail: { key: 'whatsAppSettings', value: cleanSettings }
+      }));
+      console.log('✅ Ana sayfa bilgilendirildi');
+      
+      toast.success('WhatsApp ayarları güncellendi!');
+      setShowSettingsModal(false);
+      
+      console.log('✅ WhatsApp ayarları başarıyla güncellendi');
+    } catch (error) {
+      console.error('❌ WhatsApp ayarları güncellenirken hata:', error);
+      toast.error('Ayarlar güncellenemedi. Lütfen tekrar deneyin.');
+    }
   };
 
   const toggleWhatsAppStatus = () => {
-    const newSettings = { ...whatsAppSettings, isActive: !whatsAppSettings.isActive };
-    updateWhatsAppSettings(newSettings);
+    try {
+      console.log('🔍 WhatsApp durumu değiştiriliyor...');
+      console.log('🔍 Mevcut durum:', whatsAppSettings.isActive);
+      
+      const newSettings = { ...whatsAppSettings, isActive: !whatsAppSettings.isActive };
+      console.log('🔍 Yeni durum:', newSettings.isActive);
+      
+      updateWhatsAppSettings(newSettings);
+    } catch (error) {
+      console.error('❌ WhatsApp durumu değiştirilirken hata:', error);
+      toast.error('Durum değiştirilemedi. Lütfen tekrar deneyin.');
+    }
   };
 
   const addQuickMessage = () => {
@@ -167,12 +232,29 @@ export default function WhatsAppManagement() {
 
   const testWhatsApp = () => {
     try {
+      console.log('🧪 WhatsApp test başlatılıyor...');
+      console.log('🔍 Mevcut ayarlar:', whatsAppSettings);
+      
+      // Ayarlar kontrolü
+      if (!whatsAppSettings.phoneNumber) {
+        toast.error('Telefon numarası bulunamadı. Lütfen önce ayarları kaydedin.');
+        return;
+      }
+      
+      if (!whatsAppSettings.defaultMessage) {
+        toast.error('Varsayılan mesaj bulunamadı. Lütfen önce ayarları kaydedin.');
+        return;
+      }
+      
       const phoneNumber = whatsAppSettings.phoneNumber.replace(/\D/g, '');
       const message = whatsAppSettings.defaultMessage;
+      
+      console.log('🔍 Temizlenmiş veriler:', { phoneNumber, message });
       
       // Telefon numarası kontrolü
       if (!phoneNumber || phoneNumber.length < 10) {
         toast.error('Geçersiz telefon numarası formatı. Lütfen geçerli bir numara girin.');
+        console.error('❌ Geçersiz telefon numarası:', phoneNumber);
         return;
       }
       
@@ -181,14 +263,21 @@ export default function WhatsAppManagement() {
       console.log('🧪 WhatsApp test ediliyor:', {
         phoneNumber: phoneNumber,
         message: message,
-        url: url
+        url: url,
+        originalPhoneNumber: whatsAppSettings.phoneNumber
       });
       
+      // Önce toast göster
+      toast.success('WhatsApp açılıyor...');
+      
+      // Sonra popup aç
       const newWindow = window.open(url, '_blank');
       
       if (newWindow) {
-        toast.success('WhatsApp test sayfası açılıyor...');
+        console.log('✅ WhatsApp popup başarıyla açıldı');
+        toast.success('WhatsApp test sayfası açıldı!');
       } else {
+        console.error('❌ Popup engellendi');
         toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
       }
     } catch (error) {
