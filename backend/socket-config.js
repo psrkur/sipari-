@@ -10,7 +10,8 @@ function configureSocket(server) {
         "https://arsut.net.tr",
         "https://yemek5-frontend.onrender.com",
         "https://yemek5.vercel.app",
-        "https://siparisnet.netlify.app"
+        "https://siparisnet.netlify.app",
+        "https://cizar.com.tr"
       ],
       methods: ["GET", "POST"],
       credentials: true
@@ -44,7 +45,8 @@ function configureSocket(server) {
         "https://arsut.net.tr",
         "https://yemek5-frontend.onrender.com",
         "https://yemek5.vercel.app",
-        "https://siparisnet.netlify.app"
+        "https://siparisnet.netlify.app",
+        "https://cizar.com.tr"
       ];
       
       if (!origin || allowedOrigins.includes(origin)) {

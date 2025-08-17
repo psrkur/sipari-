@@ -40,5 +40,12 @@
     "size": 709,
     "type": "postgresql",
     "success": true
+  },
+  {
+    "timestamp": "2025-08-17T00:00:49.820Z",
+    "filename": "postgresql-backup-2025-08-17T00-00-48-823Z.sql",
+    "size": 709,
+    "type": "postgresql",
+    "success": true
   }
 ]

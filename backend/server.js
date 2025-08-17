@@ -378,7 +378,7 @@ app.use(cors({
 // Global CORS headers for all responses
 app.use((req, res, next) => {
   // Origin kontrolü
-  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:8080', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app'];
+  const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'http://localhost:3004', 'http://localhost:8080', 'https://yemek5-frontend.onrender.com', 'https://yemek5.vercel.app', 'https://arsut.net.tr', 'https://siparisnet.netlify.app', 'https://cizar.com.tr'];
   const origin = req.headers.origin;
   
   if (allowedOrigins.includes(origin)) {
