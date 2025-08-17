@@ -5331,29 +5331,6 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     const completedOrders = allOrders.filter(order => 
       ['COMPLETED', 'DELIVERED', 'COMPLETED', 'DELIVERED', 'FINISHED', 'SUCCESS'].includes(order.status)
     );
-      select: {
-        id: true,
-        orderNumber: true,
-        totalAmount: true,
-        orderType: true,
-        platform: true,
-        createdAt: true,
-        branch: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            phone: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
 
     console.log('📋 Tamamlanmış sipariş sayısı:', completedOrders.length);
 
