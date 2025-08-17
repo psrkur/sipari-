@@ -1002,10 +1002,10 @@ export default function Home() {
               <div className="relative branch-dropdown">
                 <button
                   onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-                  className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 hover:border-orange-400 transition-all duration-200"
+                  className="flex items-center space-x-1 bg-white/90 backdrop-blur-sm border-2 border-orange-200 rounded-lg px-3 py-1 text-xs font-semibold text-gray-700 hover:border-orange-400 transition-all duration-200 min-w-[80px]"
                 >
                   <Building className="h-3 w-3" />
-                  <span className="hidden sm:inline">{selectedBranch?.name || 'Şube'}</span>
+                  <span>{selectedBranch?.name || 'Şube Seç'}</span>
                   <svg className={`w-3 h-3 transition-transform duration-200 ${showBranchDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
