@@ -5625,6 +5625,8 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     // Bu siparişlere ait ürün detaylarını al
     const orderIds = completedOrders.map(order => order.id);
     
+    console.log('📋 Sipariş ID\'leri:', orderIds);
+    
     const orderItems = await prisma.orderItem.findMany({
       where: {
         orderId: {
@@ -5652,8 +5654,10 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     });
 
     console.log('🛍️ Sipariş ürün sayısı:', orderItems.length);
+    console.log('🛍️ İlk birkaç order item:', orderItems.slice(0, 3));
 
     if (orderItems.length === 0) {
+      console.log('⚠️ Order items bulunamadı, boş response döndürülüyor');
       return res.json({
         period,
         startDate: startDate.toISOString(),
@@ -5672,7 +5676,14 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     // Ürün bazında satış istatistiklerini hesapla
     const productSales = {};
     
-    orderItems.forEach(item => {
+    orderItems.forEach((item, index) => {
+      console.log(`🔄 İşleniyor item ${index + 1}:`, {
+        productName: item.product?.name,
+        categoryName: item.product?.category?.name,
+        quantity: item.quantity,
+        price: item.price
+      });
+      
       const productName = item.product?.name || 'Bilinmeyen Ürün';
       const categoryName = item.product?.category?.name || 'Diğer';
       
@@ -5691,6 +5702,9 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       productSales[productName].totalRevenue += (item.price * item.quantity);
       productSales[productName].orderCount++;
     });
+
+    console.log('📊 Product sales objesi:', productSales);
+    console.log('📊 Product sales objesi keys:', Object.keys(productSales));
 
     // Ortalama fiyatları hesapla
     Object.values(productSales).forEach(product => {
@@ -5744,6 +5758,104 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('❌ Ürün satış istatistikleri hatası:', error);
     res.status(500).json({ error: 'Ürün satış istatistikleri getirilemedi' });
+  }
+});
+
+// Test endpoint - veritabanı durumunu kontrol et
+app.get('/api/test/db-status', async (req, res) => {
+  try {
+    console.log('🧪 Database status test endpoint çağrıldı');
+    
+    // Tüm tabloları kontrol et
+    const [
+      ordersCount,
+      orderItemsCount,
+      productsCount,
+      categoriesCount,
+      salesRecordsCount
+    ] = await Promise.all([
+      prisma.order.count(),
+      prisma.orderItem.count(),
+      prisma.product.count(),
+      prisma.category.count(),
+      prisma.salesRecord.count()
+    ]);
+
+    // Son 5 siparişi al
+    const recentOrders = await prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        totalAmount: true,
+        createdAt: true,
+        orderItems: {
+          select: {
+            id: true,
+            quantity: true,
+            price: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Son 5 order item'ı al
+    const recentOrderItems = await prisma.orderItem.findMany({
+      take: 5,
+      orderBy: { id: 'desc' },
+      select: {
+        id: true,
+        orderId: true,
+        quantity: true,
+        price: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            category: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const result = {
+      counts: {
+        orders: ordersCount,
+        orderItems: orderItemsCount,
+        products: productsCount,
+        categories: categoriesCount,
+        salesRecords: salesRecordsCount
+      },
+      recentOrders,
+      recentOrderItems,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('📊 Database status sonuçları:', result);
+    res.json(result);
+
+  } catch (error) {
+    console.error('❌ Database status test hatası:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

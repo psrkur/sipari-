@@ -13,6 +13,7 @@ interface DebugData {
   salesStats?: any;
   productSales?: any;
   dashboardStats?: any;
+  dbStatus?: any;
   errors?: string[];
 }
 
@@ -74,6 +75,18 @@ export default function DashboardDebug() {
         const errorMsg = `Dashboard Stats Hatası: ${error.response?.status} - ${error.response?.data?.error || error.message}`;
         errors.push(errorMsg);
         console.error('❌ Dashboard Stats hatası:', error);
+      }
+
+      // Test 4: Database Status
+      try {
+        console.log('🧪 Database Status endpoint test ediliyor...');
+        const dbResponse = await axios.get(`${API_BASE_URL}/api/test/db-status`);
+        results.dbStatus = dbResponse.data;
+        console.log('✅ Database Status başarılı:', dbResponse.data);
+      } catch (error: any) {
+        const errorMsg = `Database Status Hatası: ${error.response?.status} - ${error.response?.data?.error || error.message}`;
+        errors.push(errorMsg);
+        console.error('❌ Database Status hatası:', error);
       }
 
     } catch (error: any) {
@@ -214,6 +227,29 @@ export default function DashboardDebug() {
                 <div><strong>Customers Total:</strong> {debugData.dashboardStats.customers?.total || 0}</div>
                 <div><strong>Products Total:</strong> {debugData.dashboardStats.products?.total || 0}</div>
                 <div><strong>Real Time Orders:</strong> {debugData.dashboardStats.realTime?.currentOrders?.length || 0}</div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Database Status Sonuçları */}
+        {debugData.dbStatus && (
+          <Card className="border-indigo-200 bg-indigo-50">
+            <CardHeader>
+              <CardTitle className="text-indigo-700 text-sm flex items-center gap-2">
+                <Database className="h-4 w-4" />
+                Database Status Sonuçları
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div><strong>Orders Count:</strong> {debugData.dbStatus.counts?.orders || 0}</div>
+                <div><strong>Order Items Count:</strong> {debugData.dbStatus.counts?.orderItems || 0}</div>
+                <div><strong>Products Count:</strong> {debugData.dbStatus.counts?.products || 0}</div>
+                <div><strong>Categories Count:</strong> {debugData.dbStatus.counts?.categories || 0}</div>
+                <div><strong>Sales Records Count:</strong> {debugData.dbStatus.counts?.salesRecords || 0}</div>
+                <div><strong>Recent Orders:</strong> {debugData.dbStatus.recentOrders?.length || 0} sipariş</div>
+                <div><strong>Recent Order Items:</strong> {debugData.dbStatus.recentOrderItems?.length || 0} ürün</div>
               </div>
             </CardContent>
           </Card>
