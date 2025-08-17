@@ -630,4 +630,197 @@ router.get('/order-count-trend', async (req, res) => {
   }
 });
 
+// Ürün satış istatistikleri
+router.get('/product-sales', async (req, res) => {
+  try {
+    const { period = 'daily' } = req.query;
+    console.log(`📊 Product sales endpoint çağrıldı - period: ${period}`);
+    
+    let startDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (period) {
+      case 'daily':
+        startDate = new Date(today);
+        break;
+      case 'weekly':
+        startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'monthly':
+        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(today);
+    }
+    
+    // Ürün satış verilerini getir
+    const productSales = await safeDbOperation(() => prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: { gte: startDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] }
+        }
+      },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+            price: true
+          }
+        },
+        order: {
+          select: {
+            createdAt: true
+          }
+        }
+      }
+    }));
+    
+    // Ürün bazında satış verilerini grupla
+    const productStats = {};
+    productSales.forEach(item => {
+      const productId = item.product.id;
+      if (!productStats[productId]) {
+        productStats[productId] = {
+          id: productId,
+          name: item.product.name,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          averagePrice: item.product.price
+        };
+      }
+      
+      productStats[productId].totalQuantity += item.quantity;
+      productStats[productId].totalRevenue += item.price * item.quantity;
+    });
+    
+    // En çok satan ürünleri sırala
+    const topProducts = Object.values(productStats)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 10);
+    
+    res.json({
+      period,
+      startDate: startDate.toISOString(),
+      endDate: today.toISOString(),
+      totalProducts: topProducts.length,
+      topProducts,
+      summary: {
+        totalRevenue: topProducts.reduce((sum, p) => sum + p.totalRevenue, 0),
+        totalQuantity: topProducts.reduce((sum, p) => sum + p.totalQuantity, 0)
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Product sales hatası:', error);
+    res.status(500).json({ 
+      error: 'Ürün satış istatistikleri getirilemedi',
+      details: error.message 
+    });
+  }
+});
+
+// Satış istatistikleri
+router.get('/sales-stats', async (req, res) => {
+  try {
+    const { period = 'daily' } = req.query;
+    console.log(`📊 Sales stats endpoint çağrıldı - period: ${period}`);
+    
+    let startDate;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    switch (period) {
+      case 'daily':
+        startDate = new Date(today);
+        break;
+      case 'weekly':
+        startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'monthly':
+        startDate = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(today);
+    }
+    
+    // Satış verilerini getir
+    const salesData = await safeDbOperation(() => prisma.order.findMany({
+      where: {
+        createdAt: { gte: startDate },
+        status: { in: ['COMPLETED', 'DELIVERED'] }
+      },
+      select: {
+        id: true,
+        totalAmount: true,
+        createdAt: true,
+        orderType: true
+      }
+    }));
+    
+    // Günlük satış verilerini grupla
+    const dailySales = {};
+    salesData.forEach(order => {
+      const orderDate = new Date(order.createdAt);
+      const dateKey = orderDate.toISOString().split('T')[0];
+      
+      if (!dailySales[dateKey]) {
+        dailySales[dateKey] = {
+          date: dateKey,
+          revenue: 0,
+          orderCount: 0,
+          averageOrderValue: 0
+        };
+      }
+      
+      dailySales[dateKey].revenue += order.totalAmount;
+      dailySales[dateKey].orderCount += 1;
+    });
+    
+    // Ortalama sipariş değerini hesapla
+    Object.values(dailySales).forEach(day => {
+      day.averageOrderValue = day.orderCount > 0 ? day.revenue / day.orderCount : 0;
+    });
+    
+    // Sipariş tipine göre analiz
+    const orderTypeStats = {};
+    salesData.forEach(order => {
+      const type = order.orderType || 'UNKNOWN';
+      if (!orderTypeStats[type]) {
+        orderTypeStats[type] = { count: 0, revenue: 0 };
+      }
+      orderTypeStats[type].count += 1;
+      orderTypeStats[type].revenue += order.totalAmount;
+    });
+    
+    // Toplam istatistikler
+    const totalRevenue = salesData.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalOrders = salesData.length;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    res.json({
+      period,
+      startDate: startDate.toISOString(),
+      endDate: today.toISOString(),
+      dailySales: Object.values(dailySales),
+      orderTypeStats,
+      summary: {
+        totalRevenue,
+        totalOrders,
+        averageOrderValue,
+        periodDays: Math.ceil((today - startDate) / (1000 * 60 * 60 * 24))
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Sales stats hatası:', error);
+    res.status(500).json({ 
+      error: 'Satış istatistikleri getirilemedi',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router; 
