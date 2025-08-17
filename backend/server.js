@@ -4373,8 +4373,6 @@ app.get('/api/admin/backup/download/:filename', authenticateToken, async (req, r
 // 404 handler - En sona taşındı
 
 // Eski server kodu kaldırıldı - yeni server kodu dosyanın sonunda
-  startAutoCleanup();
-}, 2000);
 
 // Yedekleme sistemi başlat
 setTimeout(() => {
@@ -5774,7 +5772,6 @@ const server = app.listen(PORT, () => {
 });
 
 // Socket.IO'yu yapılandır
-const { configureSocket } = require('./socket-config');
 configureSocket(server);
 
 // Graceful shutdown
