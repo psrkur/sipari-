@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateToken } = require('./middleware/auth');
 
 // Prisma client'ı server.js'den al - global instance kullan
 let prisma;
@@ -44,6 +45,9 @@ async function safeDbOperation(operation, maxRetries = 3) {
     }
   }
 }
+
+// Tüm dashboard endpoint'leri için authentication gerekli
+router.use(authenticateToken);
 
 // Dashboard ana verilerini getir
 router.get('/stats', async (req, res) => {
@@ -820,6 +824,73 @@ router.get('/sales-stats', async (req, res) => {
       error: 'Satış istatistikleri getirilemedi',
       details: error.message 
     });
+  }
+});
+
+// Database stats endpoint'i ekle
+router.get('/database-stats', async (req, res) => {
+  try {
+    console.log('📊 Database stats endpoint çağrıldı');
+    
+    // Timeout ayarı - 10 saniye
+    const timeout = setTimeout(() => {
+      console.log('⏰ Database stats timeout - fallback data döndürülüyor');
+      return res.json({
+        stats: { totalOrders: 0, oldOrders: 0, activeOrders: 0, completedOrders: 0 },
+        memory: { rss: 0, heapUsed: 0, heapTotal: 0 },
+        timestamp: new Date().toISOString()
+      });
+    }, 10000);
+    
+    // İstatistikleri güvenli şekilde al
+    const totalOrders = await safeDbOperation(() => prisma.order.count());
+    const oldOrders = await safeDbOperation(() => prisma.order.count({
+      where: {
+        createdAt: {
+          lt: new Date(Date.now() - 12 * 60 * 60 * 1000)
+        }
+      }
+    }));
+    
+    const activeOrders = await safeDbOperation(() => prisma.order.count({
+      where: {
+        status: {
+          in: ['PENDING', 'PREPARING', 'READY']
+        }
+      }
+    }));
+
+    const completedOrders = await safeDbOperation(() => prisma.order.count({
+      where: {
+        status: {
+          in: ['DELIVERED', 'CANCELLED']
+        }
+      }
+    }));
+
+    // Bellek kullanımı
+    const memUsage = process.memoryUsage();
+    
+    // Timeout'u temizle
+    clearTimeout(timeout);
+    
+    res.json({
+      stats: {
+        totalOrders,
+        oldOrders,
+        activeOrders,
+        completedOrders
+      },
+      memory: {
+        rss: Math.round(memUsage.rss / 1024 / 1024),
+        heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024)
+      },
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Database stats hatası:', error);
+    res.status(500).json({ error: 'Database istatistikleri alınamadı', details: error.message });
   }
 });
 
