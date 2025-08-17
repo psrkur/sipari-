@@ -100,7 +100,7 @@ export default function WhatsAppManagement() {
           
           // Varsayılan değerleri kullan
           const defaultSettings = {
-            phoneNumber: '905551234567',
+            phoneNumber: '905322922609',
             defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
             isActive: true
           };
@@ -111,7 +111,7 @@ export default function WhatsAppManagement() {
         
         // Varsayılan değerleri kullan
         const defaultSettings = {
-          phoneNumber: '905551234567',
+          phoneNumber: '905322922609',
           defaultMessage: 'Merhaba! Sipariş vermek istiyorum.',
           isActive: true
         };
@@ -443,7 +443,7 @@ export default function WhatsAppManagement() {
                     const cleanValue = e.target.value.replace(/\D/g, '');
                     setWhatsAppSettings(prev => ({ ...prev, phoneNumber: cleanValue }));
                   }}
-                  placeholder="+90 555 123 45 67"
+                  placeholder="+90532 292 2609"
                 />
               </div>
               
