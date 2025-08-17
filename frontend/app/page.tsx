@@ -144,6 +144,15 @@ export default function Home() {
   const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('905551234567')
   const [whatsAppMessage, setWhatsAppMessage] = useState('Merhaba! Sipariş vermek istiyorum.')
 
+  // Telefon numarasını formatla
+  const formatPhoneNumber = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length === 11 && clean.startsWith('90')) {
+      return `+${clean.slice(0, 2)} ${clean.slice(2, 5)} ${clean.slice(5, 8)} ${clean.slice(8, 10)} ${clean.slice(10)}`;
+    }
+    return phone;
+  };
+
   // Optimize edilmiş fetch hook'ları - bellek optimizasyonu aktif
   const { data: branchesData, loading: branchesLoading, cacheStats, error: branchesError } = useOptimizedFetch<Branch[]>(
     API_ENDPOINTS.BRANCHES,
@@ -681,7 +690,9 @@ export default function Home() {
         try {
           const parsed = JSON.parse(savedWhatsAppSettings);
           console.log('🔍 WhatsApp ayarları yüklendi:', parsed);
-          setWhatsAppPhoneNumber(parsed.phoneNumber?.replace(/\D/g, '') || '905551234567');
+          // Telefon numarasını temizle ve formatla
+          const cleanPhoneNumber = parsed.phoneNumber?.replace(/\D/g, '') || '905551234567';
+          setWhatsAppPhoneNumber(cleanPhoneNumber);
           setWhatsAppMessage(parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.');
         } catch (error) {
           console.error('WhatsApp ayarları parse edilemedi:', error);
@@ -1174,7 +1185,7 @@ export default function Home() {
            target="_blank"
            rel="noopener noreferrer"
            className="flex items-center justify-center w-16 h-16 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-200"
-           title={`WhatsApp ile iletişime geçin (${whatsAppPhoneNumber})`}
+           title={`WhatsApp ile iletişime geçin (${formatPhoneNumber(whatsAppPhoneNumber)})`}
            onClick={() => {
              console.log('🔍 WhatsApp butonu tıklandı:', {
                phoneNumber: whatsAppPhoneNumber,

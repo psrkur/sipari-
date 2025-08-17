@@ -1471,7 +1471,7 @@ export default function AdminPage() {
               </button>
 
               <button 
-                onClick={() => setActivePage('whatsapp')} 
+                onClick={() => router.push('/admin/whatsapp-management')} 
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
                   activePage === 'whatsapp' 
                     ? 'bg-blue-500 text-white shadow-md' 
@@ -1914,11 +1914,11 @@ export default function AdminPage() {
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="text-xl font-semibold text-gray-900">💬 WhatsApp Yönetimi</h2>
                     <button
-                      onClick={() => setShowWhatsAppSettingsModal(true)}
+                      onClick={() => router.push('/admin/whatsapp-management')}
                       className="flex items-center space-x-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 hover:shadow-md"
                     >
                       <span className="text-lg">⚙️</span>
-                      <span>Ayarları Düzenle</span>
+                      <span>WhatsApp Yönetimine Git</span>
                     </button>
                   </div>
 
