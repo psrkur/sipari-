@@ -166,8 +166,35 @@ export default function WhatsAppManagement() {
   };
 
   const testWhatsApp = () => {
-    const url = `https://wa.me/${whatsAppSettings.phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(whatsAppSettings.defaultMessage)}`;
-    window.open(url, '_blank');
+    try {
+      const phoneNumber = whatsAppSettings.phoneNumber.replace(/\D/g, '');
+      const message = whatsAppSettings.defaultMessage;
+      
+      // Telefon numarası kontrolü
+      if (!phoneNumber || phoneNumber.length < 10) {
+        toast.error('Geçersiz telefon numarası formatı. Lütfen geçerli bir numara girin.');
+        return;
+      }
+      
+      const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      
+      console.log('🧪 WhatsApp test ediliyor:', {
+        phoneNumber: phoneNumber,
+        message: message,
+        url: url
+      });
+      
+      const newWindow = window.open(url, '_blank');
+      
+      if (newWindow) {
+        toast.success('WhatsApp test sayfası açılıyor...');
+      } else {
+        toast.error('Popup engellendi. Lütfen popup engelleyiciyi kapatın.');
+      }
+    } catch (error) {
+      console.error('❌ WhatsApp test hatası:', error);
+      toast.error('WhatsApp test edilemedi. Lütfen tekrar deneyin.');
+    }
   };
 
   return (

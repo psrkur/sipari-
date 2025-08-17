@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .whatsapp-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .whatsapp-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+        }
+        .whatsapp-button svg {
+            width: 30px;
+            height: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #25D366;
+        }
+        button {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #128C7E;
+        }
+        .info {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #25D366;
+        }
+        .test-button {
+            background: #667eea;
+            margin-left: 10px;
+        }
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 WhatsApp Butonu Test</h1>
+        
+        <div class="info">
+            <h3>ℹ️ Test Bilgileri</h3>
+            <p>Bu sayfa WhatsApp butonunun çalışıp çalışmadığını test etmek için oluşturuldu.</p>
+            <p><strong>Mevcut Ayarlar:</strong></p>
+            <div id="currentSettings">Yükleniyor...</div>
+        </div>
+
+        <form id="whatsappForm">
+            <div class="form-group">
+                <label for="phoneNumber">📞 Telefon Numarası:</label>
+                <input type="text" id="phoneNumber" placeholder="905551234567" value="905551234567">
+            </div>
+            
+            <div class="form-group">
+                <label for="message">💬 Mesaj:</label>
+                <textarea id="message" rows="4" placeholder="Merhaba! Sipariş vermek istiyorum.">Merhaba! Sipariş vermek istiyorum.</textarea>
+            </div>
+            
+            <button type="submit">💾 Ayarları Kaydet</button>
+            <button type="button" class="test-button" onclick="testWhatsApp()">🧪 WhatsApp'ı Test Et</button>
+        </form>
+
+        <div class="info">
+            <h3>🔧 Debug Bilgileri</h3>
+            <div id="debugInfo">Debug bilgileri burada görünecek...</div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Butonu -->
+    <a href="#" id="whatsappButton" class="whatsapp-button" onclick="openWhatsApp(event)">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+        </svg>
+    </a>
+
+    <script>
+        // WhatsApp ayarlarını yükle
+        function loadWhatsAppSettings() {
+            const savedSettings = localStorage.getItem('whatsAppSettings');
+            if (savedSettings) {
+                try {
+                    const parsed = JSON.parse(savedSettings);
+                    document.getElementById('phoneNumber').value = parsed.phoneNumber || '905551234567';
+                    document.getElementById('message').value = parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.';
+                    
+                    document.getElementById('currentSettings').innerHTML = `
+                        <p><strong>Telefon:</strong> ${parsed.phoneNumber || '905551234567'}</p>
+                        <p><strong>Mesaj:</strong> ${parsed.defaultMessage || 'Merhaba! Sipariş vermek istiyorum.'}</p>
+                        <p><strong>Aktif:</strong> ${parsed.isActive ? 'Evet' : 'Hayır'}</p>
+                    `;
+                } catch (error) {
+                    console.error('WhatsApp ayarları parse edilemedi:', error);
+                    document.getElementById('currentSettings').innerHTML = '<p style="color: red;">Ayarlar yüklenemedi</p>';
+                }
+            } else {
+                document.getElementById('currentSettings').innerHTML = '<p style="color: orange;">Henüz ayar kaydedilmemiş</p>';
+            }
+        }
+
+        // WhatsApp ayarlarını kaydet
+        function saveWhatsAppSettings() {
+            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\D/g, '');
+            const message = document.getElementById('message').value;
+            
+            const settings = {
+                phoneNumber: phoneNumber,
+                defaultMessage: message,
+                isActive: true
+            };
+            
+            localStorage.setItem('whatsAppSettings', JSON.stringify(settings));
+            
+            // Custom event gönder
+            window.dispatchEvent(new CustomEvent('whatsAppSettingsChanged', {
+                detail: { key: 'whatsAppSettings', value: settings }
+            }));
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <p style="color: green;">✅ Ayarlar kaydedildi!</p>
+                <p><strong>Telefon:</strong> ${phoneNumber}</p>
+                <p><strong>Mesaj:</strong> ${message}</p>
+                <p><strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+            `;
+            
+            loadWhatsAppSettings();
+        }
+
+        // WhatsApp'ı aç
+        function openWhatsApp(event) {
+            event.preventDefault();
+            
+            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\D/g, '');
+            const message = document.getElementById('message').value;
+            
+            const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <p style="color: blue;">🔗 WhatsApp açılıyor...</p>
+                <p><strong>URL:</strong> ${url}</p>
+                <p><strong>Telefon:</strong> ${phoneNumber}</p>
+                <p><strong>Mesaj:</strong> ${message}</p>
+                <p><strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+            `;
+            
+            window.open(url, '_blank');
+        }
+
+        // Test fonksiyonu
+        function testWhatsApp() {
+            const phoneNumber = document.getElementById('phoneNumber').value.replace(/\D/g, '');
+            const message = document.getElementById('message').value;
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <p style="color: purple;">🧪 Test yapılıyor...</p>
+                <p><strong>Telefon:</strong> ${phoneNumber}</p>
+                <p><strong>Mesaj:</strong> ${message}</p>
+                <p><strong>URL:</strong> https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}</p>
+                <p><strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+            `;
+        }
+
+        // Form submit
+        document.getElementById('whatsappForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            saveWhatsAppSettings();
+        });
+
+        // Sayfa yüklendiğinde ayarları yükle
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWhatsAppSettings();
+            
+            document.getElementById('debugInfo').innerHTML = `
+                <p style="color: green;">✅ Sayfa yüklendi</p>
+                <p><strong>LocalStorage:</strong> ${localStorage.getItem('whatsAppSettings') ? 'Mevcut' : 'Yok'}</p>
+                <p><strong>Zaman:</strong> ${new Date().toLocaleString('tr-TR')}</p>
+            `;
+        });
+
+        // WhatsApp ayarları değişikliklerini dinle
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'whatsAppSettings') {
+                loadWhatsAppSettings();
+                document.getElementById('debugInfo').innerHTML += `
+                    <p style="color: orange;">🔄 Storage değişikliği algılandı</p>
+                `;
+            }
+        });
+
+        // Custom event dinle
+        window.addEventListener('whatsAppSettingsChanged', function(e) {
+            loadWhatsAppSettings();
+            document.getElementById('debugInfo').innerHTML += `
+                <p style="color: blue;">🔄 Custom event algılandı</p>
+            `;
+        });
+    </script>
+</body>
+</html>
