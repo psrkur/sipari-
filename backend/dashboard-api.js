@@ -775,19 +775,19 @@ router.get('/product-sales', async (req, res) => {
     console.log('📊 Arşiv ürün satışları:', archivedItems.length);
     console.log('📊 Toplam ürün satışları:', productSales.length);
     
-    // Ürün bazında satış verilerini grupla
+    // Ürün bazında satış verilerini grupla (ürün ismi bazında)
     const productStats = {};
     const categoryStats = {};
     
     productSales.forEach(item => {
-      const productId = item.productId;
+      const productName = item.productName;
       const categoryName = item.categoryName || 'Kategorisiz';
       
-      // Ürün istatistikleri
-      if (!productStats[productId]) {
-        productStats[productId] = {
-          id: productId,
-          name: item.productName,
+      // Ürün istatistikleri (ürün ismi bazında grupla)
+      if (!productStats[productName]) {
+        productStats[productName] = {
+          id: item.productId,
+          name: productName,
           category: categoryName,
           totalQuantity: 0,
           totalRevenue: 0,
@@ -796,9 +796,9 @@ router.get('/product-sales', async (req, res) => {
         };
       }
       
-      productStats[productId].totalQuantity += item.quantity;
-      productStats[productId].totalRevenue += item.totalPrice;
-      productStats[productId].orderCount += 1;
+      productStats[productName].totalQuantity += item.quantity;
+      productStats[productName].totalRevenue += item.totalPrice;
+      productStats[productName].orderCount += 1;
       
       // Kategori istatistikleri
       if (!categoryStats[categoryName]) {
@@ -813,7 +813,7 @@ router.get('/product-sales', async (req, res) => {
       
       categoryStats[categoryName].totalQuantity += item.quantity;
       categoryStats[categoryName].totalRevenue += item.totalPrice;
-      categoryStats[categoryName].products.add(productId);
+      categoryStats[categoryName].products.add(productName);
     });
     
     // Kategori istatistiklerini işle
