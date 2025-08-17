@@ -479,6 +479,11 @@ export default function Home() {
   }, [])
 
   const groupProductsByCategory = useCallback((products: Product[]) => {
+    // Array kontrolü ekle
+    if (!Array.isArray(products) || products.length === 0) {
+      return {};
+    }
+
     const grouped: { [key: string]: Product[] } = {}
     
     products.forEach(product => {
@@ -496,6 +501,11 @@ export default function Home() {
   }, [])
 
   const getAvailableCategories = useCallback(() => {
+    // Array kontrolü ekle
+    if (!Array.isArray(products) || products.length === 0) {
+      return ['Tümü'];
+    }
+    
     const grouped = groupProductsByCategory(products)
     return ['Tümü', ...Object.keys(grouped)]
   }, [products, groupProductsByCategory])
@@ -640,6 +650,11 @@ export default function Home() {
 
   // Filtrelenmiş ürünler - memoize edilmiş
   const filteredProducts = useMemo(() => {
+    // Array kontrolü ekle
+    if (!Array.isArray(products) || products.length === 0) {
+      return [];
+    }
+
     let filtered = products
 
     // Kategori filtresi
@@ -657,6 +672,10 @@ export default function Home() {
 
   // Gruplandırılmış ürünler - memoize edilmiş
   const groupedProducts = useMemo(() => {
+    // Array kontrolü ekle
+    if (!Array.isArray(filteredProducts) || filteredProducts.length === 0) {
+      return [];
+    }
     return groupProductsByCategory(filteredProducts)
   }, [filteredProducts, groupProductsByCategory])
 
@@ -677,7 +696,7 @@ export default function Home() {
 
   // Ürünler yüklendiğinde resimleri preload et
   useEffect(() => {
-    if (products.length > 0) {
+    if (Array.isArray(products) && products.length > 0) {
       preloadImages(products);
     }
   }, [products, preloadImages]);

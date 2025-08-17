@@ -317,6 +317,11 @@ export default function KitchenPage() {
 
   // Filtrelenmiş siparişler
   const filteredOrders = useMemo(() => {
+    // Array kontrolü ekle
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return [];
+    }
+
     let filtered = orders;
 
     // Sipariş tipi filtresi
