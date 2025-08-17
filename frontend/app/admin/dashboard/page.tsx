@@ -11,6 +11,7 @@ import toast from 'react-hot-toast';
 import SalesStats from './sales-stats';
 import ProductSales from './product-sales';
 import SocketStatus from '@/components/SocketStatus';
+import DashboardDebug from '@/components/DashboardDebug';
 import {
   TrendingUp,
   TrendingDown,
@@ -762,6 +763,11 @@ export default function Dashboard() {
       {/* Socket.IO Durumu */}
       <div className="mt-8">
         <SocketStatus />
+      </div>
+
+      {/* Dashboard Debug */}
+      <div className="mt-8">
+        <DashboardDebug />
       </div>
     </div>
   );
