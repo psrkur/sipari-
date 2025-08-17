@@ -5473,7 +5473,19 @@ app.get('/api/admin/sales-stats', authenticateToken, async (req, res) => {
       return acc;
     }, {});
 
-    res.json({
+    // Sales array'ini oluştur (frontend'in beklediği format)
+    const sales = salesRecords.map(order => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      totalAmount: order.totalAmount,
+      orderType: order.orderType || 'DELIVERY',
+      platform: order.platform,
+      createdAt: order.createdAt,
+      branch: order.branch,
+      customer: order.customer
+    }));
+
+    const result = {
       period,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -5485,8 +5497,20 @@ app.get('/api/admin/sales-stats', authenticateToken, async (req, res) => {
       platformStats,
       orderTypeStats,
       branchStats,
-      sales: salesRecords
+      sales
+    };
+
+    console.log('📊 Satış istatistikleri hazırlandı:', {
+      totalRevenue,
+      orderCount,
+      averageOrder,
+      salesCount: sales.length,
+      platformStatsCount: Object.keys(platformStats).length,
+      orderTypeStatsCount: Object.keys(orderTypeStats).length,
+      branchStatsCount: Object.keys(branchStats).length
     });
+
+    res.json(result);
 
   } catch (error) {
     console.error('❌ Satış istatistikleri hatası:', error);
@@ -5515,12 +5539,16 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       case 'weekly':
         startDate = new Date(now);
         startDate.setDate(now.getDate() - 7);
+        startDate.setHours(0, 0, 0, 0);
         endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
         break;
       case 'monthly':
         startDate = new Date(now);
         startDate.setMonth(now.getMonth() - 1);
+        startDate.setHours(0, 0, 0, 0);
         endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
         break;
       default:
         startDate = new Date(now);
@@ -5537,34 +5565,66 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       branchFilter.branchId = Number(branchId);
     }
 
-    // Sales records'dan ürün satış verilerini al
-    const salesRecords = await prisma.salesRecord.findMany({
+    console.log('📅 Tarih aralığı:', { startDate, endDate, period });
+    console.log('🏢 Şube filtresi:', branchFilter);
+
+    // Önce tamamlanmış siparişleri al
+    const completedOrders = await prisma.order.findMany({
       where: {
         ...branchFilter,
         createdAt: {
           gte: startDate,
           lt: endDate
         },
-        status: 'COMPLETED'
+        status: {
+          in: ['COMPLETED', 'DELIVERED']
+        }
       },
       select: {
         id: true,
         orderNumber: true,
         totalAmount: true,
+        orderType: true,
+        platform: true,
         createdAt: true,
         branch: {
           select: {
             id: true,
             name: true
           }
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
         }
-      }
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
-    // Bu sales records'lara ait sipariş detaylarını al
-    const orderIds = salesRecords.map(sale => sale.orderId).filter(id => id !== null);
+    console.log('📋 Tamamlanmış sipariş sayısı:', completedOrders.length);
+
+    if (completedOrders.length === 0) {
+      return res.json({
+        period,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        summary: {
+          totalProducts: 0,
+          totalQuantity: 0,
+          totalRevenue: 0
+        },
+        productSales: [],
+        categoryStats: [],
+        salesRecords: 0
+      });
+    }
+
+    // Bu siparişlere ait ürün detaylarını al
+    const orderIds = completedOrders.map(order => order.id);
     
-    // Order items'ları al (ürün detayları için)
     const orderItems = await prisma.orderItem.findMany({
       where: {
         orderId: {
@@ -5590,6 +5650,24 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
         }
       }
     });
+
+    console.log('🛍️ Sipariş ürün sayısı:', orderItems.length);
+
+    if (orderItems.length === 0) {
+      return res.json({
+        period,
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        summary: {
+          totalProducts: 0,
+          totalQuantity: 0,
+          totalRevenue: 0
+        },
+        productSales: [],
+        categoryStats: [],
+        salesRecords: completedOrders.length
+      });
+    }
 
     // Ürün bazında satış istatistiklerini hesapla
     const productSales = {};
@@ -5639,7 +5717,7 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       categoryStats[category].productCount++;
     });
 
-    res.json({
+    const result = {
       period,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -5650,8 +5728,18 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       },
       productSales: sortedProductSales,
       categoryStats: Object.values(categoryStats),
-      salesRecords: salesRecords.length
+      salesRecords: completedOrders.length
+    };
+
+    console.log('📊 Ürün satış istatistikleri hazırlandı:', {
+      totalProducts: result.summary.totalProducts,
+      totalQuantity: result.summary.totalQuantity,
+      totalRevenue: result.summary.totalRevenue,
+      productSalesCount: result.productSales.length,
+      categoryStatsCount: result.categoryStats.length
     });
+
+    res.json(result);
 
   } catch (error) {
     console.error('❌ Ürün satış istatistikleri hatası:', error);

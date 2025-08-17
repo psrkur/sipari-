@@ -86,41 +86,41 @@ router.get('/stats', async (req, res) => {
       totalProducts,
       allOrders
     ] = await Promise.all([
-      // Bugünkü satışlar (sales records'dan)
-      safeDbOperation(() => prisma.salesRecord.findMany({
+      // Bugünkü satışlar (order tablosundan)
+      safeDbOperation(() => prisma.order.findMany({
         where: { 
           createdAt: { gte: today },
-          status: 'COMPLETED'
+          status: { in: ['COMPLETED', 'DELIVERED'] }
         },
         select: { totalAmount: true }
       })),
       
-      // Dünkü satışlar (sales records'dan)
-      safeDbOperation(() => prisma.salesRecord.findMany({
+      // Dünkü satışlar (order tablosundan)
+      safeDbOperation(() => prisma.order.findMany({
         where: { 
           createdAt: { 
             gte: yesterday,
             lt: today 
           },
-          status: 'COMPLETED'
+          status: { in: ['COMPLETED', 'DELIVERED'] }
         },
         select: { totalAmount: true }
       })),
       
-      // Bu haftaki satışlar (sales records'dan)
-      safeDbOperation(() => prisma.salesRecord.findMany({
+      // Bu haftaki satışlar (order tablosundan)
+      safeDbOperation(() => prisma.order.findMany({
         where: { 
           createdAt: { gte: weekStart },
-          status: 'COMPLETED'
+          status: { in: ['COMPLETED', 'DELIVERED'] }
         },
         select: { totalAmount: true }
       })),
       
-      // Bu ayki satışlar (sales records'dan)
-      safeDbOperation(() => prisma.salesRecord.findMany({
+      // Bu ayki satışlar (order tablosundan)
+      safeDbOperation(() => prisma.order.findMany({
         where: { 
           createdAt: { gte: monthStart },
-          status: 'COMPLETED'
+          status: { in: ['COMPLETED', 'DELIVERED'] }
         },
         select: { totalAmount: true }
       })),
@@ -172,7 +172,7 @@ router.get('/stats', async (req, res) => {
       }))
     ]);
 
-    // Satış hesaplamaları (sales records'dan)
+    // Satış hesaplamaları (order tablosundan)
     const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
     const yesterdayRevenue = yesterdaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
     const weekRevenue = weekSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
