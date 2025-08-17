@@ -139,15 +139,48 @@ export default function Dashboard() {
       const dashboardRes = await axios.get(API_ENDPOINTS.DASHBOARD_STATS, { headers });
       const dashboardData = dashboardRes.data;
 
-      console.log('📊 Dashboard verileri yüklendi:', {
-        sales: dashboardData.sales,
-        orders: dashboardData.orders,
-        customers: dashboardData.customers,
-        products: dashboardData.products,
-        realTime: dashboardData.realTime
-      });
+      console.log('📊 Dashboard verileri yüklendi:', dashboardData);
 
-      setData(dashboardData);
+      // Production backend'den gelen veri yapısını frontend'e uygun hale getir
+      const processedData: DashboardData = {
+        sales: {
+          today: dashboardData.sales?.today || dashboardData.todaySales || dashboardData.totalRevenue || 0,
+          yesterday: dashboardData.sales?.yesterday || dashboardData.yesterdaySales || 0,
+          thisWeek: dashboardData.sales?.thisWeek || dashboardData.weeklySales || dashboardData.week || 0,
+          thisMonth: dashboardData.sales?.thisMonth || dashboardData.monthlySales || dashboardData.month || 0,
+          target: dashboardData.sales?.target || dashboardData.salesTarget || 1000,
+          percentage: dashboardData.sales?.percentage || 0
+        },
+        orders: {
+          total: dashboardData.orders?.total || dashboardData.totalOrders || dashboardData.orderCount || 0,
+          pending: dashboardData.orders?.pending || dashboardData.pendingOrders || 0,
+          preparing: dashboardData.orders?.preparing || dashboardData.preparingOrders || 0,
+          ready: dashboardData.orders?.ready || dashboardData.readyOrders || 0,
+          delivered: dashboardData.orders?.delivered || dashboardData.deliveredOrders || 0,
+          cancelled: dashboardData.orders?.cancelled || dashboardData.cancelledOrders || 0,
+          averageTime: dashboardData.orders?.averageTime || dashboardData.avgPreparationTime || 0
+        },
+        customers: {
+          total: dashboardData.customers?.total || dashboardData.totalCustomers || dashboardData.customerCount || 0,
+          newToday: dashboardData.customers?.newToday || dashboardData.newCustomers || 0,
+          activeNow: dashboardData.customers?.activeNow || dashboardData.activeCustomers || 0,
+          averageRating: dashboardData.customers?.averageRating || dashboardData.avgRating || 0,
+          chatbotConversations: dashboardData.customers?.chatbotConversations || dashboardData.chatbotChats || 0
+        },
+        products: {
+          total: dashboardData.products?.total || dashboardData.totalProducts || dashboardData.productCount || 0,
+          popular: dashboardData.products?.popular || dashboardData.popularProducts || [],
+          lowStock: dashboardData.products?.lowStock || dashboardData.lowStockProducts || []
+        },
+        realTime: {
+          currentOrders: dashboardData.realTime?.currentOrders || dashboardData.currentOrders || [],
+          recentActivity: dashboardData.realTime?.recentActivity || dashboardData.recentActivity || []
+        }
+      };
+
+      console.log('📊 İşlenmiş dashboard verileri:', processedData);
+
+      setData(processedData);
       
       // Chart verilerini de yükle
       await loadChartData();

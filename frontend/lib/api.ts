@@ -235,10 +235,10 @@ export const API_ENDPOINTS = {
   get CUSTOMERS() { return `${getCurrentApiBaseUrl()}/api/customers` },
   
   // Dashboard - Production backend'de mevcut olan endpoint'leri kullan
-  get DASHBOARD_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats` },
-  get DASHBOARD_SALES_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=weekly` },
-  get DASHBOARD_ORDER_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=daily` },
-  get DASHBOARD_ORDER_COUNT_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/sales-stats?period=monthly` },
+  get DASHBOARD_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/stats` },
+  get DASHBOARD_SALES_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/stats?period=weekly` },
+  get DASHBOARD_ORDER_STATUS() { return `${getCurrentApiBaseUrl()}/api/admin/stats?period=daily` },
+  get DASHBOARD_ORDER_COUNT_TREND() { return `${getCurrentApiBaseUrl()}/api/admin/stats?period=monthly` },
   
   // Backup Management
   get ADMIN_BACKUP_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/backup/stats` },
