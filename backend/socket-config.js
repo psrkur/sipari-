@@ -4,20 +4,7 @@ const performanceMonitor = require('./performance-monitor');
 // Socket.IO konfigürasyonu
 function configureSocket(server) {
   const io = socketIO(server, {
-      // Global io instance'ını export et
-  global.io = io;
-  
-  // Dashboard güncelleme fonksiyonu
-  io.updateDashboard = (branchId = 'all') => {
-    const dashboardRoom = `dashboard-${branchId}`;
-    io.to(dashboardRoom).emit('dashboardUpdate', {
-      timestamp: new Date().toISOString(),
-      message: 'Dashboard verileri güncellendi'
-    });
-    console.log(`📊 Dashboard güncellemesi gönderildi: ${dashboardRoom}`);
-  };
-  
-  cors: {
+    cors: {
       origin: [
         process.env.FRONTEND_URL || "http://localhost:3000",
         "https://arsut.net.tr",
@@ -69,6 +56,19 @@ function configureSocket(server) {
       }
     }
   });
+
+  // Global io instance'ını export et
+  global.io = io;
+  
+  // Dashboard güncelleme fonksiyonu
+  io.updateDashboard = (branchId = 'all') => {
+    const dashboardRoom = `dashboard-${branchId}`;
+    io.to(dashboardRoom).emit('dashboardUpdate', {
+      timestamp: new Date().toISOString(),
+      message: 'Dashboard verileri güncellendi'
+    });
+    console.log(`📊 Dashboard güncellemesi gönderildi: ${dashboardRoom}`);
+  };
 
   // Bağlantı yönetimi
   io.on('connection', (socket) => {
@@ -130,9 +130,6 @@ function configureSocket(server) {
         const dashboardRoom = `dashboard-${branchId || 'all'}`;
         socket.leave(dashboardRoom);
         console.log(`📊 Dashboard odasından ayrılma: ${socket.id} -> ${dashboardRoom}`);
-      }
-    });
-        console.log(`👋 Kullanıcı ${socket.id} odadan ayrıldı: ${room}`);
       }
     });
 

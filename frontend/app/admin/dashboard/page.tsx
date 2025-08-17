@@ -152,6 +152,12 @@ export default function Dashboard() {
       // Chart verilerini de yükle
       await loadChartData();
     } catch (error: any) {
+      // Eğer istek iptal edildiyse (component unmount olduysa) hata gösterme
+      if (error.code === 'ERR_CANCELED' || error.message === 'canceled') {
+        console.log('🔍 İstek iptal edildi veya component unmount');
+        return;
+      }
+      
       console.error('Dashboard verileri yüklenemedi:', error);
       
       // Daha detaylı hata mesajı
@@ -180,7 +186,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!token) return;
     
-    loadDashboardData();
+    let isMounted = true;
+    
+    const loadData = async () => {
+      if (isMounted) {
+        await loadDashboardData();
+      }
+    };
+    
+    loadData();
 
     // Dashboard odasına katıl
     const { socket } = useSocket();
@@ -189,22 +203,32 @@ export default function Dashboard() {
     }
 
     // Her 30 saniyede bir güncelle
-    const interval = setInterval(loadDashboardData, 30000);
+    const interval = setInterval(() => {
+      if (isMounted) {
+        loadData();
+      }
+    }, 30000);
 
     // Socket.io ile gerçek zamanlı güncellemeler
     const handleNewOrder = () => {
-      loadDashboardData();
-      toast.success('Yeni sipariş alındı!');
+      if (isMounted) {
+        loadData();
+        toast.success('Yeni sipariş alındı!');
+      }
     };
 
     const handleOrderStatusChanged = () => {
-      loadDashboardData();
-      toast.success('Sipariş durumu güncellendi!');
+      if (isMounted) {
+        loadData();
+        toast.success('Sipariş durumu güncellendi!');
+      }
     };
 
     const handleDashboardUpdate = () => {
-      loadDashboardData();
-      console.log('📊 Dashboard gerçek zamanlı güncellendi');
+      if (isMounted) {
+        loadData();
+        console.log('📊 Dashboard gerçek zamanlı güncellendi');
+      }
     };
 
     on('newOrder', handleNewOrder);
@@ -212,6 +236,7 @@ export default function Dashboard() {
     on('dashboardUpdate', handleDashboardUpdate);
 
     return () => {
+      isMounted = false;
       clearInterval(interval);
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
