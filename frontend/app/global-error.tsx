@@ -10,51 +10,68 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error('Global error caught:', error);
+    // Hata loglama
+    console.error('🚨 Global Error Boundary yakaladı:', error);
+    
+    // Object.entries hatası için özel mesaj
+    if (error.message.includes('Cannot convert undefined or null to object')) {
+      console.error('🔍 Object.entries hatası tespit edildi. Bu genellikle veri yüklenmediğinde oluşur.');
+      console.error('🔍 Hata detayları:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        digest: error.digest
+      });
+    }
   }, [error]);
 
   return (
     <html>
       <body>
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg max-w-md mx-auto">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">⚠️</span>
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Kritik Hata</h2>
-              <p className="text-gray-600 mb-6">
-                Uygulamada kritik bir hata oluştu. Lütfen sayfayı yenileyin.
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 text-center">
+            <div className="text-red-500 text-6xl mb-4">🚨</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              Beklenmeyen Bir Hata Oluştu
+            </h1>
+            
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+              <p className="text-sm text-red-800 mb-2">
+                <strong>Hata:</strong> {error.name}
               </p>
-              
-              <div className="space-y-3">
-                <button
-                  onClick={reset}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200"
-                >
-                  Tekrar Dene
-                </button>
-                
-                <button
-                  onClick={() => window.location.reload()}
-                  className="w-full bg-gray-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-gray-600 transition-all duration-200"
-                >
-                  Sayfayı Yenile
-                </button>
-              </div>
-              
-              {process.env.NODE_ENV === 'development' && (
-                <details className="mt-6 text-left">
-                  <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
-                    Hata Detayları (Geliştirici Modu)
-                  </summary>
-                  <pre className="mt-2 p-3 bg-gray-100 rounded-lg text-xs overflow-auto">
-                    {error.message}
-                    {error.stack}
-                  </pre>
-                </details>
+              <p className="text-sm text-red-700">
+                {error.message}
+              </p>
+              {error.digest && (
+                <p className="text-xs text-red-600 mt-2">
+                  Hata ID: {error.digest}
+                </p>
               )}
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={reset}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                🔄 Sayfayı Yenile
+              </button>
+              
+              <button
+                onClick={() => window.location.href = '/'}
+                className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                🏠 Ana Sayfaya Dön
+              </button>
+            </div>
+
+            <div className="mt-6 text-xs text-gray-500">
+              <p>Eğer bu hata devam ederse, lütfen:</p>
+              <ul className="mt-2 space-y-1">
+                <li>• Tarayıcıyı yenileyin</li>
+                <li>• Cache'i temizleyin</li>
+                <li>• Tekrar deneyin</li>
+              </ul>
             </div>
           </div>
         </div>

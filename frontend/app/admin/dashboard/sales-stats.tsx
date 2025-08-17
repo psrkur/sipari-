@@ -19,6 +19,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { getApiBaseUrl } from '@/lib/api';
+import { safeObjectEntries } from '@/lib/utils';
 
 interface SalesStatsData {
   period: string;
@@ -252,7 +253,7 @@ export default function SalesStats() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(data.platformStats).map(([platform, stats]) => (
+              {data.platformStats && typeof data.platformStats === 'object' && safeObjectEntries(data.platformStats).map(([platform, stats]) => (
                 <div key={platform} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div>
                     <div className="font-medium">{platform}</div>
@@ -280,7 +281,7 @@ export default function SalesStats() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(data.orderTypeStats).map(([type, stats]) => (
+              {data.orderTypeStats && typeof data.orderTypeStats === 'object' && safeObjectEntries(data.orderTypeStats).map(([type, stats]) => (
                 <div key={type} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                   <div>
                     <div className="font-medium">
@@ -312,7 +313,7 @@ export default function SalesStats() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(data.branchStats).map(([branchName, stats]) => (
+              {data.branchStats && typeof data.branchStats === 'object' && safeObjectEntries(data.branchStats).map(([branchName, stats]) => (
                 <div key={branchName} className="p-4 bg-gray-50 rounded-lg">
                   <div className="font-medium mb-2">{branchName}</div>
                   <div className="text-2xl font-bold text-blue-600">

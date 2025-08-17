@@ -73,6 +73,13 @@ export const useSocket = () => {
     
     // Socket bağlantısını oluştur
     try {
+      // URL kontrolü ekle
+      if (!SOCKET_URL || typeof SOCKET_URL !== 'string') {
+        console.error('❌ Geçersiz Socket URL:', SOCKET_URL);
+        setIsConnected(false);
+        return;
+      }
+
       socketRef.current = io(SOCKET_URL, {
         transports: ['polling', 'websocket'],
         autoConnect: true,
@@ -80,6 +87,9 @@ export const useSocket = () => {
         reconnection: true,
         reconnectionAttempts: 5,
         reconnectionDelay: 1000,
+        // Ek güvenlik ayarları
+        forceNew: true,
+        rejectUnauthorized: false,
       });
 
       const socket = socketRef.current;
@@ -103,6 +113,12 @@ export const useSocket = () => {
       socket.on('reconnect', (attemptNumber) => {
         console.log(`✅ Socket.IO bağlantısı yeniden kuruldu, Deneme: ${attemptNumber}`);
         setIsConnected(true);
+      });
+
+      // Ek hata yakalama
+      socket.on('error', (error) => {
+        console.error('🔌 Socket.IO genel hatası:', error);
+        setIsConnected(false);
       });
 
     } catch (error) {

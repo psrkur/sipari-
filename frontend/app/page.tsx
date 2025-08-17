@@ -32,6 +32,7 @@ import {
   LogOut
 } from 'lucide-react'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal'
+import { safeObjectEntries } from '@/lib/utils'
 
 interface Branch {
   id: number
@@ -1160,7 +1161,7 @@ export default function Home() {
               </div>
             ) : (
                 <div className="space-y-8 sm:space-y-12">
-                {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+                {safeObjectEntries(groupedProducts).map(([category, categoryProducts]: [string, Product[]]) => (
                     <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
                       <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
                         <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">

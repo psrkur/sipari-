@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, MapPin, Clock, AlertCircle, Building } from 'lucide-react';
+import { useCartStore } from '@/store/cart';
+import { safeObjectEntries } from '@/lib/utils';
 
 interface Product {
   id: number;
@@ -339,7 +341,7 @@ export default function QRMenuPage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {Object.entries(menuData.menu).map(([categoryName, products]) => (
+            {safeObjectEntries(menuData.menu).map(([categoryName, products]) => (
               <div key={categoryName} className="bg-white rounded-lg shadow-sm border">
                 <div className="px-6 py-4 border-b bg-gray-50">
                   <h3 className="text-lg font-semibold text-gray-900">{categoryName}</h3>

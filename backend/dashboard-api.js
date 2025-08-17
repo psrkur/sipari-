@@ -283,10 +283,10 @@ router.get('/stats', async (req, res) => {
       });
     });
 
-    let popularProductsBySales = Object.entries(productSales)
+    let popularProductsBySales = productSales && typeof productSales === 'object' ? Object.entries(productSales)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.sales - a.sales)
-      .slice(0, 5);
+      .slice(0, 5) : [];
 
     // Eğer popüler ürün yoksa örnek veriler ekle
     if (popularProductsBySales.length === 0) {

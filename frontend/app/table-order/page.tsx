@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCartStore } from '@/store/cart';
+import { safeObjectEntries } from '@/lib/utils';
 
 interface Table {
   id: number;
@@ -769,9 +770,9 @@ export default function TableOrder() {
           
           {/* Ürün Listesi */}
           <div className="space-y-8 sm:space-y-12">
-            {Object.entries(groupProductsByCategory(products))
+            {products && Array.isArray(products) && safeObjectEntries(groupProductsByCategory(products))
               .filter(([category]) => selectedCategory === 'Tümü' || category === selectedCategory)
-              .map(([category, categoryProducts]) => (
+              .map(([category, categoryProducts]: [string, Product[]]) => (
                 <div key={category} className="bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8">
                   <div className="flex flex-col sm:flex-row sm:items-center mb-6 sm:mb-8">
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl sm:rounded-2xl flex items-center justify-center mr-3 sm:mr-4 mb-3 sm:mb-0">

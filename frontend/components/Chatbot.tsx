@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, X, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
+import { safeObjectEntries } from '@/lib/utils';
 
 interface ChatMessage {
   id: number;
@@ -160,9 +161,9 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         };
       }
 
-      const categoryList = Object.entries(categories).map(([categoryName, categoryProducts]) => {
+      const categoryList = safeObjectEntries(categories).map(([categoryName, categoryProducts]: [string, any[]]) => {
         const priceRange = getPriceRange(categoryProducts);
-        const productNames = categoryProducts.slice(0, 3).map(p => p.name).join(', ');
+        const productNames = categoryProducts.slice(0, 3).map((p: any) => p.name).join(', ');
         return `🍽️ **${categoryName}** (${priceRange}): ${productNames}${categoryProducts.length > 3 ? '...' : ''}`;
       }).join('\n');
 
@@ -203,7 +204,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         };
       }
 
-      const priceRanges = Object.entries(categories).map(([categoryName, categoryProducts]) => {
+      const priceRanges = safeObjectEntries(categories).map(([categoryName, categoryProducts]: [string, any[]]) => {
         const priceRange = getPriceRange(categoryProducts);
         return `🍽️ **${categoryName}**: ${priceRange}`;
       }).join('\n');
