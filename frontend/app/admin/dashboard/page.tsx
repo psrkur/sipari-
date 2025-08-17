@@ -133,7 +133,7 @@ export default function Dashboard() {
       };
       
       // Dashboard API'den verileri çek
-      const dashboardRes = await axios.get(`${API_BASE_URL}/api/dashboard/stats`, { headers });
+      const dashboardRes = await axios.get(API_ENDPOINTS.DASHBOARD_STATS, { headers });
       const dashboardData = dashboardRes.data;
 
       console.log('📊 Dashboard verileri yüklendi:', {
@@ -245,7 +245,7 @@ export default function Dashboard() {
   const loadChartData = async () => {
     try {
       // Satış trendi verilerini yükle
-      const salesTrendRes = await axios.get(`${API_BASE_URL}/api/dashboard/sales-trend`, {
+      const salesTrendRes = await axios.get(API_ENDPOINTS.DASHBOARD_SALES_TREND, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -263,7 +263,7 @@ export default function Dashboard() {
       }
 
       // Sipariş durumu verilerini yükle
-      const orderStatusRes = await axios.get(`${API_BASE_URL}/api/dashboard/order-status`, {
+      const orderStatusRes = await axios.get(API_ENDPOINTS.DASHBOARD_ORDER_STATUS, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

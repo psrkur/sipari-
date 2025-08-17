@@ -234,6 +234,12 @@ export const API_ENDPOINTS = {
   get COMPANIES() { return `${getCurrentApiBaseUrl()}/api/companies` },
   get CUSTOMERS() { return `${getCurrentApiBaseUrl()}/api/customers` },
   
+  // Dashboard
+  get DASHBOARD_STATS() { return `${getCurrentApiBaseUrl()}/api/dashboard/stats` },
+  get DASHBOARD_SALES_TREND() { return `${getCurrentApiBaseUrl()}/api/dashboard/sales-trend` },
+  get DASHBOARD_ORDER_STATUS() { return `${getCurrentApiBaseUrl()}/api/dashboard/order-status` },
+  get DASHBOARD_ORDER_COUNT_TREND() { return `${getCurrentApiBaseUrl()}/api/dashboard/order-count-trend` },
+  
   // Backup Management
   get ADMIN_BACKUP_STATS() { return `${getCurrentApiBaseUrl()}/api/admin/backup/stats` },
   get ADMIN_BACKUP_LIST() { return `${getCurrentApiBaseUrl()}/api/admin/backup/list` },

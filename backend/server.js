@@ -4265,7 +4265,7 @@ app.use('/api/integrations', ecommerceIntegrationRouter);
 // Chatbot router'ını ekle
 app.use('/api/chatbot', chatbotRouter);
 app.use('/api/chatbot', aiChatbotRouter);
-app.use('/api', dashboardRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Yedekleme router'ını ekle
 app.use('/api/backup', backupRouter);
