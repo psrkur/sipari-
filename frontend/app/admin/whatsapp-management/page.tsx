@@ -258,7 +258,7 @@ export default function WhatsAppManagement() {
         return;
       }
       
-      const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/${905322922609}?text=${encodeURIComponent(message)}`;
       
       console.log('🧪 WhatsApp test ediliyor:', {
         phoneNumber: phoneNumber,
