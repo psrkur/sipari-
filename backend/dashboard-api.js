@@ -90,44 +90,83 @@ router.get('/stats', async (req, res) => {
       totalProducts,
       allOrders
     ] = await Promise.all([
-      // Bugünkü satışlar (order tablosundan)
-      safeDbOperation(() => prisma.order.findMany({
-        where: { 
-          createdAt: { gte: today },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        },
-        select: { totalAmount: true }
-      })),
-      
-      // Dünkü satışlar (order tablosundan)
-      safeDbOperation(() => prisma.order.findMany({
-        where: { 
-          createdAt: { 
-            gte: yesterday,
-            lt: today 
+      // Bugünkü satışlar - hem aktif siparişlerden hem de SalesRecord'dan
+      Promise.all([
+        safeDbOperation(() => prisma.order.findMany({
+          where: { 
+            createdAt: { gte: today },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        },
-        select: { totalAmount: true }
-      })),
+          select: { totalAmount: true }
+        })),
+        safeDbOperation(() => prisma.salesRecord.findMany({
+          where: { 
+            createdAt: { gte: today },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        }))
+      ]).then(([active, archived]) => [...active, ...archived]),
       
-      // Bu haftaki satışlar (order tablosundan)
-      safeDbOperation(() => prisma.order.findMany({
-        where: { 
-          createdAt: { gte: weekStart },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        },
-        select: { totalAmount: true }
-      })),
+      // Dünkü satışlar - hem aktif siparişlerden hem de SalesRecord'dan
+      Promise.all([
+        safeDbOperation(() => prisma.order.findMany({
+          where: { 
+            createdAt: { 
+              gte: yesterday,
+              lt: today 
+            },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        })),
+        safeDbOperation(() => prisma.salesRecord.findMany({
+          where: { 
+            createdAt: { 
+              gte: yesterday,
+              lt: today 
+            },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        }))
+      ]).then(([active, archived]) => [...active, ...archived]),
       
-      // Bu ayki satışlar (order tablosundan)
-      safeDbOperation(() => prisma.order.findMany({
-        where: { 
-          createdAt: { gte: monthStart },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        },
-        select: { totalAmount: true }
-      })),
+      // Bu haftaki satışlar - hem aktif siparişlerden hem de SalesRecord'dan
+      Promise.all([
+        safeDbOperation(() => prisma.order.findMany({
+          where: { 
+            createdAt: { gte: weekStart },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        })),
+        safeDbOperation(() => prisma.salesRecord.findMany({
+          where: { 
+            createdAt: { gte: weekStart },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        }))
+      ]).then(([active, archived]) => [...active, ...archived]),
+      
+      // Bu ayki satışlar - hem aktif siparişlerden hem de SalesRecord'dan
+      Promise.all([
+        safeDbOperation(() => prisma.order.findMany({
+          where: { 
+            createdAt: { gte: monthStart },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        })),
+        safeDbOperation(() => prisma.salesRecord.findMany({
+          where: { 
+            createdAt: { gte: monthStart },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          },
+          select: { totalAmount: true }
+        }))
+      ]).then(([active, archived]) => [...active, ...archived]),
       
       // Bugünkü siparişler (aktif siparişler için)
       safeDbOperation(() => prisma.order.findMany({
@@ -658,34 +697,42 @@ router.get('/product-sales', async (req, res) => {
         startDate = new Date(today);
     }
     
-    // Ürün satış verilerini getir
-    const productSales = await safeDbOperation(() => prisma.orderItem.findMany({
-      where: {
-        order: {
-          createdAt: { gte: startDate },
-          status: { in: ['COMPLETED', 'DELIVERED'] }
-        }
-      },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            category: {
-              select: {
-                name: true
-              }
-            }
+    // Ürün satış verilerini getir - hem aktif siparişlerden hem de SalesRecord'dan
+    const [activeOrderItems, salesRecordItems] = await Promise.all([
+      safeDbOperation(() => prisma.orderItem.findMany({
+        where: {
+          order: {
+            createdAt: { gte: startDate },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
           }
         },
-        order: {
-          select: {
-            createdAt: true
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              category: {
+                select: {
+                  name: true
+                }
+              }
+            }
+          },
+          order: {
+            select: {
+              createdAt: true
+            }
           }
         }
-      }
-    }));
+      })),
+      // SalesRecord'dan ürün detaylarını almak için ayrı bir sorgu gerekebilir
+      // Şimdilik boş array döndür, daha sonra geliştirilebilir
+      Promise.resolve([])
+    ]);
+
+    // İki veri kaynağını birleştir
+    const productSales = [...activeOrderItems, ...salesRecordItems];
     
     // Ürün bazında satış verilerini grupla
     const productStats = {};
@@ -799,19 +846,36 @@ router.get('/sales-stats', async (req, res) => {
         startDate = new Date(today);
     }
     
-    // Satış verilerini getir
-    const salesData = await safeDbOperation(() => prisma.order.findMany({
-      where: {
-        createdAt: { gte: startDate },
-        status: { in: ['COMPLETED', 'DELIVERED'] }
-      },
-      select: {
-        id: true,
-        totalAmount: true,
-        createdAt: true,
-        orderType: true
-      }
-    }));
+    // Satış verilerini getir - hem aktif siparişlerden hem de SalesRecord'dan
+    const [activeOrders, salesRecords] = await Promise.all([
+      safeDbOperation(() => prisma.order.findMany({
+        where: {
+          createdAt: { gte: startDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] }
+        },
+        select: {
+          id: true,
+          totalAmount: true,
+          createdAt: true,
+          orderType: true
+        }
+      })),
+      safeDbOperation(() => prisma.salesRecord.findMany({
+        where: {
+          createdAt: { gte: startDate },
+          status: { in: ['COMPLETED', 'DELIVERED'] }
+        },
+        select: {
+          id: true,
+          totalAmount: true,
+          createdAt: true,
+          orderType: true
+        }
+      }))
+    ]);
+
+    // İki veri kaynağını birleştir
+    const salesData = [...activeOrders, ...salesRecords];
     
     // Günlük satış verilerini grupla
     const dailySales = {};

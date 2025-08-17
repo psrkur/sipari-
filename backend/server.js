@@ -4327,6 +4327,38 @@ app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
 
     // Transaction ile güvenli silme işlemi
     const result = await prisma.$transaction(async (tx) => {
+      // Önce tüm siparişlerin detaylarını al
+      const allOrdersWithDetails = await tx.order.findMany({
+        include: {
+          customer: true,
+          branch: true
+        }
+      });
+
+      // SalesRecord tablosuna kaydet
+      const salesRecords = allOrdersWithDetails.map(order => ({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        branchId: order.branchId,
+        customerId: order.customerId,
+        totalAmount: order.totalAmount,
+        orderType: order.orderType,
+        platform: order.platform,
+        platformOrderId: order.platformOrderId,
+        status: order.status,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      }));
+
+      // SalesRecord'ları toplu olarak ekle
+      if (salesRecords.length > 0) {
+        await tx.salesRecord.createMany({
+          data: salesRecords,
+          skipDuplicates: true
+        });
+        console.log(`💾 ${salesRecords.length} sipariş SalesRecord tablosuna kaydedildi`);
+      }
+
       // Önce orderItems'ları sil
       const deletedOrderItems = await tx.orderItem.deleteMany({});
       console.log(`🗑️ Silinen orderItems sayısı: ${deletedOrderItems.count}`);
@@ -4337,7 +4369,8 @@ app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
 
       return {
         deletedOrders: deletedOrders.count,
-        deletedOrderItems: deletedOrderItems.count
+        deletedOrderItems: deletedOrderItems.count,
+        savedSalesRecords: salesRecords.length
       };
     });
 
@@ -5308,33 +5341,57 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     console.log('📅 Tarih aralığı:', { startDate, endDate, period });
     console.log('🏢 Şube filtresi:', branchFilter);
 
-    // Önce tüm siparişleri al (test için)
-    const allOrders = await prisma.order.findMany({
-      where: {
-        ...branchFilter,
-        createdAt: {
-          gte: startDate,
-          lt: endDate
+    // Hem aktif siparişlerden hem de SalesRecord'dan veri al
+    const [activeOrders, salesRecords] = await Promise.all([
+      prisma.order.findMany({
+        where: {
+          ...branchFilter,
+          createdAt: {
+            gte: startDate,
+            lt: endDate
+          }
+        },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true
         }
-      },
-      select: {
-        id: true,
-        status: true,
-        createdAt: true
-      }
-    });
+      }),
+      prisma.salesRecord.findMany({
+        where: {
+          ...branchFilter,
+          createdAt: {
+            gte: startDate,
+            lt: endDate
+          }
+        },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true
+        }
+      })
+    ]);
 
-    console.log('📋 Tüm siparişler:', allOrders.map(o => ({ id: o.id, status: o.status, createdAt: o.createdAt })));
-    console.log('📋 Sipariş durumları:', [...new Set(allOrders.map(o => o.status))]);
+    console.log('📋 Aktif siparişler:', activeOrders.map(o => ({ id: o.id, status: o.status, createdAt: o.createdAt })));
+    console.log('📋 SalesRecord siparişler:', salesRecords.map(o => ({ id: o.id, status: o.status, createdAt: o.createdAt })));
 
-    // Tamamlanmış siparişleri filtrele
-    const completedOrders = allOrders.filter(order => 
+    // Tamamlanmış siparişleri filtrele (hem aktif hem de arşivlenmiş)
+    const completedActiveOrders = activeOrders.filter(order => 
       ['COMPLETED', 'DELIVERED', 'COMPLETED', 'DELIVERED', 'FINISHED', 'SUCCESS'].includes(order.status)
     );
+    
+    const completedSalesRecords = salesRecords.filter(record => 
+      ['COMPLETED', 'DELIVERED', 'COMPLETED', 'DELIVERED', 'FINISHED', 'SUCCESS'].includes(record.status)
+    );
 
-    console.log('📋 Tamamlanmış sipariş sayısı:', completedOrders.length);
+    console.log('📋 Tamamlanmış aktif sipariş sayısı:', completedActiveOrders.length);
+    console.log('📋 Tamamlanmış arşiv sipariş sayısı:', completedSalesRecords.length);
 
-    if (completedOrders.length === 0) {
+    const totalCompletedOrders = completedActiveOrders.length + completedSalesRecords.length;
+    console.log('📋 Toplam tamamlanmış sipariş sayısı:', totalCompletedOrders);
+
+    if (totalCompletedOrders === 0) {
       return res.json({
         period,
         startDate: startDate.toISOString(),
@@ -5346,12 +5403,12 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
         },
         productSales: [],
         categoryStats: [],
-        salesRecords: 0
+        salesRecords: totalCompletedOrders
       });
     }
 
-    // Bu siparişlere ait ürün detaylarını al
-    const orderIds = completedOrders.map(order => order.id);
+    // Bu siparişlere ait ürün detaylarını al (sadece aktif siparişlerden)
+    const orderIds = completedActiveOrders.map(order => order.id);
     
     console.log('📋 Sipariş ID\'leri:', orderIds);
     
@@ -5470,7 +5527,7 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       },
       productSales: sortedProductSales,
       categoryStats: Object.values(categoryStats),
-      salesRecords: completedOrders.length
+      salesRecords: totalCompletedOrders
     };
 
     console.log('📊 Ürün satış istatistikleri hazırlandı:', {

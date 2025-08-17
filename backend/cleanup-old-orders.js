@@ -70,6 +70,43 @@ async function cleanupOldOrders() {
 
     // Transaction ile güvenli silme işlemi
     const result = await prisma.$transaction(async (tx) => {
+      // Önce silinecek siparişlerin detaylarını al
+      const ordersWithDetails = await tx.order.findMany({
+        where: {
+          id: {
+            in: ordersToDelete.map(order => order.id)
+          }
+        },
+        include: {
+          customer: true,
+          branch: true
+        }
+      });
+
+      // SalesRecord tablosuna kaydet
+      const salesRecords = ordersWithDetails.map(order => ({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        branchId: order.branchId,
+        customerId: order.customerId,
+        totalAmount: order.totalAmount,
+        orderType: order.orderType,
+        platform: order.platform,
+        platformOrderId: order.platformOrderId,
+        status: order.status,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt
+      }));
+
+      // SalesRecord'ları toplu olarak ekle
+      if (salesRecords.length > 0) {
+        await tx.salesRecord.createMany({
+          data: salesRecords,
+          skipDuplicates: true
+        });
+        console.log(`💾 ${salesRecords.length} sipariş SalesRecord tablosuna kaydedildi`);
+      }
+
       // Önce orderItems'ları sil
       const orderIds = ordersToDelete.map(order => order.id);
       
@@ -96,7 +133,8 @@ async function cleanupOldOrders() {
 
       return {
         deletedOrders: deletedOrders.count,
-        deletedOrderItems: deletedOrderItems.count
+        deletedOrderItems: deletedOrderItems.count,
+        savedSalesRecords: salesRecords.length
       };
     });
 
