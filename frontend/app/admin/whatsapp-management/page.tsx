@@ -87,7 +87,7 @@ export default function WhatsAppManagement() {
           // Telefon numarasını temizle
           const cleanSettings = {
             ...parsed,
-            phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905551234567'
+            phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905322922609'
           };
           
           console.log('🔍 Temizlenmiş ayarlar:', cleanSettings);
