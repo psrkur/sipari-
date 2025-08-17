@@ -452,7 +452,7 @@ export default function Dashboard() {
                {(data.sales?.today || 0).toLocaleString('tr-TR')} ₺
              </div>
             <div className="flex items-center space-x-2">
-              {data.sales.percentage >= 100 ? (
+              {data?.sales?.percentage >= 100 ? (
                 <TrendingUp className="h-4 w-4 text-green-600" />
               ) : (
                 <TrendingDown className="h-4 w-4 text-red-600" />
@@ -602,35 +602,35 @@ export default function Dashboard() {
                   <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
                   <span>Bekleyen</span>
                 </div>
-                <Badge variant="secondary">{data.orders.pending || 0}</Badge>
+                <Badge variant="secondary">{data?.orders?.pending || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <span>Hazırlanan</span>
                 </div>
-                <Badge variant="secondary">{data.orders.preparing || 0}</Badge>
+                <Badge variant="secondary">{data?.orders?.preparing || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                   <span>Hazır</span>
                 </div>
-                <Badge variant="secondary">{data.orders.ready || 0}</Badge>
+                <Badge variant="secondary">{data?.orders?.ready || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                   <span>Teslim Edilen</span>
                 </div>
-                <Badge variant="secondary">{data.orders.delivered || 0}</Badge>
+                <Badge variant="secondary">{data?.orders?.delivered || 0}</Badge>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                   <span>İptal Edilen</span>
                 </div>
-                <Badge variant="secondary">{data.orders.cancelled || 0}</Badge>
+                <Badge variant="secondary">{data?.orders?.cancelled || 0}</Badge>
               </div>
             </div>
           </CardContent>
@@ -688,7 +688,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-                             {data.realTime.currentOrders && data.realTime.currentOrders.length > 0 ? (
+                             {data?.realTime?.currentOrders && data.realTime.currentOrders.length > 0 ? (
                 data.realTime.currentOrders.map((order) => (
                   <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex-1">
@@ -730,7 +730,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-                             {data.realTime.recentActivity && data.realTime.recentActivity.length > 0 ? (
+                             {data?.realTime?.recentActivity && data.realTime.recentActivity.length > 0 ? (
                 data.realTime.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
