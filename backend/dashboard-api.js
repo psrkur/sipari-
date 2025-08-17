@@ -283,14 +283,14 @@ router.get('/stats', async (req, res) => {
       });
     });
 
-    let popularProducts = Object.entries(productSales)
+    let popularProductsBySales = Object.entries(productSales)
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 5);
 
     // Eğer popüler ürün yoksa örnek veriler ekle
-    if (popularProducts.length === 0) {
-      popularProducts = [
+    if (popularProductsBySales.length === 0) {
+      popularProductsBySales = [
         { name: 'Pizza Margherita', sales: 15, revenue: 1275.00 },
         { name: 'Burger', sales: 12, revenue: 780.00 },
         { name: 'Kola', sales: 25, revenue: 375.00 },
@@ -392,8 +392,6 @@ router.get('/stats', async (req, res) => {
         time: 'Şimdi',
         icon: 'CheckCircle'
       });
-    }
-      );
     }
 
     const dashboardData = {
