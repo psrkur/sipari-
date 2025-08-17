@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { API_ENDPOINTS } from '@/lib/api';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { useSocket } from '@/lib/socket';
+import { useSocketStore } from '@/lib/socket';
 import { useOptimizedFetch, useOptimizedInterval } from '@/hooks/useOptimizedFetch';
 import { useOptimizedList, useOptimizedForm } from '@/hooks/useMemoizedState';
 import OrderList from '../components/OrderList';
@@ -72,7 +72,7 @@ export default function AdminPage() {
   // Tüm hook'ları en üstte çağır - hiçbir koşul olmadan
   const router = useRouter();
   const { user, token } = useAuthStore();
-  const { on, off } = useSocket();
+  const { on, off } = useSocketStore();
   
   // Loading state for auth check
   const [authChecking, setAuthChecking] = useState(true);

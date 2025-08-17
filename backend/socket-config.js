@@ -1,8 +1,9 @@
 const socketIO = require('socket.io');
-const performanceMonitor = require('./performance-monitor');
 
-// Socket.IO konfigürasyonu
+// Socket.IO konfigürasyonu - Tamamen yeniden yazıldı
 function configureSocket(server) {
+  console.log('🔌 Socket.IO konfigürasyonu başlatılıyor...');
+  
   const io = socketIO(server, {
     cors: {
       origin: [
@@ -16,29 +17,18 @@ function configureSocket(server) {
       methods: ["GET", "POST"],
       credentials: true
     },
-    // Bağlantı yönetimi iyileştirmeleri
-    pingTimeout: 60000, // 60 saniye (artırıldı)
-    pingInterval: 25000, // 25 saniye
-    upgradeTimeout: 20000, // 20 saniye (artırıldı)
+    // Bağlantı yönetimi - optimize edildi
+    pingTimeout: 30000,        // 30 saniye
+    pingInterval: 25000,       // 25 saniye
+    upgradeTimeout: 10000,     // 10 saniye
     allowUpgrades: true,
     transports: ['websocket', 'polling'],
-    // Memory leak önleme
-    maxHttpBufferSize: 1e6, // 1MB
-    // Reconnection ayarları
-    allowEIO3: true,
-    // Heartbeat ayarları iyileştirildi
-    heartbeat: {
-      interval: 25000,
-      timeout: 60000
-    },
-    // Bağlantı yönetimi iyileştirmeleri
-    connectTimeout: 45000, // 45 saniye
+    maxHttpBufferSize: 1e6,    // 1MB
+    allowEIO3: false,          // EIO3'ü devre dışı bırak
     // Rate limiting
     maxHttpBufferSize: 1e6,
     // Transport ayarları
-    transports: ['websocket', 'polling'],
     allowRequest: (req, callback) => {
-      // CORS kontrolü
       const origin = req.headers.origin;
       const allowedOrigins = [
         process.env.FRONTEND_URL || "http://localhost:3000",
@@ -52,6 +42,7 @@ function configureSocket(server) {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.log(`🚫 CORS reddedildi: ${origin}`);
         callback(null, false);
       }
     }
@@ -62,36 +53,44 @@ function configureSocket(server) {
   
   // Dashboard güncelleme fonksiyonu
   io.updateDashboard = (branchId = 'all') => {
-    const dashboardRoom = `dashboard-${branchId}`;
-    io.to(dashboardRoom).emit('dashboardUpdate', {
-      timestamp: new Date().toISOString(),
-      message: 'Dashboard verileri güncellendi'
-    });
-    console.log(`📊 Dashboard güncellemesi gönderildi: ${dashboardRoom}`);
+    try {
+      const dashboardRoom = `dashboard-${branchId}`;
+      io.to(dashboardRoom).emit('dashboardUpdate', {
+        timestamp: new Date().toISOString(),
+        message: 'Dashboard verileri güncellendi'
+      });
+      console.log(`📊 Dashboard güncellemesi gönderildi: ${dashboardRoom}`);
+    } catch (error) {
+      console.error('❌ Dashboard güncelleme hatası:', error);
+    }
   };
 
-  // Bağlantı yönetimi
+  // Bağlantı yönetimi - basitleştirildi ve güçlendirildi
   io.on('connection', (socket) => {
-    // Performans izleme
-    performanceMonitor.recordConnection(socket.id);
     console.log('🔌 Yeni kullanıcı bağlandı:', socket.id);
 
     // Bağlantı durumu takibi
     let isConnected = true;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 10; // Artırıldı
     let heartbeatInterval = null;
 
-    // Heartbeat kontrolü
+    // Heartbeat kontrolü - basitleştirildi
     heartbeatInterval = setInterval(() => {
       if (isConnected && socket.connected) {
-        socket.emit('ping');
+        try {
+          socket.emit('ping');
+        } catch (error) {
+          console.error(`❌ Heartbeat hatası (${socket.id}):`, error.message);
+        }
       }
     }, 25000);
 
     // Ping/Pong kontrolü
     socket.on('ping', () => {
-      socket.emit('pong');
+      try {
+        socket.emit('pong');
+      } catch (error) {
+        console.error(`❌ Pong hatası (${socket.id}):`, error.message);
+      }
     });
 
     socket.on('pong', () => {
@@ -101,42 +100,57 @@ function configureSocket(server) {
 
     // Kullanıcı oda katılımı
     socket.on('joinRoom', (room) => {
-      if (isConnected && socket.connected) {
-        socket.join(room);
-        console.log(`👥 Kullanıcı ${socket.id} odaya katıldı: ${room}`);
+      try {
+        if (isConnected && socket.connected && room) {
+          socket.join(room);
+          console.log(`👥 Kullanıcı ${socket.id} odaya katıldı: ${room}`);
+        }
+      } catch (error) {
+        console.error(`❌ Oda katılım hatası (${socket.id}):`, error.message);
       }
     });
 
     // Oda ayrılma
     socket.on('leaveRoom', (room) => {
-      if (isConnected && socket.connected) {
-        socket.leave(room);
-        console.log(`👋 Kullanıcı ${socket.id} odadan ayrıldı: ${room}`);
+      try {
+        if (isConnected && socket.connected && room) {
+          socket.leave(room);
+          console.log(`👋 Kullanıcı ${socket.id} odadan ayrıldı: ${room}`);
+        }
+      } catch (error) {
+        console.error(`❌ Oda ayrılma hatası (${socket.id}):`, error.message);
       }
     });
 
     // Dashboard güncellemeleri için oda katılımı
     socket.on('joinDashboard', (branchId) => {
-      if (isConnected && socket.connected) {
-        const dashboardRoom = `dashboard-${branchId || 'all'}`;
-        socket.join(dashboardRoom);
-        console.log(`📊 Dashboard odasına katılım: ${socket.id} -> ${dashboardRoom}`);
+      try {
+        if (isConnected && socket.connected) {
+          const dashboardRoom = `dashboard-${branchId || 'all'}`;
+          socket.join(dashboardRoom);
+          console.log(`📊 Dashboard odasına katılım: ${socket.id} -> ${dashboardRoom}`);
+        }
+      } catch (error) {
+        console.error(`❌ Dashboard katılım hatası (${socket.id}):`, error.message);
       }
     });
 
     // Dashboard odasından ayrılma
     socket.on('leaveDashboard', (branchId) => {
-      if (isConnected && socket.connected) {
-        const dashboardRoom = `dashboard-${branchId || 'all'}`;
-        socket.leave(dashboardRoom);
-        console.log(`📊 Dashboard odasından ayrılma: ${socket.id} -> ${dashboardRoom}`);
+      try {
+        if (isConnected && socket.connected) {
+          const dashboardRoom = `dashboard-${branchId || 'all'}`;
+          socket.leave(dashboardRoom);
+          console.log(`📊 Dashboard odasından ayrılma: ${socket.id} -> ${dashboardRoom}`);
+        }
+      } catch (error) {
+        console.error(`❌ Dashboard ayrılma hatası (${socket.id}):`, error.message);
       }
     });
 
     // Bağlantı kesilme
     socket.on('disconnect', (reason) => {
       isConnected = false;
-      performanceMonitor.recordDisconnection(socket.id, reason);
       console.log(`❌ Kullanıcı bağlantısı kesildi: ${socket.id}, Sebep: ${reason}`);
       
       // Heartbeat interval'ını temizle
@@ -145,8 +159,7 @@ function configureSocket(server) {
         heartbeatInterval = null;
       }
       
-      // Server-side'da socket.connect() kullanılamaz, client-side'da yapılır
-      // Bu sadece log kaydı için
+      // Bağlantı kesilme sebebini logla
       if (reason === 'transport close' || reason === 'ping timeout' || reason === 'io client disconnect') {
         console.log(`📝 Bağlantı kesilme kaydedildi: ${socket.id}, Sebep: ${reason}`);
       }
@@ -154,62 +167,78 @@ function configureSocket(server) {
 
     // Bağlantı hatası
     socket.on('connect_error', (error) => {
-      performanceMonitor.recordError(error, `Socket ${socket.id}`);
       console.error(`🔌 Bağlantı hatası (${socket.id}):`, error.message);
-    });
-
-    // Bağlantı yeniden kuruldu
-    socket.on('reconnect', (attemptNumber) => {
-      isConnected = true;
-      reconnectAttempts = 0;
-      performanceMonitor.recordReconnection(socket.id, attemptNumber);
-      console.log(`✅ Bağlantı yeniden kuruldu: ${socket.id}, Deneme: ${attemptNumber}`);
-      
-      // Heartbeat'i yeniden başlat
-      if (!heartbeatInterval) {
-        heartbeatInterval = setInterval(() => {
-          if (isConnected && socket.connected) {
-            socket.emit('ping');
-          }
-        }, 25000);
-      }
-    });
-
-    // Bağlantı yeniden kurma hatası
-    socket.on('reconnect_error', (error) => {
-      console.error(`❌ Yeniden bağlanma hatası (${socket.id}):`, error.message);
-    });
-
-    // Bağlantı yeniden kurma denemesi
-    socket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`🔄 Yeniden bağlanma denemesi: ${socket.id}, Deneme: ${attemptNumber}`);
-    });
-
-    // Bağlantı yeniden kurma başarısız
-    socket.on('reconnect_failed', () => {
-      console.log(`❌ Yeniden bağlanma başarısız: ${socket.id}`);
     });
 
     // Error handling
     socket.on('error', (error) => {
       console.error(`❌ Socket hatası (${socket.id}):`, error.message);
     });
+
+    // Test event'i
+    socket.on('test', (data) => {
+      try {
+        socket.emit('testResponse', { 
+          message: 'Test başarılı', 
+          timestamp: new Date().toISOString(),
+          receivedData: data 
+        });
+        console.log(`✅ Test event'i alındı: ${socket.id}`, data);
+      } catch (error) {
+        console.error(`❌ Test event hatası (${socket.id}):`, error.message);
+      }
+    });
+
+    // Bağlantı durumu kontrolü
+    socket.on('getStatus', () => {
+      try {
+        socket.emit('statusResponse', {
+          connected: socket.connected,
+          id: socket.id,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error(`❌ Status kontrol hatası (${socket.id}):`, error.message);
+      }
+    });
   });
 
+  // Server durumu kontrolü
+  setInterval(() => {
+    const connectedSockets = io.sockets.sockets.size;
+    console.log(`📊 Aktif bağlantı sayısı: ${connectedSockets}`);
+  }, 60000); // Her dakika
+
+  console.log('✅ Socket.IO konfigürasyonu tamamlandı');
   return io;
 }
 
 // Socket event'lerini yayınlama fonksiyonları
 function emitToRoom(io, room, event, data) {
-  io.to(room).emit(event, data);
+  try {
+    io.to(room).emit(event, data);
+    console.log(`📡 Event gönderildi: ${event} -> ${room}`);
+  } catch (error) {
+    console.error(`❌ Event gönderme hatası: ${event} -> ${room}`, error);
+  }
 }
 
 function emitToAll(io, event, data) {
-  io.emit(event, data);
+  try {
+    io.emit(event, data);
+    console.log(`📡 Event gönderildi: ${event} -> tüm kullanıcılar`);
+  } catch (error) {
+    console.error(`❌ Event gönderme hatası: ${event} -> tüm kullanıcılar`, error);
+  }
 }
 
 function emitToSocket(io, socketId, event, data) {
-  io.to(socketId).emit(event, data);
+  try {
+    io.to(socketId).emit(event, data);
+    console.log(`📡 Event gönderildi: ${event} -> ${socketId}`);
+  } catch (error) {
+    console.error(`❌ Event gönderme hatası: ${event} -> ${socketId}`, error);
+  }
 }
 
 module.exports = {

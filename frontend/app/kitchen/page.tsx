@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { API_ENDPOINTS } from '@/lib/api';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { useSocket } from '@/lib/socket';
+import { useSocketStore } from '@/lib/socket';
 
 interface OrderItem {
   id: number;
@@ -53,7 +53,7 @@ export default function KitchenPage() {
   // Tüm hook'ları en üstte çağır - hiçbir koşul olmadan
   const router = useRouter();
   const { token, user } = useAuthStore();
-  const { on, off } = useSocket();
+  const { on, off } = useSocketStore();
   
   // State'leri tanımla
   const [selectedOrderType, setSelectedOrderType] = useState<string>('all');

@@ -9,7 +9,7 @@ import { MessageCircle, Send, Clock, User, Phone } from 'lucide-react';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
-import { useSocket } from '@/lib/socket';
+import { useSocketStore } from '@/lib/socket';
 import toast from 'react-hot-toast';
 
 interface ChatMessage {
@@ -43,7 +43,7 @@ export default function ChatManagement() {
   const [loading, setLoading] = useState(true);
   const [replyMessage, setReplyMessage] = useState('');
   const { token } = useAuthStore();
-  const { on, off } = useSocket();
+  const { on, off } = useSocketStore();
   const API_BASE_URL = getApiBaseUrl();
 
   useEffect(() => {
