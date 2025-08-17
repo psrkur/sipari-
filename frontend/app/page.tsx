@@ -201,7 +201,7 @@ export default function Home() {
   console.log('🔍 Products URL:', productsUrl, 'for branch:', selectedBranch?.name);
   
   const { data: productsData, loading: productsLoading, error: productsError } = useOptimizedFetch<any[]>(
-    productsUrl || null,
+    productsUrl || 'https://placeholder.com/api/products',
     {
       cacheTime: 5 * 60 * 1000, // 5 dakika cache
       debounceTime: 300, // 300ms debounce

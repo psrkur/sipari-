@@ -122,7 +122,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function useOptimizedFetch<T = any>(
-  url: string | null,
+  url: string,
   options: UseOptimizedFetchOptions = {}
 ): UseOptimizedFetchReturn<T> {
   const {
@@ -145,8 +145,8 @@ export function useOptimizedFetch<T = any>(
   const isMountedRef = useRef(true);
 
   // Cache\'den veri al
-  const getCachedData = useCallback((cacheKey: string | null): T | null => {
-    if (!enableMemoryOptimization || !cacheKey) return null;
+  const getCachedData = useCallback((cacheKey: string): T | null => {
+    if (!enableMemoryOptimization || !cacheKey || cacheKey.trim() === '') return null;
     
     const cached = globalCache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < cacheTime) {
@@ -156,8 +156,8 @@ export function useOptimizedFetch<T = any>(
   }, [cacheTime, enableMemoryOptimization]);
 
   // Cache\'e veri kaydet
-  const setCachedData = useCallback((cacheKey: string | null, data: T) => {
-    if (!enableMemoryOptimization || !cacheKey) return;
+  const setCachedData = useCallback((cacheKey: string, data: T) => {
+    if (!enableMemoryOptimization || !cacheKey || cacheKey.trim() === '') return;
     
     globalCache.set(cacheKey, {
       data,
@@ -179,7 +179,7 @@ export function useOptimizedFetch<T = any>(
       url
     });
     
-    if (!enabled || !isMountedRef.current || !url) {
+    if (!enabled || !isMountedRef.current || !url || url.trim() === '') {
       console.log('🔍 fetchData iptal edildi');
       return;
     }
