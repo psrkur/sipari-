@@ -247,7 +247,7 @@ export default function SalesStats() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Building className="h-4 w-4 mr-2" />
+              <BarChart3 className="h-4 w-4 mr-2" />
               Platform Bazında Satışlar
             </CardTitle>
           </CardHeader>
@@ -262,7 +262,7 @@ export default function SalesStats() {
                   <div className="text-right">
                     <div className="font-bold">{formatCurrency(stats.revenue)}</div>
                     <div className="text-sm text-gray-600">
-                      %{((stats.revenue / data.summary.totalRevenue) * 100).toFixed(1)}
+                      %{data.summary && data.summary.totalRevenue ? ((stats.revenue / data.summary.totalRevenue) * 100).toFixed(1) : '0.0'}
                     </div>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export default function SalesStats() {
                   <div className="text-right">
                     <div className="font-bold">{formatCurrency(stats.revenue)}</div>
                     <div className="text-sm text-gray-600">
-                      %{((stats.revenue / data.summary.totalRevenue) * 100).toFixed(1)}
+                      %{data.summary && data.summary.totalRevenue ? ((stats.revenue / data.summary.totalRevenue) * 100).toFixed(1) : '0.0'}
                     </div>
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function SalesStats() {
       </div>
 
       {/* Şube Bazında Dağılım */}
-      {safeObjectKeys(data.branchStats).length > 1 && (
+      {data.branchStats && typeof data.branchStats === 'object' && safeObjectKeys(data.branchStats).length > 1 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -313,7 +313,7 @@ export default function SalesStats() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.branchStats && typeof data.branchStats === 'object' && safeObjectEntries(data.branchStats).map(([branchName, stats]) => (
+              {safeObjectEntries(data.branchStats).map(([branchName, stats]) => (
                 <div key={branchName} className="p-4 bg-gray-50 rounded-lg">
                   <div className="font-medium mb-2">{branchName}</div>
                   <div className="text-2xl font-bold text-blue-600">
@@ -336,30 +336,37 @@ export default function SalesStats() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {data.sales.slice(0, 10).map((sale) => (
-              <div key={sale.id} className="flex justify-between items-center p-3 border rounded-lg">
-                <div>
-                  <div className="font-medium">{sale.orderNumber}</div>
-                  <div className="text-sm text-gray-600">
-                    {sale.customer?.name || 'Müşteri bilgisi yok'} • {sale.branch.name}
+            {data.sales && Array.isArray(data.sales) && data.sales.length > 0 ? (
+              data.sales.slice(0, 10).map((sale) => (
+                <div key={sale.id} className="flex justify-between items-center p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium">{sale.orderNumber}</div>
+                    <div className="text-sm text-gray-600">
+                      {sale.customer?.name || 'Müşteri bilgisi yok'} • {sale.branch.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(sale.createdAt).toLocaleDateString('tr-TR')} {new Date(sale.createdAt).toLocaleTimeString('tr-TR')}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(sale.createdAt).toLocaleDateString('tr-TR')} {new Date(sale.createdAt).toLocaleTimeString('tr-TR')}
+                  <div className="text-right">
+                    <div className="font-bold">{formatCurrency(sale.totalAmount)}</div>
+                    <div className="flex gap-1 mt-1">
+                      <Badge variant="outline">
+                        {sale.orderType === 'DELIVERY' ? 'Teslimat' : sale.orderType === 'TABLE' ? 'Masa' : sale.orderType}
+                      </Badge>
+                      {sale.platform && (
+                        <Badge variant="secondary">{sale.platform}</Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold">{formatCurrency(sale.totalAmount)}</div>
-                  <div className="flex gap-1 mt-1">
-                    <Badge variant="outline">
-                      {sale.orderType === 'DELIVERY' ? 'Teslimat' : sale.orderType === 'TABLE' ? 'Masa' : sale.orderType}
-                    </Badge>
-                    {sale.platform && (
-                      <Badge variant="secondary">{sale.platform}</Badge>
-                    )}
-                  </div>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Henüz satış verisi bulunmuyor</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>

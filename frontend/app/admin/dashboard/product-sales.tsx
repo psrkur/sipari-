@@ -204,23 +204,30 @@ export default function ProductSales() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {data.categoryStats.map((category, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Tag className="h-5 w-5 text-orange-600" />
+            {data.categoryStats && Array.isArray(data.categoryStats) && data.categoryStats.length > 0 ? (
+              data.categoryStats.map((category, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Tag className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{category.name}</h4>
+                      <p className="text-sm text-gray-500">{category.productCount} ürün çeşidi</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold">{category.name}</h4>
-                    <p className="text-sm text-gray-500">{category.productCount} ürün çeşidi</p>
+                  <div className="text-right">
+                    <div className="font-semibold">{category.totalQuantity} adet</div>
+                    <div className="text-sm text-gray-500">{formatCurrency(category.totalRevenue)}</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">{category.totalQuantity} adet</div>
-                  <div className="text-sm text-gray-500">{formatCurrency(category.totalRevenue)}</div>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Tag className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Henüz kategori satış verisi bulunmuyor</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -235,27 +242,34 @@ export default function ProductSales() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {data.productSales.slice(0, 10).map((product, index) => (
-              <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-green-600">#{index + 1}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">{product.name}</h4>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">{product.category}</Badge>
-                      <span className="text-sm text-gray-500">{product.orderCount} sipariş</span>
+            {data.productSales && Array.isArray(data.productSales) && data.productSales.length > 0 ? (
+              data.productSales.slice(0, 10).map((product, index) => (
+                <div key={index} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <span className="text-sm font-bold text-green-600">#{index + 1}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold">{product.name}</h4>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary">{product.category}</Badge>
+                        <span className="text-sm text-gray-500">{product.orderCount} sipariş</span>
+                      </div>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{product.totalQuantity} adet</div>
+                    <div className="text-sm text-gray-500">{formatCurrency(product.totalRevenue)}</div>
+                    <div className="text-xs text-gray-400">Ort: {formatCurrency(product.averagePrice)}</div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-semibold">{product.totalQuantity} adet</div>
-                  <div className="text-sm text-gray-500">{formatCurrency(product.totalRevenue)}</div>
-                  <div className="text-xs text-gray-400">Ort: {formatCurrency(product.averagePrice)}</div>
-                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <p>Henüz ürün satış verisi bulunmuyor</p>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
@@ -279,18 +293,27 @@ export default function ProductSales() {
                 </tr>
               </thead>
               <tbody>
-                {data.productSales.map((product, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="p-2 font-medium">{product.name}</td>
-                    <td className="p-2">
-                      <Badge variant="outline">{product.category}</Badge>
+                {data.productSales && Array.isArray(data.productSales) && data.productSales.length > 0 ? (
+                  data.productSales.map((product, index) => (
+                    <tr key={index} className="border-b hover:bg-gray-50">
+                      <td className="p-2 font-medium">{product.name}</td>
+                      <td className="p-2">
+                        <Badge variant="outline">{product.category}</Badge>
+                      </td>
+                      <td className="p-2 text-right">{product.totalQuantity}</td>
+                      <td className="p-2 text-right font-semibold">{formatCurrency(product.totalRevenue)}</td>
+                      <td className="p-2 text-right text-sm">{formatCurrency(product.averagePrice)}</td>
+                      <td className="p-2 text-right">{product.orderCount}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                      <Star className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>Henüz ürün satış verisi bulunmuyor</p>
                     </td>
-                    <td className="p-2 text-right">{product.totalQuantity}</td>
-                    <td className="p-2 text-right font-semibold">{formatCurrency(product.totalRevenue)}</td>
-                    <td className="p-2 text-right text-sm">{formatCurrency(product.averagePrice)}</td>
-                    <td className="p-2 text-right">{product.orderCount}</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
