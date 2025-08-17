@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
+import { useUserActivity } from '@/hooks/useUserActivity';
 import SalesStats from './sales-stats';
 import ProductSales from './product-sales';
 import SocketStatus from '@/components/SocketStatus';
@@ -123,6 +124,9 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'sales-stats' | 'product-sales'>('dashboard');
   const { token } = useAuthStore();
   const API_BASE_URL = getApiBaseUrl();
+  
+  // Kullanıcı etkileşimi kontrolü
+  const { isActive: isUserActive } = useUserActivity({ timeout: 30000 });
 
   // Dashboard verilerini yükle
   const loadDashboardData = async () => {
@@ -229,12 +233,12 @@ export default function Dashboard() {
     
     loadData();
 
-    // Her 30 saniyede bir güncelle
+    // Her 60 saniyede bir güncelle (sadece kullanıcı aktif değilken)
     const interval = setInterval(() => {
-      if (isMounted) {
+      if (isMounted && !isUserActive) {
         loadData();
       }
-    }, 30000);
+    }, 60000);
 
     return () => {
       isMounted = false;

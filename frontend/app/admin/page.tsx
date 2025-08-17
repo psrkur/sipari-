@@ -8,6 +8,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useSocketStore } from '@/lib/socket';
 import { useOptimizedFetch, useOptimizedInterval } from '@/hooks/useOptimizedFetch';
+import { useUserActivity } from '@/hooks/useUserActivity';
 import { useOptimizedList, useOptimizedForm } from '@/hooks/useMemoizedState';
 import OrderList from '../components/OrderList';
 import UserList from '../components/UserList';
@@ -488,11 +489,14 @@ export default function AdminPage() {
     };
   }, [on, off, handleNewOrder, handleOrderStatusChanged]);
 
-  // Optimize edilmiş interval
+  // Kullanıcı etkileşimi kontrolü
+  const { isActive: isUserActive } = useUserActivity({ timeout: 30000 });
+
+  // Optimize edilmiş interval - sadece siparişler sayfasında aktifken ve kullanıcı aktif değilken
   useOptimizedInterval(
     fetchOrders,
     30000,
-    !!token && !!user
+    !!token && !!user && activePage === 'orders' && !isUserActive
   );
 
   // İlk yükleme
