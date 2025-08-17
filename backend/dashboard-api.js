@@ -181,97 +181,65 @@ router.get('/stats', async (req, res) => {
     const targetRevenue = 20000; // Günlük hedef
     const percentage = Math.round((todayRevenue / targetRevenue) * 100);
 
-    // Eğer hiç satış yoksa örnek veriler ekle
-    if (todayRevenue === 0) {
-      console.log('📊 Test verileri ekleniyor...');
-      
-      // Test verileri ekle
-      const testRevenue = 1250.50;
-      const testPercentage = Math.round((testRevenue / targetRevenue) * 100);
-      
-      // Test verilerini kullan
-      const dashboardData = {
-        sales: {
-          today: testRevenue,
-          yesterday: 980.25,
-          thisWeek: 8750.75,
-          thisMonth: 32500.50,
-          target: targetRevenue,
-          percentage: testPercentage
+    // Gerçek zamanlı siparişleri getir
+    const currentOrders = await safeDbOperation(() => prisma.order.findMany({
+      where: {
+        status: { in: ['PENDING', 'PREPARING', 'READY'] }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: {
+        id: true,
+        orderNumber: true,
+        totalAmount: true,
+        status: true,
+        createdAt: true,
+        orderItems: {
+          select: {
+            quantity: true,
+            product: { select: { name: true } }
+          }
         },
-        orders: {
-          total: 8,
-          pending: 2,
-          preparing: 3,
-          ready: 1,
-          delivered: 2,
-          cancelled: 0,
-          averageTime: 18
-        },
-        customers: {
-          total: Math.max(1, totalCustomers),
-          newToday: Math.max(1, newTodayCustomers),
-          activeNow: Math.max(1, Math.floor(totalCustomers * 0.1)),
-          averageRating: 4.7,
-          chatbotConversations: Math.max(1, Math.floor(totalCustomers * 0.2))
-        },
-        products: {
-          total: Math.max(1, totalProducts),
-          popular: [
-            { name: 'Pizza Margherita', sales: 15, revenue: 1275.00 },
-            { name: 'Burger', sales: 12, revenue: 780.00 },
-            { name: 'Kola', sales: 25, revenue: 375.00 },
-            { name: 'Patates Kızartması', sales: 8, revenue: 240.00 },
-            { name: 'Salata', sales: 6, revenue: 180.00 }
-          ],
-          lowStock: []
-        },
-        realTime: {
-          currentOrders: [
-            {
-              id: 'ORD-001',
-              customerName: 'Ahmet Yılmaz',
-              items: 'Pizza Margherita, Kola',
-              total: 85.50,
-              status: 'PREPARING',
-              time: '14:30'
-            },
-            {
-              id: 'ORD-002',
-              customerName: 'Ayşe Demir',
-              items: 'Burger, Patates Kızartması',
-              total: 65.00,
-              status: 'PENDING',
-              time: '14:25'
-            }
-          ],
-          recentActivity: [
-            {
-              type: 'order',
-              message: 'Sistem aktif ve çalışıyor',
-              time: 'Şimdi',
-              icon: 'ShoppingCart'
-            },
-            {
-              type: 'customer',
-              message: 'Yeni müşteri kaydı oluşturuldu',
-              time: '5 dakika önce',
-              icon: 'Users'
-            },
-            {
-              type: 'chatbot',
-              message: 'Chatbot sohbeti başlatıldı',
-              time: '10 dakika önce',
-              icon: 'MessageCircle'
-            }
-          ]
-        }
-      };
+        customer: { select: { name: true } }
+      }
+    }));
 
-      console.log('✅ Test dashboard verileri hazırlandı');
-      clearTimeout(timeout);
-      return res.json(dashboardData);
-    }
+    // Gerçek zamanlı aktiviteleri getir
+    const recentActivity = await safeDbOperation(() => prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        createdAt: true,
+        customer: { select: { name: true } }
+      }
+    }));
+
+    // Popüler ürünleri getir
+    const popularProducts = await safeDbOperation(() => prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: { quantity: true },
+      _count: { productId: true },
+      orderBy: { _sum: { quantity: 'desc' } },
+      take: 5
+    }));
+
+    // Popüler ürün detaylarını getir
+    const popularProductDetails = await Promise.all(
+      popularProducts.map(async (item) => {
+        const product = await safeDbOperation(() => prisma.product.findUnique({
+          where: { id: item.productId },
+          select: { name: true, price: true }
+        }));
+        return {
+          name: product?.name || 'Bilinmeyen Ürün',
+          sales: item._sum.quantity || 0,
+          revenue: (product?.price || 0) * (item._sum.quantity || 0)
+        };
+      })
+    );
 
     // Sipariş durumları
     const pendingOrders = todayOrders.filter(order => order.status === 'PENDING');
@@ -356,43 +324,21 @@ router.get('/stats', async (req, res) => {
     // Chatbot konuşmaları (gerçek veri yoksa varsayılan)
     const chatbotConversations = Math.max(1, Math.floor(totalCustomers * 0.2)); // En az 1 olsun
 
-    // Canlı siparişler
-    let currentOrders = todayOrders.slice(0, 5).map(order => ({
+    // Gerçek zamanlı siparişleri formatla
+    const formattedCurrentOrders = currentOrders.map(order => ({
       id: order.orderNumber || order.id,
       customerName: order.customer?.name || 'Misafir',
-      items: order.orderItems.map(item => item.product?.name).join(', '),
+      items: order.orderItems.map(item => `${item.product?.name} (${item.quantity})`).join(', '),
       total: order.totalAmount,
       status: order.status,
       time: new Date(order.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
     }));
 
-    // Eğer sipariş yoksa örnek siparişler ekle
-    if (currentOrders.length === 0) {
-      currentOrders = [
-        {
-          id: 'ORD-001',
-          customerName: 'Ahmet Yılmaz',
-          items: 'Pizza Margherita, Kola',
-          total: 85.50,
-          status: 'PREPARING',
-          time: '14:30'
-        },
-        {
-          id: 'ORD-002',
-          customerName: 'Ayşe Demir',
-          items: 'Burger, Patates Kızartması',
-          total: 65.00,
-          status: 'PENDING',
-          time: '14:25'
-        }
-      ];
-    }
-
-    // Son aktiviteler (gerçek verilerden)
-    const recentActivity = [];
+    // Gerçek zamanlı aktiviteleri formatla
+    const formattedRecentActivity = [];
     
     // Son siparişlerden aktivite oluştur
-    allOrders.slice(0, 5).forEach((order, index) => {
+    recentActivity.forEach((order) => {
       const timeAgo = Math.floor((Date.now() - new Date(order.createdAt)) / (1000 * 60)); // dakika
       let timeText = '';
       
@@ -401,35 +347,52 @@ router.get('/stats', async (req, res) => {
       else if (timeAgo < 1440) timeText = `${Math.floor(timeAgo / 60)} saat önce`;
       else timeText = `${Math.floor(timeAgo / 1440)} gün önce`;
       
-      recentActivity.push({
+      let message = '';
+      let icon = 'ShoppingCart';
+      
+      switch (order.status) {
+        case 'PENDING':
+          message = `Yeni sipariş alındı #${order.orderNumber || order.id}`;
+          icon = 'Package';
+          break;
+        case 'PREPARING':
+          message = `Sipariş hazırlanıyor #${order.orderNumber || order.id}`;
+          icon = 'ChefHat';
+          break;
+        case 'READY':
+          message = `Sipariş hazır #${order.orderNumber || order.id}`;
+          icon = 'CheckCircle';
+          break;
+        case 'DELIVERED':
+          message = `Sipariş teslim edildi #${order.orderNumber || order.id}`;
+          icon = 'Truck';
+          break;
+        case 'CANCELLED':
+          message = `Sipariş iptal edildi #${order.orderNumber || order.id}`;
+          icon = 'X';
+          break;
+        default:
+          message = `Sipariş güncellendi #${order.orderNumber || order.id}`;
+          icon = 'ShoppingCart';
+      }
+      
+      formattedRecentActivity.push({
         type: 'order',
-        message: `Sipariş #${order.orderNumber || order.id} ${order.status === 'DELIVERED' ? 'teslim edildi' : 'alındı'}`,
+        message,
         time: timeText,
-        icon: 'ShoppingCart'
+        icon
       });
     });
 
-    // Eğer aktivite yoksa varsayılan aktiviteler ekle
-    if (recentActivity.length === 0) {
-      recentActivity.push(
-        {
-          type: 'order',
-          message: 'Sistem aktif ve çalışıyor',
-          time: 'Şimdi',
-          icon: 'ShoppingCart'
-        },
-        {
-          type: 'customer',
-          message: 'Yeni müşteri kaydı oluşturuldu',
-          time: '5 dakika önce',
-          icon: 'Users'
-        },
-        {
-          type: 'chatbot',
-          message: 'Chatbot sohbeti başlatıldı',
-          time: '10 dakika önce',
-          icon: 'MessageCircle'
-        }
+    // Eğer aktivite yoksa sistem durumu ekle
+    if (formattedRecentActivity.length === 0) {
+      formattedRecentActivity.push({
+        type: 'system',
+        message: 'Sistem aktif ve çalışıyor',
+        time: 'Şimdi',
+        icon: 'CheckCircle'
+      });
+    }
       );
     }
 
@@ -460,12 +423,12 @@ router.get('/stats', async (req, res) => {
       },
       products: {
         total: totalProducts,
-        popular: popularProducts,
+        popular: popularProductDetails,
         lowStock: [] // Stock alanı olmadığı için boş array
       },
       realTime: {
-        currentOrders: currentOrders,
-        recentActivity: recentActivity
+        currentOrders: formattedCurrentOrders,
+        recentActivity: formattedRecentActivity
       }
     };
 

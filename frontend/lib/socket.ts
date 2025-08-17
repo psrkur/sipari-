@@ -50,6 +50,10 @@ export interface SocketEvents {
   
   userJoined: (data: { userId: number; name: string }) => void;
   userLeft: (data: { userId: number; name: string }) => void;
+  dashboardUpdate: (data: {
+    timestamp: string;
+    message: string;
+  }) => void;
 }
 
 export const useSocket = () => {

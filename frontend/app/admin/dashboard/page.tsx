@@ -10,6 +10,7 @@ import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
 import SalesStats from './sales-stats';
+import ProductSales from './product-sales';
 import {
   TrendingUp,
   TrendingDown,
@@ -118,7 +119,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'sales-stats'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'sales-stats' | 'product-sales'>('dashboard');
   const { token } = useAuthStore();
   const { on, off } = useSocket();
   const API_BASE_URL = getApiBaseUrl();
@@ -181,6 +182,12 @@ export default function Dashboard() {
     
     loadDashboardData();
 
+    // Dashboard odasına katıl
+    const { socket } = useSocket();
+    if (socket) {
+      socket.emit('joinDashboard', 'all'); // Tüm şubeler için
+    }
+
     // Her 30 saniyede bir güncelle
     const interval = setInterval(loadDashboardData, 30000);
 
@@ -195,13 +202,20 @@ export default function Dashboard() {
       toast.success('Sipariş durumu güncellendi!');
     };
 
+    const handleDashboardUpdate = () => {
+      loadDashboardData();
+      console.log('📊 Dashboard gerçek zamanlı güncellendi');
+    };
+
     on('newOrder', handleNewOrder);
     on('orderStatusChanged', handleOrderStatusChanged);
+    on('dashboardUpdate', handleDashboardUpdate);
 
     return () => {
       clearInterval(interval);
       off('newOrder', handleNewOrder);
       off('orderStatusChanged', handleOrderStatusChanged);
+      off('dashboardUpdate', handleDashboardUpdate);
     };
   }, [token]); // Sadece token'ı dependency olarak kullan
 
@@ -389,13 +403,20 @@ export default function Dashboard() {
             <BarChart3 className="h-4 w-4 mr-2" />
             Dashboard
           </Button>
-          <Button
-            variant={activeTab === 'sales-stats' ? 'default' : 'outline'}
-            onClick={() => setActiveTab('sales-stats')}
-          >
-            <DollarSign className="h-4 w-4 mr-2" />
-            Satış İstatistikleri
-          </Button>
+                           <Button
+                   variant={activeTab === 'sales-stats' ? 'default' : 'outline'}
+                   onClick={() => setActiveTab('sales-stats')}
+                 >
+                   <DollarSign className="h-4 w-4 mr-2" />
+                   Satış İstatistikleri
+                 </Button>
+                 <Button
+                   variant={activeTab === 'product-sales' ? 'default' : 'outline'}
+                   onClick={() => setActiveTab('product-sales')}
+                 >
+                   <Package className="h-4 w-4 mr-2" />
+                   Ürün Satışları
+                 </Button>
         </div>
         
         {activeTab === 'dashboard' && (
@@ -423,9 +444,11 @@ export default function Dashboard() {
       </div>
 
       {/* Content based on active tab */}
-      {activeTab === 'sales-stats' ? (
-        <SalesStats />
-      ) : (
+                   {activeTab === 'sales-stats' ? (
+               <SalesStats />
+             ) : activeTab === 'product-sales' ? (
+               <ProductSales />
+             ) : (
         <>
 
       {/* Ana Metrikler */}
