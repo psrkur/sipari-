@@ -97,46 +97,46 @@ export function useOptimizedForm<T extends Record<string, any>>(
   isDirty: boolean;
 } {
   const [values, setValues] = useState<T>(initialValues);
-  const [originalValues, setOriginalValues] = useState<T>(initialValues);
+  const originalValuesRef = useRef<T>(initialValues);
   const [isDirty, setIsDirty] = useState(false);
 
   // Update original values when initialValues change
   useEffect(() => {
-    setOriginalValues(initialValues);
+    originalValuesRef.current = initialValues;
   }, [initialValues]);
 
   const setValue = useCallback(<K extends keyof T>(key: K, value: T[K]) => {
     setValues(prev => {
       const newValues = { ...prev, [key]: value };
       const hasChanges = Object.keys(newValues).some(k => 
-        newValues[k as keyof T] !== originalValues[k as keyof T]
+        newValues[k as keyof T] !== originalValuesRef.current[k as keyof T]
       );
       setIsDirty(hasChanges);
       return newValues;
     });
-  }, [originalValues]);
+  }, []);
 
   const setMultipleValues = useCallback((newValues: Partial<T>) => {
     setValues(prev => {
       const updated = { ...prev, ...newValues };
       const hasChanges = Object.keys(updated).some(k => 
-        updated[k as keyof T] !== originalValues[k as keyof T]
+        updated[k as keyof T] !== originalValuesRef.current[k as keyof T]
       );
       setIsDirty(hasChanges);
       return updated;
     });
-  }, [originalValues]);
+  }, []);
 
   const reset = useCallback(() => {
-    setValues(originalValues);
+    setValues(originalValuesRef.current);
     setIsDirty(false);
-  }, [originalValues]);
+  }, []);
 
   const hasChanges = useMemo(() => {
     return Object.keys(values).some(key => 
-      values[key as keyof T] !== originalValues[key as keyof T]
+      values[key as keyof T] !== originalValuesRef.current[key as keyof T]
     );
-  }, [values, originalValues]);
+  }, [values]);
 
   return {
     values,
