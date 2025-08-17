@@ -87,7 +87,7 @@ export default function WhatsAppManagement() {
           // Telefon numarasını temizle
           const cleanSettings = {
             ...parsed,
-            phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905551234567'
+            phoneNumber: parsed.phoneNumber?.replace(/\D/g, '') || '905322922609'
           };
           
           console.log('🔍 Temizlenmiş ayarlar:', cleanSettings);
@@ -258,7 +258,7 @@ export default function WhatsAppManagement() {
         return;
       }
       
-      const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+      const url = `https://wa.me/${905322922609}?text=${encodeURIComponent(message)}`;
       
       console.log('🧪 WhatsApp test ediliyor:', {
         phoneNumber: phoneNumber,
@@ -443,7 +443,7 @@ export default function WhatsAppManagement() {
                     const cleanValue = e.target.value.replace(/\D/g, '');
                     setWhatsAppSettings(prev => ({ ...prev, phoneNumber: cleanValue }));
                   }}
-                  placeholder="+90 555 123 45 67"
+                  placeholder="+90532 292 2609"
                 />
               </div>
               
