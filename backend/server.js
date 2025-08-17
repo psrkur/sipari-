@@ -4372,101 +4372,7 @@ app.get('/api/admin/backup/download/:filename', authenticateToken, async (req, r
 
 // 404 handler - En sona taşındı
 
-// Port çakışması kontrolü ve alternatif port deneme
-const startServer = (port) => {
-  return new Promise((resolve, reject) => {
-    const server = app.listen(port, () => {
-      console.log(`🚀 Server ${port} portunda çalışıyor`);
-      console.log(`🌍 Environment: ${isProduction ? 'Production' : 'Development'}`);
-      console.log(`🔗 Frontend URL: ${FRONTEND_URL}`);
-      resolve(server);
-    }).on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.log(`⚠️ Port ${port} kullanımda, alternatif port deneniyor...`);
-        reject(err);
-      } else {
-        console.error('❌ Server başlatma hatası:', err);
-        reject(err);
-      }
-    });
-  });
-};
-
-// SABİT PORT - Sadece SERVER_PORT kullan
-const ports = [SERVER_PORT];
-let server = null;
-
-const tryStartServer = async () => {
-  // Upload dizinlerini oluştur
-  try {
-    const uploadsDir = path.join(__dirname, 'uploads');
-    const productsDir = path.join(uploadsDir, 'products');
-    
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-      console.log('📁 Uploads dizini oluşturuldu:', uploadsDir);
-    }
-    
-    if (!fs.existsSync(productsDir)) {
-      fs.mkdirSync(productsDir, { recursive: true });
-      console.log('📁 Products dizini oluşturuldu:', productsDir);
-    }
-  } catch (error) {
-    console.error('❌ Upload dizinleri oluşturulamadı:', error);
-  }
-
-  // Sadece sabit portu dene
-  try {
-    server = await startServer(SERVER_PORT);
-    console.log(`🚀 Server ${SERVER_PORT} portunda çalışıyor`);
-  } catch (err) {
-    if (err.code === 'EADDRINUSE') {
-      console.error(`❌ Port ${SERVER_PORT} kullanımda. Lütfen portu serbest bırakın.`);
-      console.error('💡 Çözüm: taskkill /F /IM node.exe komutunu çalıştırın');
-      process.exit(1);
-    } else {
-      throw err;
-    }
-  }
-};
-
-tryStartServer();
-
-// Socket.IO konfigürasyonu - server hazır olduğunda
-let io = null; // Global io objesi
-
-const setupSocketIO = () => {
-  if (server) {
-    try {
-      io = configureSocket(server);
-      console.log('🔌 Socket.IO konfigürasyonu tamamlandı');
-      
-      // Socket.IO bağlantı durumu izleme
-      io.engine.on('connection_error', (err) => {
-        console.error('🔌 Socket.IO bağlantı hatası:', err);
-      });
-      
-      // Server kapatma işlemi
-      process.on('SIGTERM', () => {
-        console.log('🔄 Server kapatılıyor...');
-        if (io) {
-          io.close();
-        }
-        process.exit(0);
-      });
-      
-    } catch (error) {
-      console.error('❌ Socket.IO kurulum hatası:', error);
-    }
-  }
-};
-
-// Server başlatıldıktan sonra Socket.IO'yu kur
-setTimeout(setupSocketIO, 1000);
-
-// Otomatik temizlik başlat
-setTimeout(() => {
-  console.log('🧹 Otomatik temizlik sistemi başlatılıyor...');
+// Eski server kodu kaldırıldı - yeni server kodu dosyanın sonunda
   startAutoCleanup();
 }, 2000);
 
@@ -5857,5 +5763,34 @@ app.get('/api/test/db-status', async (req, res) => {
     console.error('❌ Database status test hatası:', error);
     res.status(500).json({ error: error.message });
   }
+});
+
+// Server'ı başlat
+const PORT = process.env.PORT || 5000;
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server ${PORT} portunda başlatıldı`);
+  console.log(`📊 API: http://localhost:${PORT}`);
+  console.log(`🔌 Socket.IO: http://localhost:${PORT}`);
+});
+
+// Socket.IO'yu yapılandır
+const { configureSocket } = require('./socket-config');
+configureSocket(server);
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🔄 SIGTERM alındı, server kapatılıyor...');
+  server.close(() => {
+    console.log('✅ Server kapatıldı');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('🔄 SIGINT alındı, server kapatılıyor...');
+  server.close(() => {
+    console.log('✅ Server kapatıldı');
+    process.exit(0);
+  });
 });
 
