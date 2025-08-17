@@ -76,16 +76,56 @@ router.get('/stats', async (req, res) => {
     
     // Paralel olarak tüm verileri getir
     const [
+      todaySales,
+      yesterdaySales,
+      weekSales,
+      monthSales,
       todayOrders,
-      yesterdayOrders,
-      weekOrders,
-      monthOrders,
       totalCustomers,
       newTodayCustomers,
       totalProducts,
       allOrders
     ] = await Promise.all([
-      // Bugünkü siparişler
+      // Bugünkü satışlar (sales records'dan)
+      safeDbOperation(() => prisma.salesRecord.findMany({
+        where: { 
+          createdAt: { gte: today },
+          status: 'COMPLETED'
+        },
+        select: { totalAmount: true }
+      })),
+      
+      // Dünkü satışlar (sales records'dan)
+      safeDbOperation(() => prisma.salesRecord.findMany({
+        where: { 
+          createdAt: { 
+            gte: yesterday,
+            lt: today 
+          },
+          status: 'COMPLETED'
+        },
+        select: { totalAmount: true }
+      })),
+      
+      // Bu haftaki satışlar (sales records'dan)
+      safeDbOperation(() => prisma.salesRecord.findMany({
+        where: { 
+          createdAt: { gte: weekStart },
+          status: 'COMPLETED'
+        },
+        select: { totalAmount: true }
+      })),
+      
+      // Bu ayki satışlar (sales records'dan)
+      safeDbOperation(() => prisma.salesRecord.findMany({
+        where: { 
+          createdAt: { gte: monthStart },
+          status: 'COMPLETED'
+        },
+        select: { totalAmount: true }
+      })),
+      
+      // Bugünkü siparişler (aktif siparişler için)
       safeDbOperation(() => prisma.order.findMany({
         where: { createdAt: { gte: today } },
         select: {
@@ -105,29 +145,6 @@ router.get('/stats', async (req, res) => {
           customer: { select: { id: true, name: true } },
           branch: { select: { id: true, name: true } }
         }
-      })),
-      
-      // Dünkü siparişler
-      safeDbOperation(() => prisma.order.findMany({
-        where: { 
-          createdAt: { 
-            gte: yesterday,
-            lt: today 
-          } 
-        },
-        select: { totalAmount: true }
-      })),
-      
-      // Bu haftaki siparişler
-      safeDbOperation(() => prisma.order.findMany({
-        where: { createdAt: { gte: weekStart } },
-        select: { totalAmount: true }
-      })),
-      
-      // Bu ayki siparişler
-      safeDbOperation(() => prisma.order.findMany({
-        where: { createdAt: { gte: monthStart } },
-        select: { totalAmount: true }
       })),
       
       // Toplam müşteri sayısı
@@ -155,11 +172,11 @@ router.get('/stats', async (req, res) => {
       }))
     ]);
 
-    // Satış hesaplamaları
-    const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const yesterdayRevenue = yesterdayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const weekRevenue = weekOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const monthRevenue = monthOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    // Satış hesaplamaları (sales records'dan)
+    const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const yesterdayRevenue = yesterdaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const weekRevenue = weekSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const monthRevenue = monthSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
     
     const targetRevenue = 20000; // Günlük hedef
     const percentage = Math.round((todayRevenue / targetRevenue) * 100);

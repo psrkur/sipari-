@@ -9,6 +9,7 @@ import { useSocket } from '@/lib/socket';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
 import toast from 'react-hot-toast';
+import SalesStats from './sales-stats';
 import {
   TrendingUp,
   TrendingDown,
@@ -117,6 +118,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'today' | 'week' | 'month'>('today');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'sales-stats'>('dashboard');
   const { token } = useAuthStore();
   const { on, off } = useSocket();
   const API_BASE_URL = getApiBaseUrl();
@@ -377,27 +379,54 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Zaman Aralığı Seçimi */}
-      <div className="flex justify-end space-x-2">
-        <Button
-          variant={timeRange === 'today' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('today')}
-        >
-          Bugün
-        </Button>
-        <Button
-          variant={timeRange === 'week' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('week')}
-        >
-          Bu Hafta
-        </Button>
-        <Button
-          variant={timeRange === 'month' ? 'default' : 'outline'}
-          onClick={() => setTimeRange('month')}
-        >
-          Bu Ay
-        </Button>
+      {/* Tab Navigation */}
+      <div className="flex justify-between items-center">
+        <div className="flex space-x-2">
+          <Button
+            variant={activeTab === 'dashboard' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('dashboard')}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Dashboard
+          </Button>
+          <Button
+            variant={activeTab === 'sales-stats' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('sales-stats')}
+          >
+            <DollarSign className="h-4 w-4 mr-2" />
+            Satış İstatistikleri
+          </Button>
+        </div>
+        
+        {activeTab === 'dashboard' && (
+          <div className="flex space-x-2">
+            <Button
+              variant={timeRange === 'today' ? 'default' : 'outline'}
+              onClick={() => setTimeRange('today')}
+            >
+              Bugün
+            </Button>
+            <Button
+              variant={timeRange === 'week' ? 'default' : 'outline'}
+              onClick={() => setTimeRange('week')}
+            >
+              Bu Hafta
+            </Button>
+            <Button
+              variant={timeRange === 'month' ? 'default' : 'outline'}
+              onClick={() => setTimeRange('month')}
+            >
+              Bu Ay
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Content based on active tab */}
+      {activeTab === 'sales-stats' ? (
+        <SalesStats />
+      ) : (
+        <>
 
       {/* Ana Metrikler */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -715,6 +744,8 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
     </div>
   );
 } 

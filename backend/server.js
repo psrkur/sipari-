@@ -1009,6 +1009,19 @@ app.post('/api/orders', authenticateToken, async (req, res) => {
       }
     });
 
+    // Sales record oluştur
+    await prisma.salesRecord.create({
+      data: {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        branchId: parseInt(branchId),
+        customerId: customer?.id,
+        totalAmount: finalTotal,
+        orderType: 'DELIVERY',
+        status: 'PENDING'
+      }
+    });
+
     for (const item of items) {
       await prisma.orderItem.create({
         data: {
@@ -1594,6 +1607,14 @@ app.put('/api/admin/orders/:id/status', authenticateToken, async (req, res) => {
       include: {
         user: true,
         branch: true
+      }
+    });
+
+    // Sales record'u da güncelle
+    await prisma.salesRecord.updateMany({
+      where: { orderId: order.id },
+      data: { 
+        status: status === 'DELIVERED' ? 'COMPLETED' : status 
       }
     });
 
@@ -3622,13 +3643,21 @@ app.get('/api/admin/stats', authenticateToken, async (req, res) => {
     for (const branch of branches) {
       if (branchId && branch.id !== Number(branchId)) continue;
       
-      const orders = await prisma.order.findMany({
-        where: { ...where, branchId: branch.id },
+      // Sales records'dan satış verilerini al
+      const salesRecords = await prisma.salesRecord.findMany({
+        where: { 
+          branchId: branch.id,
+          createdAt: {
+            gte: startDate,
+            lt: endDate
+          },
+          status: 'COMPLETED'
+        },
         select: { totalAmount: true, id: true, createdAt: true }
       });
       
-      const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-      const orderCount = orders.length;
+      const totalRevenue = salesRecords.reduce((sum, s) => sum + s.totalAmount, 0);
+      const orderCount = salesRecords.length;
       const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
       
       let dailyAverage = 0;
@@ -5309,4 +5338,145 @@ process.on('SIGINT', async () => {
 
 // Prisma client'ı global olarak tanımla
 global.prismaClient = prisma;
+
+// Satış istatistikleri API'si (siparişler silinse bile çalışır)
+app.get('/api/admin/sales-stats', authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== 'SUPER_ADMIN' && req.user.role !== 'ADMIN' && req.user.role !== 'admin' && req.user.role !== 'BRANCH_MANAGER') {
+      return res.status(403).json({ error: 'Yetkisiz erişim' });
+    }
+
+    const { period = 'daily', branchId } = req.query;
+    
+    const now = new Date();
+    let startDate, endDate;
+    
+    switch (period) {
+      case 'daily':
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+        break;
+      case 'weekly':
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - 7);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'monthly':
+        startDate = new Date(now);
+        startDate.setMonth(startDate.getMonth() - 1);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      default:
+        startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+    }
+
+    // Branch filtresi
+    let branchFilter = {};
+    if (req.user.role === 'BRANCH_MANAGER') {
+      branchFilter.branchId = req.user.branchId;
+    } else if (branchId) {
+      branchFilter.branchId = Number(branchId);
+    }
+
+    // Sales records'dan verileri al
+    const salesRecords = await prisma.salesRecord.findMany({
+      where: {
+        ...branchFilter,
+        createdAt: {
+          gte: startDate,
+          lt: endDate
+        },
+        status: 'COMPLETED'
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        totalAmount: true,
+        orderType: true,
+        platform: true,
+        createdAt: true,
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // İstatistikleri hesapla
+    const totalRevenue = salesRecords.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    const orderCount = salesRecords.length;
+    const averageOrder = orderCount > 0 ? totalRevenue / orderCount : 0;
+
+    // Platform bazında dağılım
+    const platformStats = salesRecords.reduce((acc, sale) => {
+      const platform = sale.platform || 'Direkt';
+      if (!acc[platform]) {
+        acc[platform] = { count: 0, revenue: 0 };
+      }
+      acc[platform].count++;
+      acc[platform].revenue += sale.totalAmount;
+      return acc;
+    }, {});
+
+    // Sipariş tipi bazında dağılım
+    const orderTypeStats = salesRecords.reduce((acc, sale) => {
+      const type = sale.orderType || 'DELIVERY';
+      if (!acc[type]) {
+        acc[type] = { count: 0, revenue: 0 };
+      }
+      acc[type].count++;
+      acc[type].revenue += sale.totalAmount;
+      return acc;
+    }, {});
+
+    // Şube bazında dağılım
+    const branchStats = salesRecords.reduce((acc, sale) => {
+      const branchName = sale.branch?.name || 'Bilinmeyen';
+      if (!acc[branchName]) {
+        acc[branchName] = { count: 0, revenue: 0 };
+      }
+      acc[branchName].count++;
+      acc[branchName].revenue += sale.totalAmount;
+      return acc;
+    }, {});
+
+    res.json({
+      period,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+      summary: {
+        totalRevenue,
+        orderCount,
+        averageOrder
+      },
+      platformStats,
+      orderTypeStats,
+      branchStats,
+      sales: salesRecords
+    });
+
+  } catch (error) {
+    console.error('❌ Satış istatistikleri hatası:', error);
+    res.status(500).json({ error: 'Satış istatistikleri getirilemedi' });
+  }
+});
 

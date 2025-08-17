@@ -58,6 +58,7 @@ model Branch {
   products  Product[]
   tables    Table[]
   users     User[]
+  salesRecords SalesRecord[]
 
   @@map("branches")
 }
@@ -132,6 +133,7 @@ model Customer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   orders    Order[]
+  salesRecords SalesRecord[]
   chatMessages ChatMessage[]
 
   @@unique([phone])
@@ -166,6 +168,27 @@ model OrderItem {
   product   Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
+}
+
+model SalesRecord {
+  id          Int      @id @default(autoincrement())
+  orderId     Int?     // Optional - can be null if order is deleted
+  orderNumber String   // Keep order number for reference
+  branchId    Int
+  customerId  Int?
+  totalAmount Float
+  orderType   String   @default("DELIVERY") // DELIVERY, TABLE
+  platform    String?  // E-ticaret platformu (trendyol, getir, yemeksepeti, migros)
+  platformOrderId String? // Platform sipariş ID'si
+  status      String   @default("COMPLETED") // COMPLETED, CANCELLED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // İlişkiler
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  customer    Customer? @relation(fields: [customerId], references: [id])
+
+  @@map("sales_records")
 }
 
 model Company {
