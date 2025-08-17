@@ -122,7 +122,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function useOptimizedFetch<T = any>(
-  url: string,
+  url: string | (() => string),
   options: UseOptimizedFetchOptions = {}
 ): UseOptimizedFetchReturn<T> {
   const {
@@ -173,13 +173,15 @@ export function useOptimizedFetch<T = any>(
 
   // Fetch fonksiyonu
   const fetchData = useCallback(async (config?: AxiosRequestConfig) => {
+    const currentUrl = typeof url === 'function' ? url() : url;
+    
     console.log('🔍 fetchData çağrıldı:', {
       enabled,
       isMounted: isMountedRef.current,
-      url
+      currentUrl
     });
     
-    if (!enabled || !isMountedRef.current || !url || url.trim() === '') {
+    if (!enabled || !isMountedRef.current || !currentUrl || currentUrl.trim() === '') {
       console.log('🔍 fetchData iptal edildi');
       return;
     }
@@ -197,7 +199,7 @@ export function useOptimizedFetch<T = any>(
       setError(null);
 
       // Cache kontrolü
-      const cachedData = getCachedData(url);
+      const cachedData = getCachedData(currentUrl);
       if (cachedData) {
         console.log('🔍 Cache\'den veri alındı');
         if (isMountedRef.current) {
@@ -208,7 +210,7 @@ export function useOptimizedFetch<T = any>(
       }
 
       // API base URL'yi kullan
-      const fullUrl = url.startsWith('http') ? url : url;
+      const fullUrl = currentUrl.startsWith('http') ? currentUrl : currentUrl;
       console.log('🔍 OptimizedFetch URL:', fullUrl);
       
       console.log('🔍 API çağrısı yapılıyor...');
@@ -230,7 +232,7 @@ export function useOptimizedFetch<T = any>(
         if (isMountedRef.current) {
           console.log('🔍 Data set ediliyor:', response.data?.length || 'boş');
           setData(response.data);
-          setCachedData(url, response.data);
+          setCachedData(currentUrl, response.data);
           retryCountRef.current = 0;
         }
       } else {
@@ -322,7 +324,6 @@ export function useOptimizedFetch<T = any>(
   // İlk yükleme
   useEffect(() => {
     console.log('🔍 useOptimizedFetch useEffect:', {
-      url,
       enabled,
       isMounted: isMountedRef.current
     });
@@ -330,7 +331,7 @@ export function useOptimizedFetch<T = any>(
     if (enabled && isMountedRef.current) {
       debouncedFetch();
     }
-  }, [enabled, url]); // debouncedFetch dependency'sini kaldırdık, url ekledik
+  }, [enabled]); // Sadece enabled dependency'si
 
   return {
     data,
