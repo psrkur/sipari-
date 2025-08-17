@@ -176,13 +176,13 @@ export default function DashboardDebug() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Period:</strong> {debugData.salesStats.period}</div>
-                <div><strong>Total Revenue:</strong> ₺{debugData.salesStats.summary?.totalRevenue || 0}</div>
-                <div><strong>Order Count:</strong> {debugData.salesStats.summary?.orderCount || 0}</div>
-                <div><strong>Sales Array Length:</strong> {debugData.salesStats.sales?.length || 0}</div>
-                <div><strong>Platform Stats:</strong> {Object.keys(debugData.salesStats.platformStats || {}).length} platform</div>
-                <div><strong>Order Type Stats:</strong> {Object.keys(debugData.salesStats.orderTypeStats || {}).length} tip</div>
-                <div><strong>Branch Stats:</strong> {Object.keys(debugData.salesStats.branchStats || {}).length} şube</div>
+                <div><strong>Period:</strong> {debugData.salesStats.period || 'daily'}</div>
+                <div><strong>Total Revenue:</strong> ₺{debugData.salesStats.summary?.totalRevenue || debugData.salesStats.totalRevenue || 0}</div>
+                <div><strong>Order Count:</strong> {debugData.salesStats.summary?.orderCount || debugData.salesStats.orderCount || 0}</div>
+                <div><strong>Sales Array Length:</strong> {debugData.salesStats.sales?.length || debugData.salesStats.orders?.length || 0}</div>
+                <div><strong>Platform Stats:</strong> {Object.keys(debugData.salesStats.platformStats || debugData.salesStats.platforms || {}).length} platform</div>
+                <div><strong>Order Type Stats:</strong> {Object.keys(debugData.salesStats.orderTypeStats || debugData.salesStats.orderTypes || {}).length} tip</div>
+                <div><strong>Branch Stats:</strong> {Object.keys(debugData.salesStats.branchStats || debugData.salesStats.branches || {}).length} şube</div>
               </div>
             </CardContent>
           </Card>
@@ -199,13 +199,13 @@ export default function DashboardDebug() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Period:</strong> {debugData.productSales.period}</div>
-                <div><strong>Total Products:</strong> {debugData.productSales.summary?.totalProducts || 0}</div>
-                <div><strong>Total Quantity:</strong> {debugData.productSales.summary?.totalQuantity || 0}</div>
-                <div><strong>Total Revenue:</strong> ₺{debugData.productSales.summary?.totalRevenue || 0}</div>
-                <div><strong>Product Sales Array:</strong> {debugData.productSales.productSales?.length || 0} ürün</div>
-                <div><strong>Category Stats:</strong> {debugData.productSales.categoryStats?.length || 0} kategori</div>
-                <div><strong>Sales Records:</strong> {debugData.productSales.salesRecords || 0}</div>
+                <div><strong>Period:</strong> {debugData.productSales.period || 'daily'}</div>
+                <div><strong>Total Products:</strong> {debugData.productSales.summary?.totalProducts || debugData.productSales.totalProducts || 0}</div>
+                <div><strong>Total Quantity:</strong> {debugData.productSales.summary?.totalQuantity || debugData.productSales.totalQuantity || 0}</div>
+                <div><strong>Total Revenue:</strong> ₺{debugData.productSales.summary?.totalRevenue || debugData.productSales.totalRevenue || 0}</div>
+                <div><strong>Product Sales Array:</strong> {debugData.productSales.productSales?.length || debugData.productSales.products?.length || 0} ürün</div>
+                <div><strong>Category Stats:</strong> {debugData.productSales.categoryStats?.length || debugData.productSales.categories?.length || 0} kategori</div>
+                <div><strong>Sales Records:</strong> {debugData.productSales.salesRecords || debugData.productSales.records || 0}</div>
               </div>
             </CardContent>
           </Card>
@@ -222,11 +222,11 @@ export default function DashboardDebug() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Sales Today:</strong> ₺{debugData.dashboardStats.sales?.today || 0}</div>
-                <div><strong>Orders Total:</strong> {debugData.dashboardStats.orders?.total || 0}</div>
-                <div><strong>Customers Total:</strong> {debugData.dashboardStats.customers?.total || 0}</div>
-                <div><strong>Products Total:</strong> {debugData.dashboardStats.products?.total || 0}</div>
-                <div><strong>Real Time Orders:</strong> {debugData.dashboardStats.realTime?.currentOrders?.length || 0}</div>
+                <div><strong>Sales Today:</strong> ₺{debugData.dashboardStats.sales?.today || debugData.dashboardStats.todaySales || 0}</div>
+                <div><strong>Orders Total:</strong> {debugData.dashboardStats.orders?.total || debugData.dashboardStats.totalOrders || 0}</div>
+                <div><strong>Customers Total:</strong> {debugData.dashboardStats.customers?.total || debugData.dashboardStats.totalCustomers || 0}</div>
+                <div><strong>Products Total:</strong> {debugData.dashboardStats.products?.total || debugData.dashboardStats.totalProducts || 0}</div>
+                <div><strong>Real Time Orders:</strong> {debugData.dashboardStats.realTime?.currentOrders?.length || debugData.dashboardStats.currentOrders?.length || 0}</div>
               </div>
             </CardContent>
           </Card>
@@ -243,13 +243,13 @@ export default function DashboardDebug() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2 text-sm">
-                <div><strong>Orders Count:</strong> {debugData.dbStatus.counts?.orders || 0}</div>
-                <div><strong>Order Items Count:</strong> {debugData.dbStatus.counts?.orderItems || 0}</div>
-                <div><strong>Products Count:</strong> {debugData.dbStatus.counts?.products || 0}</div>
-                <div><strong>Categories Count:</strong> {debugData.dbStatus.counts?.categories || 0}</div>
-                <div><strong>Sales Records Count:</strong> {debugData.dbStatus.counts?.salesRecords || 0}</div>
-                <div><strong>Recent Orders:</strong> {debugData.dbStatus.recentOrders?.length || 0} sipariş</div>
-                <div><strong>Recent Order Items:</strong> {debugData.dbStatus.recentOrderItems?.length || 0} ürün</div>
+                <div><strong>Orders Count:</strong> {debugData.dbStatus.counts?.orders || debugData.dbStatus.orders || 0}</div>
+                <div><strong>Order Items Count:</strong> {debugData.dbStatus.counts?.orderItems || debugData.dbStatus.orderItems || 0}</div>
+                <div><strong>Products Count:</strong> {debugData.dbStatus.counts?.products || debugData.dbStatus.products || 0}</div>
+                <div><strong>Categories Count:</strong> {debugData.dbStatus.counts?.categories || debugData.dbStatus.categories || 0}</div>
+                <div><strong>Sales Records Count:</strong> {debugData.dbStatus.counts?.salesRecords || debugData.dbStatus.salesRecords || 0}</div>
+                <div><strong>Recent Orders:</strong> {debugData.dbStatus.recentOrders?.length || debugData.dbStatus.orders?.length || 0} sipariş</div>
+                <div><strong>Recent Order Items:</strong> {debugData.dbStatus.recentOrderItems?.length || debugData.dbStatus.orderItems?.length || 0} ürün</div>
               </div>
             </CardContent>
           </Card>
