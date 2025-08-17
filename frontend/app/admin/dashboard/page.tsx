@@ -255,12 +255,24 @@ export default function Dashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (salesTrendRes.data) {
+      if (salesTrendRes.data && salesTrendRes.data.datasets && salesTrendRes.data.datasets[0]) {
         setSalesChartData({
-          labels: salesTrendRes.data.labels,
+          labels: salesTrendRes.data.labels || ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
           datasets: [{
             label: 'Günlük Satış (₺)',
-            data: salesTrendRes.data.datasets[0].data,
+            data: salesTrendRes.data.datasets[0].data || [0, 0, 0, 0, 0, 0, 0],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+          }],
+        });
+      } else {
+        // Varsayılan veriler kullan
+        setSalesChartData({
+          labels: ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'],
+          datasets: [{
+            label: 'Günlük Satış (₺)',
+            data: [0, 0, 0, 0, 0, 0, 0],
             borderColor: 'rgb(59, 130, 246)',
             backgroundColor: 'rgba(59, 130, 246, 0.1)',
             tension: 0.4,
@@ -273,11 +285,34 @@ export default function Dashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (orderStatusRes.data) {
+      if (orderStatusRes.data && orderStatusRes.data.datasets && orderStatusRes.data.datasets[0]) {
         setOrderStatusData({
-          labels: orderStatusRes.data.labels,
+          labels: orderStatusRes.data.labels || ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen', 'İptal Edilen'],
           datasets: [{
-            data: orderStatusRes.data.datasets[0].data,
+            data: orderStatusRes.data.datasets[0].data || [0, 0, 0, 0, 0],
+            backgroundColor: [
+              'rgba(255, 206, 86, 0.8)',
+              'rgba(54, 162, 235, 0.8)',
+              'rgba(75, 192, 192, 0.8)',
+              'rgba(153, 102, 255, 0.8)',
+              'rgba(255, 99, 132, 0.8)',
+            ],
+            borderColor: [
+              'rgba(255, 206, 86, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 99, 132, 1)',
+            ],
+            borderWidth: 2,
+          }],
+        });
+      } else {
+        // Varsayılan veriler kullan
+        setOrderStatusData({
+          labels: ['Bekleyen', 'Hazırlanan', 'Hazır', 'Teslim Edilen', 'İptal Edilen'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0],
             backgroundColor: [
               'rgba(255, 206, 86, 0.8)',
               'rgba(54, 162, 235, 0.8)',
@@ -335,11 +370,11 @@ export default function Dashboard() {
   };
 
   const popularProductsData = {
-    labels: data?.products?.popular?.map(p => p.name) || [],
+    labels: data?.products?.popular?.map(p => p.name) || ['Ürün 1', 'Ürün 2', 'Ürün 3'],
     datasets: [
       {
         label: 'Satış Adedi',
-        data: data?.products?.popular?.map(p => p.sales) || [],
+        data: data?.products?.popular?.map(p => p.sales) || [0, 0, 0],
         backgroundColor: 'rgba(255, 99, 132, 0.8)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
