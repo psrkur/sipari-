@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { safeObjectKeys } from '@/lib/utils';
 
 // Memoize edilmiş state hook'u
 export function useMemoizedState<T>(
@@ -108,7 +109,7 @@ export function useOptimizedForm<T extends Record<string, any>>(
   const setValue = useCallback(<K extends keyof T>(key: K, value: T[K]) => {
     setValues(prev => {
       const newValues = { ...prev, [key]: value };
-      const hasChanges = Object.keys(newValues).some(k => 
+      const hasChanges = safeObjectKeys(newValues).some(k => 
         newValues[k as keyof T] !== originalValuesRef.current[k as keyof T]
       );
       setIsDirty(hasChanges);
@@ -119,7 +120,7 @@ export function useOptimizedForm<T extends Record<string, any>>(
   const setMultipleValues = useCallback((newValues: Partial<T>) => {
     setValues(prev => {
       const updated = { ...prev, ...newValues };
-      const hasChanges = Object.keys(updated).some(k => 
+      const hasChanges = safeObjectKeys(updated).some(k => 
         updated[k as keyof T] !== originalValuesRef.current[k as keyof T]
       );
       setIsDirty(hasChanges);
@@ -133,7 +134,7 @@ export function useOptimizedForm<T extends Record<string, any>>(
   }, []);
 
   const hasChanges = useMemo(() => {
-    return Object.keys(values).some(key => 
+    return safeObjectKeys(values).some(key => 
       values[key as keyof T] !== originalValuesRef.current[key as keyof T]
     );
   }, [values]);

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { API_ENDPOINTS, getApiBaseUrl } from '@/lib/api';
-import { safeObjectEntries } from '@/lib/utils';
+import { safeObjectEntries, safeObjectKeys } from '@/lib/utils';
 
 interface ChatMessage {
   id: number;
@@ -141,7 +141,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
         greeting = `İyi akşamlar ${customerName}! 🌙`;
       }
       
-      const categoryNames = Object.keys(categories);
+      const categoryNames = safeObjectKeys(categories);
       const availableCategories = categoryNames.length > 0 ? categoryNames.join(', ') : 'ürünlerimiz';
       
       return {
@@ -175,7 +175,7 @@ export default function Chatbot({ customerId, customerInfo }: ChatbotProps) {
     }
     
     // Spesifik kategori sorguları
-    const categoryMatch = Object.keys(categories).find(category => 
+    const categoryMatch = safeObjectKeys(categories).find(category => 
       lowerMessage.includes(category.toLowerCase())
     );
     

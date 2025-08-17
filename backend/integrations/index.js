@@ -2,6 +2,14 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
+// Güvenli Object.keys kullanımı için utility fonksiyon
+const safeObjectKeys = (obj) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    return Object.keys(obj);
+  }
+  return [];
+};
+
 // Platform entegrasyonlarını import et
 const trendyolIntegration = require('./trendyol-yemek');
 const yemeksepetiIntegration = require('./yemeksepeti');
@@ -512,7 +520,7 @@ class EcommerceIntegration {
   async checkAllPlatformsHealth() {
     const healthStatus = {};
     
-    for (const platformName of Object.keys(this.integrations)) {
+    for (const platformName of safeObjectKeys(this.integrations)) {
       healthStatus[platformName] = await this.checkPlatformHealth(platformName);
     }
     

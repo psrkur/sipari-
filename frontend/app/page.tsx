@@ -32,7 +32,7 @@ import {
   LogOut
 } from 'lucide-react'
 import ForgotPasswordModal from '@/components/ForgotPasswordModal'
-import { safeObjectEntries } from '@/lib/utils'
+import { safeObjectEntries, safeObjectKeys } from '@/lib/utils'
 
 interface Branch {
   id: number
@@ -511,7 +511,7 @@ export default function Home() {
     }
     
     const grouped = groupProductsByCategory(products)
-    return ['Tümü', ...Object.keys(grouped)]
+    return ['Tümü', ...safeObjectKeys(grouped)]
   }, [products, groupProductsByCategory])
 
   const addToCart = useCallback((product: Product) => {

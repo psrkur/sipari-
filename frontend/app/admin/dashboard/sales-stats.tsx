@@ -19,7 +19,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { getApiBaseUrl } from '@/lib/api';
-import { safeObjectEntries } from '@/lib/utils';
+import { safeObjectEntries, safeObjectKeys } from '@/lib/utils';
 
 interface SalesStatsData {
   period: string;
@@ -303,7 +303,7 @@ export default function SalesStats() {
       </div>
 
       {/* Şube Bazında Dağılım */}
-      {Object.keys(data.branchStats).length > 1 && (
+      {safeObjectKeys(data.branchStats).length > 1 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { safeObjectKeys } from '@/lib/utils';
 
 interface MemoryOptimizationOptions {
   maxMemoryUsage?: number; // MB cinsinden maksimum bellek kullanımı
@@ -41,7 +42,7 @@ export function useMemoryOptimization(options: MemoryOptimizationOptions = {}) {
     if (typeof window !== 'undefined') {
       // Session storage temizliği
       try {
-        const keys = Object.keys(sessionStorage);
+        const keys = safeObjectKeys(sessionStorage);
         const now = Date.now();
         
         keys.forEach(key => {
@@ -64,7 +65,7 @@ export function useMemoryOptimization(options: MemoryOptimizationOptions = {}) {
 
       // Local storage temizliği
       try {
-        const keys = Object.keys(localStorage);
+        const keys = safeObjectKeys(localStorage);
         const now = Date.now();
         
         keys.forEach(key => {

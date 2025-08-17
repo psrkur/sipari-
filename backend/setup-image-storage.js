@@ -13,6 +13,14 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 
+// Güvenli Object.keys kullanımı için utility fonksiyon
+const safeObjectKeys = (obj) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    return Object.keys(obj);
+  }
+  return [];
+};
+
 console.log('🖼️  Image Storage Setup Script Başlatılıyor...\n');
 
 // Veritabanı bağlantısı
@@ -187,7 +195,7 @@ async function createImageMapping() {
     fs.writeFileSync(mappingPath, JSON.stringify(mappingData, null, 2));
     
     console.log(`\n✅ Image mapping dosyası oluşturuldu: ${mappingPath}`);
-    console.log(`📊 ${Object.keys(mappingData).length} resim mapping'e eklendi`);
+    console.log(`📊 ${safeObjectKeys(mappingData).length} resim mapping'e eklendi`);
 
   } catch (error) {
     console.error('❌ Image mapping oluşturma hatası:', error);

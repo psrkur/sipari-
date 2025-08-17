@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Phone, MapPin, Clock, AlertCircle, Building } from 'lucide-react';
 import { useCartStore } from '@/store/cart';
-import { safeObjectEntries } from '@/lib/utils';
+import { safeObjectEntries, safeObjectKeys } from '@/lib/utils';
 
 interface Product {
   id: number;
@@ -333,7 +333,7 @@ export default function QRMenuPage() {
 
       {/* Menu */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {Object.keys(menuData.menu).length === 0 ? (
+        {safeObjectKeys(menuData.menu).length === 0 ? (
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Menü Boş</h3>

@@ -2,6 +2,14 @@ const { PrismaClient } = require('@prisma/client');
 const fs = require('fs');
 const path = require('path');
 
+// Güvenli Object.keys kullanımı için utility fonksiyon
+const safeObjectKeys = (obj) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    return Object.keys(obj);
+  }
+  return [];
+};
+
 const prisma = new PrismaClient();
 
 async function exportDatabaseData() {
@@ -87,7 +95,7 @@ async function exportDatabaseData() {
     
     // İstatistikler
     const stats = {
-      totalTables: Object.keys(data.tables).length,
+      totalTables: safeObjectKeys(data.tables).length,
       totalRecords: Object.values(data.tables).reduce((sum, table) => sum + table.length, 0),
       fileSize: fileSize,
       exportDate: data.exportDate

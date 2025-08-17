@@ -4,6 +4,14 @@ const router = express.Router();
 const ecommerceIntegration = require('./index');
 const { authenticateToken } = require('../middleware/auth');
 
+// Güvenli Object.keys kullanımı için utility fonksiyon
+const safeObjectKeys = (obj) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    return Object.keys(obj);
+  }
+  return [];
+};
+
 // Platform konfigürasyonu
 router.post('/platforms/register', authenticateToken, async (req, res) => {
   try {
@@ -130,7 +138,7 @@ router.get('/platforms/:platformName/status', authenticateToken, async (req, res
 // Tüm platformların durumu
 router.get('/platforms/status', authenticateToken, async (req, res) => {
   try {
-    const platforms = Object.keys(ecommerceIntegration.platforms).map(name => {
+    const platforms = safeObjectKeys(ecommerceIntegration.platforms).map(name => {
       const platform = ecommerceIntegration.platforms[name];
       return {
         name,
@@ -289,7 +297,7 @@ router.post('/platforms/reload-configs', authenticateToken, async (req, res) => 
     res.json({
       success: true,
       message: 'Platform configurations reloaded successfully',
-      platforms: Object.keys(ecommerceIntegration.platforms)
+      platforms: safeObjectKeys(ecommerceIntegration.platforms)
     });
   } catch (error) {
     console.error('Platform config reload error:', error);

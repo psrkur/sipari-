@@ -1,6 +1,14 @@
 // Environment variables - Manuel yükleme
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const isProduction = process.env.NODE_ENV === 'production';
+
+// Güvenli Object.keys kullanımı için utility fonksiyon
+const safeObjectKeys = (obj) => {
+  if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+    return Object.keys(obj);
+  }
+  return [];
+};
 console.log('🔧 process.env.PORT başlangıç:', process.env.PORT);
 console.log('🔧 NODE_ENV:', process.env.NODE_ENV);
 console.log('🔧 isProduction:', isProduction);
@@ -1942,7 +1950,7 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
     console.log('Request body:', req.body);
     console.log('User role:', req.user.role);
     console.log('Product ID:', req.params.id);
-    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body keys:', safeObjectKeys(req.body));
     console.log('Request body values:', {
       name: req.body.name,
       price: req.body.price,
@@ -1957,11 +1965,11 @@ app.put('/api/admin/products/:id', authenticateToken, async (req, res) => {
 
     // Branch manager sadece isActive güncellemesi yapıyorsa, diğer alanları kontrol etme
     const isOnlyStatusUpdate = req.user.role === 'BRANCH_MANAGER' && 
-      Object.keys(req.body).length === 1 && 
+      safeObjectKeys(req.body).length === 1 && 
       Object.prototype.hasOwnProperty.call(req.body, 'isActive');
 
     console.log('Is only status update:', isOnlyStatusUpdate);
-    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Request body keys:', safeObjectKeys(req.body));
     console.log('Has isActive property:', Object.prototype.hasOwnProperty.call(req.body, 'isActive'));
 
     console.log('Validation check:', {
