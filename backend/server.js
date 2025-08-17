@@ -4394,7 +4394,7 @@ app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
       return {
         deletedOrders: deletedOrders.count,
         deletedOrderItems: deletedOrderItems.count,
-        savedSalesRecords: salesRecords.length
+        savedSalesRecords: allOrdersWithDetails.length
       };
     });
 
