@@ -70,7 +70,7 @@ async function cleanupOldOrders() {
 
     // Transaction ile güvenli silme işlemi
     const result = await prisma.$transaction(async (tx) => {
-      // Önce silinecek siparişlerin detaylarını al
+      // Önce silinecek siparişlerin detaylarını al (ürün detayları dahil)
       const ordersWithDetails = await tx.order.findMany({
         where: {
           id: {
@@ -79,33 +79,57 @@ async function cleanupOldOrders() {
         },
         include: {
           customer: true,
-          branch: true
+          branch: true,
+          orderItems: {
+            include: {
+              product: {
+                include: {
+                  category: true
+                }
+              }
+            }
+          }
         }
       });
 
-      // SalesRecord tablosuna kaydet
-      const salesRecords = ordersWithDetails.map(order => ({
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        branchId: order.branchId,
-        customerId: order.customerId,
-        totalAmount: order.totalAmount,
-        orderType: order.orderType,
-        platform: order.platform,
-        platformOrderId: order.platformOrderId,
-        status: order.status,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt
-      }));
-
-      // SalesRecord'ları toplu olarak ekle
-      if (salesRecords.length > 0) {
-        await tx.salesRecord.createMany({
-          data: salesRecords,
-          skipDuplicates: true
+      // SalesRecord ve SalesRecordItem'ları oluştur
+      for (const order of ordersWithDetails) {
+        // SalesRecord oluştur
+        const salesRecord = await tx.salesRecord.create({
+          data: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            branchId: order.branchId,
+            customerId: order.customerId,
+            totalAmount: order.totalAmount,
+            orderType: order.orderType,
+            platform: order.platform,
+            platformOrderId: order.platformOrderId,
+            status: order.status,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt
+          }
         });
-        console.log(`💾 ${salesRecords.length} sipariş SalesRecord tablosuna kaydedildi`);
+
+        // SalesRecordItem'ları oluştur
+        const salesRecordItems = order.orderItems.map(item => ({
+          salesRecordId: salesRecord.id,
+          productId: item.productId,
+          productName: item.product.name,
+          categoryName: item.product.category.name,
+          quantity: item.quantity,
+          price: item.price,
+          totalPrice: item.price * item.quantity
+        }));
+
+        if (salesRecordItems.length > 0) {
+          await tx.salesRecordItem.createMany({
+            data: salesRecordItems
+          });
+        }
       }
+
+      console.log(`💾 ${ordersWithDetails.length} sipariş ve ürün detayları SalesRecord tablosuna kaydedildi`);
 
       // Önce orderItems'ları sil
       const orderIds = ordersToDelete.map(order => order.id);

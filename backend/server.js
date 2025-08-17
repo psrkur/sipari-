@@ -4327,37 +4327,61 @@ app.delete('/api/admin/orders', authenticateToken, async (req, res) => {
 
     // Transaction ile güvenli silme işlemi
     const result = await prisma.$transaction(async (tx) => {
-      // Önce tüm siparişlerin detaylarını al
+      // Önce tüm siparişlerin detaylarını al (ürün detayları dahil)
       const allOrdersWithDetails = await tx.order.findMany({
         include: {
           customer: true,
-          branch: true
+          branch: true,
+          orderItems: {
+            include: {
+              product: {
+                include: {
+                  category: true
+                }
+              }
+            }
+          }
         }
       });
 
-      // SalesRecord tablosuna kaydet
-      const salesRecords = allOrdersWithDetails.map(order => ({
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        branchId: order.branchId,
-        customerId: order.customerId,
-        totalAmount: order.totalAmount,
-        orderType: order.orderType,
-        platform: order.platform,
-        platformOrderId: order.platformOrderId,
-        status: order.status,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt
-      }));
-
-      // SalesRecord'ları toplu olarak ekle
-      if (salesRecords.length > 0) {
-        await tx.salesRecord.createMany({
-          data: salesRecords,
-          skipDuplicates: true
+      // SalesRecord ve SalesRecordItem'ları oluştur
+      for (const order of allOrdersWithDetails) {
+        // SalesRecord oluştur
+        const salesRecord = await tx.salesRecord.create({
+          data: {
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            branchId: order.branchId,
+            customerId: order.customerId,
+            totalAmount: order.totalAmount,
+            orderType: order.orderType,
+            platform: order.platform,
+            platformOrderId: order.platformOrderId,
+            status: order.status,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt
+          }
         });
-        console.log(`💾 ${salesRecords.length} sipariş SalesRecord tablosuna kaydedildi`);
+
+        // SalesRecordItem'ları oluştur
+        const salesRecordItems = order.orderItems.map(item => ({
+          salesRecordId: salesRecord.id,
+          productId: item.productId,
+          productName: item.product.name,
+          categoryName: item.product.category.name,
+          quantity: item.quantity,
+          price: item.price,
+          totalPrice: item.price * item.quantity
+        }));
+
+        if (salesRecordItems.length > 0) {
+          await tx.salesRecordItem.createMany({
+            data: salesRecordItems
+          });
+        }
       }
+
+      console.log(`💾 ${allOrdersWithDetails.length} sipariş ve ürün detayları SalesRecord tablosuna kaydedildi`);
 
       // Önce orderItems'ları sil
       const deletedOrderItems = await tx.orderItem.deleteMany({});
@@ -5407,42 +5431,82 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       });
     }
 
-    // Bu siparişlere ait ürün detaylarını al (sadece aktif siparişlerden)
+    // Bu siparişlere ait ürün detaylarını al (hem aktif siparişlerden hem de arşivden)
     const orderIds = completedActiveOrders.map(order => order.id);
     
     console.log('📋 Sipariş ID\'leri:', orderIds);
     
-    const orderItems = await prisma.orderItem.findMany({
-      where: {
-        orderId: {
-          in: orderIds
-        }
-      },
-      select: {
-        id: true,
-        quantity: true,
-        price: true,
-        orderId: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            category: {
-              select: {
-                id: true,
-                name: true
+    const [orderItems, salesRecordItems] = await Promise.all([
+      prisma.orderItem.findMany({
+        where: {
+          orderId: {
+            in: orderIds
+          }
+        },
+        select: {
+          id: true,
+          quantity: true,
+          price: true,
+          orderId: true,
+          product: {
+            select: {
+              id: true,
+              name: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true
+                }
               }
             }
           }
         }
-      }
-    });
+      }),
+      prisma.salesRecordItem.findMany({
+        where: {
+          salesRecord: {
+            createdAt: {
+              gte: startDate,
+              lt: endDate
+            },
+            status: { in: ['COMPLETED', 'DELIVERED', 'FINISHED', 'SUCCESS'] }
+          }
+        },
+        select: {
+          id: true,
+          productName: true,
+          categoryName: true,
+          quantity: true,
+          price: true,
+          totalPrice: true
+        }
+      })
+    ]);
 
-    console.log('🛍️ Sipariş ürün sayısı:', orderItems.length);
+    console.log('🛍️ Aktif sipariş ürün sayısı:', orderItems.length);
+    console.log('🛍️ Arşiv sipariş ürün sayısı:', salesRecordItems.length);
     console.log('🛍️ İlk birkaç order item:', orderItems.slice(0, 3));
 
-    if (orderItems.length === 0) {
-      console.log('⚠️ Order items bulunamadı, boş response döndürülüyor');
+    // İki veri kaynağını birleştir
+    const allProductItems = [
+      ...orderItems.map(item => ({
+        productName: item.product?.name || 'Bilinmeyen Ürün',
+        categoryName: item.product?.category?.name || 'Diğer',
+        quantity: item.quantity,
+        price: item.price,
+        totalPrice: item.price * item.quantity
+      })),
+      ...salesRecordItems.map(item => ({
+        productName: item.productName,
+        categoryName: item.categoryName,
+        quantity: item.quantity,
+        price: item.price,
+        totalPrice: item.totalPrice
+      }))
+    ];
+
+    if (allProductItems.length === 0) {
+      console.log('⚠️ Hiç ürün satışı bulunamadı, boş response döndürülüyor');
       return res.json({
         period,
         startDate: startDate.toISOString(),
@@ -5454,23 +5518,23 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
         },
         productSales: [],
         categoryStats: [],
-        salesRecords: completedOrders.length
+        salesRecords: totalCompletedOrders
       });
     }
 
     // Ürün bazında satış istatistiklerini hesapla
     const productSales = {};
     
-    orderItems.forEach((item, index) => {
+    allProductItems.forEach((item, index) => {
       console.log(`🔄 İşleniyor item ${index + 1}:`, {
-        productName: item.product?.name,
-        categoryName: item.product?.category?.name,
+        productName: item.productName,
+        categoryName: item.categoryName,
         quantity: item.quantity,
         price: item.price
       });
       
-      const productName = item.product?.name || 'Bilinmeyen Ürün';
-      const categoryName = item.product?.category?.name || 'Diğer';
+      const productName = item.productName;
+      const categoryName = item.categoryName;
       
       if (!productSales[productName]) {
         productSales[productName] = {
@@ -5484,7 +5548,7 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
       }
       
       productSales[productName].totalQuantity += item.quantity;
-      productSales[productName].totalRevenue += (item.price * item.quantity);
+      productSales[productName].totalRevenue += item.totalPrice;
       productSales[productName].orderCount++;
     });
 

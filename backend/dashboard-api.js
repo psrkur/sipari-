@@ -726,13 +726,48 @@ router.get('/product-sales', async (req, res) => {
           }
         }
       })),
-      // SalesRecord'dan ürün detaylarını almak için ayrı bir sorgu gerekebilir
-      // Şimdilik boş array döndür, daha sonra geliştirilebilir
-      Promise.resolve([])
+      // SalesRecord'dan ürün detaylarını al
+      safeDbOperation(() => prisma.salesRecordItem.findMany({
+        where: {
+          salesRecord: {
+            createdAt: { gte: startDate },
+            status: { in: ['COMPLETED', 'DELIVERED'] }
+          }
+        },
+        select: {
+          id: true,
+          productName: true,
+          categoryName: true,
+          quantity: true,
+          price: true,
+          totalPrice: true,
+          createdAt: true
+        }
+      }))
     ]);
 
-    // İki veri kaynağını birleştir
-    const productSales = [...activeOrderItems, ...salesRecordItems];
+    // İki veri kaynağını birleştir ve formatla
+    const activeItems = activeOrderItems.map(item => ({
+      id: item.id,
+      productName: item.product.name,
+      categoryName: item.product.category.name,
+      quantity: item.quantity,
+      price: item.price,
+      totalPrice: item.price * item.quantity,
+      createdAt: item.order.createdAt
+    }));
+
+    const archivedItems = salesRecordItems.map(item => ({
+      id: item.id,
+      productName: item.productName,
+      categoryName: item.categoryName,
+      quantity: item.quantity,
+      price: item.price,
+      totalPrice: item.totalPrice,
+      createdAt: item.createdAt
+    }));
+
+    const productSales = [...activeItems, ...archivedItems];
     
     // Ürün bazında satış verilerini grupla
     const productStats = {};

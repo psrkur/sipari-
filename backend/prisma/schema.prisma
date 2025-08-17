@@ -91,6 +91,7 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
+  salesRecordItems SalesRecordItem[] // Satış kayıtlarındaki ürün detayları
   branch      Branch      @relation(fields: [branchId], references: [id])
   category    Category    @relation(fields: [categoryId], references: [id])
   companyId   Int
@@ -187,8 +188,27 @@ model SalesRecord {
   // İlişkiler
   branch      Branch   @relation(fields: [branchId], references: [id])
   customer    Customer? @relation(fields: [customerId], references: [id])
+  salesRecordItems SalesRecordItem[] // Ürün detayları
 
   @@map("sales_records")
+}
+
+model SalesRecordItem {
+  id            Int      @id @default(autoincrement())
+  salesRecordId Int
+  productId     Int
+  productName   String   // Ürün adını sakla (ürün silinirse bile)
+  categoryName  String   // Kategori adını sakla
+  quantity      Int
+  price         Float
+  totalPrice    Float
+  createdAt     DateTime @default(now())
+  
+  // İlişkiler
+  salesRecord   SalesRecord @relation(fields: [salesRecordId], references: [id], onDelete: Cascade)
+  product       Product? @relation(fields: [productId], references: [id]) // Optional - ürün silinirse null olabilir
+
+  @@map("sales_record_items")
 }
 
 model Company {
