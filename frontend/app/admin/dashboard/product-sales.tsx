@@ -57,8 +57,8 @@ export default function ProductSales() {
     try {
       setLoading(true);
       
-      // Production backend'de mevcut olan endpoint'i kullan
-      const response = await axios.get(`${API_BASE_URL}/api/admin/sales-stats?period=${period}`, {
+      // Product sales için doğru endpoint'i kullan
+      const response = await axios.get(`${API_BASE_URL}/api/admin/product-sales?period=${period}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

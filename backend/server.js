@@ -5308,18 +5308,29 @@ app.get('/api/admin/product-sales', authenticateToken, async (req, res) => {
     console.log('📅 Tarih aralığı:', { startDate, endDate, period });
     console.log('🏢 Şube filtresi:', branchFilter);
 
-    // Önce tamamlanmış siparişleri al
-    const completedOrders = await prisma.order.findMany({
+    // Önce tüm siparişleri al (test için)
+    const allOrders = await prisma.order.findMany({
       where: {
         ...branchFilter,
         createdAt: {
           gte: startDate,
           lt: endDate
-        },
-        status: {
-          in: ['COMPLETED', 'DELIVERED']
         }
       },
+      select: {
+        id: true,
+        status: true,
+        createdAt: true
+      }
+    });
+
+    console.log('📋 Tüm siparişler:', allOrders.map(o => ({ id: o.id, status: o.status, createdAt: o.createdAt })));
+    console.log('📋 Sipariş durumları:', [...new Set(allOrders.map(o => o.status))]);
+
+    // Tamamlanmış siparişleri filtrele
+    const completedOrders = allOrders.filter(order => 
+      ['COMPLETED', 'DELIVERED', 'COMPLETED', 'DELIVERED', 'FINISHED', 'SUCCESS'].includes(order.status)
+    );
       select: {
         id: true,
         orderNumber: true,
