@@ -663,14 +663,14 @@ export default function POSPage() {
             </select>
           </div>
 
-          {/* Kategori Filtreleri */}
-          <div className="mb-5 md:mb-6">
-            <div className="flex flex-wrap gap-2 md:gap-3">
+          {/* Kategori Filtreleri - Kompakt */}
+          <div className="mb-4 md:mb-5">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
               <Button
                 onClick={() => setSelectedCategory('all')}
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
                 size="sm"
-                className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 whitespace-nowrap"
+                className="text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap h-7 md:h-8"
               >
                 Tümü
               </Button>
@@ -680,7 +680,7 @@ export default function POSPage() {
                   onClick={() => setSelectedCategory(category.name)}
                   variant={selectedCategory === category.name ? 'default' : 'outline'}
                   size="sm"
-                  className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2.5 whitespace-nowrap"
+                  className="text-xs md:text-sm px-2 md:px-3 py-1.5 md:py-2 whitespace-nowrap h-7 md:h-8"
                 >
                   {category.name}
                 </Button>
@@ -688,32 +688,32 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Ürün Grid - Responsive tasarım */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4">
+          {/* Ürün Grid - Ultra Modern ve Kompakt Tasarım */}
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10 gap-1.5 md:gap-2">
             {filteredProducts.map(product => (
               <div
                 key={product.id}
-                className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-blue-300 rounded-lg bg-white group"
+                className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 border border-gray-200 hover:border-green-400 rounded-lg bg-white group overflow-hidden min-h-[80px] md:min-h-[90px]"
                 onClick={() => addToCart(product)}
               >
-                <Card className="h-full">
-                  <CardContent className="p-3 md:p-4 h-full flex flex-col">
-                    {/* Ürün Adı - Tam görünür, responsive */}
-                    <h3 className="font-semibold text-sm md:text-base lg:text-lg mb-2 break-words leading-tight min-h-[2.5rem] md:min-h-[3rem] lg:min-h-[3.5rem] flex items-start">
-                      {product.name}
-                    </h3>
-                    
-                    {/* Fiyat */}
-                    <p className="text-base md:text-lg lg:text-xl font-bold text-green-600 mb-2 mt-auto">
+                <div className="p-1.5 md:p-2 h-full flex flex-col justify-between">
+                  {/* Ürün Adı - Ultra kompakt */}
+                  <h3 className="font-medium text-xs md:text-sm leading-tight line-clamp-2 text-gray-800 group-hover:text-green-700">
+                    {product.name}
+                  </h3>
+                  
+                  {/* Fiyat - Dikkat çekici */}
+                  <div className="mt-auto">
+                    <p className="text-xs md:text-sm font-bold text-green-600 group-hover:text-green-700">
                       ₺{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price || 0).toFixed(2)}
                     </p>
                     
-                    {/* Kategori */}
-                    <Badge variant="secondary" className="text-xs md:text-sm w-fit">
+                    {/* Kategori - Minimal badge */}
+                    <Badge variant="secondary" className="text-[10px] md:text-xs w-fit mt-0.5 opacity-70">
                       {product.category.name}
                     </Badge>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
