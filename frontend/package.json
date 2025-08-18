@@ -9,9 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@capacitor/android": "^7.4.1",
-    "@capacitor/cli": "^7.4.1",
-    "@capacitor/core": "^7.4.1",
     "@tailwindcss/line-clamp": "^0.4.4",
     "@types/react-beautiful-dnd": "^13.1.8",
     "autoprefixer": "^10.0.1",
