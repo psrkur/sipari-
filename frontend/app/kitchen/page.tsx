@@ -68,48 +68,37 @@ export default function KitchenPage() {
   // Ref'leri tanımla
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Şubeleri yükle fonksiyonu
-  const fetchBranches = useCallback(async () => {
-    if (!token) return;
-    
-    try {
-      const response = await axios.get(API_ENDPOINTS.BRANCHES, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      const branchesData = Array.isArray(response.data) ? response.data : [];
-      setBranches(branchesData);
-      
-      // İlk şubeyi otomatik seç
-      if (branchesData.length > 0 && !selectedBranch) {
-        setSelectedBranch(branchesData[0]);
-      }
-    } catch (error: any) {
-      console.error('Şubeler yüklenemedi:', error);
-      toast.error('Şubeler yüklenemedi');
-    }
-  }, [token, selectedBranch]);
-
   // Siparişleri yükle fonksiyonu
   const fetchOrders = useCallback(async (branchId: number, silent = false) => {
-    if (!branchId || !token) return;
+    if (!branchId || !token) {
+      console.log('❌ fetchOrders: branchId veya token eksik', { branchId, hasToken: !!token });
+      return;
+    }
 
     if (!silent) {
       setLoading(true);
     }
 
     try {
+      console.log('🔍 Siparişler yükleniyor...', { branchId, endpoint: API_ENDPOINTS.ADMIN_ORDERS });
+      
       const response = await axios.get(API_ENDPOINTS.ADMIN_ORDERS, {
         headers: { Authorization: `Bearer ${token}` },
         params: { branchId }
       });
 
+      console.log('✅ Sipariş API yanıtı:', response.data);
+      
       const ordersData = Array.isArray(response.data) ? response.data : [];
+      console.log('📊 Ham sipariş verisi:', ordersData.length, 'sipariş');
       
       // Sadece aktif siparişleri filtrele
       const activeOrders = ordersData.filter((order: Order) => 
         ['PENDING', 'PREPARING', 'READY'].includes(order.status)
       );
+      
+      console.log('📊 Aktif siparişler:', activeOrders.length, 'sipariş');
+      console.log('📊 Sipariş durumları:', activeOrders.map(o => ({ id: o.id, status: o.status, orderNumber: o.orderNumber })));
 
       // Sadece veri değişikliği varsa güncelle
       const hasChanges = JSON.stringify(activeOrders) !== JSON.stringify(orders);
@@ -122,9 +111,19 @@ export default function KitchenPage() {
         console.log('📊 Veri değişikliği yok, güncelleme atlandı');
       }
     } catch (error: any) {
-      console.error('Siparişler yüklenemedi:', error);
+      console.error('❌ Siparişler yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error.response?.data || error.message);
+      
       if (!silent) {
-        toast.error('Siparişler yüklenemedi');
+        if (error.response?.status === 401) {
+          toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+        } else if (error.response?.status === 403) {
+          toast.error('Bu sayfaya erişim yetkiniz yok.');
+        } else if (error.response?.status === 404) {
+          toast.error('API endpoint bulunamadı. Backend çalışıyor mu?');
+        } else {
+          toast.error(`Siparişler yüklenemedi: ${error.response?.status || 'Bilinmeyen hata'}`);
+        }
       }
     } finally {
       if (!silent) {
@@ -132,6 +131,46 @@ export default function KitchenPage() {
       }
     }
   }, [token, orders]);
+
+  // Şubeleri yükle fonksiyonu
+  const fetchBranches = useCallback(async () => {
+    if (!token) {
+      console.log('❌ fetchBranches: token eksik');
+      return;
+    }
+    
+    try {
+      console.log('🔍 Şubeler yükleniyor...', { endpoint: API_ENDPOINTS.BRANCHES });
+      
+      const response = await axios.get(API_ENDPOINTS.BRANCHES, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('✅ Şubeler API yanıtı:', response.data);
+      
+      const branchesData = Array.isArray(response.data) ? response.data : [];
+      setBranches(branchesData);
+      
+      console.log('📊 Yüklenen şubeler:', branchesData.length, 'şube');
+      
+      // İlk şubeyi otomatik seç
+      if (branchesData.length > 0 && !selectedBranch) {
+        console.log('🏢 İlk şube otomatik seçildi:', branchesData[0].name);
+        setSelectedBranch(branchesData[0]);
+      }
+    } catch (error: any) {
+      console.error('❌ Şubeler yüklenemedi:', error);
+      console.error('❌ Hata detayı:', error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        toast.error('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+      } else if (error.response?.status === 403) {
+        toast.error('Bu sayfaya erişim yetkiniz yok.');
+      } else {
+        toast.error('Şubeler yüklenemedi');
+      }
+    }
+  }, [token, selectedBranch]);
 
   // Sipariş durumu güncelleme
   const updateOrderStatus = useCallback(async (orderId: number, newStatus: string) => {
@@ -335,8 +374,12 @@ export default function KitchenPage() {
               <p>Auth Checking: {authChecking ? 'Evet' : 'Hayır'}</p>
               <p>Orders Count: {orders.length}</p>
               <p>Selected Branch: {selectedBranch ? selectedBranch.name : 'Yok'}</p>
+              <p>Branches Count: {branches.length}</p>
+              <p>Loading: {loading ? 'Evet' : 'Hayır'}</p>
               <p>Tamamen Sessiz Kontrol: {autoRefresh ? 'Açık' : 'Kapalı'}</p>
               <p>Last Update: {lastUpdate.toLocaleTimeString('tr-TR')}</p>
+              <p>API Base URL: {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}</p>
+              <p>Current API: {typeof window !== 'undefined' ? window.location.hostname : 'SSR'}</p>
             </div>
           )}
 
@@ -422,6 +465,7 @@ export default function KitchenPage() {
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Siparişler yükleniyor...</p>
+                    <p className="text-sm text-gray-500 mt-2">Şube: {selectedBranch.name}</p>
                   </div>
                 ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => (
@@ -531,12 +575,19 @@ export default function KitchenPage() {
                 ) : (
                   <div className="text-center py-12 text-gray-500">
                     <p>Seçili şubede aktif sipariş bulunamadı</p>
+                    <p className="text-sm mt-2">Şube: {selectedBranch.name}</p>
+                    <p className="text-sm">Toplam sipariş: {orders.length}</p>
+                    <p className="text-sm">Filtrelenmiş: {filteredOrders.length}</p>
                   </div>
                 )}
               </div>
             ) : (
               <div className="text-center py-12 text-gray-500">
                 <p>Lütfen bir şube seçin</p>
+                <p className="text-sm mt-2">Mevcut şube sayısı: {branches.length}</p>
+                {branches.length === 0 && (
+                  <p className="text-sm text-red-500">Şubeler yüklenemedi!</p>
+                )}
               </div>
             )}
           </div>
