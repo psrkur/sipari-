@@ -591,6 +591,13 @@ export default function AdminPage() {
 
   // Optimize edilmiş callback'ler
   const updateOrderStatus = useCallback(async (orderId: number, status: string) => {
+    // Optimistic UI güncellemesi
+    const current = orders.find(o => o.id === orderId);
+    const previousStatus = current?.status;
+    if (previousStatus && previousStatus !== status) {
+      updateOrderItem(orderId, (order) => ({ ...order, status }));
+    }
+
     try {
       const response = await axios.put(
         API_ENDPOINTS.ADMIN_UPDATE_ORDER_STATUS(orderId),
@@ -598,18 +605,24 @@ export default function AdminPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.success) {
+      const updatedOrder = response?.data?.order;
+      if (updatedOrder) {
         updateOrderItem(orderId, (order) => ({
           ...order,
-          status
+          status: updatedOrder.status,
         }));
-        toast.success('Sipariş durumu güncellendi');
       }
+
+      toast.success('Sipariş durumu güncellendi');
     } catch (error: any) {
       console.error('Sipariş durumu güncellenemedi:', error);
+      // Hata olursa geri al
+      if (previousStatus) {
+        updateOrderItem(orderId, (order) => ({ ...order, status: previousStatus }));
+      }
       toast.error('Sipariş durumu güncellenemedi');
     }
-  }, [token]);
+  }, [token, updateOrderItem, orders]);
 
   // Form submit handlers
   const addUser = useCallback(async (e: React.FormEvent) => {

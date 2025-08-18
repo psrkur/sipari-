@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "node deploy-tables.js",
     "build": "npx prisma generate",
-    "postinstall": "node --max-old-space-size=2048 -e \"require('child_process').execSync('npx prisma generate', {stdio: 'inherit'})\"",
+    "postinstall": "node --max-old-space-size=2048 -e \"require('child_process').execSync('npx prisma generate', {stdio: 'inherit'})\" && node --max-old-space-size=2048 deploy-chatbot-migration.js",
     "migrate": "node deploy-migration.js",
     "run-migration": "node run-migration.js",
     "sync-images": "node sync-images-manual.js",
