@@ -21,6 +21,41 @@ try {
   };
 }
 
+// Yardımcı: orderNumber bazında benzersiz gelir toplama
+function sumUniqueRevenueByOrderNumber(salesArray) {
+  try {
+    const seenOrderNumbers = new Set();
+    let total = 0;
+    for (const sale of salesArray || []) {
+      const key = sale.orderNumber || null;
+      if (key) {
+        if (seenOrderNumbers.has(key)) continue;
+        seenOrderNumbers.add(key);
+      }
+      total += Number(sale.totalAmount || 0);
+    }
+    return total;
+  } catch (_) {
+    // Her ihtimale karşı eski davranışa dön
+    return (salesArray || []).reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+  }
+}
+
+// Yardımcı: orderNumber bazında tekilleştirilmiş dizi döndür
+function dedupeByOrderNumber(items) {
+  const seen = new Set();
+  const result = [];
+  for (const it of items || []) {
+    const key = it.orderNumber || null;
+    if (key) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+    }
+    result.push(it);
+  }
+  return result;
+}
+
 // Safe database operation wrapper with retry logic
 async function safeDbOperation(operation, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -97,14 +132,14 @@ router.get('/stats', async (req, res) => {
             createdAt: { gte: today },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         })),
         safeDbOperation(() => prisma.salesRecord.findMany({
           where: { 
             createdAt: { gte: today },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         }))
       ]).then(([active, archived]) => [...active, ...archived]),
       
@@ -118,7 +153,7 @@ router.get('/stats', async (req, res) => {
             },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         })),
         safeDbOperation(() => prisma.salesRecord.findMany({
           where: { 
@@ -128,7 +163,7 @@ router.get('/stats', async (req, res) => {
             },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         }))
       ]).then(([active, archived]) => [...active, ...archived]),
       
@@ -139,14 +174,14 @@ router.get('/stats', async (req, res) => {
             createdAt: { gte: weekStart },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         })),
         safeDbOperation(() => prisma.salesRecord.findMany({
           where: { 
             createdAt: { gte: weekStart },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         }))
       ]).then(([active, archived]) => [...active, ...archived]),
       
@@ -157,14 +192,14 @@ router.get('/stats', async (req, res) => {
             createdAt: { gte: monthStart },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         })),
         safeDbOperation(() => prisma.salesRecord.findMany({
           where: { 
             createdAt: { gte: monthStart },
             status: { in: ['COMPLETED', 'DELIVERED'] }
           },
-          select: { totalAmount: true }
+          select: { totalAmount: true, orderNumber: true }
         }))
       ]).then(([active, archived]) => [...active, ...archived]),
       
@@ -215,11 +250,11 @@ router.get('/stats', async (req, res) => {
       }))
     ]);
 
-    // Satış hesaplamaları (order tablosundan)
-    const todayRevenue = todaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    const yesterdayRevenue = yesterdaySales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    const weekRevenue = weekSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
-    const monthRevenue = monthSales.reduce((sum, sale) => sum + sale.totalAmount, 0);
+    // Satış hesaplamaları (orderNumber ile tekilleştir)
+    const todayRevenue = sumUniqueRevenueByOrderNumber(todaySales);
+    const yesterdayRevenue = sumUniqueRevenueByOrderNumber(yesterdaySales);
+    const weekRevenue = sumUniqueRevenueByOrderNumber(weekSales);
+    const monthRevenue = sumUniqueRevenueByOrderNumber(monthSales);
     
     const targetRevenue = 20000; // Günlük hedef
     const percentage = Math.round((todayRevenue / targetRevenue) * 100);
@@ -721,7 +756,8 @@ router.get('/product-sales', async (req, res) => {
           },
           order: {
             select: {
-              createdAt: true
+              createdAt: true,
+              orderNumber: true
             }
           }
         }
@@ -736,17 +772,19 @@ router.get('/product-sales', async (req, res) => {
         },
         select: {
           id: true,
+          productId: true,
           productName: true,
           categoryName: true,
           quantity: true,
           price: true,
           totalPrice: true,
-          createdAt: true
+          createdAt: true,
+          salesRecord: { select: { orderNumber: true } }
         }
       }))
     ]);
 
-    // İki veri kaynağını birleştir ve formatla
+    // İki veri kaynağını formatla
     const activeItems = activeOrderItems.map(item => ({
       id: item.id,
       productId: item.product.id,
@@ -755,21 +793,31 @@ router.get('/product-sales', async (req, res) => {
       quantity: item.quantity,
       price: item.price,
       totalPrice: item.price * item.quantity,
-      createdAt: item.order.createdAt
+      createdAt: item.order.createdAt,
+      orderNumber: item.order.orderNumber
     }));
 
     const archivedItems = salesRecordItems.map(item => ({
       id: item.id,
-      productId: item.id, // SalesRecordItem için unique ID kullan
+      productId: item.productId || item.id, // SalesRecordItem için unique ID kullan
       productName: item.productName,
       categoryName: item.categoryName,
       quantity: item.quantity,
       price: item.price,
       totalPrice: item.totalPrice,
-      createdAt: item.createdAt
+      createdAt: item.createdAt,
+      orderNumber: item.salesRecord?.orderNumber || null
     }));
 
-    const productSales = [...activeItems, ...archivedItems];
+    // Aktif + arşiv öğelerini orderNumber + productId + price ile tekilleştir
+    const seenItemKeys = new Set();
+    const productSales = [];
+    for (const it of [...activeItems, ...archivedItems]) {
+      const key = `${it.orderNumber || 'NA'}::${it.productId || it.productName}::${Number(it.price).toFixed(2)}`;
+      if (seenItemKeys.has(key)) continue;
+      seenItemKeys.add(key);
+      productSales.push(it);
+    }
     
     console.log('📊 Aktif ürün satışları:', activeItems.length);
     console.log('📊 Arşiv ürün satışları:', archivedItems.length);
@@ -898,7 +946,8 @@ router.get('/sales-stats', async (req, res) => {
           id: true,
           totalAmount: true,
           createdAt: true,
-          orderType: true
+          orderType: true,
+          orderNumber: true
         }
       })),
       safeDbOperation(() => prisma.salesRecord.findMany({
@@ -910,13 +959,15 @@ router.get('/sales-stats', async (req, res) => {
           id: true,
           totalAmount: true,
           createdAt: true,
-          orderType: true
+          orderType: true,
+          orderNumber: true
         }
       }))
     ]);
 
-    // İki veri kaynağını birleştir
-    const salesData = [...activeOrders, ...salesRecords];
+    // İki veri kaynağını birleştir ve orderNumber bazında tekilleştir
+    const salesDataCombined = [...activeOrders, ...salesRecords];
+    const salesData = dedupeByOrderNumber(salesDataCombined);
     
     // Günlük satış verilerini grupla
     const dailySales = {};
@@ -954,7 +1005,7 @@ router.get('/sales-stats', async (req, res) => {
     });
     
     // Toplam istatistikler
-    const totalRevenue = salesData.reduce((sum, order) => sum + order.totalAmount, 0);
+    const totalRevenue = salesData.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
     const totalOrders = salesData.length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
@@ -968,6 +1019,9 @@ router.get('/sales-stats', async (req, res) => {
         totalRevenue,
         totalOrders,
         averageOrderValue,
+        // Frontend geri uyumluluğu
+        orderCount: totalOrders,
+        averageOrder: averageOrderValue,
         periodDays: Math.ceil((today - startDate) / (1000 * 60 * 60 * 24))
       }
     });
