@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -14,7 +15,8 @@ import {
   BarChart3,
   PieChart,
   Users,
-  Building
+  Building,
+  Search
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
@@ -71,8 +73,23 @@ export default function SalesStats() {
   const [data, setData] = useState<SalesStatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [useCustomDate, setUseCustomDate] = useState(false);
   const { token } = useAuthStore();
   const API_BASE_URL = getApiBaseUrl();
+
+  // Bugünün tarihini varsayılan olarak ayarla
+  useEffect(() => {
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0];
+    setEndDate(formattedToday);
+    
+    // Varsayılan olarak bugünün başlangıcını ayarla
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+    setStartDate(startOfDay.toISOString().split('T')[0]);
+  }, []);
 
   const loadSalesStats = async () => {
     try {
@@ -83,7 +100,16 @@ export default function SalesStats() {
         'Content-Type': 'application/json'
       };
       
-      const response = await axios.get(`${API_BASE_URL}/api/admin/sales-stats?period=${period}`, { headers });
+      // API parametrelerini hazırla
+      const params = new URLSearchParams();
+      params.append('period', period);
+      
+      if (useCustomDate && startDate && endDate) {
+        params.append('startDate', startDate);
+        params.append('endDate', endDate);
+      }
+      
+      const response = await axios.get(`${API_BASE_URL}/api/admin/sales-stats?${params.toString()}`, { headers });
       setData(response.data);
 
       console.log('📊 Satış istatistikleri yüklendi:', response.data);
@@ -105,7 +131,27 @@ export default function SalesStats() {
   useEffect(() => {
     if (!token) return;
     loadSalesStats();
-  }, [token, period]);
+  }, [token, period, startDate, endDate, useCustomDate]);
+
+  const handleDateFilter = () => {
+    if (!startDate || !endDate) {
+      toast.error('Lütfen başlangıç ve bitiş tarihlerini seçin.');
+      return;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+      toast.error('Başlangıç tarihi bitiş tarihinden büyük olamaz.');
+      return;
+    }
+    
+    setUseCustomDate(true);
+    loadSalesStats();
+  };
+
+  const handlePeriodChange = (newPeriod: 'daily' | 'weekly' | 'monthly') => {
+    setPeriod(newPeriod);
+    setUseCustomDate(false);
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -123,6 +169,10 @@ export default function SalesStats() {
   };
 
   const getPeriodText = () => {
+    if (useCustomDate && startDate && endDate) {
+      return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    }
+    
     switch (period) {
       case 'daily':
         return 'Bugün';
@@ -162,22 +212,22 @@ export default function SalesStats() {
         <h2 className="text-2xl font-bold">Satış İstatistikleri</h2>
         <div className="flex space-x-2">
           <Button
-            variant={period === 'daily' ? 'default' : 'outline'}
-            onClick={() => setPeriod('daily')}
+            variant={period === 'daily' && !useCustomDate ? 'default' : 'outline'}
+            onClick={() => handlePeriodChange('daily')}
           >
             <Calendar className="h-4 w-4 mr-2" />
             Günlük
           </Button>
           <Button
-            variant={period === 'weekly' ? 'default' : 'outline'}
-            onClick={() => setPeriod('weekly')}
+            variant={period === 'weekly' && !useCustomDate ? 'default' : 'outline'}
+            onClick={() => handlePeriodChange('weekly')}
           >
             <BarChart3 className="h-4 w-4 mr-2" />
             Haftalık
           </Button>
           <Button
-            variant={period === 'monthly' ? 'default' : 'outline'}
-            onClick={() => setPeriod('monthly')}
+            variant={period === 'monthly' && !useCustomDate ? 'default' : 'outline'}
+            onClick={() => handlePeriodChange('monthly')}
           >
             <PieChart className="h-4 w-4 mr-2" />
             Aylık
@@ -185,9 +235,58 @@ export default function SalesStats() {
         </div>
       </div>
 
+      {/* Tarih Seçici */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Search className="h-4 w-4 mr-2" />
+            Tarih Aralığı Seçimi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Başlangıç Tarihi
+              </label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Bitiş Tarihi
+              </label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <Button
+              onClick={handleDateFilter}
+              disabled={!startDate || !endDate}
+              className="w-full sm:w-auto"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Filtrele
+            </Button>
+          </div>
+          {useCustomDate && (
+            <div className="mt-2 text-sm text-blue-600">
+              Özel tarih aralığı kullanılıyor: {getPeriodText()}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Tarih Aralığı */}
       <div className="text-sm text-gray-600">
-        {formatDate(data.startDate)} - {formatDate(data.endDate)}
+        {getPeriodText()}
       </div>
 
       {/* Ana Metrikler */}

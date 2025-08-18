@@ -88,7 +88,7 @@ export default function KitchenPage() {
       });
 
       console.log('✅ Sipariş API yanıtı:', response.data);
-      
+
       const ordersData = Array.isArray(response.data) ? response.data : [];
       console.log('📊 Ham sipariş verisi:', ordersData.length, 'sipariş');
       
