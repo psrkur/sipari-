@@ -79,9 +79,7 @@ async function exportDatabaseData() {
     console.log('📊 PlatformConfigs tablosu export ediliyor...');
     data.tables.platformConfigs = await prisma.platformConfig.findMany();
     
-    // ChatMessages
-    console.log('📊 ChatMessages tablosu export ediliyor...');
-    data.tables.chatMessages = await prisma.chatMessage.findMany();
+
     
     // Images
     console.log('📊 Images tablosu export ediliyor...');

@@ -135,7 +135,7 @@ model Customer {
   updatedAt DateTime @updatedAt
   orders    Order[]
   salesRecords SalesRecord[]
-  chatMessages ChatMessage[]
+
 
   @@unique([phone])
   @@map("customers")
@@ -256,19 +256,7 @@ model PlatformConfig {
   @@map("platform_configs")
 }
 
-model ChatMessage {
-  id          Int      @id @default(autoincrement())
-  customerId  Int
-  message     String
-  platform    String   @default("web") // web, whatsapp, telegram
-  direction   String   // incoming, outgoing
-  isProcessed Boolean  @default(false)
-  responseType String? // order_status_inquiry, menu_inquiry, etc.
-  createdAt   DateTime @default(now())
-  customer    Customer @relation(fields: [customerId], references: [id])
 
-  @@map("chat_messages")
-}
 
 model Image {
   id          Int      @id @default(autoincrement())

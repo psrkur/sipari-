@@ -16,7 +16,7 @@ import ProductManagement from '../components/ProductManagement';
 import BranchManagement from '../components/BranchManagement';
 import ImageSelector from '../../components/ImageSelector';
 import Link from 'next/link';
-import ChatManagement from './chat-management/page';
+
 import Dashboard from './dashboard/page';
 import ImageManagement from './image-management/page';
 
@@ -1584,39 +1584,7 @@ export default function AdminPage() {
                 {sidebarOpen && <span>Masa Yönetimi</span>}
               </button>
               
-              <button
-                onClick={() => {
-                  console.log('=== SOHBET BUTON DEBUG ===');
-                  console.log('1. Buton tıklandı');
-                  console.log('2. Router durumu:', router);
-                  console.log('3. Router durumu kontrol ediliyor...');
-                  console.log('4. Current pathname:', window.location.pathname);
-                  console.log('5. Target path: /admin/chat-management');
-                  
-                  try {
-                    console.log('7. Router.push() deneniyor...');
-                    router.push('/admin/chat-management');
-                    console.log('8. Router.push() başarılı');
-                    
-                    // 2 saniye sonra pathname'i kontrol et
-                    setTimeout(() => {
-                      console.log('9. 2 saniye sonra pathname:', window.location.pathname);
-                      if (window.location.pathname !== '/admin/chat-management') {
-                        console.log('10. Router.push() başarısız, window.location kullanılıyor');
-                        window.location.href = '/admin/chat-management';
-                      }
-                    }, 2000);
-                  } catch (error) {
-                    console.error('11. Router.push() hatası:', error);
-                    window.location.href = '/admin/chat-management';
-                  }
-                }}
-                className="flex items-center space-x-3 px-4 py-3 rounded-lg bg-pink-100 hover:bg-pink-200 text-pink-700 font-medium transition-all duration-200 hover:shadow-md w-full text-left cursor-pointer"
-                type="button"
-              >
-                <span className="text-lg">💬</span>
-                {sidebarOpen && <span>Sohbet</span>}
-              </button>
+
               
               <button
                 onClick={() => {

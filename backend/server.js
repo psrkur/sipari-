@@ -36,8 +36,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const logger = require('./utils/logger');
 const { configureSocket } = require('./socket-config');
 const performanceMonitor = require('./performance-monitor');
-const chatbotRouter = require('./chatbot-api');
-const aiChatbotRouter = require('./ai-chatbot-api');
+
 const dashboardRouter = require('./dashboard-api');
 const backupRouter = require('./backup-api');
 
@@ -3313,6 +3312,169 @@ app.post('/api/table/:tableId/order', async (req, res) => {
   }
 });
 
+// POS Satış Endpoint'i - Direkt teslim edildi olarak kaydeder
+app.post('/api/pos/sale', async (req, res) => {
+  try {
+    const { items, notes, branchId, tableId, customerInfo } = req.body;
+    
+    if (!items || items.length === 0) {
+      return res.status(400).json({ error: 'Sipariş öğeleri gerekli' });
+    }
+
+    if (!branchId) {
+      return res.status(400).json({ error: 'Şube ID gerekli' });
+    }
+
+    // Şubeyi kontrol et
+    const branch = await prisma.branch.findUnique({
+      where: { id: parseInt(branchId) }
+    });
+
+    if (!branch) {
+      return res.status(404).json({ error: 'Şube bulunamadı' });
+    }
+
+    // Toplam tutarı hesapla
+    let totalAmount = 0;
+    for (const item of items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+      if (product) {
+        totalAmount += product.price * item.quantity;
+      }
+    }
+
+    // Sipariş numarası oluştur
+    const orderNumber = `POS${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    // POS siparişini direkt "DELIVERED" durumunda oluştur
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        branchId: parseInt(branchId),
+        tableId: tableId ? parseInt(tableId) : null,
+        status: 'DELIVERED', // Direkt teslim edildi
+        totalAmount,
+        notes: notes || 'POS Satışı',
+        orderType: 'TABLE',
+        platform: 'POS',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    // Sipariş öğelerini oluştur
+    for (const item of items) {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId }
+      });
+      if (product) {
+        await prisma.orderItem.create({
+          data: {
+            orderId: order.id,
+            productId: item.productId,
+            quantity: item.quantity,
+            price: product.price,
+            note: item.note || null
+          }
+        });
+      }
+    }
+
+    // Müşteri bilgisi varsa kaydet
+    if (customerInfo && customerInfo.name && customerInfo.phone) {
+      try {
+        const customer = await prisma.customer.upsert({
+          where: { phone: customerInfo.phone },
+          update: { 
+            name: customerInfo.name,
+            address: customerInfo.address || null,
+            email: customerInfo.email || null
+          },
+          create: {
+            name: customerInfo.name,
+            phone: customerInfo.phone,
+            address: customerInfo.address || null,
+            email: customerInfo.email || null
+          }
+        });
+
+        // Siparişi müşteri ile ilişkilendir
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { customerId: customer.id }
+        });
+      } catch (customerError) {
+        console.error('❌ Müşteri kaydetme hatası:', customerError);
+        // Müşteri hatası sipariş oluşturmayı etkilemesin
+      }
+    }
+
+    // SalesRecord'a da kaydet (istatistikler için)
+    try {
+      const salesRecord = await prisma.salesRecord.create({
+        data: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          branchId: parseInt(branchId),
+          customerId: order.customerId,
+          totalAmount: order.totalAmount,
+          orderType: 'TABLE',
+          platform: 'POS',
+          status: 'COMPLETED',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      });
+
+      // SalesRecordItem'ları oluştur
+      for (const item of items) {
+        const product = await prisma.product.findUnique({
+          where: { id: item.productId }
+        });
+        if (product) {
+          await prisma.salesRecordItem.create({
+            data: {
+              salesRecordId: salesRecord.id,
+              productId: item.productId,
+              productName: product.name,
+              categoryName: product.category?.name || 'Kategorisiz',
+              quantity: item.quantity,
+              price: product.price,
+              totalPrice: product.price * item.quantity
+            }
+          });
+        }
+      }
+    } catch (salesRecordError) {
+      console.error('❌ SalesRecord kaydetme hatası:', salesRecordError);
+      // SalesRecord hatası sipariş oluşturmayı etkilemesin
+    }
+
+    console.log(`✅ POS satışı oluşturuldu: ${order.orderNumber} - ${totalAmount}₺`);
+
+    res.status(201).json({
+      success: true,
+      order: {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        createdAt: order.createdAt
+      },
+      message: 'POS satışı başarıyla kaydedildi'
+    });
+
+  } catch (error) {
+    console.error('❌ POS satış hatası:', error);
+    res.status(500).json({ 
+      error: 'POS satışı oluşturulamadı',
+      details: error.message 
+    });
+  }
+});
+
 async function seedData() {
   try {
     await prisma.$connect();
@@ -4197,9 +4359,7 @@ app.post('/api/admin/sync-images', authenticateToken, async (req, res) => {
 const ecommerceIntegrationRouter = require('./integrations/api');
 app.use('/api/integrations', ecommerceIntegrationRouter);
 
-// Chatbot router'ını ekle
-app.use('/api/chatbot', chatbotRouter);
-app.use('/api/chatbot', aiChatbotRouter);
+
 app.use('/api/admin', dashboardRouter);
 
 // Yedekleme router'ını ekle

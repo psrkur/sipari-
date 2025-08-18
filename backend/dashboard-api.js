@@ -95,7 +95,7 @@ router.get('/stats', async (req, res) => {
       return res.json({
         sales: { today: 0, yesterday: 0, thisWeek: 0, thisMonth: 0, target: 20000, percentage: 0 },
         orders: { total: 0, pending: 0, preparing: 0, ready: 0, delivered: 0, cancelled: 0, averageTime: 0 },
-        customers: { total: 0, newToday: 0, activeNow: 0, averageRating: 0, chatbotConversations: 0 },
+        customers: { total: 0, newToday: 0, activeNow: 0, averageRating: 0 },
         products: { total: 0, popular: [], lowStock: [] },
         realTime: { currentOrders: [], recentActivity: [] }
       });
@@ -399,8 +399,7 @@ router.get('/stats', async (req, res) => {
     // Müşteri puanı (gerçek veri yoksa varsayılan)
     const averageRating = 4.7; // Bu değer gerçek rating sistemi olmadığı için sabit
 
-    // Chatbot konuşmaları (gerçek veri yoksa varsayılan)
-    const chatbotConversations = Math.max(1, Math.floor(totalCustomers * 0.2)); // En az 1 olsun
+
 
     // Gerçek zamanlı siparişleri formatla
     const formattedCurrentOrders = currentOrders.map(order => ({
@@ -495,7 +494,7 @@ router.get('/stats', async (req, res) => {
         newToday: newTodayCustomers,
         activeNow: activeCustomers,
         averageRating: averageRating,
-        chatbotConversations: chatbotConversations
+
       },
       products: {
         total: totalProducts,
